@@ -1,0 +1,24 @@
+# C-NOTE Phase 1 — Task Tracker
+
+- [x] STEP 1: Scaffold Vite + React + TS project
+- [x] STEP 2: Install dependencies (react-router-dom, tailwindcss v4 vite plugin, lucide-react, @vitejs/plugin-react@4, @types/node)
+- [x] STEP 3: Project structure & config files (tsconfig, vite.config, eslint, .gitignore)
+- [x] STEP 4: Storage abstraction (src/lib/storage.ts)
+- [x] STEP 5: Domain types (src/types/)
+- [x] STEP 6: Design tokens (src/styles/tokens.css)
+- [x] STEP 7: Global styles + typography (src/styles/global.css, typography.css)
+- [x] STEP 8: Theme system (ThemeContext + useTheme + ThemeProvider)
+- [x] STEP 9: Mock data (src/data/subjects.ts — 13 subjects, metadata only)
+- [x] STEP 10: UI primitives (Button, IconButton, Input, Badge, Divider, Spinner, Skeleton, Tooltip, EmptyState)
+- [x] STEP 11: Layout components (AppShell, GlobalHeader, PageContainer)
+- [x] STEP 12: Navigation components (Breadcrumbs, MobileNavigation)
+- [x] STEP 13: Feedback components (ErrorBoundary, ErrorState, NotFound, LoadingState)
+- [x] STEP 14: Router setup (src/app/router.tsx + providers)
+- [x] STEP 15: Placeholder pages (Home, Subjects, SubjectDetail, TopicDetail, QuestionDetail, NotFound)
+- [x] STEP 16: DesignSystemPage (Design Lab at /design-system)
+- [x] STEP 17: App entry (main.tsx + App.tsx + index.html + vite-env.d.ts)
+- [x] STEP 18: README.md + content/data README stubs
+- [x] STEP 19: npm install — ✅ 195 packages, 0 vulnerabilities
+- [x] STEP 20: TypeScript check — ✅ 0 errors (strict mode)
+- [x] STEP 21: npm run build — ✅ built in 1.21s, 0 warnings
+- [x] STEP 22: npm run dev — ✅ running at localhost:5173
