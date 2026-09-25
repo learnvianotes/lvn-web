@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sheet 150 — Master DSA Interview Notes</title>
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="icon" type="image/png" href="../../app-icon.png">
+  <link rel="apple-touch-icon" href="../../app-icon.png">
+  <meta name="theme-color" content="#F7F4ED">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sheet 150">
+  <meta name="description" content="Complete 150 LeetCode master solution breakdown with Naive & Optimized approaches, Time/Space complexities, Intuition, and clean Python implementations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../../css/c-note-theme.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('cnote_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      try { localStorage.setItem('cnote_theme', savedTheme); } catch(e) {}
+    })();
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('cnote_theme', next); } catch(e) {}
+      updateThemeIcon(next);
+    }
+
+    function updateThemeIcon(theme) {
+      const currentTheme = theme || document.documentElement.getAttribute('data-theme') || 'light';
+      const icons = document.querySelectorAll('.theme-toggle-btn i, .themeToggleIcon, #themeToggleIcon');
+      icons.forEach(icon => {
+        icon.className = currentTheme === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      updateThemeIcon(theme);
+    });
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #38bdf8;
+      --purple: #a855f7;
+      --pink: #f472b6;
+      --green: #34d399;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --radius: 14px;
+    }
+
+    html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--border2) var(--bg); }
+    ::selection { background: var(--accent); color: #000; }
+    
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color .15s;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+
+    .hero-compact {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 16px 24px 8px;
+    }
+
+    .hero-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero-compact h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+      margin: 0;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+    }
+
+    .badge-compact {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .hero-stats-pill {
+      font-size: 12px;
+      color: var(--text2);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .search-box-compact {
+      max-width: 360px;
+      width: 100%;
+      margin: 0 !important;
+      position: relative;
+    }
+
+    .search-box-compact input {
+      padding: 8px 14px 8px 36px !important;
+      font-size: 13.5px !important;
+      border-radius: 8px !important;
+    }
+
+    .search-box-compact i {
+      left: 12px !important;
+      font-size: 16px !important;
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px 14px 44px;
+      font-size: 14.5px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-box input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+    .search-box i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      font-size: 18px;
+    }
+
+    .grid-container,
+    #cardsGrid {
+      max-width: 1320px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding: 16px 24px 80px !important;
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 16px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .s150-progress-bar-wrap {
+      max-width: 1320px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      margin-top: 0 !important;
+      margin-bottom: 20px !important;
+      padding: 16px 24px !important;
+      background: var(--bg2) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius) !important;
+      box-sizing: border-box !important;
+      width: calc(100% - 48px) !important;
+    }
+
+    .s150-progress-bar-label {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      font-size: 13px !important;
+      color: var(--text2) !important;
+      margin-bottom: 10px !important;
+      font-family: var(--font-sans) !important;
+    }
+
+    .s150-progress-bar-label strong {
+      color: var(--text) !important;
+      font-weight: 700 !important;
+    }
+
+    .s150-progress-track {
+      width: 100% !important;
+      height: 8px !important;
+      background: var(--bg3, rgba(255,255,255,0.06)) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 999px !important;
+      overflow: hidden !important;
+    }
+
+    .s150-progress-fill {
+      height: 100% !important;
+      background: linear-gradient(90deg, #34d399, #38bdf8) !important;
+      border-radius: 999px !important;
+      transition: width 0.3s ease !important;
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+      min-height: 185px;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--card-color, var(--accent));
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+    }
+
+    .card-num {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text3);
+      opacity: 0.35;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 9px;
+      background: color-mix(in srgb, var(--card-color, var(--accent)) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--card-color, var(--accent)) 25%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--card-color, var(--accent));
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--card-color, var(--accent));
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.5;
+      margin-bottom: 14px;
+      flex-grow: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--text3);
+      transition: color .15s;
+    }
+
+    /* Responsive Breakpoints for 4-Column Grid */
+    @media (max-width: 1100px) {
+      .grid-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+    }
+    @media (max-width: 768px) {
+      .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 12px 14px 60px;
+        gap: 12px;
+      }
+      .sheet150-centered-search-container {
+        padding: 0 14px !important;
+        margin: 14px auto 10px !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+        padding: 10px 12px 40px;
+        gap: 10px;
+      }
+    }
+    .card:hover .card-footer {
+      color: var(--card-color, var(--accent));
+    }
+    .card-footer i { transition: transform .15s; }
+    .card:hover .card-footer i { transform: translateX(4px); }
+  </style>
+  <link rel="stylesheet" href="./sheet150.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="/subjects" class="back-btn">
+      <i class="ti ti-arrow-left"></i> Home Hub
+    </a>
+    <div class="brand">
+      <img src="../../app-icon.png" class="brand-icon" alt="C-Note" style="width:32px;height:32px;object-fit:cover;border-radius:8px;">
+      <div class="brand-title">Sheet 150</div>
+    </div>
+    <div style="display:flex; align-items:center;">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+        <i class="ti ti-sun" id="themeToggleIcon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Search + Filter Bar under topbar -->
+  <div class="sheet150-centered-search-container" style="max-width:960px;margin:20px auto 0;padding:0 24px;">
+    <!-- Search row -->
+    <div class="search-box" style="margin:0 0 12px 0;position:relative;width:100%;">
+      <i class="ti ti-search" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3);pointer-events:none;"></i>
+      <input type="text" id="s150DashSearch" placeholder="Search any topic e.g. Binary Search, Trees, DP…" autocomplete="off"
+        style="width:100%;height:44px;padding:0 20px 0 46px;font-size:14px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .2s,box-shadow .2s;">
+    </div>
+    <!-- Filter chips -->
+    <div id="s150FilterBar" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">
+      <button class="s150-filter-chip active" data-filter="all" onclick="s150FilterCards('all',this)">All <span class="chip-count" id="chipCountAll"></span></button>
+      <button class="s150-filter-chip" data-filter="solved" onclick="s150FilterCards('solved',this)">✓ Solved <span class="chip-count" id="chipCountSolved">0</span></button>
+      <button class="s150-filter-chip" data-filter="revisit" onclick="s150FilterCards('revisit',this)">↻ Revisit <span class="chip-count" id="chipCountRevisit">0</span></button>
+      <button class="s150-filter-chip" data-filter="unsolved" onclick="s150FilterCards('unsolved',this)">Unsolved <span class="chip-count" id="chipCountUnsolved"></span></button>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="s150-progress-bar-wrap" style="max-width:960px;margin:0 auto 16px;padding:14px 24px;">
+    <div class="s150-progress-bar-label">
+      <span>Overall Progress</span>
+      <strong id="s150PBText">0 / 150 Solved</strong>
+    </div>
+    <div class="s150-progress-track">
+      <div class="s150-progress-fill" id="s150PBFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <main id="cardsGrid" class="grid-container">
+
+    <a href="./s150_arrays.html" class="card" data-topic-id="arrays" style="--card-color: #34d399;">
+      <span class="card-num">01</span>
+      <div class="card-icon"><i class="ti ti-list-details"></i></div>
+      <div class="card-title">Arrays</div>
+      <div class="card-meta">11 PROBLEMS (Hashing, 2P, Sliding Window)</div>
+      <div class="card-desc">Frequency hashing, two-pointer techniques, dynamic windowing, 3Sum, and Trapping Rain Water.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./04_arrays_strings_linkedlists.html#strings" class="card" data-topic-id="strings" style="--card-color: #22d3ee;">
+      <span class="card-num">02</span>
+      <div class="card-icon"><i class="ti ti-typography"></i></div>
+      <div class="card-title">Strings</div>
+      <div class="card-meta">6 PROBLEMS (Sliding Window, Anagrams)</div>
+      <div class="card-desc">Valid Palindrome, Minimum Window Substring, Longest Substring Without Repeating Characters, Permutations.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./04_arrays_strings_linkedlists.html#linkedlists" class="card" data-topic-id="linkedlists" style="--card-color: #38bdf8;">
+      <span class="card-num">03</span>
+      <div class="card-icon"><i class="ti ti-link"></i></div>
+      <div class="card-title">LinkedLists</div>
+      <div class="card-meta">11 PROBLEMS (Fast/Slow Pointer, LRU Cache)</div>
+      <div class="card-desc">Reversing lists, cycle detection, LRU Cache implementation, merging K sorted lists, and k-group reversal.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./07_searching_sorting.html#searching" class="card" data-topic-id="searching" style="--card-color: #f59e0b;">
+      <span class="card-num">04</span>
+      <div class="card-icon"><i class="ti ti-search"></i></div>
+      <div class="card-title">Searching</div>
+      <div class="card-meta">6 PROBLEMS (Binary Search Variants)</div>
+      <div class="card-desc">Binary search patterns, rotated sorted array searches, search on answer space (Koko Bananas), 2D matrix.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./07_searching_sorting.html#sorting" class="card" data-topic-id="sorting" style="--card-color: #eab308;">
+      <span class="card-num">05</span>
+      <div class="card-icon"><i class="ti ti-sort-ascending"></i></div>
+      <div class="card-title">Sorting</div>
+      <div class="card-meta">1 PROBLEM (Hard Divide & Conquer)</div>
+      <div class="card-desc">Median of Two Sorted Arrays using logarithmic binary partition search and divide-and-conquer principles.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./10_intervals.html" class="card" data-topic-id="intervals" style="--card-color: #ec4899;">
+      <span class="card-num">06</span>
+      <div class="card-icon"><i class="ti ti-timeline"></i></div>
+      <div class="card-title">Intervals</div>
+      <div class="card-meta">6 PROBLEMS (Merging & Non-Overlapping)</div>
+      <div class="card-desc">Interval merging, insertion, non-overlapping subsets, meeting rooms counting, and min interval queries.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./06_stack_queue.html#stack" class="card" data-topic-id="stack" style="--card-color: #f472b6;">
+      <span class="card-num">07</span>
+      <div class="card-icon"><i class="ti ti-stack-2"></i></div>
+      <div class="card-title">Stack</div>
+      <div class="card-meta">7 PROBLEMS (Monotonic Stack, RPN)</div>
+      <div class="card-desc">LIFO mechanics, Min Stack design, RPN evaluation, Car Fleet, and Largest Rectangle in Histogram.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./06_stack_queue.html#queue" class="card" data-topic-id="queue" style="--card-color: #a855f7;">
+      <span class="card-num">08</span>
+      <div class="card-icon"><i class="ti ti-stack-pop"></i></div>
+      <div class="card-title">Queue</div>
+      <div class="card-meta">7 PROBLEMS (FIFO & Monotonic Queue)</div>
+      <div class="card-desc">FIFO queues, sliding window maximum with monotonic double-ended queue, and stream evaluation.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./05_heap_hash.html#heap" class="card" data-topic-id="heap" style="--card-color: #fb923c;">
+      <span class="card-num">09</span>
+      <div class="card-icon"><i class="ti ti-chart-bubble"></i></div>
+      <div class="card-title">Heap</div>
+      <div class="card-meta">7 PROBLEMS (Min/Max Heaps, Median Stream)</div>
+      <div class="card-desc">Min-heaps, max-heaps, Kth largest elements, task scheduler, Twitter timeline feed, and median finder.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./05_heap_hash.html#hash" class="card" data-topic-id="hash" style="--card-color: #84cc16;">
+      <span class="card-num">10</span>
+      <div class="card-icon"><i class="ti ti-hash"></i></div>
+      <div class="card-title">Hash</div>
+      <div class="card-meta">7 PROBLEMS (HashMap & Subarray Sums)</div>
+      <div class="card-desc">O(1) hash map design, frequency maps, subarray sum equals K, and constant time lookups.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./01_recursion_backtracking.html#recursion" class="card" data-topic-id="recursion" style="--card-color: #06b6d4;">
+      <span class="card-num">11</span>
+      <div class="card-icon"><i class="ti ti-git-fork"></i></div>
+      <div class="card-title">Recursion</div>
+      <div class="card-meta">4 PROBLEMS (Decision Trees & Subsets)</div>
+      <div class="card-desc">Call stack execution, subset generation, combinations, and permutation trees.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./01_recursion_backtracking.html#backtracking" class="card" data-topic-id="backtracking" style="--card-color: #14b8a6;">
+      <span class="card-num">12</span>
+      <div class="card-icon"><i class="ti ti-repeat"></i></div>
+      <div class="card-title">Backtracking</div>
+      <div class="card-meta">5 PROBLEMS (State Space Search & N-Queens)</div>
+      <div class="card-desc">Pruning search trees, Word Search grid traversal, Palindrome Partitioning, Phone Mnemonics, and N-Queens.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./02_trees_graphs.html#trees" class="card" data-topic-id="trees" style="--card-color: #10b981;">
+      <span class="card-num">13</span>
+      <div class="card-icon"><i class="ti ti-subtask"></i></div>
+      <div class="card-title">Trees</div>
+      <div class="card-meta">15 PROBLEMS (BST, Traversals, LCA)</div>
+      <div class="card-desc">Binary tree traversals, BST validation, level order, LCA, tree construction, max path sum, and serialization.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./02_trees_graphs.html#graphs" class="card" data-topic-id="graphs" style="--card-color: #6366f1;">
+      <span class="card-num">14</span>
+      <div class="card-icon"><i class="ti ti-sitemap"></i></div>
+      <div class="card-title">Graphs</div>
+      <div class="card-meta">13 PROBLEMS (DFS/BFS, Topological Sort)</div>
+      <div class="card-desc">Island counting, clone graph, Pacific Atlantic flow, course scheduling (Kahn's), Union-Find, and Word Ladder.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./09_greedy.html" class="card" data-topic-id="greedy" style="--card-color: #8b5cf6;">
+      <span class="card-num">15</span>
+      <div class="card-icon"><i class="ti ti-chart-arrows"></i></div>
+      <div class="card-title">Greedy</div>
+      <div class="card-meta">8 PROBLEMS (Kadane's, Jump Games)</div>
+      <div class="card-desc">Local optimal choice, Kadane's algorithm, Jump Game I & II, Gas Station circuit, Hand of Straights, Partition Labels.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./03_dynamic_programming.html" class="card" data-topic-id="dynamic-programming" style="--card-color: #d946ef;">
+      <span class="card-num">16</span>
+      <div class="card-icon"><i class="ti ti-cpu"></i></div>
+      <div class="card-title">Dynamic Programming</div>
+      <div class="card-meta">21 PROBLEMS (1-D & 2-D DP)</div>
+      <div class="card-desc">Memoization & tabulation, House Robber, Coin Change, LIS, LCS, Knapsack 0/1, Edit Distance, and Burst Balloons.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./08_tries.html" class="card" data-topic-id="tries" style="--card-color: #f43f5e;">
+      <span class="card-num">17</span>
+      <div class="card-icon"><i class="ti ti-row-insert-bottom"></i></div>
+      <div class="card-title">Tries</div>
+      <div class="card-meta">3 PROBLEMS (Prefix Trees & Search)</div>
+      <div class="card-desc">Prefix tree implementation, wildcard search with dot matching, and Word Search II combining Trie with 2D DFS.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./12_bit_manipulation.html" class="card" data-topic-id="bit-manipulation" style="--card-color: #ef4444;">
+      <span class="card-num">18</span>
+      <div class="card-icon"><i class="ti ti-binary"></i></div>
+      <div class="card-title">Bit Manipulation</div>
+      <div class="card-meta">7 PROBLEMS (XOR Tricks, Hamming Weight)</div>
+      <div class="card-desc">Single number XOR, bit counting, reverse bits, missing number, bitwise arithmetic without + operator.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <a href="./11_math_geometry.html" class="card" data-topic-id="math-geometry" style="--card-color: #3b82f6;">
+      <span class="card-num">19</span>
+      <div class="card-icon"><i class="ti ti-math"></i></div>
+      <div class="card-title">Math & Geometry</div>
+      <div class="card-meta">8 PROBLEMS (Matrix Operations & Pow)</div>
+      <div class="card-desc">In-place matrix rotation, spiral traversal, set matrix zeroes, happy numbers, Pow(x,n), and Detect Squares.</div>
+      <div class="card-footer"><span>Explore Module</span><i class="ti ti-arrow-right"></i></div>
+    </a>
+  </main>
+
+  <script>
+    // ── Search ───────────────────────────────────────────────────
+    const s150SearchInput = document.getElementById('s150DashSearch');
+    const s150Cards = document.querySelectorAll('#cardsGrid .card');
+
+    let s150ActiveFilter = 'all';
+
+    if (s150SearchInput) {
+      s150SearchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        s150Cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          const matchSearch = !q || text.includes(q);
+          const filterPasses = s150FilterMatch(card, s150ActiveFilter);
+          card.style.display = (matchSearch && filterPasses) ? 'flex' : 'none';
+        });
+      });
+      s150SearchInput.addEventListener('focus', function() {
+        this.style.borderColor = 'var(--accent)';
+        this.style.boxShadow = '0 0 0 3px rgba(56,189,248,0.15)';
+      });
+      s150SearchInput.addEventListener('blur', function() {
+        this.style.borderColor = '';
+        this.style.boxShadow = '';
+      });
+    }
+
+    // ── Filter logic ────────────────────────────────────────────
+    function s150FilterMatch(card, filter) {
+      if (filter === 'all') return true;
+      const cardId = card.dataset.topicId;
+      // read from progress state
+      const status = (window._s150Progress && cardId) ? (window._s150Progress[cardId] || 'unsolved') : 'unsolved';
+      if (filter === 'unsolved') return status === 'unsolved' || !status;
+      return status === filter;
+    }
+
+    function s150FilterCards(filter, btn) {
+      s150ActiveFilter = filter;
+      document.querySelectorAll('.s150-filter-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const q = s150SearchInput ? s150SearchInput.value.toLowerCase() : '';
+      s150Cards.forEach(card => {
+        const matchSearch = !q || card.textContent.toLowerCase().includes(q);
+        const filterPasses = s150FilterMatch(card, filter);
+        card.style.display = (matchSearch && filterPasses) ? 'flex' : 'none';
+      });
+    }
+
+    // ── Progress overlay on cards ─────────────────────────────────
+    window._s150Progress = {};
+
+    function s150ApplyProgress(progressMap) {
+      window._s150Progress = progressMap || {};
+      let solved = 0, revisit = 0;
+      s150Cards.forEach(card => {
+        const topicId = card.dataset.topicId;
+        if (!topicId) return;
+        const status = progressMap[topicId];
+        // Remove existing overlay
+        card.querySelector('.card-status-pip')?.remove();
+        if (status === 'solved') {
+          solved++;
+          const pip = document.createElement('span');
+          pip.className = 'card-status-pip pip-solved';
+          pip.innerHTML = '<i class="ti ti-check"></i>';
+          pip.title = 'Solved';
+          card.appendChild(pip);
+        } else if (status === 'revisit') {
+          revisit++;
+          const pip = document.createElement('span');
+          pip.className = 'card-status-pip pip-revisit';
+          pip.innerHTML = '<i class="ti ti-refresh"></i>';
+          pip.title = 'Needs revisit';
+          card.appendChild(pip);
+        }
+      });
+      // Update progress bar
+      const total = 150;
+      const pct = Math.round((solved / total) * 100);
+      const fill = document.getElementById('s150PBFill');
+      const text = document.getElementById('s150PBText');
+      if (fill) fill.style.width = pct + '%';
+      if (text) text.textContent = solved + ' / ' + total + ' Solved';
+      // Update chip counts
+      const unsolved = total - solved - revisit;
+      const solvedEl = document.getElementById('chipCountSolved');
+      const revisitEl = document.getElementById('chipCountRevisit');
+      const unsolvedEl = document.getElementById('chipCountUnsolved');
+      const allEl = document.getElementById('chipCountAll');
+      if (solvedEl) solvedEl.textContent = solved;
+      if (revisitEl) revisitEl.textContent = revisit;
+      if (unsolvedEl) unsolvedEl.textContent = unsolved;
+      if (allEl) allEl.textContent = total;
+    }
+
+    // Seed from localStorage immediately
+    try {
+      const localProg = JSON.parse(localStorage.getItem('s150_progress') || '{}');
+      s150ApplyProgress(localProg);
+    } catch {}
+
+    // ── postMessage handler (receives CNOTE_INIT_DATA from React host) ──
+    window.addEventListener('message', function(event) {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type === 'CNOTE_INIT_DATA' && data.progress) {
+        // Merge remote with local (remote wins)
+        try {
+          const local = JSON.parse(localStorage.getItem('s150_progress') || '{}');
+          const merged = Object.assign({}, local, data.progress);
+          localStorage.setItem('s150_progress', JSON.stringify(merged));
+          s150ApplyProgress(merged);
+        } catch { s150ApplyProgress(data.progress); }
+      }
+    });
+
+    // Ask host for initial Firestore state
+    try { window.parent.postMessage({ type: 'CNOTE_REQUEST_INITIAL_STATE', source: 'sheet150-hub' }, '*'); } catch {}
+  </script>
+  <script src="./sheet150.js" defer></script>
+</body>
+</html>

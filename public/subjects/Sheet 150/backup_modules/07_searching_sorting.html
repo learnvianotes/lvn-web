@@ -1,0 +1,3625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Searching & Sorting — Sheet 150</title>
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="icon" type="image/png" href="../../app-icon.png">
+  <link rel="apple-touch-icon" href="../../app-icon.png">
+  <meta name="theme-color" content="#F7F4ED">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../../css/c-note-theme.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('cnote_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      try { localStorage.setItem('cnote_theme', savedTheme); } catch(e) {}
+    })();
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('cnote_theme', next); } catch(e) {}
+      updateThemeIcon(next);
+    }
+
+    function updateThemeIcon(theme) {
+      const currentTheme = theme || document.documentElement.getAttribute('data-theme') || 'light';
+      const icons = document.querySelectorAll('.theme-toggle-btn i, .themeToggleIcon, #themeToggleIcon');
+      icons.forEach(icon => {
+        icon.className = currentTheme === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      updateThemeIcon(theme);
+    });
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #38bdf8;
+      --green: #34d399;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --cyan: #22d3ee;
+      --purple: #a855f7;
+      --radius: 12px;
+    }
+    html {
+      scroll-behavior: smooth;
+      height: 100%;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+    ::selection { background: var(--accent); color: #000; }
+    
+    /* Custom Sleek Dark Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
+      
+    }
+
+    /* ── Mobile Top Navbar (System Design Style) ── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      z-index: 500;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .hamburger-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 20px;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hamburger-btn:hover, .hamburger-btn:active {
+      background: var(--bg4);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .mobile-nav-logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .mobile-nav-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    /* ── Sidebar Overlay (Mobile) ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 599;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      opacity: 0;
+      transition: opacity .25s ease;
+      pointer-events: none;
+    }
+    .sidebar-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      position: relative;
+    }
+    
+    /* Desktop Sidebar (>= 900px) */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      height: 100vh;
+      height: 100dvh;
+      overflow-y: auto;
+      
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overscroll-behavior: contain;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+      transform: none;
+    }
+    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    .sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    .sidebar-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-close-btn {
+      display: none;
+      align-self: flex-end;
+      background: transparent;
+      border: none;
+      color: var(--text3);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color .15s;
+    }
+    .sidebar-close-btn:hover { color: var(--accent); }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 10px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .module-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .module-title-side {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .sidebar-search {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .sidebar-search input {
+      width: 100%;
+      height: 36px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px 0 42px !important;
+      font-size: 12.5px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      box-sizing: border-box;
+    }
+    .sidebar-search input:focus { border-color: var(--accent); }
+    .sidebar-search i {
+      position: absolute;
+      left: 22px !important;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .nav-list { padding: 10px 8px 40px; list-style: none; flex-grow: 1; }
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--accent);
+      padding: 12px 10px 6px;
+      margin-top: 10px;
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+    .nav-section-title:first-child { margin-top: 0; }
+    .nav-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: var(--text2);
+      text-decoration: none;
+      margin-bottom: 2px;
+      transition: all .15s;
+      word-break: break-word;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: var(--bg3); color: var(--accent); font-weight: 600; }
+    .nav-item span:first-child {
+      flex: 1;
+      min-width: 0;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+    .diff-badge {
+      font-size: 9.5px;
+      font-family: var(--mono);
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+    .diff-easy { background: rgba(52, 211, 153, 0.14); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.28); }
+    .diff-medium { background: rgba(245, 158, 11, 0.14); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.28); }
+    .diff-hard { background: rgba(239, 68, 68, 0.14); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.28); }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      width: calc(100% - 280px);
+      max-width: 960px;
+      min-width: 0;
+      padding: 36px 36px 100px;
+      box-sizing: border-box;
+    }
+
+    .topic-header {
+      margin-bottom: 36px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .topic-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .topic-header h1 {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+    .topic-header p {
+      font-size: 14.5px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* Problem Card */
+    .problem-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+      scroll-margin-top: 32px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+    .problem-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .problem-title-area { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .problem-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .problem-header h2 {
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+      word-break: break-word;
+    }
+    .problem-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .lc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .lc-link:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+    .sec-block {
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .sec-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .sec-title i { color: var(--accent); font-size: 15px; }
+
+    .desc-box, .naive-box, .intuition-box, .approach-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.6;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      display: block;
+    }
+    .intuition-box {
+      background: rgba(56, 189, 248, 0.04);
+      border-color: rgba(56, 189, 248, 0.2);
+      border-left: 3px solid var(--accent);
+    }
+    .naive-box {
+      background: rgba(245, 158, 11, 0.04);
+      border-color: rgba(245, 158, 11, 0.2);
+      border-left: 3px solid var(--amber);
+    }
+    .approach-box {
+      background: rgba(52, 211, 153, 0.04);
+      border-color: rgba(52, 211, 153, 0.2);
+      border-left: 3px solid var(--green);
+    }
+
+    ol.step-list, ul.bullet-list {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+    ol.step-list li, ul.bullet-list li {
+      margin-bottom: 6px;
+      color: var(--text2);
+      word-break: break-word;
+    }
+    ol.step-list li strong, ul.bullet-list li strong { color: var(--text); }
+
+    .complexity-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      max-width: 100%;
+    }
+    .c-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      word-break: break-word;
+    }
+    .c-time {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .c-space {
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+    }
+    .c-naive {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .code-container {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #06080e;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      gap: 8px;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--text3); }
+    .code-container pre {
+      padding: 14px 16px;
+      margin: 0;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: #bbf7e6;
+      line-height: 1.6;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+    }
+    .code-container pre code {
+      display: block;
+      white-space: pre;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    /* Summary & Special Cards */
+    .summary-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+      scroll-margin-top: 32px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+    .summary-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-header h2 {
+      font-size: clamp(20px, 3.5vw, 24px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      word-break: break-word;
+    }
+    .summary-header p {
+      font-size: 13.5px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .pattern-item-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .pattern-item-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      word-break: break-word;
+    }
+    .pattern-item-card p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.55;
+    }
+    .pattern-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .pattern-table {
+      width: 100%;
+      min-width: 540px;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .pattern-table th {
+      background: var(--bg3);
+      padding: 10px 14px;
+      color: var(--text);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .pattern-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .diagram-box {
+      background: #06080e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--cyan);
+      white-space: pre;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      line-height: 1.5;
+      max-width: 100%;
+    }
+    .cheat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .cheat-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .cheat-item code {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .cheat-item p {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+    .cheatsheet-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .cheatsheet-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cheatsheet-row:last-child { border-bottom: none; }
+    .cs-trigger {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+      border-radius: 6px;
+      padding: 5px 10px;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .cs-arrow { color: var(--text3); font-size: 16px; align-self: center; }
+    .cs-answer { font-size: 13px; color: var(--text2); }
+    .cs-answer strong { color: var(--text); }
+    .group-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent);
+      margin: 20px 0 10px;
+    }
+
+    /* ── RESPONSIVE BREAKPOINTS (SYSTEM DESIGN SLIDE-OUT DRAWER) ── */
+    @media (max-width: 900px) {
+      .mobile-nav { display: flex; }
+      .sidebar-overlay { display: block; }
+
+      .sidebar {
+        position: fixed;
+        top: 56px !important;
+        left: 0;
+        bottom: 0;
+        z-index: 600;
+        width: min(300px, 85vw);
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+        height: calc(100vh - 56px) !important;
+        height: calc(100dvh - 56px) !important;
+        border-right: 1px solid var(--border);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+      }
+      .sidebar.open {
+        transform: translateX(0) !important;
+      }
+      .sidebar-close-btn {
+        display: block;
+      }
+
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 76px 16px 60px;
+      }
+      .problem-card, .summary-card {
+        padding: 20px 16px;
+        margin-bottom: 28px;
+        scroll-margin-top: 76px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 72px 12px 48px;
+      }
+      .problem-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .problem-meta {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .desc-box, .naive-box, .intuition-box, .approach-box {
+        padding: 12px 14px;
+        font-size: 13.5px;
+      }
+      .code-container pre {
+        padding: 12px;
+        font-size: 12px;
+      }
+      .cheatsheet-row {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .cs-trigger, .cs-arrow {
+        align-self: flex-start;
+      }
+      .cheat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    /* Multi-language Code Container Tabs (LeetCode Style) */
+    .code-container {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #06080e;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-sans);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .lang-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lang-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s ease;
+      user-select: none;
+    }
+    .lang-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .lang-tab.active {
+      background: var(--bg4);
+      color: var(--accent);
+      border-color: var(--border2);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    .lang-tab.active i {
+      color: var(--accent);
+    }
+    .code-content {
+      display: none;
+    }
+    .code-content.active {
+      display: block;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 4px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .15s;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .copy-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--text3); }
+    .code-container pre {
+      padding: 14px 16px;
+      margin: 0;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+
+    /* ── Desktop Sub-Page Fixed Topbar ── */
+    .sub-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+      min-height: 52px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+    .sub-topbar-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text3);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      transition: color .15s;
+      white-space: nowrap;
+    }
+    .sub-topbar-back:hover { color: var(--accent); }
+    .sub-topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .sub-topbar-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+    /* On mobile: hide desktop topbar, show mobile-nav instead */
+    @media (max-width: 900px) {
+      .sub-topbar { display: none !important; }
+    }
+    /* On desktop: offset sidebar and layout below 52px topbar */
+    @media (min-width: 901px) {
+      .sidebar {
+        top: 52px !important;
+        height: calc(100vh - 52px) !important;
+        height: calc(100dvh - 52px) !important;
+        bottom: auto !important;
+      }
+      .layout {
+        padding-top: 52px !important;
+      }
+      .sidebar-header {
+        display: none !important;
+      }
+      .problem-card, .summary-card {
+        scroll-margin-top: 68px !important;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="./sheet150.css">
+</head>
+<body>
+  <!-- Mobile Top Navbar -->
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleNav()" aria-label="Toggle navigation menu">
+      <i class="ti ti-menu-2" id="hamburgerIcon"></i>
+    </button>
+    <img src="../../app-icon.png" class="mobile-nav-logo" alt="C-Note" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">
+    <span class="mobile-nav-title" id="mobileNavTitle">Searching & Sorting</span>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" style="margin-left:auto;">
+      <i class="ti ti-sun" id="themeToggleIcon"></i>
+    </button>
+  </nav>
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" aria-hidden="true"></div>
+  <!-- Desktop Fixed Topbar -->
+  <header class="sub-topbar" id="subTopbar">
+    <a href="./index.html" class="sub-topbar-back">
+      <i class="ti ti-arrow-left"></i> Sheet 150 Hub
+    </a>
+    <div class="sub-topbar-brand">
+      <img src="../../app-icon.png" alt="Sheet 150" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">
+      <span class="sub-topbar-title">Sheet 150</span>
+    </div>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <i class="ti ti-sun"></i>
+    </button>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-header-top">
+          <a href="./index.html" class="back-link"><i class="ti ti-arrow-left"></i> Sheet 150 Hub</a>
+          <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar"><i class="ti ti-x"></i></button>
+        </div>
+      </div>
+      <div class="sidebar-search">
+        <i class="ti ti-search"></i>
+        <input type="text" id="filterInput" placeholder="Filter problems...">
+      </div>
+      <div class="nav-list" id="navList">
+        <div class="nav-section-title">7A. Binary Search — 7</div>
+        <a href="#lc-704" class="nav-item">
+          <span>1. Binary Search — LC 704</span>
+          <span class="diff-badge diff-easy">Easy</span>
+        </a>
+        <a href="#lc-74" class="nav-item">
+          <span>2. Search a 2D Matrix — LC 74</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-875" class="nav-item">
+          <span>3. Koko Eating Bananas — LC 875</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-153" class="nav-item">
+          <span>4. Find Minimum in Rotated Sorted Array — LC 153</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-33" class="nav-item">
+          <span>5. Search in Rotated Sorted Array — LC 33</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-981" class="nav-item">
+          <span>6. Time Based Key-Value Store — LC 981</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-4" class="nav-item">
+          <span>7. Median of Two Sorted Arrays — LC 4</span>
+          <span class="diff-badge diff-hard">Hard</span>
+        </a>
+        <div style="margin: 16px 0 8px 12px; font-size: 11px; font-family: var(--mono); font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;">SUMMARY & MAPS</div>
+        <a href="#pattern-map" class="nav-item">
+          <span>🧠 Pattern Map</span>
+        </a>
+        <a href="#master-patterns" class="nav-item">
+          <span>🔥 4 Core Patterns</span>
+        </a>
+        <a href="#template-roadmap" class="nav-item">
+          <span>⭐ Cheat Sheet</span>
+        </a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topic-header">
+        <div class="topic-eyebrow">MODULE 02 &bull; SHEET 150</div>
+        <h1>Searching &amp; Sorting</h1>
+        <p>7 essential problems covering Standard 1D &amp; 2D Binary Search, Binary Search on Answer Space, Rotated Arrays, and Dual-Array Partitioning.</p>
+      </div>
+
+
+    <div class="problem-card" id="lc-704">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 704 &bull; 7. Searching & Sorting</span>
+          <h2>Binary Search</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/binary-search/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given an array of integers <code>nums</code> sorted in ascending order and a target integer <code>target</code>, write a function to search target in <code>nums</code>. Return index if present else -1.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Eliminate half of the remaining search space on each step in a sorted array.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Scan every element linearly from index 0 to n-1.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def search(self, nums, target):
+        for i, num in enumerate(nums):
+            if num == target:
+                return i
+
+        return -1</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int search(vector&lt;int&gt;&amp; nums, int target) {
+        for i, num in enumerate(nums):
+            if (num == target) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int search(int[] nums, int target) {
+        for i, num in enumerate(nums):
+            if (num == target) {
+                return i;
+            }
+        }
+        return -1;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Use two pointers <code>left</code> and <code>right</code>. Calculate <code>mid = left + (right - left) // 2</code>. If <code>nums[mid] == target</code> return <code>mid</code>, else adjust boundaries.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Initialize <code>left = 0</code>, <code>right = len(nums) - 1</code>.</li><li>Loop while <code>left &lt;= right</code>:</li><li>Compute <code>mid = left + (right - left) // 2</code>.</li><li>If <code>nums[mid] == target</code>, return <code>mid</code>.</li><li>If <code>nums[mid] &lt; target</code>, set <code>left = mid + 1</code>.</li><li>Else, set <code>right = mid - 1</code>.</li><li>Return <code>-1</code> if target not found.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def search(self, nums, target):
+        left = 0
+        right = len(nums) - 1
+
+        while left &lt;= right:
+            mid = left + (right - left) // 2
+
+            if nums[mid] == target:
+                return mid
+
+            if nums[mid] &lt; target:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return -1</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int search(vector&lt;int&gt;&amp; nums, int target) {
+        left = 0;
+        right = nums.size() - 1;
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            if (nums[mid] == target) {
+                return mid;
+            }
+            if (nums[mid] &lt; target) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return -1;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int search(int[] nums, int target) {
+        left = 0;
+        right = nums.length - 1;
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            if (nums[mid] == target) {
+                return mid;
+            }
+            if (nums[mid] &lt; target) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return -1;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(log n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Sorted array → Eliminate half → Standard Binary Search</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/first-bad-version/" target="_blank" rel="noopener">
+      <span class="sim-name">First Bad Version</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 278</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/search-insert-position/" target="_blank" rel="noopener">
+      <span class="sim-name">Search Insert Position</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 35</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/guess-number-higher-or-lower/" target="_blank" rel="noopener">
+      <span class="sim-name">Guess Number Higher or Lower</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 374</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/peak-index-in-a-mountain-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Peak Index in Mountain Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 852</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-peak-element/" target="_blank" rel="noopener">
+      <span class="sim-name">Find Peak Element</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 162</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-74">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 74 &bull; 7. Searching & Sorting</span>
+          <h2>Search a 2D Matrix</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/search-a-2d-matrix/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Write an efficient algorithm that searches for a value <code>target</code> in an <code>m x n</code> integer matrix where each row is sorted and the first element of each row is greater than the last of the previous row.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>The entire matrix behaves like one contiguous sorted 1D array of size <code>m * n</code>.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Nested row and column loops checking every matrix cell.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def searchMatrix(self, matrix, target):
+
+        for row in matrix:
+            for value in row:
+                if value == target:
+                    return True
+
+        return False</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    bool searchMatrix(vector&lt;vector&lt;int&gt;&gt;&amp; matrix, int target) {
+        for (auto row : matrix) {
+            for (auto value : row) {
+                if (value == target) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        for (int row : matrix) {
+            for (int value : row) {
+                if (value == target) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(m × n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Treat 2D matrix as a virtual 1D sorted array of length <code>rows * cols</code>. Map 1D index to 2D cell via: <code>row = index // cols</code>, <code>col = index % cols</code>.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Set <code>left = 0</code>, <code>right = rows * cols - 1</code>.</li><li>Loop while <code>left &lt;= right</code>:</li><li>Compute <code>mid = left + (right - left) // 2</code>.</li><li>Map <code>row = mid // cols</code>, <code>col = mid % cols</code>.</li><li>If <code>matrix[row][col] == target</code>, return <code>True</code>.</li><li>If <code>matrix[row][col] &lt; target</code>, <code>left = mid + 1</code>; else <code>right = mid - 1</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def searchMatrix(self, matrix, target):
+
+        rows = len(matrix)
+        cols = len(matrix[0])
+
+        left = 0
+        right = rows * cols - 1
+
+        while left &lt;= right:
+            mid = left + (right - left) // 2
+
+            row = mid // cols
+            col = mid % cols
+
+            value = matrix[row][col]
+
+            if value == target:
+                return True
+
+            if value &lt; target:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return False</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    bool searchMatrix(vector&lt;vector&lt;int&gt;&gt;&amp; matrix, int target) {
+        rows = matrix.size();
+        cols = matrix[0].size();
+        left = 0;
+        right = rows * cols - 1;
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            row = mid // cols;
+            col = mid % cols;
+            value = matrix[row][col];
+            if (value == target) {
+                return true;
+            }
+            if (value &lt; target) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return false;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        rows = matrix.length;
+        cols = matrix[0].length;
+        left = 0;
+        right = rows * cols - 1;
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            row = mid // cols;
+            col = mid % cols;
+            value = matrix[row][col];
+            if (value == target) {
+                return true;
+            }
+            if (value &lt; target) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return false;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(log(m × n))</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; 2D Matrix with sorted boundaries → Virtual 1D Binary Search</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/search-a-2d-matrix-ii/" target="_blank" rel="noopener">
+      <span class="sim-name">Search a 2D Matrix II</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 240</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/" target="_blank" rel="noopener">
+      <span class="sim-name">Kth Smallest Element in Sorted Matrix</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 378</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/binary-search/" target="_blank" rel="noopener">
+      <span class="sim-name">Binary Search</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 704</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/count-negative-numbers-in-a-sorted-matrix/" target="_blank" rel="noopener">
+      <span class="sim-name">Count Negative Numbers in Sorted Matrix</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1351</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Find Minimum in Rotated Sorted Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 153</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-875">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 875 &bull; 7. Searching & Sorting</span>
+          <h2>Koko Eating Bananas</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/koko-eating-bananas/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Koko can decide her eating speed <code>k</code> per hour. Return minimum integer <code>k</code> such that she can eat all bananas within <code>h</code> hours.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>The answer space of speeds $k \in [1, \max(\text{piles})]$ is monotonic: if speed $k$ is valid, all speeds $> k$ are also valid.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Linear search trying every speed $k = 1, 2, 3 \dots \max(\text{piles})$ and checking total hours.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def minEatingSpeed(self, piles, h):
+
+        for speed in range(1, max(piles) + 1):
+
+            hours = 0
+
+            for pile in piles:
+                hours += (
+                    pile + speed - 1
+                ) // speed
+
+            if hours &lt;= h:
+                return speed
+
+        return max(piles)</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int minEatingSpeed(int piles, int h) {
+        for (int speed = 1; speed &lt; max(piles) + 1; ++speed) {
+            hours = 0;
+            for (auto pile : piles) {
+                hours += (;
+                pile + speed - 1;
+                ) // speed;
+            }
+            if (hours &lt;= h) {
+                return speed;
+            }
+        }
+        return max(piles);
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int minEatingSpeed(int piles, int h) {
+        for (int speed = 1; speed &lt; max(piles) + 1; ++speed) {
+            hours = 0;
+            for (int pile : piles) {
+                hours += (;
+                pile + speed - 1;
+                ) // speed;
+            }
+            if (hours &lt;= h) {
+                return speed;
+            }
+        }
+        return max(piles);
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n × max(piles))</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Binary search on the answer space range $[1, \max(\text{piles})]$. Find the first speed where total hours $\le h$.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Set <code>left = 1</code>, <code>right = max(piles)</code>.</li><li>Loop while <code>left &lt;= right</code>:</li><li>Set <code>speed = left + (right - left) // 2</code>.</li><li>Compute <code>hours = sum((pile + speed - 1) // speed for pile in piles)</code>.</li><li>If <code>hours &lt;= h</code>: speed is valid! Record <code>answer = speed</code> and try smaller speeds <code>right = speed - 1</code>.</li><li>Else: speed is too slow, try faster speeds <code>left = speed + 1</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def minEatingSpeed(self, piles, h):
+
+        left = 1
+        right = max(piles)
+
+        answer = right
+
+        while left &lt;= right:
+            speed = left + (right - left) // 2
+
+            hours = 0
+
+            for pile in piles:
+                hours += (
+                    pile + speed - 1
+                ) // speed
+
+            if hours &lt;= h:
+                answer = speed
+                right = speed - 1
+            else:
+                left = speed + 1
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; minEatingSpeed(int piles, int h) {
+        left = 1;
+        right = max(piles);
+        answer = right;
+        while (left &lt;= right) {
+            speed = left + (right - left) // 2;
+            hours = 0;
+            for (auto pile : piles) {
+                hours += (;
+                pile + speed - 1;
+                ) // speed;
+            }
+            if (hours &lt;= h) {
+                answer = speed;
+                right = speed - 1;
+            }
+            else:;
+            left = speed + 1;
+        }
+        return answer;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; minEatingSpeed(int piles, int h) {
+        left = 1;
+        right = max(piles);
+        answer = right;
+        while (left &lt;= right) {
+            speed = left + (right - left) // 2;
+            hours = 0;
+            for (int pile : piles) {
+                hours += (;
+                pile + speed - 1;
+                ) // speed;
+            }
+            if (hours &lt;= h) {
+                answer = speed;
+                right = speed - 1;
+            }
+            else:;
+            left = speed + 1;
+        }
+        return answer;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n log(max(piles)))</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Monotonic feasibility condition → Binary Search on Answer</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/minimize-max-distance-to-gas-station/" target="_blank" rel="noopener">
+      <span class="sim-name">Minimize Max Distance to Gas Station</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 774</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/" target="_blank" rel="noopener">
+      <span class="sim-name">Capacity to Ship Packages</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1011</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/split-array-largest-sum/" target="_blank" rel="noopener">
+      <span class="sim-name">Split Array Largest Sum</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 410</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/minimum-number-of-days-to-make-m-bouquets/" target="_blank" rel="noopener">
+      <span class="sim-name">Minimum Number of Days to Make m Bouquets</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1482</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-the-smallest-divisor-given-a-threshold/" target="_blank" rel="noopener">
+      <span class="sim-name">Find the Smallest Divisor</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1283</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-153">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 153 &bull; 7. Searching & Sorting</span>
+          <h2>Find Minimum in Rotated Sorted Array</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given sorted rotated array of unique elements <code>nums</code>, return the minimum element in $O(\log n)$ time.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>The minimum element is the pivot point separating the two sorted halves.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Linear scan keeping track of minimum value.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def findMin(self, nums):
+        answer = nums[0]
+
+        for num in nums:
+            answer = min(answer, num)
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; findMin(vector&lt;int&gt;&amp; nums) {
+        answer = nums[0];
+        for (auto num : nums) {
+            answer = min(answer, num);
+        }
+        return answer;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; findMin(int[] nums) {
+        answer = nums[0];
+        for (int num : nums) {
+            answer = min(answer, num);
+        }
+        return answer;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Compare <code>nums[mid]</code> against the right boundary <code>nums[right]</code>. If <code>nums[mid] > nums[right]</code>, minimum lies in right half; else minimum lies in left half including <code>mid</code>.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Set <code>left = 0</code>, <code>right = len(nums) - 1</code>.</li><li>Loop while <code>left &lt; right</code>:</li><li>Compute <code>mid = left + (right - left) // 2</code>.</li><li>If <code>nums[mid] > nums[right]</code>: minimum must be in right half <code>left = mid + 1</code>.</li><li>Else: minimum could be <code>mid</code> or to the left <code>right = mid</code>.</li><li>Return <code>nums[left]</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def findMin(self, nums):
+
+        left = 0
+        right = len(nums) - 1
+
+        while left &lt; right:
+
+            mid = left + (right - left) // 2
+
+            if nums[mid] &gt; nums[right]:
+                left = mid + 1
+            else:
+                right = mid
+
+        return nums[left]</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int findMin(vector&lt;int&gt;&amp; nums) {
+        left = 0;
+        right = nums.size() - 1;
+        while (left &lt; right) {
+            mid = left + (right - left) // 2;
+            if (nums[mid] &gt; nums[right]) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid;
+        }
+        return nums[left];
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int findMin(int[] nums) {
+        left = 0;
+        right = nums.length - 1;
+        while (left &lt; right) {
+            mid = left + (right - left) // 2;
+            if (nums[mid] &gt; nums[right]) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid;
+        }
+        return nums[left];
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(log n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Rotated sorted array → Compare mid with right boundary</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array-ii/" target="_blank" rel="noopener">
+      <span class="sim-name">Find Minimum in Rotated Sorted Array II</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 154</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/search-in-rotated-sorted-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Search in Rotated Sorted Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 33</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/search-in-rotated-sorted-array-ii/" target="_blank" rel="noopener">
+      <span class="sim-name">Search in Rotated Sorted Array II</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 81</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/peak-index-in-a-mountain-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Peak Index in Mountain Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 852</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-peak-element/" target="_blank" rel="noopener">
+      <span class="sim-name">Find Peak Element</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 162</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-33">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 33 &bull; 7. Searching & Sorting</span>
+          <h2>Search in Rotated Sorted Array</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/search-in-rotated-sorted-array/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given array <code>nums</code> rotated at an unknown pivot and integer <code>target</code>, return index of <code>target</code> or -1 in $O(\log n)$ time.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>At least one half of the array (left or right) is guaranteed to be strictly sorted at any step.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Linear scan checking each element.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def search(self, nums, target):
+
+        for i, num in enumerate(nums):
+            if num == target:
+                return i
+
+        return -1</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int search(vector&lt;int&gt;&amp; nums, int target) {
+        for i, num in enumerate(nums):
+            if (num == target) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int search(int[] nums, int target) {
+        for i, num in enumerate(nums):
+            if (num == target) {
+                return i;
+            }
+        }
+        return -1;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Check if <code>nums[left] &lt;= nums[mid]</code>. If True, left half is sorted: check if target is inside <code>[nums[left], nums[mid])</code>. Else right half is sorted: check if target is inside <code>(nums[mid], nums[right]]</code>.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Set <code>left = 0</code>, <code>right = len(nums) - 1</code>.</li><li>Loop while <code>left &lt;= right</code>:</li><li>If <code>nums[mid] == target</code>, return <code>mid</code>.</li><li>If <code>nums[left] &lt;= nums[mid]</code> (Left half sorted):</li><li>If <code>nums[left] &lt;= target &lt; nums[mid]</code>, move <code>right = mid - 1</code>; else <code>left = mid + 1</code>.</li><li>Else (Right half sorted):</li><li>If <code>nums[mid] &lt; target &lt;= nums[right]</code>, move <code>left = mid + 1</code>; else <code>right = mid - 1</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def search(self, nums, target):
+
+        left = 0
+        right = len(nums) - 1
+
+        while left &lt;= right:
+
+            mid = left + (right - left) // 2
+
+            if nums[mid] == target:
+                return mid
+
+            # Left half is sorted
+            if nums[left] &lt;= nums[mid]:
+
+                if nums[left] &lt;= target &lt; nums[mid]:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+
+            # Right half is sorted
+            else:
+
+                if nums[mid] &lt; target &lt;= nums[right]:
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
+        return -1</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int search(vector&lt;int&gt;&amp; nums, int target) {
+        left = 0;
+        right = nums.size() - 1;
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            if (nums[mid] == target) {
+                return mid;
+            }
+            // Left half is sorted
+            if (nums[left] &lt;= nums[mid]) {
+                if (nums[left] &lt;= target &lt; nums[mid]) {
+                    right = mid - 1;
+                }
+                else:;
+                left = mid + 1;
+            }
+            // Right half is sorted
+            else:;
+            if (nums[mid] &lt; target &lt;= nums[right]) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return -1;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int search(int[] nums, int target) {
+        left = 0;
+        right = nums.length - 1;
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            if (nums[mid] == target) {
+                return mid;
+            }
+            // Left half is sorted
+            if (nums[left] &lt;= nums[mid]) {
+                if (nums[left] &lt;= target &lt; nums[mid]) {
+                    right = mid - 1;
+                }
+                else:;
+                left = mid + 1;
+            }
+            // Right half is sorted
+            else:;
+            if (nums[mid] &lt; target &lt;= nums[right]) {
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return -1;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(log n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Rotated array → Identify sorted half → Binary search boundary</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/search-in-rotated-sorted-array-ii/" target="_blank" rel="noopener">
+      <span class="sim-name">Search in Rotated Sorted Array II</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 81</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Find Minimum in Rotated Sorted Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 153</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/search-a-2d-matrix/" target="_blank" rel="noopener">
+      <span class="sim-name">Search a 2D Matrix</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 74</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/binary-search/" target="_blank" rel="noopener">
+      <span class="sim-name">Binary Search</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 704</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-in-mountain-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Find in Mountain Array</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1095</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-981">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 981 &bull; 7. Searching & Sorting</span>
+          <h2>Time Based Key-Value Store</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/time-based-key-value-store/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Design a key-value data structure that can store multiple values for the same key at different timestamps and retrieve key value at <code>timestamp_prev &lt;= timestamp</code>.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Timestamps for a key are added in strictly increasing order, so timestamps per key are sorted.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Store list of <code>(timestamp, value)</code> tuples and scan backward linearly on <code>get()</code>.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class TimeMap:
+
+    def __init__(self):
+        self.store = {}
+
+    def set(self, key, value, timestamp):
+
+        if key not in self.store:
+            self.store[key] = []
+
+        self.store[key].append(
+            (timestamp, value)
+        )
+
+    def get(self, key, timestamp):
+
+        if key not in self.store:
+            return ""
+
+        result = ""
+
+        for time, value in reversed(
+            self.store[key]
+        ):
+            if time &lt;= timestamp:
+                return value
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+private:
+    void __init__(int self, vector&lt;vector&lt;int&gt;&gt;&amp; result) {
+        store = {}
+        if (key !in store) {
+            store[key] = [];
+        }
+        store[key].append(;
+        (timestamp, value);
+        );
+        if (key !in store) {
+            return "";
+        }
+        result = "";
+        for time, value in reversed(
+            store[key];
+        }
+        ):;
+        if (time &lt;= timestamp) {
+            return value;
+        }
+        return result;
+    }
+
+public:
+    vector&lt;int&gt; set(int key, int value, int timestamp) {
+        class TimeMap:;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    private void __init__(int self, List&lt;List&lt;Integer&gt;&gt; result) {
+        store = {}
+        if (key !in store) {
+            store[key] = [];
+        }
+        store[key].append(;
+        (timestamp, value);
+        );
+        if (key !in store) {
+            return "";
+        }
+        result = "";
+        for time, value in reversed(
+            store[key];
+        }
+        ):;
+        if (time &lt;= timestamp) {
+            return value;
+        }
+        return result;
+    }
+
+    public List&lt;Integer&gt; set(int key, int value, int timestamp) {
+        class TimeMap:;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">get: O(n), set: O(1)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Binary search for the rightmost element whose timestamp $\le$ requested timestamp.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li><code>set(key, val, time)</code>: append <code>(time, val)</code> to list <code>store[key]</code>.</li><li><code>get(key, target_time)</code>: binary search <code>values = store[key]</code>.</li><li>While <code>left &lt;= right</code>:</li><li>If <code>values[mid][0] &lt;= target_time</code>: record <code>answer = values[mid][1]</code> and search right <code>left = mid + 1</code>.</li><li>Else: search left <code>right = mid - 1</code>.</li><li>Return <code>answer</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class TimeMap:
+
+    def __init__(self):
+        self.store = {}
+
+    def set(self, key, value, timestamp):
+
+        if key not in self.store:
+            self.store[key] = []
+
+        self.store[key].append(
+            (timestamp, value)
+        )
+
+    def get(self, key, timestamp):
+
+        if key not in self.store:
+            return ""
+
+        values = self.store[key]
+
+        left = 0
+        right = len(values) - 1
+
+        answer = ""
+
+        while left &lt;= right:
+
+            mid = left + (right - left) // 2
+
+            if values[mid][0] &lt;= timestamp:
+                answer = values[mid][1]
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+private:
+    void __init__(int self) {
+        store = {}
+        if (key !in store) {
+            store[key] = [];
+        }
+        store[key].append(;
+        (timestamp, value);
+        );
+        if (key !in store) {
+            return "";
+        }
+        values = store[key];
+        left = 0;
+        right = values.size() - 1;
+        answer = "";
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            if (values[mid][0] &lt;= timestamp) {
+                answer = values[mid][1];
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return answer;
+    }
+
+public:
+    vector&lt;int&gt; set(int key, int value, int timestamp) {
+        class TimeMap:;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    private void __init__(int self) {
+        store = {}
+        if (key !in store) {
+            store[key] = [];
+        }
+        store[key].append(;
+        (timestamp, value);
+        );
+        if (key !in store) {
+            return "";
+        }
+        values = store[key];
+        left = 0;
+        right = values.length - 1;
+        answer = "";
+        while (left &lt;= right) {
+            mid = left + (right - left) // 2;
+            if (values[mid][0] &lt;= timestamp) {
+                answer = values[mid][1];
+                left = mid + 1;
+            }
+            else:;
+            right = mid - 1;
+        }
+        return answer;
+    }
+
+    public List&lt;Integer&gt; set(int key, int value, int timestamp) {
+        class TimeMap:;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">get: O(log n), set: O(1)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Sorted timestamps → Rightmost valid binary search</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/binary-search/" target="_blank" rel="noopener">
+      <span class="sim-name">Binary Search</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 704</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/design-hashmap/" target="_blank" rel="noopener">
+      <span class="sim-name">Design HashMap</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 706</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/my-calendar-i/" target="_blank" rel="noopener">
+      <span class="sim-name">My Calendar I</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 729</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/range-sum-query-immutable/" target="_blank" rel="noopener">
+      <span class="sim-name">Range Sum Query — Immutable</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 303</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/snapshot-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Snapshot Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1146</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-4">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 4 &bull; 7. Searching & Sorting</span>
+          <h2>Median of Two Sorted Arrays</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-hard">Hard</span>
+          <a href="https://leetcode.com/problems/median-of-two-sorted-arrays/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given two sorted arrays <code>nums1</code> and <code>nums2</code> of size <code>m</code> and <code>n</code> respectively, return the median of the two sorted arrays in $O(\log(m+n))$ time.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Partition both arrays into equal left and right halves such that $\max(\text{left}_1, \text{left}_2) \le \min(\text{right}_1, \text{right}_2)$.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Merge both sorted arrays into a combined array of size $m+n$ and pick median.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def findMedianSortedArrays(self, nums1, nums2):
+
+        merged = []
+
+        i = 0
+        j = 0
+
+        while i &lt; len(nums1) and j &lt; len(nums2):
+
+            if nums1[i] &lt;= nums2[j]:
+                merged.append(nums1[i])
+                i += 1
+            else:
+                merged.append(nums2[j])
+                j += 1
+
+        merged.extend(nums1[i:])
+        merged.extend(nums2[j:])
+
+        n = len(merged)
+
+        if n % 2:
+            return merged[n // 2]
+
+        return (
+            merged[n // 2 - 1]
+            + merged[n // 2]
+        ) / 2</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int findMedianSortedArrays(int nums1, int nums2) {
+        merged = [];
+        i = 0;
+        j = 0;
+        while (i &lt; nums1.size() &amp;&amp; j &lt; nums2.size()) {
+            if (nums1[i] &lt;= nums2[j]) {
+                merged.push_back(nums1[i]);
+                i += 1;
+            }
+            else:;
+            merged.push_back(nums2[j]);
+            j += 1;
+        }
+        merged.extend(nums1[i:]);
+        merged.extend(nums2[j:]);
+        n = merged.size();
+        if (n % 2) {
+            return merged[n // 2];
+        }
+        return (;
+        merged[n // 2 - 1];
+        + merged[n // 2];
+        ) / 2;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int findMedianSortedArrays(int nums1, int nums2) {
+        merged = [];
+        i = 0;
+        j = 0;
+        while (i &lt; nums1.length &amp;&amp; j &lt; nums2.length) {
+            if (nums1[i] &lt;= nums2[j]) {
+                merged.add(nums1[i]);
+                i += 1;
+            }
+            else:;
+            merged.add(nums2[j]);
+            j += 1;
+        }
+        merged.extend(nums1[i:]);
+        merged.extend(nums2[j:]);
+        n = merged.length;
+        if (n % 2) {
+            return merged[n // 2];
+        }
+        return (;
+        merged[n // 2 - 1];
+        + merged[n // 2];
+        ) / 2;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(m + n)</span>
+          <span class="c-badge c-space">Space: O(m + n)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Binary search partition on the smaller array <code>nums1</code>. Calculate partition indices in both arrays so total left elements equals total right elements.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Ensure <code>len(nums1) &lt;= len(nums2)</code> (swap if necessary).</li><li>Set <code>left = 0</code>, <code>right = len(nums1)</code>.</li><li>Calculate <code>partition1 = (left + right) // 2</code> and <code>partition2 = (m + n + 1) // 2 - partition1</code>.</li><li>Determine <code>left1, right1, left2, right2</code> boundary values.</li><li>If <code>left1 &lt;= right2</code> and <code>left2 &lt;= right1</code>: partition is valid!</li><li>Return $\max(\text{left}_1, \text{left}_2)$ (if odd total length) or average of max left and min right (if even).</li><li>If <code>left1 > right2</code>: move partition left <code>right = partition1 - 1</code>; else move right <code>left = partition1 + 1</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def findMedianSortedArrays(self, nums1, nums2):
+
+        if len(nums1) &gt; len(nums2):
+            nums1, nums2 = nums2, nums1
+
+        m = len(nums1)
+        n = len(nums2)
+
+        left = 0
+        right = m
+
+        half = (m + n + 1) // 2
+
+        while left &lt;= right:
+
+            partition1 = (
+                left + right
+            ) // 2
+
+            partition2 = (
+                half - partition1
+            )
+
+            left1 = (
+                nums1[partition1 - 1]
+                if partition1 &gt; 0
+                else float("-inf")
+            )
+
+            right1 = (
+                nums1[partition1]
+                if partition1 &lt; m
+                else float("inf")
+            )
+
+            left2 = (
+                nums2[partition2 - 1]
+                if partition2 &gt; 0
+                else float("-inf")
+            )
+
+            right2 = (
+                nums2[partition2]
+                if partition2 &lt; n
+                else float("inf")
+            )
+
+            # Correct partition
+            if left1 &lt;= right2 and left2 &lt;= right1:
+
+                if (m + n) % 2:
+                    return max(left1, left2)
+
+                return (
+                    max(left1, left2)
+                    + min(right1, right2)
+                ) / 2
+
+            # Partition1 is too far right
+            elif left1 &gt; right2:
+                right = partition1 - 1
+
+            # Partition1 is too far left
+            else:
+                left = partition1 + 1</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int findMedianSortedArrays(int nums1, int nums2) {
+        if (nums1.size() &gt; nums2.size()) {
+            nums1, nums2 = nums2, nums1;
+        }
+        m = nums1.size();
+        n = nums2.size();
+        left = 0;
+        right = m;
+        half = (m + n + 1) // 2;
+        while (left &lt;= right) {
+            partition1 = (;
+            left + right;
+            ) // 2;
+            partition2 = (;
+            half - partition1;
+            );
+            left1 = (;
+            nums1[partition1 - 1];
+            if (partition1 &gt; 0) {
+            }
+            else float("-inf");
+            );
+            right1 = (;
+            nums1[partition1];
+            if (partition1 &lt; m) {
+            }
+            else float("inf");
+            );
+            left2 = (;
+            nums2[partition2 - 1];
+            if (partition2 &gt; 0) {
+            }
+            else float("-inf");
+            );
+            right2 = (;
+            nums2[partition2];
+            if (partition2 &lt; n) {
+            }
+            else float("inf");
+            );
+            // Correct partition
+            if (left1 &lt;= right2 &amp;&amp; left2 &lt;= right1) {
+                if ((m + n) % 2) {
+                    return max(left1, left2);
+                }
+                return (;
+                max(left1, left2);
+                + min(right1, right2);
+                ) / 2;
+            }
+            // Partition1 is too far right
+            else if (left1 &gt; right2) {
+                right = partition1 - 1;
+            }
+            // Partition1 is too far left
+            else:;
+            left = partition1 + 1;
+        }
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int findMedianSortedArrays(int nums1, int nums2) {
+        if (nums1.length &gt; nums2.length) {
+            nums1, nums2 = nums2, nums1;
+        }
+        m = nums1.length;
+        n = nums2.length;
+        left = 0;
+        right = m;
+        half = (m + n + 1) // 2;
+        while (left &lt;= right) {
+            partition1 = (;
+            left + right;
+            ) // 2;
+            partition2 = (;
+            half - partition1;
+            );
+            left1 = (;
+            nums1[partition1 - 1];
+            if (partition1 &gt; 0) {
+            }
+            else float("-inf");
+            );
+            right1 = (;
+            nums1[partition1];
+            if (partition1 &lt; m) {
+            }
+            else float("inf");
+            );
+            left2 = (;
+            nums2[partition2 - 1];
+            if (partition2 &gt; 0) {
+            }
+            else float("-inf");
+            );
+            right2 = (;
+            nums2[partition2];
+            if (partition2 &lt; n) {
+            }
+            else float("inf");
+            );
+            // Correct partition
+            if (left1 &lt;= right2 &amp;&amp; left2 &lt;= right1) {
+                if ((m + n) % 2) {
+                    return max(left1, left2);
+                }
+                return (;
+                max(left1, left2);
+                + min(right1, right2);
+                ) / 2;
+            }
+            // Partition1 is too far right
+            else if (left1 &gt; right2) {
+                right = partition1 - 1;
+            }
+            // Partition1 is too far left
+            else:;
+            left = partition1 + 1;
+        }
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(log(min(m, n)))</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Binary search partition on smaller array</p>
+        </div>
+      </div>
+    </div>
+
+      <!-- Summary Card 1: Pattern Map -->
+      <div class="summary-card" id="pattern-map">
+        <div class="summary-header">
+          <h2><i class="ti ti-map"></i> 🧠 Complete Searching Pattern Map</h2>
+        </div>
+        <p style="color: var(--text2); margin-bottom: 20px; font-size: 14px;">Quick-reference table mapping all 7 Searching & Sorting problems to their core techniques.</p>
+        <div class="pattern-table-wrapper">
+          <table class="pattern-table">
+            <thead>
+              <tr>
+                <th>Problem</th>
+                <th>LeetCode #</th>
+                <th>Naive Time</th>
+                <th>Optimized Time</th>
+                <th>Core Binary Search Pattern</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Binary Search</td><td>LC 704</td><td>O(N)</td><td>O(log N)</td><td>Standard 1D Binary Search</td></tr>
+              <tr><td>Search 2D Matrix</td><td>LC 74</td><td>O(M × N)</td><td>O(log(M × N))</td><td>Flatten Matrix + Virtual 1D Binary Search</td></tr>
+              <tr><td>Koko Eating Bananas</td><td>LC 875</td><td>O(N × M)</td><td>O(N log M)</td><td>Binary Search on Monotonic Answer Space</td></tr>
+              <tr><td>Find Minimum in Rotated Array</td><td>LC 153</td><td>O(N)</td><td>O(log N)</td><td>Rotated Array Boundary Comparison</td></tr>
+              <tr><td>Search in Rotated Array</td><td>LC 33</td><td>O(N)</td><td>O(log N)</td><td>Identify Sorted Half & Binary Search</td></tr>
+              <tr><td>Time Based Key-Value Store</td><td>LC 981</td><td>O(N) get</td><td>O(log N) get</td><td>Rightmost Valid Predecessor Search</td></tr>
+              <tr><td>Median of Two Sorted Arrays</td><td>LC 4</td><td>O(M + N)</td><td>O(log min(M,N))</td><td>Dual Array Binary Search Partition</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Summary Card 2: The 4 Core Patterns -->
+      <div class="summary-card" id="master-patterns">
+        <div class="summary-header">
+          <h2><i class="ti ti-flame"></i> 🔥 The 4 Core Binary Search Patterns</h2>
+        </div>
+        <p style="color: var(--text2); margin-bottom: 20px; font-size: 14px;">Every binary search problem fits into one of these four master templates.</p>
+        <div class="pattern-grid">
+          <div class="pattern-item-card">
+            <h4><i class="ti ti-search"></i> 1. Standard Binary Search</h4>
+            <p>Direct lookup in sorted array. Compare <code>mid</code> to target. Eliminate half (LC 704, LC 74).</p>
+          </div>
+          <div class="pattern-item-card">
+            <h4><i class="ti ti-adjustments"></i> 2. Binary Search on Answer</h4>
+            <p>Search monotonic answer space <code>[Invalid ... Invalid | Valid ... Valid]</code>. Find first valid speed/capacity (LC 875).</p>
+          </div>
+          <div class="pattern-item-card">
+            <h4><i class="ti ti-rotate"></i> 3. Rotated Binary Search</h4>
+            <p>Identify which half is sorted, then test if target falls inside sorted range bounds (LC 153, LC 33).</p>
+          </div>
+          <div class="pattern-item-card">
+            <h4><i class="ti ti-cut"></i> 4. Boundary / Partition Search</h4>
+            <p>Search rightmost value $\le$ target (LC 981), or binary search partition point between 2 sorted arrays (LC 4).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Card 3: Conceptual Partitioning Diagram & Cheat Sheet -->
+      <div class="summary-card" id="template-roadmap">
+        <div class="summary-header">
+          <h2><i class="ti ti-rocket"></i> ⭐ Conceptual Partitioning Diagram &amp; Cheat Sheet</h2>
+        </div>
+        <p style="color: var(--text2); margin-bottom: 20px; font-size: 14px;">Visual representation of LC 4 partitioning and interview trigger conditions.</p>
+
+        <div class="diagram-box">
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                      LC 4 DUAL ARRAY PARTITION                         │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │
+   Array A: [1,  3,  8,  9  |  15]    <-- partition1
+   Array B: [7, 11          |  18, 19, 21, 25]  <-- partition2
+                             ▲
+   Check condition: max(left1, left2) <= min(right1, right2)
+                    max(9, 11) <= min(15, 18)  => 11 <= 15  (Valid!)
+        </div>
+
+        <div style="margin-top: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
+          <h4 style="color: var(--accent); font-size: 15px; margin-bottom: 12px;"><i class="ti ti-target"></i> Interview Trigger Rules</h4>
+          <ul class="bullet-list" style="font-size: 13.5px; color: var(--text2);">
+            <li><strong>"Sorted Array":</strong> Standard Binary Search ($O(\log n)$).</li>
+            <li><strong>"Minimum X such that..." / "Maximum X such that...":</strong> Binary Search on Answer Space.</li>
+            <li><strong>"Rotated Sorted Array":</strong> Identify which half is sorted at <code>mid</code>.</li>
+            <li><strong>"Largest value <= target":</strong> Rightmost valid element binary search.</li>
+            <li><strong>"Median of 2 Sorted Arrays":</strong> Binary search partition on smaller array ($O(\log \min(m, n))$).</li>
+          </ul>
+        </div>
+  
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-median-from-data-stream/" target="_blank" rel="noopener">
+      <span class="sim-name">Find Median from Data Stream</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 295</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/kth-largest-element-in-an-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Kth Largest Element in an Array</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 215</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/k-th-smallest-prime-fraction/" target="_blank" rel="noopener">
+      <span class="sim-name">K-th Smallest Prime Fraction</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 786</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/" target="_blank" rel="noopener">
+      <span class="sim-name">Kth Smallest Element in Sorted Matrix</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 378</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/split-array-largest-sum/" target="_blank" rel="noopener">
+      <span class="sim-name">Split Array Largest Sum</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 410</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    </main>
+  </div>
+
+          <script>
+    const filterInput = document.getElementById('filterInput');
+    const navItems = document.querySelectorAll('.nav-item');
+    const cards = document.querySelectorAll('.problem-card');
+
+    function openSidebar() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const icon = document.getElementById('hamburgerIcon');
+      if (sidebar) sidebar.classList.add('open');
+      if (overlay) overlay.classList.add('active');
+      if (icon) {
+        icon.classList.remove('ti-menu-2');
+        icon.classList.add('ti-x');
+      }
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const icon = document.getElementById('hamburgerIcon');
+      if (sidebar) sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+      if (icon) {
+        icon.classList.remove('ti-x');
+        icon.classList.add('ti-menu-2');
+      }
+    }
+
+    function toggleNav() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    }
+
+    if (filterInput) {
+      filterInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        navItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(q) ? 'block' : 'none';
+        });
+      });
+    }
+
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        const titleEl = item.querySelector('span:first-child');
+        const mobileNavTitle = document.getElementById('mobileNavTitle');
+        if (mobileNavTitle && titleEl) {
+          mobileNavTitle.textContent = titleEl.textContent.trim();
+        }
+        if (window.innerWidth <= 900) {
+          setTimeout(closeSidebar, 50);
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
+    if ('IntersectionObserver' in window && cards.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            if (id) {
+              navItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (href === `#${id}`) {
+                  item.classList.add('active');
+                  const titleEl = item.querySelector('span:first-child');
+                  const mobileNavTitle = document.getElementById('mobileNavTitle');
+                  if (mobileNavTitle && titleEl && window.innerWidth <= 900) {
+                    mobileNavTitle.textContent = titleEl.textContent.trim();
+                  }
+                } else {
+                  item.classList.remove('active');
+                }
+              });
+            }
+          }
+        });
+      }, { rootMargin: '-70px 0px -60% 0px', threshold: 0 });
+
+      cards.forEach(card => observer.observe(card));
+    }
+
+    function copyCode(btn) {
+      try {
+        const container = btn.closest('.code-container');
+        const codeEl = container ? container.querySelector('code') : null;
+        if (!codeEl) return;
+
+        const textToCopy = codeEl.textContent || codeEl.innerText;
+
+        const showSuccess = () => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="color: var(--green);"></i> <span style="color: var(--green);">Copied!</span>';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.borderColor = '';
+          }, 2000);
+        };
+
+        if (navigator.clipboard && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => {
+            fallbackCopy(textToCopy, showSuccess);
+          });
+        } else {
+          fallbackCopy(textToCopy, showSuccess);
+        }
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    }
+
+    function fallbackCopy(text, onSuccess) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful && onSuccess) onSuccess();
+      } catch (err) {
+        console.error('Fallback copy error:', err);
+      }
+      document.body.removeChild(textarea);
+    }
+  
+    function switchLang(btn, lang) {
+      if (!btn) return;
+      const container = btn.closest('.code-container');
+      if (container) {
+        container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const targetContent = container.querySelector(`.code-content[data-lang="${lang}"]`);
+        if (targetContent) targetContent.classList.add('active');
+      }
+      try {
+        localStorage.setItem('preferred_dsa_lang', lang);
+      } catch(e) {}
+      syncAllCodeContainers(lang);
+    }
+
+    function syncAllCodeContainers(lang) {
+      document.querySelectorAll('.code-container').forEach(container => {
+        const tab = container.querySelector(`.lang-tab[data-lang="${lang}"]`);
+        const content = container.querySelector(`.code-content[data-lang="${lang}"]`);
+        if (tab && content) {
+          container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+          container.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          content.classList.add('active');
+        }
+      });
+    }
+
+    function initLanguagePreference() {
+      try {
+        const savedLang = localStorage.getItem('preferred_dsa_lang');
+        if (savedLang && ['python', 'cpp', 'java'].includes(savedLang)) {
+          syncAllCodeContainers(savedLang);
+        }
+      } catch(e) {}
+    }
+
+    function enableMobileCodeTouchScroll() {
+      document.querySelectorAll('.code-container, .code-content, pre, .code-block').forEach(elem => {
+        let startX = 0, scrollLeft = 0, isDragging = false;
+        elem.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 1) {
+            startX = e.touches[0].pageX;
+            scrollLeft = elem.scrollLeft;
+            isDragging = true;
+          }
+        }, { passive: true });
+        elem.addEventListener('touchmove', function(e) {
+          if (!isDragging || e.touches.length !== 1) return;
+          const deltaX = e.touches[0].pageX - startX;
+          elem.scrollLeft = scrollLeft - deltaX;
+        }, { passive: true });
+        elem.addEventListener('touchend', function() { isDragging = false; }, { passive: true });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initLanguagePreference();
+      enableMobileCodeTouchScroll();
+    });
+
+    function copyCode(btn) {
+      try {
+        const container = btn.closest('.code-container');
+        const activeContent = container ? (container.querySelector('.code-content.active code') || container.querySelector('code')) : null;
+        if (!activeContent) return;
+
+        const textToCopy = activeContent.textContent || activeContent.innerText;
+
+        const showSuccess = () => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="color: var(--green);"></i> <span style="color: var(--green);">Copied!</span>';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.borderColor = '';
+          }, 2000);
+        };
+
+        if (navigator.clipboard && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => {
+            fallbackCopy(textToCopy, showSuccess);
+          });
+        } else {
+          fallbackCopy(textToCopy, showSuccess);
+        }
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    }
+
+  </script>
+  <script src="./sheet150.js" defer></script>
+</body>
+</html>

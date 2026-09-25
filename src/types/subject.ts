@@ -9,6 +9,9 @@ import type { Slug, ISODateString } from './common'
 /* ── Difficulty ───────────────────────────────────────────── */
 export type Difficulty = 'easy' | 'medium' | 'hard'
 
+/* ── Subject category ─────────────────────────────────────── */
+export type SubjectCategory = 'core-cs' | 'dsa' | 'ai-ml' | 'tools'
+
 /* ── Progress ─────────────────────────────────────────────── */
 export type ProgressStatus = 'unsolved' | 'solved' | 'revisit'
 
@@ -22,8 +25,15 @@ export interface Subject {
   title: string
   shortTitle?: string
   description: string
+  category: SubjectCategory
+  /** Lucide icon name to use for this subject */
+  lucideIcon: string
   /** Ordered list of topic IDs belonging to this subject */
   topicIds: Slug[]
+  /** Short tags shown on the subject card (max 3) */
+  displayTags?: string[]
+  /** Search keywords and topic terms for quick filtering */
+  keywords?: string
   /** Approximate total question/item count */
   itemCount?: number
   /** Whether this subject is actively being worked on */

@@ -1,0 +1,3485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Stack & Queue — Sheet 150</title>
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="icon" type="image/png" href="../../app-icon.png">
+  <link rel="apple-touch-icon" href="../../app-icon.png">
+  <meta name="theme-color" content="#F7F4ED">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../../css/c-note-theme.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('cnote_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      try { localStorage.setItem('cnote_theme', savedTheme); } catch(e) {}
+    })();
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('cnote_theme', next); } catch(e) {}
+      updateThemeIcon(next);
+    }
+
+    function updateThemeIcon(theme) {
+      const currentTheme = theme || document.documentElement.getAttribute('data-theme') || 'light';
+      const icons = document.querySelectorAll('.theme-toggle-btn i, .themeToggleIcon, #themeToggleIcon');
+      icons.forEach(icon => {
+        icon.className = currentTheme === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      updateThemeIcon(theme);
+    });
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #38bdf8;
+      --green: #34d399;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --cyan: #22d3ee;
+      --purple: #a855f7;
+      --radius: 12px;
+    }
+    html {
+      scroll-behavior: smooth;
+      height: 100%;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+    ::selection { background: var(--accent); color: #000; }
+    
+    /* Custom Sleek Dark Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
+      
+    }
+
+    /* ── Mobile Top Navbar (System Design Style) ── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      z-index: 500;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .hamburger-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 20px;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hamburger-btn:hover, .hamburger-btn:active {
+      background: var(--bg4);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .mobile-nav-logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .mobile-nav-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    /* ── Sidebar Overlay (Mobile) ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 599;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      opacity: 0;
+      transition: opacity .25s ease;
+      pointer-events: none;
+    }
+    .sidebar-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      position: relative;
+    }
+    
+    /* Desktop Sidebar (>= 900px) */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      height: 100vh;
+      height: 100dvh;
+      overflow-y: auto;
+      
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overscroll-behavior: contain;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+      transform: none;
+    }
+    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    .sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    .sidebar-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-close-btn {
+      display: none;
+      align-self: flex-end;
+      background: transparent;
+      border: none;
+      color: var(--text3);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color .15s;
+    }
+    .sidebar-close-btn:hover { color: var(--accent); }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 10px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .module-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .module-title-side {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .sidebar-search {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .sidebar-search input {
+      width: 100%;
+      height: 36px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px 0 42px !important;
+      font-size: 12.5px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      box-sizing: border-box;
+    }
+    .sidebar-search input:focus { border-color: var(--accent); }
+    .sidebar-search i {
+      position: absolute;
+      left: 22px !important;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .nav-list { padding: 10px 8px 40px; list-style: none; flex-grow: 1; }
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--accent);
+      padding: 12px 10px 6px;
+      margin-top: 10px;
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+    .nav-section-title:first-child { margin-top: 0; }
+    .nav-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: var(--text2);
+      text-decoration: none;
+      margin-bottom: 2px;
+      transition: all .15s;
+      word-break: break-word;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: var(--bg3); color: var(--accent); font-weight: 600; }
+    .nav-item span:first-child {
+      flex: 1;
+      min-width: 0;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+    .diff-badge {
+      font-size: 9.5px;
+      font-family: var(--mono);
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+    .diff-easy { background: rgba(52, 211, 153, 0.14); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.28); }
+    .diff-medium { background: rgba(245, 158, 11, 0.14); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.28); }
+    .diff-hard { background: rgba(239, 68, 68, 0.14); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.28); }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      width: calc(100% - 280px);
+      max-width: 960px;
+      min-width: 0;
+      padding: 36px 36px 100px;
+      box-sizing: border-box;
+    }
+
+    .topic-header {
+      margin-bottom: 36px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .topic-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .topic-header h1 {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+    .topic-header p {
+      font-size: 14.5px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* Problem Card */
+    .problem-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+      scroll-margin-top: 32px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+    .problem-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .problem-title-area { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .problem-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .problem-header h2 {
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+      word-break: break-word;
+    }
+    .problem-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .lc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .lc-link:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+    .sec-block {
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .sec-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .sec-title i { color: var(--accent); font-size: 15px; }
+
+    .desc-box, .naive-box, .intuition-box, .approach-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.6;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      display: block;
+    }
+    .intuition-box {
+      background: rgba(56, 189, 248, 0.04);
+      border-color: rgba(56, 189, 248, 0.2);
+      border-left: 3px solid var(--accent);
+    }
+    .naive-box {
+      background: rgba(245, 158, 11, 0.04);
+      border-color: rgba(245, 158, 11, 0.2);
+      border-left: 3px solid var(--amber);
+    }
+    .approach-box {
+      background: rgba(52, 211, 153, 0.04);
+      border-color: rgba(52, 211, 153, 0.2);
+      border-left: 3px solid var(--green);
+    }
+
+    ol.step-list, ul.bullet-list {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+    ol.step-list li, ul.bullet-list li {
+      margin-bottom: 6px;
+      color: var(--text2);
+      word-break: break-word;
+    }
+    ol.step-list li strong, ul.bullet-list li strong { color: var(--text); }
+
+    .complexity-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      max-width: 100%;
+    }
+    .c-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      word-break: break-word;
+    }
+    .c-time {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .c-space {
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+    }
+    .c-naive {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .code-container {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #06080e;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      gap: 8px;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--text3); }
+    .code-container pre {
+      padding: 14px 16px;
+      margin: 0;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: #bbf7e6;
+      line-height: 1.6;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+    }
+    .code-container pre code {
+      display: block;
+      white-space: pre;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    /* Summary & Special Cards */
+    .summary-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+      scroll-margin-top: 32px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+    .summary-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-header h2 {
+      font-size: clamp(20px, 3.5vw, 24px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      word-break: break-word;
+    }
+    .summary-header p {
+      font-size: 13.5px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .pattern-item-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .pattern-item-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      word-break: break-word;
+    }
+    .pattern-item-card p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.55;
+    }
+    .pattern-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .pattern-table {
+      width: 100%;
+      min-width: 540px;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .pattern-table th {
+      background: var(--bg3);
+      padding: 10px 14px;
+      color: var(--text);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .pattern-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .diagram-box {
+      background: #06080e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--cyan);
+      white-space: pre;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      line-height: 1.5;
+      max-width: 100%;
+    }
+    .cheat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .cheat-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .cheat-item code {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .cheat-item p {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+    .cheatsheet-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .cheatsheet-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cheatsheet-row:last-child { border-bottom: none; }
+    .cs-trigger {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+      border-radius: 6px;
+      padding: 5px 10px;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .cs-arrow { color: var(--text3); font-size: 16px; align-self: center; }
+    .cs-answer { font-size: 13px; color: var(--text2); }
+    .cs-answer strong { color: var(--text); }
+    .group-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent);
+      margin: 20px 0 10px;
+    }
+
+    /* ── RESPONSIVE BREAKPOINTS (SYSTEM DESIGN SLIDE-OUT DRAWER) ── */
+    @media (max-width: 900px) {
+      .mobile-nav { display: flex; }
+      .sidebar-overlay { display: block; }
+
+      .sidebar {
+        position: fixed;
+        top: 56px !important;
+        left: 0;
+        bottom: 0;
+        z-index: 600;
+        width: min(300px, 85vw);
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+        height: calc(100vh - 56px) !important;
+        height: calc(100dvh - 56px) !important;
+        border-right: 1px solid var(--border);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+      }
+      .sidebar.open {
+        transform: translateX(0) !important;
+      }
+      .sidebar-close-btn {
+        display: block;
+      }
+
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 76px 16px 60px;
+      }
+      .problem-card, .summary-card {
+        padding: 20px 16px;
+        margin-bottom: 28px;
+        scroll-margin-top: 76px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 72px 12px 48px;
+      }
+      .problem-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .problem-meta {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .desc-box, .naive-box, .intuition-box, .approach-box {
+        padding: 12px 14px;
+        font-size: 13.5px;
+      }
+      .code-container pre {
+        padding: 12px;
+        font-size: 12px;
+      }
+      .cheatsheet-row {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .cs-trigger, .cs-arrow {
+        align-self: flex-start;
+      }
+      .cheat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    /* Multi-language Code Container Tabs (LeetCode Style) */
+    .code-container {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #06080e;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-sans);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .lang-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lang-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s ease;
+      user-select: none;
+    }
+    .lang-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .lang-tab.active {
+      background: var(--bg4);
+      color: var(--accent);
+      border-color: var(--border2);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    .lang-tab.active i {
+      color: var(--accent);
+    }
+    .code-content {
+      display: none;
+    }
+    .code-content.active {
+      display: block;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 4px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .15s;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .copy-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--text3); }
+    .code-container pre {
+      padding: 14px 16px;
+      margin: 0;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+
+    /* ── Desktop Sub-Page Fixed Topbar ── */
+    .sub-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+      min-height: 52px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+    .sub-topbar-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text3);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      transition: color .15s;
+      white-space: nowrap;
+    }
+    .sub-topbar-back:hover { color: var(--accent); }
+    .sub-topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .sub-topbar-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+    /* On mobile: hide desktop topbar, show mobile-nav instead */
+    @media (max-width: 900px) {
+      .sub-topbar { display: none !important; }
+    }
+    /* On desktop: offset sidebar and layout below 52px topbar */
+    @media (min-width: 901px) {
+      .sidebar {
+        top: 52px !important;
+        height: calc(100vh - 52px) !important;
+        height: calc(100dvh - 52px) !important;
+        bottom: auto !important;
+      }
+      .layout {
+        padding-top: 52px !important;
+      }
+      .sidebar-header {
+        display: none !important;
+      }
+      .problem-card, .summary-card {
+        scroll-margin-top: 68px !important;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="./sheet150.css">
+</head>
+<body>
+  <!-- Mobile Top Navbar -->
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleNav()" aria-label="Toggle navigation menu">
+      <i class="ti ti-menu-2" id="hamburgerIcon"></i>
+    </button>
+    <img src="../../app-icon.png" class="mobile-nav-logo" alt="C-Note" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">
+    <span class="mobile-nav-title" id="mobileNavTitle">Stack & Queue</span>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" style="margin-left:auto;">
+      <i class="ti ti-sun" id="themeToggleIcon"></i>
+    </button>
+  </nav>
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" aria-hidden="true"></div>
+  <!-- Desktop Fixed Topbar -->
+  <header class="sub-topbar" id="subTopbar">
+    <a href="./index.html" class="sub-topbar-back">
+      <i class="ti ti-arrow-left"></i> Sheet 150 Hub
+    </a>
+    <div class="sub-topbar-brand">
+      <img src="../../app-icon.png" alt="Sheet 150" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">
+      <span class="sub-topbar-title">Sheet 150</span>
+    </div>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <i class="ti ti-sun"></i>
+    </button>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-header-top">
+          <a href="./index.html" class="back-link"><i class="ti ti-arrow-left"></i> Sheet 150 Hub</a>
+          <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar"><i class="ti ti-x"></i></button>
+        </div>
+      </div>
+      <div class="sidebar-search">
+        <i class="ti ti-search"></i>
+        <input type="text" id="filterInput" placeholder="Filter problems...">
+      </div>
+      <div class="nav-list" id="navList">
+        <div class="nav-section-title">6. Stack & Queue — 7</div>
+        <a href="#lc-20" class="nav-item">
+          <span>1. Valid Parentheses — LC 20</span>
+          <span class="diff-badge diff-easy">Easy</span>
+        </a>
+        <a href="#lc-155" class="nav-item">
+          <span>2. Min Stack — LC 155</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-150" class="nav-item">
+          <span>3. Evaluate Reverse Polish Notation — LC 150</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-22" class="nav-item">
+          <span>4. Generate Parentheses — LC 22</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-739" class="nav-item">
+          <span>5. Daily Temperatures — LC 739</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-853" class="nav-item">
+          <span>6. Car Fleet — LC 853</span>
+          <span class="diff-badge diff-medium">Medium</span>
+        </a>
+        <a href="#lc-84" class="nav-item">
+          <span>7. Largest Rectangle in Histogram — LC 84</span>
+          <span class="diff-badge diff-hard">Hard</span>
+        </a>
+        <div style="margin: 16px 0 8px 12px; font-size: 11px; font-family: var(--mono); font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;">SUMMARY & MAPS</div>
+        <a href="#pattern-map" class="nav-item">
+          <span>🧠 Pattern Map</span>
+        </a>
+        <a href="#master-patterns" class="nav-item">
+          <span>🔥 Monotonic Matrix</span>
+        </a>
+        <a href="#template-roadmap" class="nav-item">
+          <span>⚡ Killer Insights</span>
+        </a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topic-header">
+        <div class="topic-eyebrow">MODULE 04 &bull; SHEET 150</div>
+        <h1>Stack &amp; Queue</h1>
+        <p>7 essential problems covering Parentheses Matching, Auxiliary Min Stacks, Postfix Evaluation, Backtracking, and Monotonic Stacks.</p>
+      </div>
+
+
+    <div class="problem-card" id="lc-20">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 20 &bull; 6. Stack & Queue</span>
+          <h2>Valid Parentheses</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/valid-parentheses/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given a string <code>s</code> containing just the characters <code>'('</code>, <code>')'</code>, <code>'{'</code>, <code>'}'</code>, <code>'['</code> and <code>']'</code>, determine if the input string is valid.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Brackets must close in exact LIFO (last-in, first-out) order.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Repeatedly scan string and remove matching adjacent pairs <code>'()'</code>, <code>'[]'</code>, <code>'{}'</code> using string replacement.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def isValid(self, s):
+        changed = True
+
+        while changed:
+            changed = False
+
+            for pair in ["()", "[]", "{}"]:
+                if pair in s:
+                    s = s.replace(pair, "")
+                    changed = True
+
+        return len(s) == 0</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    bool isValid(string s) {
+        changed = true;
+        while (changed) {
+            changed = false;
+            for pair in ["()", "[]", "{}"]:
+                if (pair in s) {
+                    s = s.replace(pair, "");
+                    changed = true;
+                }
+            }
+        }
+        return s.size() == 0;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public boolean isValid(String s) {
+        changed = true;
+        while (changed) {
+            changed = false;
+            for pair in ["()", "[]", "{}"]:
+                if (pair in s) {
+                    s = s.replace(pair, "");
+                    changed = true;
+                }
+            }
+        }
+        return s.length == 0;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n²)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Push opening brackets onto a stack. When encountering a closing bracket, pop the stack top and verify it matches the expected opening pair.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Use empty list <code>stack</code> and dictionary <code>pairs = {')': '(', ']': '[', '}': '{'}</code>.</li><li>For each char: if opening bracket <code>'([{'</code>, push to stack.</li><li>Else (closing bracket): return <code>False</code> if stack is empty or <code>stack.pop() != pairs[char]</code>.</li><li>Return <code>True</code> if stack is completely empty at the end.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def isValid(self, s):
+        stack = []
+
+        pairs = {
+            ")": "(",
+            "]": "[",
+            "}": "{"
+        }
+
+        for char in s:
+            if char in "([{":
+                stack.append(char)
+
+            else:
+                if not stack:
+                    return False
+
+                if stack.pop() != pairs[char]:
+                    return False
+
+        return not stack</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    bool isValid(string s) {
+        vector&lt;int&gt; stack;
+        pairs = {
+        ")": "(",;
+        "]": "[",;
+        "}": "{";
+        }
+        for (auto char : s) {
+            if (char in "([{") {
+                stack.push_back(char);
+            }
+            else:;
+            if (stack.empty()) {
+                return false;
+            }
+            if (stack.pop_back() != pairs[char]) {
+                return false;
+            }
+        }
+        return stack.empty();
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public boolean isValid(String s) {
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        pairs = {
+        ")": "(",;
+        "]": "[",;
+        "}": "{";
+        }
+        for (char char : s.toCharArray()) {
+            if (char in "([{") {
+                stack.add(char);
+            }
+            else:;
+            if (stack.isEmpty()) {
+                return false;
+            }
+            if (stack.remove(if stack.size() - 1) != pairs[char]) {
+                return false;
+            }
+        }
+        return stack.isEmpty();
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Opening bracket → push; Closing bracket → pop & compare with stack top</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/min-stack/" target="_blank" rel="noopener">
+      <span class="sim-name">Min Stack</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 155</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/longest-valid-parentheses/" target="_blank" rel="noopener">
+      <span class="sim-name">Longest Valid Parentheses</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 32</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/remove-invalid-parentheses/" target="_blank" rel="noopener">
+      <span class="sim-name">Remove Invalid Parentheses</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 301</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/generate-parentheses/" target="_blank" rel="noopener">
+      <span class="sim-name">Generate Parentheses</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 22</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/check-if-a-parentheses-string-can-be-valid/" target="_blank" rel="noopener">
+      <span class="sim-name">Check if Parentheses String Can Be Valid</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 2116</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-155">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 155 &bull; 6. Stack & Queue</span>
+          <h2>Min Stack</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/min-stack/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Design a stack that supports <code>push</code>, <code>pop</code>, <code>top</code>, and retrieving the minimum element <code>getMin</code> in <strong>O(1)</strong> time.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>All 4 operations must execute in constant time $O(1)$.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Use a normal stack and compute <code>min(self.stack)</code> dynamically inside <code>getMin()</code>.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class MinStack:
+
+    def __init__(self):
+        self.stack = []
+
+    def push(self, val):
+        self.stack.append(val)
+
+    def pop(self):
+        return self.stack.pop()
+
+    def top(self):
+        return self.stack[-1]
+
+    def getMin(self):
+        return min(self.stack)</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+private:
+    void __init__(int self) {
+        vector&lt;int&gt; stack;
+        stack.push_back(val);
+        return stack.pop_back();
+        return stack[-1];
+        return min(stack);
+    }
+
+public:
+    int push(int val) {
+        class MinStack:;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    private void __init__(int self) {
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        stack.add(val);
+        return stack.remove(return stack.size() - 1);
+        return stack[-1];
+        return min(stack);
+    }
+
+    public int push(int val) {
+        class MinStack:;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">getMin: O(n), Others: O(1)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Maintain an auxiliary stack <code>minimum</code> that tracks the minimum element at each depth of the stack.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Maintain main <code>stack</code> and parallel <code>minimum</code> stack.</li><li>On <code>push(val)</code>: append <code>val</code> to main stack, and append <code>min(val, minimum[-1])</code> to minimum stack.</li><li>On <code>pop()</code>: pop from both main and minimum stacks simultaneously.</li><li><code>getMin()</code> simply returns <code>minimum[-1]</code> in O(1) time.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class MinStack:
+
+    def __init__(self):
+        self.stack = []
+        self.minimum = []
+
+    def push(self, val):
+        self.stack.append(val)
+
+        if not self.minimum:
+            self.minimum.append(val)
+        else:
+            self.minimum.append(
+                min(val, self.minimum[-1])
+            )
+
+    def pop(self):
+        self.minimum.pop()
+        return self.stack.pop()
+
+    def top(self):
+        return self.stack[-1]
+
+    def getMin(self):
+        return self.minimum[-1]</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+private:
+    void __init__(int self) {
+        vector&lt;int&gt; stack;
+        minimum = [];
+        stack.push_back(val);
+        if (!minimum) {
+            minimum.push_back(val);
+        }
+        else:;
+        minimum.append(;
+        min(val, minimum[-1]);
+        );
+        minimum.pop_back();
+        return stack.pop_back();
+        return stack[-1];
+        return minimum[-1];
+    }
+
+public:
+    int push(int val) {
+        class MinStack:;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    private void __init__(int self) {
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        minimum = [];
+        stack.add(val);
+        if (!minimum) {
+            minimum.add(val);
+        }
+        else:;
+        minimum.append(;
+        min(val, minimum[-1]);
+        );
+        minimum.remove(minimum.size() - 1);
+        return stack.remove(return stack.size() - 1);
+        return stack[-1];
+        return minimum[-1];
+    }
+
+    public int push(int val) {
+        class MinStack:;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">All operations: O(1)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Auxiliary stack tracking answer query at each stack depth</p>
+        </div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/max-stack/" target="_blank" rel="noopener">
+      <span class="sim-name">Max Stack</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 716</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/valid-parentheses/" target="_blank" rel="noopener">
+      <span class="sim-name">Valid Parentheses</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 20</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/implement-queue-using-stacks/" target="_blank" rel="noopener">
+      <span class="sim-name">Implement Queue using Stacks</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 232</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/design-a-stack-with-increment-operation/" target="_blank" rel="noopener">
+      <span class="sim-name">Design Stack With Increment Operation</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1381</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/sliding-window-maximum/" target="_blank" rel="noopener">
+      <span class="sim-name">Sliding Window Maximum</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 239</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-150">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 150 &bull; 6. Stack & Queue</span>
+          <h2>Evaluate Reverse Polish Notation</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/evaluate-reverse-polish-notation/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Evaluate the value of an arithmetic expression in Reverse Polish Notation (postfix). Valid operators are <code>'+'</code>, <code>'-'</code>, <code>'*'</code>, and <code>'/'</code>.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>In RPN, operators follow their operands: e.g. <code>['2', '1', '+', '3', '*']</code> = <code>(2 + 1) * 3 = 9</code>.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Repeatedly scan token array, find first operator, evaluate previous 2 operands, and replace sub-slice in token list.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def evalRPN(self, tokens):
+
+        tokens = tokens[:]
+
+        operators = {"+", "-", "*", "/"}
+
+        while len(tokens) &gt; 1:
+            for i, token in enumerate(tokens):
+
+                if token not in operators:
+                    continue
+
+                a = int(tokens[i - 2])
+                b = int(tokens[i - 1])
+
+                if token == "+":
+                    result = a + b
+                elif token == "-":
+                    result = a - b
+                elif token == "*":
+                    result = a * b
+                else:
+                    result = int(a / b)
+
+                tokens[i - 2:i + 1] = [str(result)]
+                break
+
+        return int(tokens[0])</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int evalRPN(int tokens) {
+        tokens = tokens[:];
+        operators = {"+", "-", "*", "/"}
+        while (tokens.size() &gt; 1) {
+            for i, token in enumerate(tokens):
+                if (token !in operators) {
+                    continue;
+                }
+                a = int(tokens[i - 2]);
+                b = int(tokens[i - 1]);
+                if (token == "+") {
+                    result = a + b;
+                }
+                else if (token == "-") {
+                    result = a - b;
+                }
+                else if (token == "*") {
+                    result = a * b;
+                }
+                else:;
+                result = int(a / b);
+                tokens[i - 2:i + 1] = [str(result)];
+                break;
+            }
+        }
+        return int(tokens[0]);
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int evalRPN(int tokens) {
+        tokens = tokens[:];
+        operators = {"+", "-", "*", "/"}
+        while (tokens.length &gt; 1) {
+            for i, token in enumerate(tokens):
+                if (token !in operators) {
+                    continue;
+                }
+                a = int(tokens[i - 2]);
+                b = int(tokens[i - 1]);
+                if (token == "+") {
+                    result = a + b;
+                }
+                else if (token == "-") {
+                    result = a - b;
+                }
+                else if (token == "*") {
+                    result = a * b;
+                }
+                else:;
+                result = int(a / b);
+                tokens[i - 2:i + 1] = [str(result)];
+                break;
+            }
+        }
+        return int(tokens[0]);
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n²)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Use an operand stack. Push numbers. On operator, pop top 2 numbers (second popped is left operand), evaluate result, and push back.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Initialize empty <code>stack</code>.</li><li>Iterate through <code>tokens</code>.</li><li>If integer: push <code>int(token)</code> to stack.</li><li>If operator: pop <code>b = stack.pop()</code>, <code>a = stack.pop()</code>.</li><li>Perform operation (truncating division toward zero <code>int(a / b)</code>), push result to stack.</li><li>Return <code>stack[-1]</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def evalRPN(self, tokens):
+        stack = []
+
+        operators = {"+", "-", "*", "/"}
+
+        for token in tokens:
+
+            if token not in operators:
+                stack.append(int(token))
+                continue
+
+            b = stack.pop()
+            a = stack.pop()
+
+            if token == "+":
+                result = a + b
+            elif token == "-":
+                result = a - b
+            elif token == "*":
+                result = a * b
+            else:
+                result = int(a / b)
+
+            stack.append(result)
+
+        return stack[-1]</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int evalRPN(int tokens) {
+        vector&lt;int&gt; stack;
+        operators = {"+", "-", "*", "/"}
+        for (auto token : tokens) {
+            if (token !in operators) {
+                stack.push_back(int(token));
+                continue;
+            }
+            b = stack.pop_back();
+            a = stack.pop_back();
+            if (token == "+") {
+                result = a + b;
+            }
+            else if (token == "-") {
+                result = a - b;
+            }
+            else if (token == "*") {
+                result = a * b;
+            }
+            else:;
+            result = int(a / b);
+            stack.push_back(result);
+        }
+        return stack[-1];
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int evalRPN(int tokens) {
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        operators = {"+", "-", "*", "/"}
+        for (int token : tokens) {
+            if (token !in operators) {
+                stack.add(int(token));
+                continue;
+            }
+            b = stack.remove(b = stack.size() - 1);
+            a = stack.remove(a = stack.size() - 1);
+            if (token == "+") {
+                result = a + b;
+            }
+            else if (token == "-") {
+                result = a - b;
+            }
+            else if (token == "*") {
+                result = a * b;
+            }
+            else:;
+            result = int(a / b);
+            stack.add(result);
+        }
+        return stack[-1];
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Operand → push; Operator → pop two → calculate → push result</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-22">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 22 &bull; 6. Stack & Queue</span>
+          <h2>Generate Parentheses</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/generate-parentheses/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given <code>n</code> pairs of parentheses, write a function to generate all combinations of well-formed parentheses.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Generate valid strings of length $2n$ where open count $\le n$ and close count $\le$ open count at all steps.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Generate all $2^{2n}$ possible bracket strings recursively and validate each using a balance counter.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def generateParenthesis(self, n):
+
+        result = []
+
+        def valid(s):
+            balance = 0
+
+            for char in s:
+                if char == "(":
+                    balance += 1
+                else:
+                    balance -= 1
+
+                if balance &lt; 0:
+                    return False
+
+            return balance == 0
+
+        def generate(s):
+            if len(s) == 2 * n:
+                if valid(s):
+                    result.append(s)
+                return
+
+            generate(s + "(")
+            generate(s + ")")
+
+        generate("")
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+private:
+    void valid(int s, vector&lt;vector&lt;int&gt;&gt;&amp; result) {
+        balance = 0;
+        for (auto char : s) {
+            if (char == "(") {
+                balance += 1;
+            }
+            else:;
+            balance -= 1;
+            if (balance &lt; 0) {
+                return false;
+            }
+        }
+        return balance == 0;
+        if (s.size() == 2 * n) {
+            if (valid(s)) {
+                result.push_back(s);
+            }
+            return;
+        }
+        generate(s + "(");
+        generate(s + ")");
+    }
+
+public:
+    vector&lt;vector&lt;int&gt;&gt; generateParenthesis(int n) {
+        vector&lt;vector&lt;int&gt;&gt; result;
+        generate("");
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    private void valid(int s, List&lt;List&lt;Integer&gt;&gt; result) {
+        balance = 0;
+        for (char char : s.toCharArray()) {
+            if (char == "(") {
+                balance += 1;
+            }
+            else:;
+            balance -= 1;
+            if (balance &lt; 0) {
+                return false;
+            }
+        }
+        return balance == 0;
+        if (s.length == 2 * n) {
+            if (valid(s)) {
+                result.add(s);
+            }
+            return;
+        }
+        generate(s + "(");
+        generate(s + ")");
+    }
+
+    public List&lt;List&lt;Integer&gt;&gt; generateParenthesis(int n) {
+        List&lt;List&lt;Integer&gt;&gt; result = new ArrayList&lt;&gt;();
+        generate("");
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(2^(2n) × n)</span>
+          <span class="c-badge c-space">Space: O(n) recursion</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Backtracking with constraints: only add <code>'('</code> if <code>open_count &lt; n</code>; only add <code>')'</code> if <code>close_count &lt; open_count</code>. Prunes invalid branches early.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Recursive helper <code>backtrack(current, open_count, close_count)</code>.</li><li>Base Case: <code>len(current) == 2 * n</code>, append to <code>result</code>.</li><li>Branch 1: If <code>open_count &lt; n</code>, recurse with <code>'('</code>.</li><li>Branch 2: If <code>close_count &lt; open_count</code>, recurse with <code>')'</code>.</li><li>Number of valid strings is given by the $n$th Catalan number $C_n = \frac{1}{n+1}\binom{2n}{n}$.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def generateParenthesis(self, n):
+
+        result = []
+
+        def backtrack(current, open_count, close_count):
+
+            if len(current) == 2 * n:
+                result.append(current)
+                return
+
+            if open_count &lt; n:
+                backtrack(
+                    current + "(",
+                    open_count + 1,
+                    close_count
+                )
+
+            if close_count &lt; open_count:
+                backtrack(
+                    current + ")",
+                    open_count,
+                    close_count + 1
+                )
+
+        backtrack("", 0, 0)
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+private:
+    void backtrack(vector&lt;int&gt;&amp; current, int open_count, int close_count, vector&lt;vector&lt;int&gt;&gt;&amp; result) {
+        if (current.size() == 2 * n) {
+            result.push_back(current);
+            return;
+        }
+        if (open_count &lt; n) {
+            backtrack(result);
+            current + "(",;
+            open_count + 1,;
+            close_count;
+            );
+        }
+        if (close_count &lt; open_count) {
+            backtrack(result);
+            current + ")",;
+            open_count,;
+            close_count + 1;
+            );
+        }
+    }
+
+public:
+    vector&lt;vector&lt;int&gt;&gt; generateParenthesis(int n) {
+        vector&lt;vector&lt;int&gt;&gt; result;
+        backtrack("", 0, 0, result);
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    private void backtrack(List&lt;Integer&gt; current, int open_count, int close_count, List&lt;List&lt;Integer&gt;&gt; result) {
+        if (current.length == 2 * n) {
+            result.add(current);
+            return;
+        }
+        if (open_count &lt; n) {
+            backtrack(result);
+            current + "(",;
+            open_count + 1,;
+            close_count;
+            );
+        }
+        if (close_count &lt; open_count) {
+            backtrack(result);
+            current + ")",;
+            open_count,;
+            close_count + 1;
+            );
+        }
+    }
+
+    public List&lt;List&lt;Integer&gt;&gt; generateParenthesis(int n) {
+        List&lt;List&lt;Integer&gt;&gt; result = new ArrayList&lt;&gt;();
+        backtrack("", 0, 0, result);
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(C(n) × n)</span>
+          <span class="c-badge c-space">Space: O(n) recursion</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Backtracking with constraints (prune impossible branches)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-739">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 739 &bull; 6. Stack & Queue</span>
+          <h2>Daily Temperatures</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/daily-temperatures/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given an array of integers <code>temperatures</code>, return an array <code>answer</code> such that <code>answer[i]</code> is the number of days you have to wait after the <code>i</code>th day to get a warmer temperature.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Find the index distance to the Next Greater Element for each index.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>For each day i, iterate through future days j = i+1 ... n-1 until a warmer temperature is found.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def dailyTemperatures(self, temperatures):
+        n = len(temperatures)
+        result = [0] * n
+
+        for i in range(n):
+
+            for j in range(i + 1, n):
+
+                if temperatures[j] &gt; temperatures[i]:
+                    result[i] = j - i
+                    break
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; dailyTemperatures(int temperatures) {
+        n = temperatures.size();
+        result = [0] * n;
+        for (int i = 0; i &lt; n; ++i) {
+            for (int j = i + 1; j &lt; n; ++j) {
+                if (temperatures[j] &gt; temperatures[i]) {
+                    result[i] = j - i;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; dailyTemperatures(int temperatures) {
+        n = temperatures.length;
+        result = [0] * n;
+        for (int i = 0; i &lt; n; ++i) {
+            for (int j = i + 1; j &lt; n; ++j) {
+                if (temperatures[j] &gt; temperatures[i]) {
+                    result[i] = j - i;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n²)</span>
+          <span class="c-badge c-space">Space: O(1) aux</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Monotonic Decreasing Stack storing indices. When current temperature > temperature at top index, pop index and compute day gap <code>curr_index - prev_index</code>.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Initialize <code>result = [0] * len(temperatures)</code> and empty <code>stack</code>.</li><li>Iterate index <code>i</code> and <code>temperature</code>.</li><li>While <code>stack</code> and <code>temperature > temperatures[stack[-1]]</code>:</li><li>Pop <code>prev_index = stack.pop()</code>.</li><li>Set <code>result[prev_index] = i - prev_index</code>.</li><li>Push current index <code>i</code> onto stack.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def dailyTemperatures(self, temperatures):
+
+        result = [0] * len(temperatures)
+
+        stack = []
+
+        for i, temperature in enumerate(temperatures):
+
+            while (
+                stack
+                and temperature &gt; temperatures[stack[-1]]
+            ):
+                previous = stack.pop()
+
+                result[previous] = i - previous
+
+            stack.append(i)
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; dailyTemperatures(int temperatures) {
+        result = [0] * temperatures.size();
+        vector&lt;int&gt; stack;
+        for i, temperature in enumerate(temperatures):
+            while (() {
+                stack;
+                and temperature &gt; temperatures[stack[-1]];
+            }
+            ):;
+            previous = stack.pop_back();
+            result[previous] = i - previous;
+            stack.push_back(i);
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; dailyTemperatures(int temperatures) {
+        result = [0] * temperatures.length;
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        for i, temperature in enumerate(temperatures):
+            while (() {
+                stack;
+                and temperature &gt; temperatures[stack[-1]];
+            }
+            ):;
+            previous = stack.remove(previous = stack.size() - 1);
+            result[previous] = i - previous;
+            stack.add(i);
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Next Greater Element → Monotonic Decreasing Stack</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-853">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 853 &bull; 6. Stack & Queue</span>
+          <h2>Car Fleet</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/car-fleet/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Cars travel to target destination. A faster car catching a slower fleet merges into that fleet. Return total number of fleets that arrive at destination.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>Car arrival time = <code>(target - position) / speed</code>. Sorting cars by starting position descending lets us evaluate fleet merging.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>Simulate positions over continuous time steps or iteratively merge adjacent fleets.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def carFleet(self, target, position, speed):
+
+        cars = sorted(
+            zip(position, speed)
+        )
+
+        fleets = []
+
+        for pos, spd in cars:
+            time = (target - pos) / spd
+
+            while (
+                fleets
+                and time &lt;= fleets[-1]
+            ):
+                fleets.pop()
+
+            fleets.append(time)
+
+        return len(fleets)</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int carFleet(int target, int position, int speed) {
+        cars = sorted(;
+        zip(position, speed);
+        );
+        fleets = [];
+        for pos, spd in cars:
+            time = (target - pos) / spd;
+            while (() {
+                fleets;
+                and time &lt;= fleets[-1];
+            }
+            ):;
+            fleets.pop_back();
+            fleets.push_back(time);
+        }
+        return fleets.size();
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int carFleet(int target, int position, int speed) {
+        cars = sorted(;
+        zip(position, speed);
+        );
+        fleets = [];
+        for pos, spd in cars:
+            time = (target - pos) / spd;
+            while (() {
+                fleets;
+                and time &lt;= fleets[-1];
+            }
+            ):;
+            fleets.remove(fleets.size() - 1);
+            fleets.add(time);
+        }
+        return fleets.length;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n log n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Sort cars by position descending (closest to target first). Compute target arrival time. If current car's arrival time $\le$ last fleet's arrival time, it merges into that fleet.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Pair position & speed, sort descending by position: <code>sorted(zip(position, speed), reverse=True)</code>.</li><li>Initialize stack storing fleet arrival times.</li><li>For each car: compute <code>time = (target - pos) / spd</code>.</li><li>If stack is empty or <code>time > stack[-1]</code>, push <code>time</code> to stack (forms a new distinct fleet).</li><li>Return <code>len(stack)</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def carFleet(self, target, position, speed):
+
+        cars = sorted(
+            zip(position, speed),
+            reverse=True
+        )
+
+        stack = []
+
+        for pos, spd in cars:
+            time = (
+                target - pos
+            ) / spd
+
+            if (
+                not stack
+                or time &gt; stack[-1]
+            ):
+                stack.append(time)
+
+        return len(stack)</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int carFleet(int target, int position, int speed) {
+        cars = sorted(;
+        zip(position, speed),;
+        reverse=true;
+        );
+        vector&lt;int&gt; stack;
+        for pos, spd in cars:
+            time = (;
+            target - pos;
+            ) / spd;
+            if (() {
+                stack.empty();
+                or time &gt; stack[-1];
+            }
+            ):;
+            stack.push_back(time);
+        }
+        return stack.size();
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int carFleet(int target, int position, int speed) {
+        cars = sorted(;
+        zip(position, speed),;
+        reverse=true;
+        );
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        for pos, spd in cars:
+            time = (;
+            target - pos;
+            ) / spd;
+            if (() {
+                stack.isEmpty();
+                or time &gt; stack[-1];
+            }
+            ):;
+            stack.add(time);
+        }
+        return stack.length;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n log n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Sort by position descending → Target Arrival Time Stack</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-84">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 84 &bull; 6. Stack & Queue</span>
+          <h2>Largest Rectangle in Histogram</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-hard">Hard</span>
+          <a href="https://leetcode.com/problems/largest-rectangle-in-histogram/" target="_blank" rel="noopener" class="lc-link">
+            LeetCode <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Problem Statement -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box">
+          <p>Given an array of integers <code>heights</code> representing the histogram's bar height where width of each bar is 1, find the area of the largest rectangle in the histogram.</p>
+        </div>
+      </div>
+
+      <!-- 2. Understanding -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box">
+          <p>For a bar at index <code>i</code> with height <code>h</code>, the max width rectangle extending this height spans between the Previous Smaller Element and Next Smaller Element.</p>
+        </div>
+      </div>
+
+      <!-- 3. Naive Solution -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box">
+          <p>For every bar i, expand left and right pointers while bar heights are $\ge heights[i]$, then compute area.</p>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def largestRectangleArea(self, heights):
+
+        answer = 0
+        n = len(heights)
+
+        for i in range(n):
+
+            left = i
+            right = i
+
+            while (
+                left - 1 &gt;= 0
+                and heights[left - 1] &gt;= heights[i]
+            ):
+                left -= 1
+
+            while (
+                right + 1 &lt; n
+                and heights[right + 1] &gt;= heights[i]
+            ):
+                right += 1
+
+            width = right - left + 1
+
+            answer = max(
+                answer,
+                heights[i] * width
+            )
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; largestRectangleArea(vector&lt;int&gt;&amp; heights) {
+        answer = 0;
+        n = heights.size();
+        for (int i = 0; i &lt; n; ++i) {
+            left = i;
+            right = i;
+            while (() {
+                left - 1 &gt;= 0;
+                and heights[left - 1] &gt;= heights[i];
+            }
+            ):;
+            left -= 1;
+            while (() {
+                right + 1 &lt; n;
+                and heights[right + 1] &gt;= heights[i];
+            }
+            ):;
+            right += 1;
+            width = right - left + 1;
+            answer = max(;
+            answer,;
+            heights[i] * width;
+            );
+        }
+        return answer;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; largestRectangleArea(int[] heights) {
+        answer = 0;
+        n = heights.length;
+        for (int i = 0; i &lt; n; ++i) {
+            left = i;
+            right = i;
+            while (() {
+                left - 1 &gt;= 0;
+                and heights[left - 1] &gt;= heights[i];
+            }
+            ):;
+            left -= 1;
+            while (() {
+                right + 1 &lt; n;
+                and heights[right + 1] &gt;= heights[i];
+            }
+            ):;
+            right += 1;
+            width = right - left + 1;
+            answer = max(;
+            answer,;
+            heights[i] * width;
+            );
+        }
+        return answer;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Naive Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n²)</span>
+          <span class="c-badge c-space">Space: O(1) aux</span>
+        </div>
+      </div>
+
+      <!-- 5. Intuition for Optimization -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box">
+          <p>Monotonic Increasing Stack storing bar indices. When a shorter bar is encountered, taller bars at top of stack can no longer extend rightward; pop and calculate rectangle area.</p>
+        </div>
+      </div>
+
+      <!-- 6. Approach Algorithm -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box">
+          <ol class="step-list">
+            <li>Append sentinel <code>0</code> height to <code>heights</code> to flush stack at end.</li><li>Maintain monotonic increasing stack of bar indices.</li><li>When current <code>height &lt; heights[stack[-1]]</code>:</li><li>Pop <code>h = heights[stack.pop()]</code>.</li><li>Left boundary is new <code>stack[-1]</code> if stack non-empty else <code>-1</code>.</li><li>Compute <code>width = current_index - left_boundary - 1</code> and update max area.</li><li>Push current index.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 7. Optimized Code -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def largestRectangleArea(self, heights):
+
+        stack = []
+        answer = 0
+
+        heights.append(0)
+
+        for i, height in enumerate(heights):
+
+            while (
+                stack
+                and heights[stack[-1]] &gt; height
+            ):
+                h = heights[stack.pop()]
+
+                left_boundary = (
+                    stack[-1]
+                    if stack
+                    else -1
+                )
+
+                width = (
+                    i
+                    - left_boundary
+                    - 1
+                )
+
+                answer = max(
+                    answer,
+                    h * width
+                )
+
+            stack.append(i)
+
+        heights.pop()
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; largestRectangleArea(vector&lt;int&gt;&amp; heights) {
+        vector&lt;int&gt; stack;
+        answer = 0;
+        heights.push_back(0);
+        for i, height in enumerate(heights):
+            while (() {
+                stack;
+                and heights[stack[-1]] &gt; height;
+            }
+            ):;
+            h = heights[stack.pop_back()];
+            left_boundary = (;
+            stack[-1];
+            if (stack) {
+            }
+            else -1;
+            );
+            width = (;
+            i;
+            - left_boundary;
+            - 1;
+            );
+            answer = max(;
+            answer,;
+            h * width;
+            );
+            stack.push_back(i);
+        }
+        heights.pop_back();
+        return answer;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; largestRectangleArea(int[] heights) {
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        answer = 0;
+        heights.add(0);
+        for i, height in enumerate(heights):
+            while (() {
+                stack;
+                and heights[stack[-1]] &gt; height;
+            }
+            ):;
+            h = heights[stack.remove(h = heights[stack.size() - 1)];
+            left_boundary = (;
+            stack[-1];
+            if (stack) {
+            }
+            else -1;
+            );
+            width = (;
+            i;
+            - left_boundary;
+            - 1;
+            );
+            answer = max(;
+            answer,;
+            h * width;
+            );
+            stack.add(i);
+        }
+        heights.remove(heights.size() - 1);
+        return answer;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Optimized Complexity -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <!-- 9. Pattern / Key Takeaway -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box">
+          <p><strong>Pattern</strong> &mdash; Next / Previous Smaller Element → Monotonic Increasing Stack</p>
+        </div>
+      </div>
+    </div>
+
+      <!-- Summary Card 1: Pattern Map -->
+      <div class="summary-card" id="pattern-map">
+        <div class="summary-header">
+          <h2><i class="ti ti-map"></i> 🧠 Complete Stack &amp; Queue Pattern Map</h2>
+        </div>
+        <p style="color: var(--text2); margin-bottom: 20px; font-size: 14px;">Quick-reference table mapping all 7 Stack & Queue problems to their core optimal technique.</p>
+        <div class="pattern-table-wrapper">
+          <table class="pattern-table">
+            <thead>
+              <tr>
+                <th>Problem</th>
+                <th>LeetCode #</th>
+                <th>Core Algorithmic Pattern</th>
+                <th>Time</th>
+                <th>Space</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Valid Parentheses</td><td>LC 20</td><td>LIFO Stack Matching</td><td>O(N)</td><td>O(N)</td></tr>
+              <tr><td>Min Stack</td><td>LC 155</td><td>Auxiliary Min Stack tracking depth answer</td><td>O(1) all ops</td><td>O(N)</td></tr>
+              <tr><td>Evaluate Reverse Polish Notation</td><td>LC 150</td><td>Operand Stack calculation</td><td>O(N)</td><td>O(N)</td></tr>
+              <tr><td>Generate Parentheses</td><td>LC 22</td><td>Backtracking with open/close constraints</td><td>O(C(n) · n)</td><td>O(N) aux</td></tr>
+              <tr><td>Daily Temperatures</td><td>LC 739</td><td>Monotonic Decreasing Stack (Next Greater Element)</td><td>O(N)</td><td>O(N)</td></tr>
+              <tr><td>Car Fleet</td><td>LC 853</td><td>Position Descending Sort + Target Arrival Time Stack</td><td>O(N log N)</td><td>O(N)</td></tr>
+              <tr><td>Largest Rectangle in Histogram</td><td>LC 84</td><td>Monotonic Increasing Stack (Next/Prev Smaller Element)</td><td>O(N)</td><td>O(N)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Summary Card 2: Monotonic Stack Decision Matrix -->
+      <div class="summary-card" id="master-patterns">
+        <div class="summary-header">
+          <h2><i class="ti ti-flame"></i> 🔥 Monotonic Stack Decision Matrix</h2>
+        </div>
+        <p style="color: var(--text2); margin-bottom: 20px; font-size: 14px;">Mastering the relationship between problem requirements and Monotonic Stack types.</p>
+        <div class="pattern-table-wrapper">
+          <table class="pattern-table">
+            <thead>
+              <tr>
+                <th>Target Problem Signal</th>
+                <th>Stack Property</th>
+                <th>Pop Condition</th>
+                <th>Key Problems</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Next Greater Element / Warmest Day</td><td>Monotonic Decreasing</td><td><code>curr_val > stack_top_val</code></td><td>LC 739 (Daily Temps)</td></tr>
+              <tr><td>Previous Greater Element</td><td>Monotonic Decreasing</td><td><code>curr_val >= stack_top_val</code></td><td>Stock Span Problems</td></tr>
+              <tr><td>Next Smaller Element / Max Histogram Area</td><td>Monotonic Increasing</td><td><code>curr_val &lt; stack_top_val</code></td><td>LC 84 (Largest Rectangle)</td></tr>
+              <tr><td>Previous Smaller Element</td><td>Monotonic Increasing</td><td><code>curr_val &lt;= stack_top_val</code></td><td>Subarray Minimum Sums</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Summary Card 3: Deep Connections & Amortized O(n) Proof -->
+      <div class="summary-card" id="template-roadmap">
+        <div class="summary-header">
+          <h2><i class="ti ti-rocket"></i> ⚡ The Most Important Connection &amp; Amortized Proof</h2>
+        </div>
+        <p style="color: var(--text2); margin-bottom: 20px; font-size: 14px;">Comparing the two flagship Monotonic Stack problems and understanding why nested while loops remain O(N).</p>
+
+        <div class="diagram-box">
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                        MONOTONIC STACK DUALITY                         │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │
+         ┌───────────────────────────┴───────────────────────────┐
+         ▼                                                       ▼
+ [ Daily Temperatures — LC 739 ]             [ Largest Rectangle — LC 84 ]
+  • Next Greater Element                      • Next/Previous Smaller Element
+  • Stack is Decreasing                       • Stack is Increasing
+  • Pop when curr > top                       • Pop when curr < top
+  • Popped element finds warmer day           • Popped element calculates height × width
+        </div>
+
+        <div style="margin-top: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
+          <h4 style="color: var(--accent); font-size: 15px; margin-bottom: 10px;"><i class="ti ti-bulb"></i> The Killer Interview Proof: Why Monotonic Stacks are strictly O(n)</h4>
+          <p style="font-size: 13.5px; color: var(--text2); line-height: 1.6;">
+            Even though a monotonic stack algorithm contains a nested <code>while</code> loop, <strong>every array index is pushed onto the stack exactly once and popped at most once</strong> throughout the entire execution of the loop.<br><br>
+            Total push operations = $N$. Total pop operations $\le N$. Therefore, the total work spent inside the nested loop across all elements combined is $O(N + N) = O(N)$.
+          </p>
+        </div>
+  
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/maximal-rectangle/" target="_blank" rel="noopener">
+      <span class="sim-name">Maximal Rectangle</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 85</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/trapping-rain-water/" target="_blank" rel="noopener">
+      <span class="sim-name">Trapping Rain Water</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 42</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/maximum-width-ramp/" target="_blank" rel="noopener">
+      <span class="sim-name">Maximum Width Ramp</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 962</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/sum-of-subarray-minimums/" target="_blank" rel="noopener">
+      <span class="sim-name">Sum of Subarray Minimums</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 907</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/car-fleet/" target="_blank" rel="noopener">
+      <span class="sim-name">Car Fleet</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 853</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    </main>
+  </div>
+
+          <script>
+    const filterInput = document.getElementById('filterInput');
+    const navItems = document.querySelectorAll('.nav-item');
+    const cards = document.querySelectorAll('.problem-card');
+
+    function openSidebar() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const icon = document.getElementById('hamburgerIcon');
+      if (sidebar) sidebar.classList.add('open');
+      if (overlay) overlay.classList.add('active');
+      if (icon) {
+        icon.classList.remove('ti-menu-2');
+        icon.classList.add('ti-x');
+      }
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const icon = document.getElementById('hamburgerIcon');
+      if (sidebar) sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+      if (icon) {
+        icon.classList.remove('ti-x');
+        icon.classList.add('ti-menu-2');
+      }
+    }
+
+    function toggleNav() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    }
+
+    if (filterInput) {
+      filterInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        navItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(q) ? 'block' : 'none';
+        });
+      });
+    }
+
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        const titleEl = item.querySelector('span:first-child');
+        const mobileNavTitle = document.getElementById('mobileNavTitle');
+        if (mobileNavTitle && titleEl) {
+          mobileNavTitle.textContent = titleEl.textContent.trim();
+        }
+        if (window.innerWidth <= 900) {
+          setTimeout(closeSidebar, 50);
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
+    if ('IntersectionObserver' in window && cards.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            if (id) {
+              navItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (href === `#${id}`) {
+                  item.classList.add('active');
+                  const titleEl = item.querySelector('span:first-child');
+                  const mobileNavTitle = document.getElementById('mobileNavTitle');
+                  if (mobileNavTitle && titleEl && window.innerWidth <= 900) {
+                    mobileNavTitle.textContent = titleEl.textContent.trim();
+                  }
+                } else {
+                  item.classList.remove('active');
+                }
+              });
+            }
+          }
+        });
+      }, { rootMargin: '-70px 0px -60% 0px', threshold: 0 });
+
+      cards.forEach(card => observer.observe(card));
+    }
+
+    function copyCode(btn) {
+      try {
+        const container = btn.closest('.code-container');
+        const codeEl = container ? container.querySelector('code') : null;
+        if (!codeEl) return;
+
+        const textToCopy = codeEl.textContent || codeEl.innerText;
+
+        const showSuccess = () => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="color: var(--green);"></i> <span style="color: var(--green);">Copied!</span>';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.borderColor = '';
+          }, 2000);
+        };
+
+        if (navigator.clipboard && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => {
+            fallbackCopy(textToCopy, showSuccess);
+          });
+        } else {
+          fallbackCopy(textToCopy, showSuccess);
+        }
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    }
+
+    function fallbackCopy(text, onSuccess) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful && onSuccess) onSuccess();
+      } catch (err) {
+        console.error('Fallback copy error:', err);
+      }
+      document.body.removeChild(textarea);
+    }
+  
+    function switchLang(btn, lang) {
+      if (!btn) return;
+      const container = btn.closest('.code-container');
+      if (container) {
+        container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const targetContent = container.querySelector(`.code-content[data-lang="${lang}"]`);
+        if (targetContent) targetContent.classList.add('active');
+      }
+      try {
+        localStorage.setItem('preferred_dsa_lang', lang);
+      } catch(e) {}
+      syncAllCodeContainers(lang);
+    }
+
+    function syncAllCodeContainers(lang) {
+      document.querySelectorAll('.code-container').forEach(container => {
+        const tab = container.querySelector(`.lang-tab[data-lang="${lang}"]`);
+        const content = container.querySelector(`.code-content[data-lang="${lang}"]`);
+        if (tab && content) {
+          container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+          container.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          content.classList.add('active');
+        }
+      });
+    }
+
+    function initLanguagePreference() {
+      try {
+        const savedLang = localStorage.getItem('preferred_dsa_lang');
+        if (savedLang && ['python', 'cpp', 'java'].includes(savedLang)) {
+          syncAllCodeContainers(savedLang);
+        }
+      } catch(e) {}
+    }
+
+    function enableMobileCodeTouchScroll() {
+      document.querySelectorAll('.code-container, .code-content, pre, .code-block').forEach(elem => {
+        let startX = 0, scrollLeft = 0, isDragging = false;
+        elem.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 1) {
+            startX = e.touches[0].pageX;
+            scrollLeft = elem.scrollLeft;
+            isDragging = true;
+          }
+        }, { passive: true });
+        elem.addEventListener('touchmove', function(e) {
+          if (!isDragging || e.touches.length !== 1) return;
+          const deltaX = e.touches[0].pageX - startX;
+          elem.scrollLeft = scrollLeft - deltaX;
+        }, { passive: true });
+        elem.addEventListener('touchend', function() { isDragging = false; }, { passive: true });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initLanguagePreference();
+      enableMobileCodeTouchScroll();
+    });
+
+    function copyCode(btn) {
+      try {
+        const container = btn.closest('.code-container');
+        const activeContent = container ? (container.querySelector('.code-content.active code') || container.querySelector('code')) : null;
+        if (!activeContent) return;
+
+        const textToCopy = activeContent.textContent || activeContent.innerText;
+
+        const showSuccess = () => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="color: var(--green);"></i> <span style="color: var(--green);">Copied!</span>';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.borderColor = '';
+          }, 2000);
+        };
+
+        if (navigator.clipboard && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => {
+            fallbackCopy(textToCopy, showSuccess);
+          });
+        } else {
+          fallbackCopy(textToCopy, showSuccess);
+        }
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    }
+
+  </script>
+  <script src="./sheet150.js" defer></script>
+</body>
+</html>

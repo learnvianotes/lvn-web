@@ -1,0 +1,2941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bit Manipulation — Sheet 150</title>
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="icon" type="image/png" href="../../app-icon.png">
+  <link rel="apple-touch-icon" href="../../app-icon.png">
+  <meta name="theme-color" content="#F7F4ED">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../../css/c-note-theme.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('cnote_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      try { localStorage.setItem('cnote_theme', savedTheme); } catch(e) {}
+    })();
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('cnote_theme', next); } catch(e) {}
+      updateThemeIcon(next);
+    }
+
+    function updateThemeIcon(theme) {
+      const currentTheme = theme || document.documentElement.getAttribute('data-theme') || 'light';
+      const icons = document.querySelectorAll('.theme-toggle-btn i, .themeToggleIcon, #themeToggleIcon');
+      icons.forEach(icon => {
+        icon.className = currentTheme === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'light';
+      updateThemeIcon(theme);
+    });
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #38bdf8;
+      --green: #34d399;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --cyan: #22d3ee;
+      --purple: #a855f7;
+      --radius: 12px;
+    }
+    html {
+      scroll-behavior: smooth;
+      height: 100%;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+    ::selection { background: var(--accent); color: #000; }
+    
+    /* Custom Sleek Dark Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
+      
+    }
+
+    /* ── Mobile Top Navbar (System Design Style) ── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      z-index: 500;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .hamburger-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 20px;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hamburger-btn:hover, .hamburger-btn:active {
+      background: var(--bg4);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .mobile-nav-logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .mobile-nav-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    /* ── Sidebar Overlay (Mobile) ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 599;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      opacity: 0;
+      transition: opacity .25s ease;
+      pointer-events: none;
+    }
+    .sidebar-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      position: relative;
+    }
+    
+    /* Desktop Sidebar (>= 900px) */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      height: 100vh;
+      height: 100dvh;
+      overflow-y: auto;
+      
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overscroll-behavior: contain;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+      transform: none;
+    }
+    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    .sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    .sidebar-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-close-btn {
+      display: none;
+      align-self: flex-end;
+      background: transparent;
+      border: none;
+      color: var(--text3);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color .15s;
+    }
+    .sidebar-close-btn:hover { color: var(--accent); }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 10px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .module-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .module-title-side {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .sidebar-search {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .sidebar-search input {
+      width: 100%;
+      height: 36px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px 0 42px !important;
+      font-size: 12.5px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      box-sizing: border-box;
+    }
+    .sidebar-search input:focus { border-color: var(--accent); }
+    .sidebar-search i {
+      position: absolute;
+      left: 22px !important;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .nav-list { padding: 10px 8px 40px; list-style: none; flex-grow: 1; }
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--accent);
+      padding: 12px 10px 6px;
+      margin-top: 10px;
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+    .nav-section-title:first-child { margin-top: 0; }
+    .nav-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: var(--text2);
+      text-decoration: none;
+      margin-bottom: 2px;
+      transition: all .15s;
+      word-break: break-word;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: var(--bg3); color: var(--accent); font-weight: 600; }
+    .nav-item span:first-child {
+      flex: 1;
+      min-width: 0;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+    .diff-badge {
+      font-size: 9.5px;
+      font-family: var(--mono);
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+    .diff-easy { background: rgba(52, 211, 153, 0.14); color: var(--green); border: 1px solid rgba(52, 211, 153, 0.28); }
+    .diff-medium { background: rgba(245, 158, 11, 0.14); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.28); }
+    .diff-hard { background: rgba(239, 68, 68, 0.14); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.28); }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      width: calc(100% - 280px);
+      max-width: 960px;
+      min-width: 0;
+      padding: 36px 36px 100px;
+      box-sizing: border-box;
+    }
+
+    .topic-header {
+      margin-bottom: 36px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .topic-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .topic-header h1 {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+    .topic-header p {
+      font-size: 14.5px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* Problem Card */
+    .problem-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+      scroll-margin-top: 32px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+    .problem-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .problem-title-area { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .problem-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .problem-header h2 {
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+      word-break: break-word;
+    }
+    .problem-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .lc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .lc-link:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+    .sec-block {
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .sec-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .sec-title i { color: var(--accent); font-size: 15px; }
+
+    .desc-box, .naive-box, .intuition-box, .approach-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.6;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      display: block;
+    }
+    .intuition-box {
+      background: rgba(56, 189, 248, 0.04);
+      border-color: rgba(56, 189, 248, 0.2);
+      border-left: 3px solid var(--accent);
+    }
+    .naive-box {
+      background: rgba(245, 158, 11, 0.04);
+      border-color: rgba(245, 158, 11, 0.2);
+      border-left: 3px solid var(--amber);
+    }
+    .approach-box {
+      background: rgba(52, 211, 153, 0.04);
+      border-color: rgba(52, 211, 153, 0.2);
+      border-left: 3px solid var(--green);
+    }
+
+    ol.step-list, ul.bullet-list {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+    ol.step-list li, ul.bullet-list li {
+      margin-bottom: 6px;
+      color: var(--text2);
+      word-break: break-word;
+    }
+    ol.step-list li strong, ul.bullet-list li strong { color: var(--text); }
+
+    .complexity-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      max-width: 100%;
+    }
+    .c-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      word-break: break-word;
+    }
+    .c-time {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .c-space {
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+    }
+    .c-naive {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .code-container {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #06080e;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      gap: 8px;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--text3); }
+    .code-container pre {
+      padding: 14px 16px;
+      margin: 0;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: #bbf7e6;
+      line-height: 1.6;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+    }
+    .code-container pre code {
+      display: block;
+      white-space: pre;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    /* Summary & Special Cards */
+    .summary-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+      scroll-margin-top: 32px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+    }
+    .summary-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-header h2 {
+      font-size: clamp(20px, 3.5vw, 24px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      word-break: break-word;
+    }
+    .summary-header p {
+      font-size: 13.5px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .pattern-item-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .pattern-item-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      word-break: break-word;
+    }
+    .pattern-item-card p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.55;
+    }
+    .pattern-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .pattern-table {
+      width: 100%;
+      min-width: 540px;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .pattern-table th {
+      background: var(--bg3);
+      padding: 10px 14px;
+      color: var(--text);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .pattern-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .diagram-box {
+      background: #06080e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--cyan);
+      white-space: pre;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      line-height: 1.5;
+      max-width: 100%;
+    }
+    .cheat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .cheat-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .cheat-item code {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .cheat-item p {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+    .cheatsheet-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .cheatsheet-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cheatsheet-row:last-child { border-bottom: none; }
+    .cs-trigger {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+      border-radius: 6px;
+      padding: 5px 10px;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .cs-arrow { color: var(--text3); font-size: 16px; align-self: center; }
+    .cs-answer { font-size: 13px; color: var(--text2); }
+    .cs-answer strong { color: var(--text); }
+    .group-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent);
+      margin: 20px 0 10px;
+    }
+
+    /* ── RESPONSIVE BREAKPOINTS (SYSTEM DESIGN SLIDE-OUT DRAWER) ── */
+    @media (max-width: 900px) {
+      .mobile-nav { display: flex; }
+      .sidebar-overlay { display: block; }
+
+      .sidebar {
+        position: fixed;
+        top: 56px !important;
+        left: 0;
+        bottom: 0;
+        z-index: 600;
+        width: min(300px, 85vw);
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+        height: calc(100vh - 56px) !important;
+        height: calc(100dvh - 56px) !important;
+        border-right: 1px solid var(--border);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+      }
+      .sidebar.open {
+        transform: translateX(0) !important;
+      }
+      .sidebar-close-btn {
+        display: block;
+      }
+
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 76px 16px 60px;
+      }
+      .problem-card, .summary-card {
+        padding: 20px 16px;
+        margin-bottom: 28px;
+        scroll-margin-top: 76px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 72px 12px 48px;
+      }
+      .problem-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .problem-meta {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .desc-box, .naive-box, .intuition-box, .approach-box {
+        padding: 12px 14px;
+        font-size: 13.5px;
+      }
+      .code-container pre {
+        padding: 12px;
+        font-size: 12px;
+      }
+      .cheatsheet-row {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .cs-trigger, .cs-arrow {
+        align-self: flex-start;
+      }
+      .cheat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    /* Multi-language Code Container Tabs (LeetCode Style) */
+    .code-container {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #06080e;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: block;
+      clear: both;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-sans);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .lang-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lang-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s ease;
+      user-select: none;
+    }
+    .lang-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .lang-tab.active {
+      background: var(--bg4);
+      color: var(--accent);
+      border-color: var(--border2);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    .lang-tab.active i {
+      color: var(--accent);
+    }
+    .code-content {
+      display: none;
+    }
+    .code-content.active {
+      display: block;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 4px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .15s;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .copy-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--text3); }
+    .code-container pre {
+      padding: 14px 16px;
+      margin: 0;
+      overflow-x: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+
+    /* ── Desktop Sub-Page Fixed Topbar ── */
+    .sub-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+      min-height: 52px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+    .sub-topbar-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text3);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      transition: color .15s;
+      white-space: nowrap;
+    }
+    .sub-topbar-back:hover { color: var(--accent); }
+    .sub-topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .sub-topbar-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+    /* On mobile: hide desktop topbar, show mobile-nav instead */
+    @media (max-width: 900px) {
+      .sub-topbar { display: none !important; }
+    }
+    /* On desktop: offset sidebar and layout below 52px topbar */
+    @media (min-width: 901px) {
+      .sidebar {
+        top: 52px !important;
+        height: calc(100vh - 52px) !important;
+        height: calc(100dvh - 52px) !important;
+        bottom: auto !important;
+      }
+      .layout {
+        padding-top: 52px !important;
+      }
+      .sidebar-header {
+        display: none !important;
+      }
+      .problem-card, .summary-card {
+        scroll-margin-top: 68px !important;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="./sheet150.css">
+</head>
+<body>
+  <!-- Mobile Top Navbar -->
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleNav()" aria-label="Toggle navigation menu">
+      <i class="ti ti-menu-2" id="hamburgerIcon"></i>
+    </button>
+    <img src="../../app-icon.png" class="mobile-nav-logo" alt="C-Note" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">
+    <span class="mobile-nav-title" id="mobileNavTitle">Bit Manipulation</span>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" style="margin-left:auto;">
+      <i class="ti ti-sun" id="themeToggleIcon"></i>
+    </button>
+  </nav>
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" aria-hidden="true"></div>
+  <!-- Desktop Fixed Topbar -->
+  <header class="sub-topbar" id="subTopbar">
+    <a href="./index.html" class="sub-topbar-back">
+      <i class="ti ti-arrow-left"></i> Sheet 150 Hub
+    </a>
+    <div class="sub-topbar-brand">
+      <img src="../../app-icon.png" alt="Sheet 150" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">
+      <span class="sub-topbar-title">Sheet 150</span>
+    </div>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <i class="ti ti-sun"></i>
+    </button>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-header-top">
+          <a href="./index.html" class="back-link"><i class="ti ti-arrow-left"></i> Sheet 150 Hub</a>
+          <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar"><i class="ti ti-x"></i></button>
+        </div>
+      </div>
+    <div class="sidebar-search">
+      <i class="ti ti-search"></i>
+      <input type="text" id="filterInput" placeholder="Filter problems...">
+    </div>
+    <div class="nav-list" id="navList">
+      <div class="nav-section-title">12. Bit Manipulation — 7</div>
+      <a href="#lc-136" class="nav-item"><span>1. Single Number — LC 136</span><span class="diff-badge diff-easy">Easy</span></a>
+      <a href="#lc-191" class="nav-item"><span>2. Number of 1 Bits — LC 191</span><span class="diff-badge diff-easy">Easy</span></a>
+      <a href="#lc-338" class="nav-item"><span>3. Counting Bits — LC 338</span><span class="diff-badge diff-easy">Easy</span></a>
+      <a href="#lc-190" class="nav-item"><span>4. Reverse Bits — LC 190</span><span class="diff-badge diff-easy">Easy</span></a>
+      <a href="#lc-268" class="nav-item"><span>5. Missing Number — LC 268</span><span class="diff-badge diff-easy">Easy</span></a>
+      <a href="#lc-371" class="nav-item"><span>6. Sum of Two Integers — LC 371</span><span class="diff-badge diff-medium">Medium</span></a>
+      <a href="#lc-7" class="nav-item"><span>7. Reverse Integer — LC 7</span><span class="diff-badge diff-medium">Medium</span></a>
+      <div style="margin:16px 0 8px 12px;font-size:11px;font-family:var(--mono);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;">SUMMARY &amp; MAPS</div>
+      <a href="#pattern-map"   class="nav-item"><span>🧠 Pattern Map</span></a>
+      <a href="#six-tricks"    class="nav-item"><span>🔥 6 Bit Tricks</span></a>
+      <a href="#cheatsheet"    class="nav-item"><span>🎯 Cheat Sheet</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topic-header">
+      <div class="topic-eyebrow">MODULE 11 &bull; SHEET 150</div>
+      <h1>Bit Manipulation</h1>
+      <p>7 problems — XOR cancellation, lowest-set-bit removal, bit-shift DP, binary reversal, carry arithmetic, and digit extraction.</p>
+    </div>
+
+
+    <div class="problem-card" id="lc-136">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 136 &bull; 12. Bit Manipulation</span>
+          <h2>Single Number</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/single-number/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Every number in the array appears exactly twice except one. Find that single number. You must solve it in O(n) time and O(1) space.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p>XOR has two golden properties: <code>x ^ x = 0</code> (pairs cancel) and <code>x ^ 0 = x</code> (identity). XOR-ing all elements causes every duplicate pair to vanish, leaving only the unique number.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>Use a hash set: add unseen numbers, remove them when seen a second time. Whatever remains is the answer.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def singleNumber(self, nums):
+        seen = set()
+
+        for num in nums:
+            if num in seen:
+                seen.remove(num)
+            else:
+                seen.add(num)
+
+        return seen.pop()</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int singleNumber(vector&lt;int&gt;&amp; nums) {
+        unordered_set&lt;int&gt; seen;
+        for (auto num : nums) {
+            if (seen.count(num)) {
+                seen.remove(num);
+            }
+            else:;
+            seen.insert(num);
+        }
+        return seen.pop_back();
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int singleNumber(int[] nums) {
+        Set&lt;Integer&gt; seen = new HashSet&lt;&gt;();
+        for (int num : nums) {
+            if (seen.contains(num)) {
+                seen.remove(num);
+            }
+            else:;
+            seen.add(num);
+        }
+        return seen.remove(return seen.size() - 1);
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p>XOR all elements together. Paired numbers cancel to 0. The single unpaired number XOR'd with 0 returns itself.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Initialize <code>answer = 0</code>.</li><li>For each <code>num</code> in <code>nums</code>: <code>answer ^= num</code>.</li><li>Return <code>answer</code>.</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def singleNumber(self, nums):
+        answer = 0
+
+        for num in nums:
+            answer ^= num
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; singleNumber(vector&lt;int&gt;&amp; nums) {
+        answer = 0;
+        for (auto num : nums) {
+            answer ^= num;
+        }
+        return answer;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; singleNumber(int[] nums) {
+        answer = 0;
+        for (int num : nums) {
+            answer ^= num;
+        }
+        return answer;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; Pairs + one unique → XOR all elements (x ^ x = 0, x ^ 0 = x)</p></div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/single-number-ii/" target="_blank" rel="noopener">
+      <span class="sim-name">Single Number II</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 137</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/single-number-iii/" target="_blank" rel="noopener">
+      <span class="sim-name">Single Number III</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 260</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/missing-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Missing Number</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 268</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-the-duplicate-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Find the Duplicate Number</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 287</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Maximum XOR of Two Numbers</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 421</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-191">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 191 &bull; 12. Bit Manipulation</span>
+          <h2>Number of 1 Bits</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/number-of-1-bits/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Given an unsigned integer, return the number of set bits (1s) in its binary representation (Hamming weight).</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p><code>n &amp; (n-1)</code> clears the lowest set bit. Repeating this until <code>n == 0</code> tells us exactly how many 1-bits exist — one iteration per set bit, not per total bit.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>Check all 32 bits one by one using <code>n &amp; 1</code> and right-shift.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def hammingWeight(self, n):
+        count = 0
+
+        for _ in range(32):
+            if n &amp; 1:
+                count += 1
+
+            n &gt;&gt;= 1
+
+        return count</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int hammingWeight(int n) {
+        count = 0;
+        for (int _ = 0; _ &lt; 32; ++_) {
+            if (n &amp; 1) {
+                count += 1;
+            }
+            n &gt;&gt;= 1;
+        }
+        return count;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int hammingWeight(int n) {
+        count = 0;
+        for (int _ = 0; _ &lt; 32; ++_) {
+            if (n &amp; 1) {
+                count += 1;
+            }
+            n &gt;&gt;= 1;
+        }
+        return count;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(32) = O(1)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p><code>n - 1</code> flips the lowest set bit and all bits below it. So <code>n &amp; (n-1)</code> removes exactly the lowest 1-bit. Each iteration costs one set bit — loop runs exactly <code>k</code> times where <code>k</code> is the Hamming weight.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Initialize <code>count = 0</code>.</li><li>While <code>n != 0</code>: <code>n &amp;= n - 1</code>; <code>count += 1</code>.</li><li>Return <code>count</code>.</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def hammingWeight(self, n):
+        count = 0
+
+        while n:
+            n &amp;= n - 1
+            count += 1
+
+        return count</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int hammingWeight(int n) {
+        count = 0;
+        while (n) {
+            n &amp;= n - 1;
+            count += 1;
+        }
+        return count;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int hammingWeight(int n) {
+        count = 0;
+        while (n) {
+            n &amp;= n - 1;
+            count += 1;
+        }
+        return count;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(k) — k = number of set bits</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; n &amp; (n-1) removes the lowest set bit — loop runs once per 1-bit</p></div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/number-of-steps-to-reduce-a-number-to-zero/" target="_blank" rel="noopener">
+      <span class="sim-name">Number of Steps to Reduce to Zero</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1342</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/counting-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Counting Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 338</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/sum-of-two-integers/" target="_blank" rel="noopener">
+      <span class="sim-name">Sum of Two Integers</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 371</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/bitwise-and-of-numbers-range/" target="_blank" rel="noopener">
+      <span class="sim-name">Bitwise AND of Numbers Range</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 201</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/reverse-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Reverse Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 190</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-338">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 338 &bull; 12. Bit Manipulation</span>
+          <h2>Counting Bits</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/counting-bits/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Given <code>n</code>, return an array of length <code>n+1</code> where <code>result[i]</code> is the number of 1-bits in <code>i</code>.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p>Right-shifting a number by 1 removes its last bit: <code>num &gt;&gt; 1</code> has the same 1-bits as <code>num</code> minus the contribution of its last bit. So <code>bits[num] = bits[num &gt;&gt; 1] + (num &amp; 1)</code> — build on already-computed results.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>For each number 0..n, count its 1-bits independently using <code>n &amp; (n-1)</code>.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def countBits(self, n):
+        result = []
+
+        for num in range(n + 1):
+            count = 0
+            x = num
+
+            while x:
+                x &amp;= x - 1
+                count += 1
+
+            result.append(count)
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;vector&lt;int&gt;&gt; countBits(int n) {
+        vector&lt;vector&lt;int&gt;&gt; result;
+        for (int num = 0; num &lt; n + 1; ++num) {
+            count = 0;
+            x = num;
+            while (x) {
+                x &amp;= x - 1;
+                count += 1;
+            }
+            result.push_back(count);
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;List&lt;Integer&gt;&gt; countBits(int n) {
+        List&lt;List&lt;Integer&gt;&gt; result = new ArrayList&lt;&gt;();
+        for (int num = 0; num &lt; n + 1; ++num) {
+            count = 0;
+            x = num;
+            while (x) {
+                x &amp;= x - 1;
+                count += 1;
+            }
+            result.add(count);
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n log n)</span>
+          <span class="c-badge c-space">Space: O(n) output</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p>DP recurrence: <code>bits[num] = bits[num &gt;&gt; 1] + (num &amp; 1)</code>. Removing the last bit gives a smaller number whose bit count is already known.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Initialize <code>result = [0] * (n + 1)</code>.</li><li>For <code>num</code> in range(1, n+1):</li><li><code>result[num] = result[num &gt;&gt; 1] + (num &amp; 1)</code>.</li><li>Return <code>result</code>.</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def countBits(self, n):
+        result = [0] * (n + 1)
+
+        for num in range(1, n + 1):
+            result[num] = (
+                result[num &gt;&gt; 1]
+                + (num &amp; 1)
+            )
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; countBits(int n) {
+        result = [0] * (n + 1);
+        for (int num = 1; num &lt; n + 1; ++num) {
+            result[num] = (;
+            result[num &gt;&gt; 1];
+            + (num &amp; 1);
+            );
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; countBits(int n) {
+        result = [0] * (n + 1);
+        for (int num = 1; num &lt; n + 1; ++num) {
+            result[num] = (;
+            result[num &gt;&gt; 1];
+            + (num &amp; 1);
+            );
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n) output</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; DP + bit shift: bits[num] = bits[num >> 1] + (num &amp; 1)</p></div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/number-of-1-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Number of 1 Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 191</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Counting Bits Range</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 1356</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/power-of-two/" target="_blank" rel="noopener">
+      <span class="sim-name">Power of Two</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 231</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/single-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Single Number</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 136</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/sum-of-two-integers/" target="_blank" rel="noopener">
+      <span class="sim-name">Sum of Two Integers</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 371</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-190">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 190 &bull; 12. Bit Manipulation</span>
+          <h2>Reverse Bits</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/reverse-bits/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Reverse the bits of a given 32-bit unsigned integer and return the result.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p>Extract the rightmost bit of <code>n</code> using <code>n &amp; 1</code>, shift it into the leftmost available position of <code>result</code> using <code>result &lt;&lt;= 1</code> then <code>result |= n &amp; 1</code>, then right-shift <code>n</code>. Repeat 32 times.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>Build a binary string of <code>n</code>, reverse it, then reconstruct the integer.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def reverseBits(self, n):
+        binary = ""
+
+        for _ in range(32):
+            binary += str(n &amp; 1)
+            n &gt;&gt;= 1
+
+        result = 0
+
+        for bit in binary:
+            result = (result &lt;&lt; 1) | int(bit)
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; reverseBits(int n) {
+        binary = "";
+        for (int _ = 0; _ &lt; 32; ++_) {
+            binary += str(n &amp; 1);
+            n &gt;&gt;= 1;
+        }
+        result = 0;
+        for (auto bit : binary) {
+            result = (result &lt;&lt; 1) | int(bit);
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; reverseBits(int n) {
+        binary = "";
+        for (int _ = 0; _ &lt; 32; ++_) {
+            binary += str(n &amp; 1);
+            n &gt;&gt;= 1;
+        }
+        result = 0;
+        for (int bit : binary) {
+            result = (result &lt;&lt; 1) | int(bit);
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(32) = O(1)</span>
+          <span class="c-badge c-space">Space: O(32) = O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p>Per-iteration: shift <code>result</code> left to make room, OR in the lowest bit of <code>n</code>, then right-shift <code>n</code>. After 32 iterations the bits are fully reversed.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Initialize <code>result = 0</code>.</li><li>Repeat 32 times: <code>result &lt;&lt;= 1</code>, <code>result |= n &amp; 1</code>, <code>n &gt;&gt;= 1</code>.</li><li>Return <code>result</code>.</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def reverseBits(self, n):
+        result = 0
+
+        for _ in range(32):
+            result &lt;&lt;= 1
+            result |= n &amp; 1
+            n &gt;&gt;= 1
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; reverseBits(int n) {
+        result = 0;
+        for (int _ = 0; _ &lt; 32; ++_) {
+            result &lt;&lt;= 1;
+            result |= n &amp; 1;
+            n &gt;&gt;= 1;
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; reverseBits(int n) {
+        result = 0;
+        for (int _ = 0; _ &lt; 32; ++_) {
+            result &lt;&lt;= 1;
+            result |= n &amp; 1;
+            n &gt;&gt;= 1;
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(32) = O(1)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; Shift + extract each bit: result &lt;&lt;= 1 → result |= (n &amp; 1) → n &gt;&gt;= 1</p></div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/number-of-1-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Number of 1 Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 191</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/reverse-integer/" target="_blank" rel="noopener">
+      <span class="sim-name">Reverse Integer</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 7</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/counting-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Counting Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 338</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/single-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Single Number</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 136</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/power-of-two/" target="_blank" rel="noopener">
+      <span class="sim-name">Power of Two</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 231</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-268">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 268 &bull; 12. Bit Manipulation</span>
+          <h2>Missing Number</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-easy">Easy</span>
+          <a href="https://leetcode.com/problems/missing-number/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Given an array containing <code>n</code> distinct numbers from <code>[0, n]</code>, return the one missing number.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p>XOR the complete range <code>0..n</code> with every element of the array. Present numbers cancel in pairs; only the missing number has no partner to cancel with.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>Put all numbers in a set; scan 0..n for the missing one.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def missingNumber(self, nums):
+        n = len(nums)
+        values = set(nums)
+
+        for num in range(n + 1):
+            if num not in values:
+                return num
+
+        return -1</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    bool missingNumber(vector&lt;int&gt;&amp; nums) {
+        n = nums.size();
+        values = set(nums);
+        for (int num = 0; num &lt; n + 1; ++num) {
+            if (num !in values) {
+                return num;
+            }
+        }
+        return -1;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public boolean missingNumber(int[] nums) {
+        n = nums.length;
+        values = set(nums);
+        for (int num = 0; num &lt; n + 1; ++num) {
+            if (num !in values) {
+                return num;
+            }
+        }
+        return -1;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(n)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p>Start with <code>answer = n</code>. For each index <code>i</code>, XOR in both <code>i</code> and <code>nums[i]</code>. Every index 0..n-1 is covered, and each present number cancels. The missing number survives.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Initialize <code>answer = n</code>.</li><li>For <code>i, num</code> in <code>enumerate(nums)</code>: <code>answer ^= i</code>, <code>answer ^= num</code>.</li><li>Return <code>answer</code>.</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def missingNumber(self, nums):
+        n = len(nums)
+        answer = n
+
+        for i, num in enumerate(nums):
+            answer ^= i
+            answer ^= num
+
+        return answer</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; missingNumber(vector&lt;int&gt;&amp; nums) {
+        n = nums.size();
+        answer = n;
+        for i, num in enumerate(nums):
+            answer ^= i;
+            answer ^= num;
+        }
+        return answer;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; missingNumber(int[] nums) {
+        n = nums.length;
+        answer = n;
+        for i, num in enumerate(nums):
+            answer ^= i;
+            answer ^= num;
+        }
+        return answer;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(n)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; Missing value in known range → XOR complete range with array (also solvable as sum(0..n) - sum(nums))</p></div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/single-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Single Number</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 136</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-the-duplicate-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Find the Duplicate Number</span>
+      <span class="sim-diff medium">medium</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 287</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/find-all-numbers-disappeared-in-an-array/" target="_blank" rel="noopener">
+      <span class="sim-name">Find All Numbers Disappeared in Array</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 448</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/first-missing-positive/" target="_blank" rel="noopener">
+      <span class="sim-name">First Missing Positive</span>
+      <span class="sim-diff hard">hard</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 41</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/counting-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Counting Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 338</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-371">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 371 &bull; 12. Bit Manipulation</span>
+          <h2>Sum of Two Integers</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/sum-of-two-integers/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Calculate <code>a + b</code> without using the operators <code>+</code> or <code>-</code>.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p><code>a ^ b</code> computes the sum bit-by-bit ignoring carries. <code>(a &amp; b) &lt;&lt; 1</code> produces the carry bits shifted into position. Repeat, treating the carry as the new addend, until there is no carry left.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>In Python, just return <code>a + b</code> — but this violates the constraint.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def getSum(self, a, b):
+        return a + b  # violates constraint</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int getSum(int a, int b) {
+        return a + b  # violates constraint;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int getSum(int a, int b) {
+        return a + b  # violates constraint;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(1)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p>Binary addition: XOR gives the digit sum without carry; AND gives where carries occur, shifted left one position. Mask to 32 bits to simulate fixed-width arithmetic. Handle sign extension at the end for negative results.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Set <code>MASK = 0xFFFFFFFF</code> (32 bits), <code>MAX_INT = 0x7FFFFFFF</code>.</li><li>While <code>b != 0</code>: compute <code>carry = (a &amp; b) &lt;&lt; 1</code>.</li><li><code>a = (a ^ b) &amp; MASK</code>, <code>b = carry &amp; MASK</code>.</li><li>If <code>a &lt;= MAX_INT</code> return <code>a</code>, else return <code>~(a ^ MASK)</code> (sign-extend negative).</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def getSum(self, a, b):
+        MASK = 0xFFFFFFFF
+        MAX_INT = 0x7FFFFFFF
+
+        while b != 0:
+            carry = (a &amp; b) &lt;&lt; 1
+            a = (a ^ b) &amp; MASK
+            b = carry &amp; MASK
+
+        if a &lt;= MAX_INT:
+            return a
+
+        return ~(a ^ MASK)</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int getSum(int a, int b) {
+        MASK = 0xFFFFFFFF;
+        MAX_INT = 0x7FFFFFFF;
+        while (b != 0) {
+            carry = (a &amp; b) &lt;&lt; 1;
+            a = (a ^ b) &amp; MASK;
+            b = carry &amp; MASK;
+        }
+        if (a &lt;= MAX_INT) {
+            return a;
+        }
+        return ~(a ^ MASK);
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int getSum(int a, int b) {
+        MASK = 0xFFFFFFFF;
+        MAX_INT = 0x7FFFFFFF;
+        while (b != 0) {
+            carry = (a &amp; b) &lt;&lt; 1;
+            a = (a ^ b) &amp; MASK;
+            b = carry &amp; MASK;
+        }
+        if (a &lt;= MAX_INT) {
+            return a;
+        }
+        return ~(a ^ MASK);
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(1) — max 32 iterations</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; XOR = addition without carry; (a &amp; b) &lt;&lt; 1 = carry; repeat until carry is 0</p></div>
+      </div>
+
+      <!-- Similar Questions -->
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-git-branch"></i> Similar Questions</div>
+        <details class="s150-similar">
+          <summary>
+            <i class="ti ti-stack-2"></i>
+            5 Related Problems — click to expand
+            <i class="ti ti-chevron-down chevron"></i>
+          </summary>
+          <div class="s150-similar-list">
+    <a class="s150-similar-link" href="https://leetcode.com/problems/add-two-integers/" target="_blank" rel="noopener">
+      <span class="sim-name">Sum of Two Integers (variant)</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 2235</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/single-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Single Number</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 136</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/number-of-1-bits/" target="_blank" rel="noopener">
+      <span class="sim-name">Number of 1 Bits</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 191</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/missing-number/" target="_blank" rel="noopener">
+      <span class="sim-name">Missing Number</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 268</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+    <a class="s150-similar-link" href="https://leetcode.com/problems/add-binary/" target="_blank" rel="noopener">
+      <span class="sim-name">Add Binary</span>
+      <span class="sim-diff easy">easy</span>
+      <span class="sim-lc" style="font-size:11px;color:var(--text3);flex-shrink:0">LC 67</span>
+      <i class="ti ti-external-link ext"></i>
+    </a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="problem-card" id="lc-7">
+      <div class="problem-header">
+        <div class="problem-title-area">
+          <span class="problem-tag">#LC 7 &bull; 12. Bit Manipulation</span>
+          <h2>Reverse Integer</h2>
+        </div>
+        <div class="problem-meta">
+          <span class="diff-badge diff-medium">Medium</span>
+          <a href="https://leetcode.com/problems/reverse-integer/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div>
+        <div class="desc-box"><p>Given a signed 32-bit integer <code>x</code>, return <code>x</code> with its digits reversed. If the reversed value overflows the 32-bit signed range <code>[-2³¹, 2³¹-1]</code>, return 0.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bulb"></i> 2. Understanding &amp; Key Observations</div>
+        <div class="desc-box"><p>Extract digits right-to-left using <code>x % 10</code> and rebuild the reversed number using <code>result * 10 + digit</code>. Handle sign separately. Check overflow against 32-bit bounds before returning.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-baseline"></i> 3. Naive Solution &mdash; Brute Force</div>
+        <div class="naive-box"><p>Convert to string, reverse, convert back to int, then check overflow.</p></div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def reverse(self, x):
+        sign = -1 if x &lt; 0 else 1
+        x = abs(x)
+
+        reversed_num = int(str(x)[::-1])
+        reversed_num *= sign
+
+        if (
+            reversed_num &lt; -(2 ** 31)
+            or reversed_num &gt; 2 ** 31 - 1
+        ):
+            return 0
+
+        return reversed_num</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    int reverse(int x) {
+        sign = -1 if x &lt; 0 else 1;
+        x = abs(x);
+        reversed_num = int(str(x)[::-1]);
+        reversed_num *= sign;
+        if (() {
+            reversed_num &lt; -(2 ** 31);
+            or reversed_num &gt; 2 ** 31 - 1;
+        }
+        ):;
+        return 0;
+        return reversed_num;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public int reverse(int x) {
+        sign = -1 if x &lt; 0 else 1;
+        x = abs(x);
+        reversed_num = int(str(x)[::-1]);
+        reversed_num *= sign;
+        if (() {
+            reversed_num &lt; -(2 ** 31);
+            or reversed_num &gt; 2 ** 31 - 1;
+        }
+        ):;
+        return 0;
+        return reversed_num;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-clock-pause"></i> 4. Time &amp; Space Complexity Analysis (Naive)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-naive">Time: O(log |x|)</span>
+          <span class="c-badge c-space">Space: O(log |x|)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-sparkles"></i> 5. Intuition &mdash; For Optimization</div>
+        <div class="intuition-box"><p>Digit extraction: <code>x % 10</code> gives the last digit; <code>x //= 10</code> removes it. Accumulate into <code>result = result * 10 + digit</code>. Multiply sign back in at the end and validate the 32-bit range.</p></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-list-check"></i> 6. Approach &mdash; Step-by-Step Algorithm</div>
+        <div class="approach-box"><ol class="step-list"><li>Store <code>sign = -1 if x &lt; 0 else 1</code>, then <code>x = abs(x)</code>.</li><li>Initialize <code>result = 0</code>.</li><li>While <code>x &gt; 0</code>: <code>digit = x % 10</code>, <code>result = result * 10 + digit</code>, <code>x //= 10</code>.</li><li><code>result *= sign</code>.</li><li>If result is outside <code>[-2³¹, 2³¹-1]</code>: return 0; else return <code>result</code>.</li></ol></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-code"></i> 7. Optimized Code (Python 3)</div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="lang-tabs">
+              <button class="lang-tab active" data-lang="python" onclick="switchLang(this, 'python')">
+                <i class="ti ti-brand-python"></i> Python
+              </button>
+              <button class="lang-tab" data-lang="cpp" onclick="switchLang(this, 'cpp')">
+                <i class="ti ti-brand-cpp"></i> C++
+              </button>
+              <button class="lang-tab" data-lang="java" onclick="switchLang(this, 'java')">
+                <i class="ti ti-coffee"></i> Java
+              </button>
+            </div>
+            <button class="copy-btn" onclick="copyCode(this)">
+              <i class="ti ti-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-content active" data-lang="python">
+            <pre><code>class Solution:
+    def reverse(self, x):
+        sign = -1 if x &lt; 0 else 1
+        x = abs(x)
+
+        result = 0
+
+        while x:
+            digit = x % 10
+            result = result * 10 + digit
+            x //= 10
+
+        result *= sign
+
+        if result &lt; -(2 ** 31) or result &gt; 2 ** 31 - 1:
+            return 0
+
+        return result</code></pre>
+          </div>
+          <div class="code-content" data-lang="cpp">
+            <pre><code>class Solution {
+public:
+    vector&lt;int&gt; reverse(int x) {
+        sign = -1 if x &lt; 0 else 1;
+        x = abs(x);
+        result = 0;
+        while (x) {
+            digit = x % 10;
+            result = result * 10 + digit;
+            x //= 10;
+        }
+        result *= sign;
+        if (result &lt; -(2 ** 31) || result &gt; 2 ** 31 - 1) {
+            return 0;
+        }
+        return result;
+    }
+};</code></pre>
+          </div>
+          <div class="code-content" data-lang="java">
+            <pre><code>class Solution {
+    public List&lt;Integer&gt; reverse(int x) {
+        sign = -1 if x &lt; 0 else 1;
+        x = abs(x);
+        result = 0;
+        while (x) {
+            digit = x % 10;
+            result = result * 10 + digit;
+            x //= 10;
+        }
+        result *= sign;
+        if (result &lt; -(2 ** 31) || result &gt; 2 ** 31 - 1) {
+            return 0;
+        }
+        return result;
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-chart-dots"></i> 8. Time and Space Complexity Analysis (Optimized)</div>
+        <div class="complexity-row">
+          <span class="c-badge c-time">Time: O(log |x|)</span>
+          <span class="c-badge c-space">Space: O(1)</span>
+        </div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-title"><i class="ti ti-bookmark"></i> 9. Pattern / Key Takeaway</div>
+        <div class="intuition-box"><p><strong>Pattern</strong> &mdash; Digit extraction right-to-left: digit = x % 10, remove with x //= 10, rebuild with result * 10 + digit</p></div>
+      </div>
+    </div>
+
+    <!-- Pattern Map -->
+    <div class="summary-card" id="pattern-map">
+      <div class="summary-header">
+        <h2><i class="ti ti-map"></i> 🧠 Complete Bit Manipulation Pattern Map</h2>
+      </div>
+      <p style="color:var(--text2);margin-bottom:20px;font-size:14px;">All 7 problems, their core technique, and complexity.</p>
+      <div class="pattern-table-wrapper">
+        <table class="pattern-table">
+          <thead>
+            <tr><th>Problem</th><th>LC #</th><th>Core Technique</th><th>Time</th><th>Space</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Single Number</td><td>LC 136</td><td>XOR cancellation (x ^ x = 0)</td><td>O(n)</td><td>O(1)</td></tr>
+            <tr><td>Number of 1 Bits</td><td>LC 191</td><td>n &amp; (n-1) removes lowest set bit</td><td>O(k)</td><td>O(1)</td></tr>
+            <tr><td>Counting Bits</td><td>LC 338</td><td>DP: bits[n] = bits[n &gt;&gt; 1] + (n &amp; 1)</td><td>O(n)</td><td>O(n)</td></tr>
+            <tr><td>Reverse Bits</td><td>LC 190</td><td>Shift + extract per bit, 32 iterations</td><td>O(1)</td><td>O(1)</td></tr>
+            <tr><td>Missing Number</td><td>LC 268</td><td>XOR full range with array</td><td>O(n)</td><td>O(1)</td></tr>
+            <tr><td>Sum of Two Integers</td><td>LC 371</td><td>XOR = sum; AND &lt;&lt; 1 = carry; repeat</td><td>O(1)</td><td>O(1)</td></tr>
+            <tr><td>Reverse Integer</td><td>LC 7</td><td>Digit extraction: x % 10, x //= 10</td><td>O(log n)</td><td>O(1)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6 Bit Tricks -->
+    <div class="summary-card" id="six-tricks">
+      <div class="summary-header">
+        <h2><i class="ti ti-flame"></i> 🔥 6 Bit Tricks to Memorize</h2>
+      </div>
+      <p style="color:var(--text2);margin-bottom:20px;font-size:14px;">These operations underlie every problem in this module. Learn the primitives, not the solutions.</p>
+      <div class="pattern-grid">
+        <div class="pattern-item-card">
+          <h4><i class="ti ti-circle-number-1"></i> Check last bit (parity)</h4>
+          <p><code style="font-family:var(--mono);color:var(--accent)">n &amp; 1</code><br>Returns 1 if odd, 0 if even. Used in LC 338 (Counting Bits) and LC 190 (Reverse Bits).</p>
+        </div>
+        <div class="pattern-item-card">
+          <h4><i class="ti ti-circle-number-2"></i> Remove lowest set bit</h4>
+          <p><code style="font-family:var(--mono);color:var(--accent)">n &amp;= n - 1</code><br>Clears the rightmost 1. Loop runs exactly k times where k = Hamming weight. Core of LC 191.</p>
+        </div>
+        <div class="pattern-item-card">
+          <h4><i class="ti ti-circle-number-3"></i> Power of 2 check</h4>
+          <p><code style="font-family:var(--mono);color:var(--accent)">n > 0 and (n &amp; (n-1)) == 0</code><br>Powers of 2 have exactly one 1-bit, so n-1 flips all lower bits and AND gives 0.</p>
+        </div>
+        <div class="pattern-item-card">
+          <h4><i class="ti ti-circle-number-4"></i> XOR cancellation</h4>
+          <p><code style="font-family:var(--mono);color:var(--accent)">x ^ x = 0 &nbsp;&nbsp; x ^ 0 = x</code><br>Pairs cancel to 0; the lone value survives. Used directly in LC 136 and LC 268.</p>
+        </div>
+        <div class="pattern-item-card">
+          <h4><i class="ti ti-circle-number-5"></i> Bit shift arithmetic</h4>
+          <p><code style="font-family:var(--mono);color:var(--accent)">n &gt;&gt; 1</code> → divide by 2 / strip last bit<br><code style="font-family:var(--mono);color:var(--accent)">n &lt;&lt; 1</code> → multiply by 2 / shift left<br>Core of LC 338 DP and LC 190 reversal.</p>
+        </div>
+        <div class="pattern-item-card">
+          <h4><i class="ti ti-circle-number-6"></i> Binary addition with bits</h4>
+          <p><code style="font-family:var(--mono);color:var(--accent)">a ^ b</code> = sum without carry<br><code style="font-family:var(--mono);color:var(--accent)">(a &amp; b) &lt;&lt; 1</code> = carry bits<br>Repeat until carry = 0. That's all of LC 371.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cheat Sheet -->
+    <div class="summary-card" id="cheatsheet">
+      <div class="summary-header">
+        <h2><i class="ti ti-target"></i> 🎯 Bit Manipulation Cheat Sheet</h2>
+      </div>
+      <p style="color:var(--text2);margin-bottom:20px;font-size:14px;">All essential expressions in one place. Memorize these and you won't need to memorize seven different solutions.</p>
+      <div class="cheat-grid">
+        <div class="cheat-item"><code>x ^ x = 0</code><p>Identical values cancel — foundation of XOR tricks</p></div>
+        <div class="cheat-item"><code>x ^ 0 = x</code><p>XOR with 0 is identity — start accumulator at 0</p></div>
+        <div class="cheat-item"><code>n &amp; 1</code><p>Get last bit (check odd/even)</p></div>
+        <div class="cheat-item"><code>n &amp; (n - 1)</code><p>Remove lowest set bit (count 1-bits)</p></div>
+        <div class="cheat-item"><code>n >> 1</code><p>Right shift — divide by 2 / strip last bit</p></div>
+        <div class="cheat-item"><code>n &lt;&lt; 1</code><p>Left shift — multiply by 2</p></div>
+        <div class="cheat-item"><code>a ^ b</code><p>Addition without carry</p></div>
+        <div class="cheat-item"><code>(a &amp; b) &lt;&lt; 1</code><p>Carry bits (shift into next position)</p></div>
+        <div class="cheat-item"><code>n > 0 and n &amp; (n-1) == 0</code><p>Check if power of 2</p></div>
+        <div class="cheat-item"><code>x % 10 / x //= 10</code><p>Digit extraction right-to-left</p></div>
+      </div>
+
+      <div style="margin-top:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:20px;">
+        <p style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:10px;">⭐ Interview Priority</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;color:var(--text2);">
+          <div>
+            <p style="color:var(--text);font-weight:700;margin-bottom:4px;">Must-Know First</p>
+            <p>LC 136 — XOR fundamentals<br>LC 191 — n &amp; (n-1) trick<br>LC 268 — XOR cancellation<br>LC 338 — DP + bit shifts</p>
+          </div>
+          <div>
+            <p style="color:var(--text);font-weight:700;margin-bottom:4px;">Next Priority</p>
+            <p>LC 371 — XOR + carry<br>LC 190 — Reverse bits<br>LC 7 — Digit extraction</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+        <script>
+    const filterInput = document.getElementById('filterInput');
+    const navItems = document.querySelectorAll('.nav-item');
+    const cards = document.querySelectorAll('.problem-card');
+
+    function openSidebar() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const icon = document.getElementById('hamburgerIcon');
+      if (sidebar) sidebar.classList.add('open');
+      if (overlay) overlay.classList.add('active');
+      if (icon) {
+        icon.classList.remove('ti-menu-2');
+        icon.classList.add('ti-x');
+      }
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const icon = document.getElementById('hamburgerIcon');
+      if (sidebar) sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+      if (icon) {
+        icon.classList.remove('ti-x');
+        icon.classList.add('ti-menu-2');
+      }
+    }
+
+    function toggleNav() {
+      const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    }
+
+    if (filterInput) {
+      filterInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        navItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(q) ? 'block' : 'none';
+        });
+      });
+    }
+
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        const titleEl = item.querySelector('span:first-child');
+        const mobileNavTitle = document.getElementById('mobileNavTitle');
+        if (mobileNavTitle && titleEl) {
+          mobileNavTitle.textContent = titleEl.textContent.trim();
+        }
+        if (window.innerWidth <= 900) {
+          setTimeout(closeSidebar, 50);
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
+    if ('IntersectionObserver' in window && cards.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            if (id) {
+              navItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (href === `#${id}`) {
+                  item.classList.add('active');
+                  const titleEl = item.querySelector('span:first-child');
+                  const mobileNavTitle = document.getElementById('mobileNavTitle');
+                  if (mobileNavTitle && titleEl && window.innerWidth <= 900) {
+                    mobileNavTitle.textContent = titleEl.textContent.trim();
+                  }
+                } else {
+                  item.classList.remove('active');
+                }
+              });
+            }
+          }
+        });
+      }, { rootMargin: '-70px 0px -60% 0px', threshold: 0 });
+
+      cards.forEach(card => observer.observe(card));
+    }
+
+    function copyCode(btn) {
+      try {
+        const container = btn.closest('.code-container');
+        const codeEl = container ? container.querySelector('code') : null;
+        if (!codeEl) return;
+
+        const textToCopy = codeEl.textContent || codeEl.innerText;
+
+        const showSuccess = () => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="color: var(--green);"></i> <span style="color: var(--green);">Copied!</span>';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.borderColor = '';
+          }, 2000);
+        };
+
+        if (navigator.clipboard && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => {
+            fallbackCopy(textToCopy, showSuccess);
+          });
+        } else {
+          fallbackCopy(textToCopy, showSuccess);
+        }
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    }
+
+    function fallbackCopy(text, onSuccess) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful && onSuccess) onSuccess();
+      } catch (err) {
+        console.error('Fallback copy error:', err);
+      }
+      document.body.removeChild(textarea);
+    }
+  
+    function switchLang(btn, lang) {
+      if (!btn) return;
+      const container = btn.closest('.code-container');
+      if (container) {
+        container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const targetContent = container.querySelector(`.code-content[data-lang="${lang}"]`);
+        if (targetContent) targetContent.classList.add('active');
+      }
+      try {
+        localStorage.setItem('preferred_dsa_lang', lang);
+      } catch(e) {}
+      syncAllCodeContainers(lang);
+    }
+
+    function syncAllCodeContainers(lang) {
+      document.querySelectorAll('.code-container').forEach(container => {
+        const tab = container.querySelector(`.lang-tab[data-lang="${lang}"]`);
+        const content = container.querySelector(`.code-content[data-lang="${lang}"]`);
+        if (tab && content) {
+          container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+          container.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          content.classList.add('active');
+        }
+      });
+    }
+
+    function initLanguagePreference() {
+      try {
+        const savedLang = localStorage.getItem('preferred_dsa_lang');
+        if (savedLang && ['python', 'cpp', 'java'].includes(savedLang)) {
+          syncAllCodeContainers(savedLang);
+        }
+      } catch(e) {}
+    }
+
+    function enableMobileCodeTouchScroll() {
+      document.querySelectorAll('.code-container, .code-content, pre, .code-block').forEach(elem => {
+        let startX = 0, scrollLeft = 0, isDragging = false;
+        elem.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 1) {
+            startX = e.touches[0].pageX;
+            scrollLeft = elem.scrollLeft;
+            isDragging = true;
+          }
+        }, { passive: true });
+        elem.addEventListener('touchmove', function(e) {
+          if (!isDragging || e.touches.length !== 1) return;
+          const deltaX = e.touches[0].pageX - startX;
+          elem.scrollLeft = scrollLeft - deltaX;
+        }, { passive: true });
+        elem.addEventListener('touchend', function() { isDragging = false; }, { passive: true });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initLanguagePreference();
+      enableMobileCodeTouchScroll();
+    });
+
+    function copyCode(btn) {
+      try {
+        const container = btn.closest('.code-container');
+        const activeContent = container ? (container.querySelector('.code-content.active code') || container.querySelector('code')) : null;
+        if (!activeContent) return;
+
+        const textToCopy = activeContent.textContent || activeContent.innerText;
+
+        const showSuccess = () => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="ti ti-check" style="color: var(--green);"></i> <span style="color: var(--green);">Copied!</span>';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.borderColor = '';
+          }, 2000);
+        };
+
+        if (navigator.clipboard && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => {
+            fallbackCopy(textToCopy, showSuccess);
+          });
+        } else {
+          fallbackCopy(textToCopy, showSuccess);
+        }
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    }
+
+  </script>
+  <script src="./sheet150.js" defer></script>
+</body>
+</html>

@@ -6,6 +6,7 @@ export type { Theme, ThemeContextValue } from './theme'
 export type {
   Difficulty,
   ProgressStatus,
+  SubjectCategory,
   Subject,
   Topic,
   Question,

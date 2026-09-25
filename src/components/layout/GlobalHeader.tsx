@@ -1,54 +1,56 @@
 /* ============================================================
-   GlobalHeader — top navigation bar
+   GlobalHeader — App-style header
+   Left:  app icon + "C-NOTE" + subtitle
+   Right: subjects count + theme toggle
+   No sticky nav bar. Minimal. Matches the reference design.
    ============================================================ */
 
+import { Menu } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Search, Menu } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 import { ThemeToggle } from '@/features/theme/ThemeToggle'
-import { IconButton } from '@/components/ui/IconButton'
+import { SUBJECTS } from '@/data/subjects'
 
 interface GlobalHeaderProps {
   onMenuOpen?: () => void
 }
 
 export function GlobalHeader({ onMenuOpen }: GlobalHeaderProps) {
+  const { theme } = useTheme()
+
   return (
-    <header className="global-header" role="banner">
-      <div className="global-header__inner">
+    <header className="app-header" data-theme-active={theme}>
+      <div className="app-header__inner">
         {/* Identity */}
-        <Link to="/" className="header-logo" aria-label="C-NOTE home">
-          <span className="header-logo__mark" aria-hidden="true">C</span>
-          <span className="header-logo__text">C-NOTE</span>
+        <Link to="/" className="app-header__identity" aria-label="C-NOTE home">
+          <img
+            src="/app-icon.png"
+            alt=""
+            aria-hidden="true"
+            className="app-header__icon"
+          />
+          <div className="app-header__text">
+            <span className="app-header__name">C-NOTE</span>
+            <span className="app-header__subtitle">Personal Technical Knowledge Base</span>
+          </div>
         </Link>
 
-        <div className="header-spacer" />
-
-        {/* Search trigger — visual placeholder for Phase 1 */}
-        <button
-          className="header-search-trigger"
-          aria-label="Search (coming soon)"
-          disabled
-          title="Search will be available in a future phase"
-        >
-          <Search size={13} aria-hidden="true" />
-          <span>Search…</span>
-          <kbd className="header-search-trigger__kbd" aria-label="keyboard shortcut">⌘K</kbd>
-        </button>
-
-        {/* Right actions */}
-        <div className="header-actions">
+        {/* Actions */}
+        <div className="app-header__actions">
+          <span className="app-header__count" aria-label={`${SUBJECTS.length} subjects`}>
+            <span className="pulse-dot" aria-hidden="true" />
+            {SUBJECTS.length} Subjects
+          </span>
           <ThemeToggle />
-
-          {/* Mobile menu trigger */}
-          <IconButton
-            aria-label="Open navigation menu"
-            className="header-mobile-menu-btn"
-            onClick={onMenuOpen}
-            size="md"
-            variant="ghost"
-          >
-            <Menu size={18} />
-          </IconButton>
+          {onMenuOpen && (
+            <button
+              className="icon-btn icon-btn--ghost icon-btn--sm header-mobile-menu-btn"
+              aria-label="Open navigation menu"
+              onClick={onMenuOpen}
+            >
+              <Menu size={16} />
+            </button>
+          )}
         </div>
       </div>
     </header>

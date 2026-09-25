@@ -1,9 +1,5 @@
-/* ============================================================
-   AppShell — root layout wrapper
-   Composes GlobalHeader + MobileNavigation + main content.
-   ============================================================ */
-
 import { useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { GlobalHeader } from './GlobalHeader'
 import { MobileNavigation } from '@/components/navigation/MobileNavigation'
 
@@ -13,9 +9,15 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const location = useLocation()
+
+  // In learning workspace (/subjects/:id or /subjects/:id/topics/:topicId),
+  // hide the dashboard header so the workspace has a single unified toolbar.
+  const isLearningWorkspace =
+    location.pathname.startsWith('/subjects/') && location.pathname !== '/subjects'
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isLearningWorkspace ? 'app-shell--workspace' : ''}`}>
       {/* Skip to content link for keyboard/screen reader users */}
       <a
         href="#main-content"
@@ -27,7 +29,9 @@ export function AppShell({ children }: AppShellProps) {
         Skip to main content
       </a>
 
-      <GlobalHeader onMenuOpen={() => setMobileNavOpen(true)} />
+      {!isLearningWorkspace && (
+        <GlobalHeader onMenuOpen={() => setMobileNavOpen(true)} />
+      )}
 
       <MobileNavigation
         isOpen={mobileNavOpen}

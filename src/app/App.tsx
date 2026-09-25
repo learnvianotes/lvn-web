@@ -5,12 +5,15 @@
 
 import { RouterProvider } from 'react-router-dom'
 import { ThemeProvider } from './providers/ThemeProvider'
+import { FirebaseProvider } from '@/contexts/FirebaseContext'
 import { router } from './router'
 
 export function App() {
   return (
-    <ThemeProvider>
-      <RouterProvider router={router} />
-    </ThemeProvider>
+    <FirebaseProvider>
+      <ThemeProvider>
+        <RouterProvider router={router} />
+      </ThemeProvider>
+    </FirebaseProvider>
   )
 }

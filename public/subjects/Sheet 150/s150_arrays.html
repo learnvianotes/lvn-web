@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Arrays &amp; Hashing — Sheet 150 | C-Note</title>
+  <meta name="description" content="9 Arrays & Hashing problems with full solutions: Contains Duplicate, Valid Anagram, Two Sum, Group Anagrams, Top K Frequent, Product Except Self, Valid Sudoku, Encode/Decode, Longest Consecutive.">
+  <link rel="icon" type="image/png" href="../../app-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../../css/c-note-theme.css">
+  <link rel="stylesheet" href="./sheet150.css">
+  <script>(function(){try{if(window.self!==window.top){document.documentElement.setAttribute('data-embedded','true');document.documentElement.classList.add('is-embedded');}}catch(e){}const t=localStorage.getItem('cnote_theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+  <!-- Overlay Backdrop for Mobile Drawer -->
+  <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Header Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle navigation menu">
+        <i class="ti ti-menu-2"></i>
+      </button>
+      <a href="./index.html" class="logo" id="headerLogoBtn" title="Back to Sheet 150">
+        <i class="ti ti-arrow-left" style="font-size:16px;color:var(--text2);"></i>
+        <img src="../../app-icon.png" class="logo-icon" alt="C-Note Logo">
+        <span class="logo-text">C-NOTE</span>
+      </a>
+    </div>
+
+    <div class="header-center-title" id="headerCenterTitle">
+      <span>Sheet 150</span>
+      <span class="h-badge">Module 01</span>
+    </div>
+
+    <div class="topbar-right">
+      <button class="cmd-palette-trigger" id="cmdPaletteBtn" title="Quick Search (⌘K)" onclick="openSearch()">
+        <i class="ti ti-search"></i>
+        <span class="cmd-text">Quick Search...</span>
+        <kbd class="cmd-kbd">⌘K</kbd>
+      </button>
+
+      <div class="status-badge-top" id="progressPill" title="Sheet 150 Progress">
+        <span class="pulse-dot"></span>
+        <span id="progressText">0/9 Solved</span>
+      </div>
+
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <i class="ti ti-moon" id="themeIcon"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <a href="./index.html" class="back-link" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text3);text-decoration:none;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;"><i class="ti ti-arrow-left"></i> Sheet 150 Hub</a>
+          <span class="sidebar-module-badge">MODULE 01 · SHEET 150</span>
+          <h2 class="sidebar-module-title">Arrays &amp; Hashing</h2>
+        </div>
+      </div>
+      <!-- Filter pills -->
+      <div class="sidebar-filters">
+        <button class="sf-btn f-all active" onclick="applyFilter('all',this)">All</button>
+        <button class="sf-btn f-easy" onclick="applyFilter('easy',this)">Easy</button>
+        <button class="sf-btn f-medium" onclick="applyFilter('medium',this)">Med</button>
+        <button class="sf-btn f-hard" onclick="applyFilter('hard',this)">Hard</button>
+        <button class="sf-btn f-solved" onclick="applyFilter('solved',this)">Solved</button>
+        <button class="sf-btn f-revisit" onclick="applyFilter('revisit',this)">Revisit</button>
+      </div>
+
+      <div class="nav-section-title">PROBLEMS</div>
+      <nav class="nav-list" id="navList">
+        <a href="#lc-217" class="nav-item" data-id="lc-217"><span class="nav-item-num">01</span><span class="nav-item-name">Contains Duplicate</span><span class="nav-item-diff diff-easy">EASY</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-242" class="nav-item" data-id="lc-242"><span class="nav-item-num">02</span><span class="nav-item-name">Valid Anagram</span><span class="nav-item-diff diff-easy">EASY</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-1"   class="nav-item" data-id="lc-1"><span class="nav-item-num">03</span><span class="nav-item-name">Two Sum</span><span class="nav-item-diff diff-easy">EASY</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-49"  class="nav-item" data-id="lc-49"><span class="nav-item-num">04</span><span class="nav-item-name">Group Anagrams</span><span class="nav-item-diff diff-medium">MED</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-347" class="nav-item" data-id="lc-347"><span class="nav-item-num">05</span><span class="nav-item-name">Top K Frequent Elements</span><span class="nav-item-diff diff-medium">MED</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-238" class="nav-item" data-id="lc-238"><span class="nav-item-num">06</span><span class="nav-item-name">Product of Array Except Self</span><span class="nav-item-diff diff-medium">MED</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-36"  class="nav-item" data-id="lc-36"><span class="nav-item-num">07</span><span class="nav-item-name">Valid Sudoku</span><span class="nav-item-diff diff-medium">MED</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-271" class="nav-item" data-id="lc-271"><span class="nav-item-num">08</span><span class="nav-item-name">Encode and Decode Strings</span><span class="nav-item-diff diff-medium">MED</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+        <a href="#lc-128" class="nav-item" data-id="lc-128"><span class="nav-item-num">09</span><span class="nav-item-name">Longest Consecutive Sequence</span><span class="nav-item-diff diff-hard">HARD</span><span class="status-pip-slot"><span class="status-pip"></span></span></a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <!-- Clean Page Header -->
+      <div class="topic-page-header">
+        <div class="topic-eyebrow"><i class="ti ti-layers-intersect"></i> Module 01 · Sheet 150</div>
+        <h1 class="topic-title">Arrays &amp; Hashing</h1>
+        <p class="topic-desc">Frequency hashing, two-pointer techniques, dynamic windowing, 3Sum, and Trapping Rain Water.</p>
+      </div>
+
+      <!-- LC 217 -->
+      <div class="problem-card" id="lc-217">
+        <div class="problem-header">
+          <div><span class="problem-tag">#LC 217 &bull; Arrays &amp; Hashing</span><h2>Contains Duplicate</h2></div>
+          <div class="problem-meta"><span class="diff-badge diff-easy">Easy</span><a href="https://leetcode.com/problems/contains-duplicate/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div>
+        </div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Given an integer array <code>nums</code>, return <code>true</code> if any value appears <strong>at least twice</strong>, and <code>false</code> if every element is distinct.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-grid"><div><div class="io-label in">Input</div><div class="io-item"><code>nums: int[]</code><br><small style="color:var(--text3);">1 &le; n &le; 10<sup>5</sup>, -10<sup>9</sup> &le; nums[i] &le; 10<sup>9</sup></small></div></div><div><div class="io-label out">Output</div><div class="io-item"><code>boolean</code> — true if duplicate exists</div></div></div><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">nums = [1,2,3,1]</div><div class="io-out">Output: true</div><div class="io-comment">// 1 appears at index 0 and 3</div></div><div class="io-example"><div class="io-example-label">Example 2</div><div class="io-in">nums = [1,2,3,4]</div><div class="io-out">Output: false</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-ruler-measure"></i> 3. Constraints</div><div class="desc-box"><ul class="bullet-list" style="margin-top:0;"><li><code>1 &le; nums.length &le; 10<sup>5</sup></code></li><li><code>-10<sup>9</sup> &le; nums[i] &le; 10<sup>9</sup></code></li></ul></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bulb"></i> 4. Understanding &amp; Key Observations</div><div class="desc-box"><p>Brute force compares every pair — O(n²). Key insight: we only need to know "have I seen this before?" → Hash Set gives O(1) lookup, making one linear pass sufficient.</p></div></div>
+        <div class="sec-block">
+          <div class="sec-title"><i class="ti ti-baseline"></i> 5. Naive Solution — O(n²) Brute Force</div>
+          <div class="naive-box"><p>Check every pair <code>(i, j)</code> with <code>i &lt; j</code>. Return true on first match.</p></div>
+          <div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'cpp')"><i class="ti ti-brand-cpp"></i> C++</button><button class="lang-tab" onclick="switchLang(this,'java')"><i class="ti ti-coffee"></i> Java</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div>
+            <div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def containsDuplicate(self, nums: list[int]) -> bool:
+        for i in range(len(nums)):
+            for j in range(i + 1, len(nums)):
+                if nums[i] == nums[j]:
+                    return True
+        return False</code></pre></div>
+            <div class="code-content" data-lang="cpp"><pre><code>class Solution {
+public:
+    bool containsDuplicate(vector&lt;int&gt;&amp; nums) {
+        for (int i = 0; i &lt; nums.size(); ++i)
+            for (int j = i+1; j &lt; nums.size(); ++j)
+                if (nums[i] == nums[j]) return true;
+        return false;
+    }
+};</code></pre></div>
+            <div class="code-content" data-lang="java"><pre><code>class Solution {
+    public boolean containsDuplicate(int[] nums) {
+        for (int i = 0; i &lt; nums.length; ++i)
+            for (int j = i+1; j &lt; nums.length; ++j)
+                if (nums[i] == nums[j]) return true;
+        return false;
+    }
+}</code></pre></div>
+            <div class="code-content" data-lang="js"><pre><code>var containsDuplicate = function(nums) {
+    for (let i = 0; i &lt; nums.length; i++)
+        for (let j = i+1; j &lt; nums.length; j++)
+            if (nums[i] === nums[j]) return true;
+    return false;
+};</code></pre></div>
+          </div>
+          <div class="expected-box naive"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>[1,2,3,1] &#8594; <span style="color:#34d399;">true</span> &nbsp;|&nbsp; [1,2,3,4] &#8594; <span style="color:#ef4444;">false</span></div></div>
+        </div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-clock-pause"></i> 6. Complexity — Naive</div><div class="complexity-row"><span class="c-badge c-naive">Time: O(n²)</span><span class="c-badge c-space">Space: O(1)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition — Optimization</div><div class="intuition-box"><p>"Have I seen this before?" → <strong>Hash Set</strong>. Store each number as we go; check the set before inserting. O(1) average lookup replaces O(n) inner scan.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-list-check"></i> 8. Approach — Algorithm</div><div class="approach-box"><ol class="step-list"><li>Initialize empty set <code>seen</code>.</li><li>For each <code>num</code>: if <code>num in seen</code> → return <code>True</code>.</li><li>Else add <code>num</code> to <code>seen</code>.</li><li>End of loop → return <code>False</code>.</li></ol></div></div>
+        <div class="sec-block">
+          <div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code — Hash Set O(n)</div>
+          <div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'cpp')"><i class="ti ti-brand-cpp"></i> C++</button><button class="lang-tab" onclick="switchLang(this,'java')"><i class="ti ti-coffee"></i> Java</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div>
+            <div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def containsDuplicate(self, nums: list[int]) -> bool:
+        seen = set()
+        for num in nums:
+            if num in seen:
+                return True
+            seen.add(num)
+        return False</code></pre></div>
+            <div class="code-content" data-lang="cpp"><pre><code>class Solution {
+public:
+    bool containsDuplicate(vector&lt;int&gt;&amp; nums) {
+        unordered_set&lt;int&gt; seen;
+        for (int num : nums) {
+            if (seen.count(num)) return true;
+            seen.insert(num);
+        }
+        return false;
+    }
+};</code></pre></div>
+            <div class="code-content" data-lang="java"><pre><code>class Solution {
+    public boolean containsDuplicate(int[] nums) {
+        Set&lt;Integer&gt; seen = new HashSet&lt;&gt;();
+        for (int num : nums)
+            if (!seen.add(num)) return true;
+        return false;
+    }
+}</code></pre></div>
+            <div class="code-content" data-lang="js"><pre><code>var containsDuplicate = function(nums) {
+    const seen = new Set();
+    for (const num of nums) {
+        if (seen.has(num)) return true;
+        seen.add(num);
+    }
+    return false;
+};</code></pre></div>
+          </div>
+          <div class="expected-box optimal"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>[1,2,3,1] &#8594; <span style="color:#34d399;">true</span> &nbsp;|&nbsp; [1,2,3,4] &#8594; <span style="color:#ef4444;">false</span> &nbsp;|&nbsp; [1,1,1,3] &#8594; <span style="color:#34d399;">true</span></div></div>
+        </div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity — Optimized</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n)</span><span class="c-badge c-space">Space: O(n)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-layers-intersect"></i> 11. Methods / Variants</div><div class="methods-list"><div class="method-item"><div class="method-label">Method 1 — Hash Set · O(n) / O(n) ✓ Recommended</div><p>Build a hash set on-the-fly. O(1) lookup with early exit.</p></div><div class="method-item"><div class="method-label">Method 2 — Sorting · O(n log n) / O(1)</div><p>Sort in-place, check adjacent elements. Better space, worse time.</p></div><div class="method-item"><div class="method-label">Method 3 — Python One-liner · O(n) / O(n)</div><p><code>return len(nums) != len(set(nums))</code> — No early exit though.</p></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Frequency Hashing</strong> — "Have I seen this before?" &#8594; <strong>Hash Set</strong>. This is the #1 most common array pattern, foundational to Two Sum, Group Anagrams, Longest Consecutive Sequence, and hundreds more problems.</p></div></div>
+      </div>
+
+      <!-- LC 242 -->
+      <div class="problem-card" id="lc-242">
+        <div class="problem-header"><div><span class="problem-tag">#LC 242 &bull; Arrays &amp; Hashing</span><h2>Valid Anagram</h2></div><div class="problem-meta"><span class="diff-badge diff-easy">Easy</span><a href="https://leetcode.com/problems/valid-anagram/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Given two strings <code>s</code> and <code>t</code>, return <code>true</code> if <code>t</code> is an anagram of <code>s</code>. An anagram uses the exact same characters with identical frequencies.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-grid"><div><div class="io-label in">Input</div><div class="io-item"><code>s, t: str</code> (lowercase English letters)<br><small style="color:var(--text3);">1 &le; len &le; 5×10<sup>4</sup></small></div></div><div><div class="io-label out">Output</div><div class="io-item"><code>boolean</code> — true if anagram</div></div></div><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">s="anagram", t="nagaram"</div><div class="io-out">Output: true</div></div><div class="io-example"><div class="io-example-label">Example 2</div><div class="io-in">s="rat", t="car"</div><div class="io-out">Output: false</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-ruler-measure"></i> 3. Constraints</div><div class="desc-box"><ul class="bullet-list" style="margin-top:0;"><li><code>1 &le; s.length, t.length &le; 5×10<sup>4</sup></code></li><li>s and t consist of lowercase English letters</li></ul></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bulb"></i> 4. Understanding &amp; Key Observations</div><div class="desc-box"><p>Anagrams share identical character frequency distributions. Quick check: if lengths differ, immediately false. Then compare frequency maps — a hashmap/counter approach is O(n).</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-baseline"></i> 5. Naive Solution — Sorting</div><div class="naive-box"><p>Sort both strings. If anagrams, sorted versions are equal.</p></div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def isAnagram(self, s: str, t: str) -> bool:
+        return sorted(s) == sorted(t)</code></pre></div><div class="code-content" data-lang="js"><pre><code>var isAnagram = function(s, t) {
+    return s.split('').sort().join('') === t.split('').sort().join('');
+};</code></pre></div></div><div class="expected-box naive"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>"anagram","nagaram" &#8594; <span style="color:#34d399;">true</span> | "rat","car" &#8594; <span style="color:#ef4444;">false</span></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-clock-pause"></i> 6. Complexity — Naive</div><div class="complexity-row"><span class="c-badge c-naive">Time: O(n log n)</span><span class="c-badge c-space">Space: O(1)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p>Count character frequencies with a hashmap. Two strings are anagrams iff their frequency maps are identical. Single O(n) pass instead of O(n log n) sort.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-list-check"></i> 8. Approach — Algorithm</div><div class="approach-box"><ol class="step-list"><li>If <code>len(s) != len(t)</code> &#8594; return False.</li><li>Build frequency map for <code>s</code>.</li><li>For each char in <code>t</code>, decrement its count.</li><li>If any count goes negative &#8594; return False.</li><li>Return True.</li></ol></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code — HashMap O(n)</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'cpp')"><i class="ti ti-brand-cpp"></i> C++</button><button class="lang-tab" onclick="switchLang(this,'java')"><i class="ti ti-coffee"></i> Java</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>from collections import Counter
+class Solution:
+    def isAnagram(self, s: str, t: str) -> bool:
+        return Counter(s) == Counter(t)</code></pre></div><div class="code-content" data-lang="cpp"><pre><code>class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        if (s.size() != t.size()) return false;
+        int count[26] = {};
+        for (char c : s) count[c-'a']++;
+        for (char c : t) if (--count[c-'a'] &lt; 0) return false;
+        return true;
+    }
+};</code></pre></div><div class="code-content" data-lang="java"><pre><code>class Solution {
+    public boolean isAnagram(String s, String t) {
+        if (s.length() != t.length()) return false;
+        int[] count = new int[26];
+        for (char c : s.toCharArray()) count[c-'a']++;
+        for (char c : t.toCharArray()) if (--count[c-'a'] &lt; 0) return false;
+        return true;
+    }
+}</code></pre></div><div class="code-content" data-lang="js"><pre><code>var isAnagram = function(s, t) {
+    if (s.length !== t.length) return false;
+    const map = {};
+    for (const c of s) map[c] = (map[c]||0) + 1;
+    for (const c of t) { if (!map[c]) return false; map[c]--; }
+    return true;
+};</code></pre></div></div><div class="expected-box optimal"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>"anagram","nagaram" &#8594; <span style="color:#34d399;">true</span> | "rat","car" &#8594; <span style="color:#ef4444;">false</span></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity — Optimized</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n)</span><span class="c-badge c-space">Space: O(1)*</span></div><div style="font-size:12px;color:var(--text3);margin-top:4px;">*O(26)=O(1) for lowercase letters</div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-layers-intersect"></i> 11. Methods</div><div class="methods-list"><div class="method-item"><div class="method-label">Method 1 — Counter · O(n) / O(1) ✓</div><p><code>Counter(s) == Counter(t)</code> — cleanest Python one-liner.</p></div><div class="method-item"><div class="method-label">Method 2 — Fixed Array[26] · O(n) / O(1)</div><p>Integer array of size 26. Faster in practice due to cache locality.</p></div><div class="method-item"><div class="method-label">Method 3 — Sorting · O(n log n) / O(1)</div><p>Sort both strings and compare. Simple but suboptimal.</p></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Character Frequency Map</strong> — "Same characters, different order" &#8594; compare frequency maps. Applies to anagram detection, permutation checking, group-by-signature problems.</p></div></div>
+      </div>
+
+      <!-- LC 1 -->
+      <div class="problem-card" id="lc-1">
+        <div class="problem-header"><div><span class="problem-tag">#LC 1 &bull; Arrays &amp; Hashing</span><h2>Two Sum</h2></div><div class="problem-meta"><span class="diff-badge diff-easy">Easy</span><a href="https://leetcode.com/problems/two-sum/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Given an array of integers <code>nums</code> and an integer <code>target</code>, return <em>indices</em> of the two numbers that add up to <code>target</code>. Exactly one solution exists. You may not use the same element twice.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-grid"><div><div class="io-label in">Input</div><div class="io-item"><code>nums: int[]</code>, <code>target: int</code><br><small style="color:var(--text3);">2 &le; n &le; 10<sup>4</sup></small></div></div><div><div class="io-label out">Output</div><div class="io-item"><code>int[2]</code> — indices [i, j] where nums[i]+nums[j]=target</div></div></div><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">nums=[2,7,11,15], target=9</div><div class="io-out">Output: [0,1]</div><div class="io-comment">// 2+7=9</div></div><div class="io-example"><div class="io-example-label">Example 2</div><div class="io-in">nums=[3,2,4], target=6</div><div class="io-out">Output: [1,2]</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-ruler-measure"></i> 3. Constraints</div><div class="desc-box"><ul class="bullet-list" style="margin-top:0;"><li><code>2 &le; nums.length &le; 10<sup>4</sup></code></li><li><code>-10<sup>9</sup> &le; nums[i], target &le; 10<sup>9</sup></code></li><li>Only one valid answer exists</li></ul></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bulb"></i> 4. Understanding &amp; Key Observations</div><div class="desc-box"><p>For each element <code>x</code>, we need <code>target - x</code>. Brute force checks all pairs O(n²). Optimization: store each element in a map as we scan, look up the complement in O(1).</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-baseline"></i> 5. Naive Solution — O(n²)</div><div class="naive-box"><p>Check all pairs (i, j) with i &lt; j.</p></div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'cpp')"><i class="ti ti-brand-cpp"></i> C++</button><button class="lang-tab" onclick="switchLang(this,'java')"><i class="ti ti-coffee"></i> Java</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def twoSum(self, nums: list[int], target: int) -> list[int]:
+        for i in range(len(nums)):
+            for j in range(i + 1, len(nums)):
+                if nums[i] + nums[j] == target:
+                    return [i, j]</code></pre></div><div class="code-content" data-lang="cpp"><pre><code>class Solution {
+public:
+    vector&lt;int&gt; twoSum(vector&lt;int&gt;&amp; nums, int target) {
+        for (int i = 0; i &lt; nums.size(); i++)
+            for (int j = i+1; j &lt; nums.size(); j++)
+                if (nums[i]+nums[j]==target) return {i,j};
+        return {};
+    }
+};</code></pre></div><div class="code-content" data-lang="java"><pre><code>class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        for (int i = 0; i &lt; nums.length; i++)
+            for (int j = i+1; j &lt; nums.length; j++)
+                if (nums[i]+nums[j]==target) return new int[]{i,j};
+        return new int[]{};
+    }
+}</code></pre></div><div class="code-content" data-lang="js"><pre><code>var twoSum = function(nums, target) {
+    for (let i = 0; i &lt; nums.length; i++)
+        for (let j = i+1; j &lt; nums.length; j++)
+            if (nums[i]+nums[j]===target) return [i,j];
+};</code></pre></div></div><div class="expected-box naive"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>[2,7,11,15],target=9 &#8594; <span style="color:#34d399;">[0,1]</span></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-clock-pause"></i> 6. Complexity — Naive</div><div class="complexity-row"><span class="c-badge c-naive">Time: O(n²)</span><span class="c-badge c-space">Space: O(1)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p>For each element x, we need <code>target - x</code>. Store visited elements in <code>{value: index}</code> map. Check if the complement exists before inserting current element.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-list-check"></i> 8. Approach — Algorithm</div><div class="approach-box"><ol class="step-list"><li>Init empty map <code>seen = {value: index}</code>.</li><li>For each index i: compute <code>complement = target - nums[i]</code>.</li><li>If <code>complement in seen</code> &#8594; return <code>[seen[complement], i]</code>.</li><li>Else store <code>seen[nums[i]] = i</code>.</li></ol></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code — One-pass HashMap</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'cpp')"><i class="ti ti-brand-cpp"></i> C++</button><button class="lang-tab" onclick="switchLang(this,'java')"><i class="ti ti-coffee"></i> Java</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def twoSum(self, nums: list[int], target: int) -> list[int]:
+        seen = {}
+        for i, num in enumerate(nums):
+            complement = target - num
+            if complement in seen:
+                return [seen[complement], i]
+            seen[num] = i</code></pre></div><div class="code-content" data-lang="cpp"><pre><code>class Solution {
+public:
+    vector&lt;int&gt; twoSum(vector&lt;int&gt;&amp; nums, int target) {
+        unordered_map&lt;int,int&gt; seen;
+        for (int i = 0; i &lt; nums.size(); i++) {
+            int comp = target - nums[i];
+            if (seen.count(comp)) return {seen[comp], i};
+            seen[nums[i]] = i;
+        }
+        return {};
+    }
+};</code></pre></div><div class="code-content" data-lang="java"><pre><code>class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        Map&lt;Integer,Integer&gt; seen = new HashMap&lt;&gt;();
+        for (int i = 0; i &lt; nums.length; i++) {
+            int comp = target - nums[i];
+            if (seen.containsKey(comp)) return new int[]{seen.get(comp),i};
+            seen.put(nums[i], i);
+        }
+        return new int[]{};
+    }
+}</code></pre></div><div class="code-content" data-lang="js"><pre><code>var twoSum = function(nums, target) {
+    const seen = new Map();
+    for (let i = 0; i &lt; nums.length; i++) {
+        const comp = target - nums[i];
+        if (seen.has(comp)) return [seen.get(comp), i];
+        seen.set(nums[i], i);
+    }
+};</code></pre></div></div><div class="expected-box optimal"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>[2,7,11,15],9 &#8594; <span style="color:#34d399;">[0,1]</span> | [3,2,4],6 &#8594; <span style="color:#34d399;">[1,2]</span> | [3,3],6 &#8594; <span style="color:#34d399;">[0,1]</span></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity — Optimized</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n)</span><span class="c-badge c-space">Space: O(n)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-layers-intersect"></i> 11. Methods</div><div class="methods-list"><div class="method-item"><div class="method-label">Method 1 — One-pass HashMap · O(n) / O(n) ✓</div><p>Check complement before inserting. Handles [3,3] edge case correctly.</p></div><div class="method-item"><div class="method-label">Method 2 — Two-pass HashMap · O(n) / O(n)</div><p>Build full map, then scan for complement. Slightly simpler, same complexity.</p></div><div class="method-item"><div class="method-label">Method 3 — Two Pointers (if sorted) · O(n log n) / O(1)</div><p>Sort + two pointers. O(1) space but loses original indices.</p></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Complement Lookup via HashMap</strong> — Store visited elements, check complement on each step. Canonical HashMap-in-arrays pattern. Generalizes to 3Sum (sort + fix + two-ptr) and 4Sum.</p></div></div>
+      </div>
+
+      <!-- LC 49, 347, 238, 36, 271, 128 — template cards -->
+      <div class="problem-card" id="lc-49">
+        <div class="problem-header"><div><span class="problem-tag">#LC 49 &bull; Arrays &amp; Hashing</span><h2>Group Anagrams</h2></div><div class="problem-meta"><span class="diff-badge diff-medium">Medium</span><a href="https://leetcode.com/problems/group-anagrams/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Given an array of strings <code>strs</code>, group the anagrams together. Return in any order.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">strs = ["eat","tea","tan","ate","nat","bat"]</div><div class="io-out">Output: [["bat"],["nat","tan"],["ate","eat","tea"]]</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-ruler-measure"></i> 3. Constraints</div><div class="desc-box"><ul class="bullet-list" style="margin-top:0;"><li><code>1 &le; strs.length &le; 10<sup>4</sup></code></li><li><code>0 &le; strs[i].length &le; 100</code>, lowercase English only</li></ul></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bulb"></i> 4. Understanding &amp; Key Observations</div><div class="desc-box"><p>Anagrams share the same character frequency signature. Use sorted string as the hashmap key to group all anagrams together.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p>"eat" sorted = "aet", "tea" sorted = "aet", "ate" sorted = "aet". Use this canonical form as a dict key to group them in one pass.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-list-check"></i> 8. Approach</div><div class="approach-box"><ol class="step-list"><li>Init <code>groups = defaultdict(list)</code>.</li><li>For each string s, compute <code>key = tuple(sorted(s))</code>.</li><li>Append s to <code>groups[key]</code>.</li><li>Return <code>list(groups.values())</code>.</li></ol></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>from collections import defaultdict
+class Solution:
+    def groupAnagrams(self, strs: list[str]) -> list[list[str]]:
+        groups = defaultdict(list)
+        for s in strs:
+            groups[tuple(sorted(s))].append(s)
+        return list(groups.values())</code></pre></div><div class="code-content" data-lang="js"><pre><code>var groupAnagrams = function(strs) {
+    const map = new Map();
+    for (const s of strs) {
+        const key = s.split('').sort().join('');
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(s);
+    }
+    return [...map.values()];
+};</code></pre></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n·k log k)</span><span class="c-badge c-space">Space: O(n·k)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Group by Canonical Form</strong> — When grouping equivalent items, normalize to a canonical signature and use it as a hashmap key.</p></div></div>
+      </div>
+
+      <div class="problem-card" id="lc-347">
+        <div class="problem-header"><div><span class="problem-tag">#LC 347 &bull; Arrays &amp; Hashing</span><h2>Top K Frequent Elements</h2></div><div class="problem-meta"><span class="diff-badge diff-medium">Medium</span><a href="https://leetcode.com/problems/top-k-frequent-elements/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Given an integer array <code>nums</code> and an integer <code>k</code>, return the <code>k</code> most frequent elements.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">nums=[1,1,1,2,2,3], k=2</div><div class="io-out">Output: [1,2]</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-ruler-measure"></i> 3. Constraints</div><div class="desc-box"><ul class="bullet-list" style="margin-top:0;"><li><code>1 &le; nums.length &le; 10<sup>5</sup></code></li><li>k is in range [1, number of unique elements]</li><li>The answer is guaranteed to be unique</li></ul></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p><strong>Bucket Sort:</strong> Frequencies range 1 to n. Create n+1 frequency buckets. Put numbers into their bucket. Read from the end (highest freq) until we have k elements. O(n) — beats heap's O(n log k).</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code — Bucket Sort</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>from collections import Counter
+class Solution:
+    def topKFrequent(self, nums: list[int], k: int) -> list[int]:
+        count = Counter(nums)
+        buckets = [[] for _ in range(len(nums) + 1)]
+        for num, freq in count.items():
+            buckets[freq].append(num)
+        res = []
+        for i in range(len(buckets)-1, 0, -1):
+            for num in buckets[i]:
+                res.append(num)
+                if len(res) == k: return res</code></pre></div><div class="code-content" data-lang="js"><pre><code>var topKFrequent = function(nums, k) {
+    const cnt = new Map();
+    for (const n of nums) cnt.set(n,(cnt.get(n)||0)+1);
+    const buckets = Array.from({length:nums.length+1},()=>[]);
+    for (const [n,f] of cnt) buckets[f].push(n);
+    const res = [];
+    for (let i = buckets.length-1; i > 0 &amp;&amp; res.length &lt; k; i--)
+        res.push(...buckets[i]);
+    return res.slice(0,k);
+};</code></pre></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n)</span><span class="c-badge c-space">Space: O(n)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Bucket Sort for Bounded Frequencies</strong> — When frequency values are bounded by n, bucket sort achieves O(n). "Top K" problems: use heap O(n log k) or bucket sort O(n).</p></div></div>
+      </div>
+
+      <div class="problem-card" id="lc-238">
+        <div class="problem-header"><div><span class="problem-tag">#LC 238 &bull; Arrays &amp; Hashing</span><h2>Product of Array Except Self</h2></div><div class="problem-meta"><span class="diff-badge diff-medium">Medium</span><a href="https://leetcode.com/problems/product-of-array-except-self/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Return array where <code>answer[i]</code> = product of all elements except <code>nums[i]</code>. Must run O(n) <strong>without division</strong>.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">nums = [1,2,3,4]</div><div class="io-out">Output: [24,12,8,6]</div><div class="io-comment">// 24=2*3*4, 12=1*3*4, 8=1*2*4, 6=1*2*3</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p><code>answer[i] = product_of_all_left × product_of_all_right</code>. Two passes: left to right (prefix), right to left (suffix). Combine into result in O(n) with O(1) extra space.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code — Prefix × Suffix</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def productExceptSelf(self, nums: list[int]) -> list[int]:
+        n = len(nums)
+        res = [1] * n
+        prefix = 1
+        for i in range(n):
+            res[i] = prefix
+            prefix *= nums[i]
+        suffix = 1
+        for i in range(n-1, -1, -1):
+            res[i] *= suffix
+            suffix *= nums[i]
+        return res</code></pre></div><div class="code-content" data-lang="js"><pre><code>var productExceptSelf = function(nums) {
+    const n = nums.length, res = new Array(n).fill(1);
+    let prefix = 1;
+    for (let i = 0; i &lt; n; i++) { res[i]=prefix; prefix*=nums[i]; }
+    let suffix = 1;
+    for (let i = n-1; i >= 0; i--) { res[i]*=suffix; suffix*=nums[i]; }
+    return res;
+};</code></pre></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n)</span><span class="c-badge c-space">Space: O(1)*</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Prefix/Suffix Accumulation</strong> — "Everything to the left × everything to the right." Applies to Trapping Rain Water, Max Product Subarray. Avoids division.</p></div></div>
+      </div>
+
+      <div class="problem-card" id="lc-36">
+        <div class="problem-header"><div><span class="problem-tag">#LC 36 &bull; Arrays &amp; Hashing</span><h2>Valid Sudoku</h2></div><div class="problem-meta"><span class="diff-badge diff-medium">Medium</span><a href="https://leetcode.com/problems/valid-sudoku/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Determine if a 9×9 Sudoku board is valid. Each row, column, and 3×3 sub-box must contain digits 1–9 without repetition. Empty cells are <code>'.'</code>.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p>Track seen digits per row, column, and box simultaneously in ONE pass. Box index: <code>(r//3)*3 + (c//3)</code>. If any digit repeats in any set → invalid.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def isValidSudoku(self, board: list[list[str]]) -> bool:
+        rows = [set() for _ in range(9)]
+        cols = [set() for _ in range(9)]
+        boxes = [set() for _ in range(9)]
+        for r in range(9):
+            for c in range(9):
+                v = board[r][c]
+                if v == '.': continue
+                box = (r//3)*3 + c//3
+                if v in rows[r] or v in cols[c] or v in boxes[box]:
+                    return False
+                rows[r].add(v); cols[c].add(v); boxes[box].add(v)
+        return True</code></pre></div><div class="code-content" data-lang="js"><pre><code>var isValidSudoku = function(board) {
+    const rows=[...Array(9)].map(()=>new Set());
+    const cols=[...Array(9)].map(()=>new Set());
+    const boxes=[...Array(9)].map(()=>new Set());
+    for(let r=0;r&lt;9;r++)for(let c=0;c&lt;9;c++){
+        const v=board[r][c]; if(v==='.') continue;
+        const box=Math.floor(r/3)*3+Math.floor(c/3);
+        if(rows[r].has(v)||cols[c].has(v)||boxes[box].has(v)) return false;
+        rows[r].add(v);cols[c].add(v);boxes[box].add(v);
+    }
+    return true;
+};</code></pre></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity</div><div class="complexity-row"><span class="c-badge c-time">Time: O(81) = O(1)</span><span class="c-badge c-space">Space: O(81) = O(1)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Multi-Constraint Tracking in One Pass</strong> — Maintain separate sets for each constraint dimension. Box formula: <code>(r//3)*3 + c//3</code>.</p></div></div>
+      </div>
+
+      <div class="problem-card" id="lc-271">
+        <div class="problem-header"><div><span class="problem-tag">#LC 271 &bull; Arrays &amp; Hashing</span><h2>Encode and Decode Strings</h2></div><div class="problem-meta"><span class="diff-badge diff-medium">Medium</span><a href="https://leetcode.com/problems/encode-and-decode-strings/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Design encode/decode for a list of strings to a single string. Must handle any characters including <code>#</code>, <code>|</code>, etc.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p><strong>Length-prefix encoding:</strong> Format each string as <code>"{length}#{content}"</code>. During decode, read the length, skip <code>#</code>, read exactly that many chars. No delimiter collisions possible.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Codec:
+    def encode(self, strs: list[str]) -> str:
+        return ''.join(f'{len(s)}#{s}' for s in strs)
+
+    def decode(self, s: str) -> list[str]:
+        res, i = [], 0
+        while i &lt; len(s):
+            j = s.index('#', i)
+            length = int(s[i:j])
+            res.append(s[j+1:j+1+length])
+            i = j+1+length
+        return res</code></pre></div><div class="code-content" data-lang="js"><pre><code>var encode = s => s.map(w => `${w.length}#${w}`).join('');
+var decode = function(s) {
+    const res=[]; let i=0;
+    while(i&lt;s.length){
+        const j=s.indexOf('#',i), len=parseInt(s.slice(i,j));
+        res.push(s.slice(j+1,j+1+len)); i=j+1+len;
+    }
+    return res;
+};</code></pre></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity</div><div class="complexity-row"><span class="c-badge c-time">Encode O(n)</span><span class="c-badge c-time">Decode O(n)</span><span class="c-badge c-space">Space O(n)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Length-Prefix Encoding</strong> — Encode variable-length data with a length prefix to avoid delimiter ambiguity. Used in HTTP/2 framing, protobuf, network protocols.</p></div></div>
+      </div>
+
+      <div class="problem-card" id="lc-128">
+        <div class="problem-header"><div><span class="problem-tag">#LC 128 &bull; Arrays &amp; Hashing</span><h2>Longest Consecutive Sequence</h2></div><div class="problem-meta"><span class="diff-badge diff-medium">Medium</span><a href="https://leetcode.com/problems/longest-consecutive-sequence/" target="_blank" rel="noopener" class="lc-link">LeetCode <i class="ti ti-external-link"></i></a></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-file-text"></i> 1. Problem Statement</div><div class="desc-box"><p>Given an unsorted integer array <code>nums</code>, return the length of the longest consecutive sequence. Must run in O(n) time.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-arrows-exchange"></i> 2. Input &amp; Output</div><div class="io-box"><div class="io-examples"><div class="io-example"><div class="io-example-label">Example 1</div><div class="io-in">nums = [100,4,200,1,3,2]</div><div class="io-out">Output: 4</div><div class="io-comment">// Sequence: 1,2,3,4</div></div><div class="io-example"><div class="io-example-label">Example 2</div><div class="io-in">nums = [0,3,7,2,5,8,4,6,0,1]</div><div class="io-out">Output: 9</div></div></div></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-ruler-measure"></i> 3. Constraints</div><div class="desc-box"><ul class="bullet-list" style="margin-top:0;"><li><code>0 &le; nums.length &le; 10<sup>5</sup></code></li><li><code>-10<sup>9</sup> &le; nums[i] &le; 10<sup>9</sup></code></li></ul></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bulb"></i> 4. Understanding &amp; Key Observations</div><div class="desc-box"><p>A number is a sequence start only if <code>n-1</code> is NOT in the set. Only count from starts to avoid O(n²). Total while-loop iterations across all starts = n (amortized O(n)).</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-sparkles"></i> 7. Intuition</div><div class="intuition-box"><p>Convert to set for O(1) lookup. For each number, only start counting if it has no predecessor (n-1 not in set). Then count upward. Each element processed at most twice total.</p></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-list-check"></i> 8. Approach</div><div class="approach-box"><ol class="step-list"><li>Put all numbers in a hash set.</li><li>For each n: if <code>n-1 not in set</code> (sequence start):</li><li>&nbsp;&nbsp;&nbsp;&nbsp;Count up: while <code>n+len in set</code>, increment length.</li><li>&nbsp;&nbsp;&nbsp;&nbsp;Update best = max(best, length).</li><li>Return best.</li></ol></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-code"></i> 9. Optimized Code — Hash Set O(n)</div><div class="code-container"><div class="code-header"><div class="lang-tabs"><button class="lang-tab active" onclick="switchLang(this,'py')"><i class="ti ti-brand-python"></i> Python</button><button class="lang-tab" onclick="switchLang(this,'cpp')"><i class="ti ti-brand-cpp"></i> C++</button><button class="lang-tab" onclick="switchLang(this,'java')"><i class="ti ti-coffee"></i> Java</button><button class="lang-tab" onclick="switchLang(this,'js')"><i class="ti ti-brand-javascript"></i> JS</button></div><button class="copy-btn" onclick="copyCode(this)"><i class="ti ti-copy"></i> Copy</button></div><div class="code-content active" data-lang="py"><pre><code>class Solution:
+    def longestConsecutive(self, nums: list[int]) -> int:
+        num_set = set(nums)
+        best = 0
+        for n in num_set:
+            if n - 1 not in num_set:
+                cur, length = n, 1
+                while cur + 1 in num_set:
+                    cur += 1; length += 1
+                best = max(best, length)
+        return best</code></pre></div><div class="code-content" data-lang="cpp"><pre><code>class Solution {
+public:
+    int longestConsecutive(vector&lt;int&gt;&amp; nums) {
+        unordered_set&lt;int&gt; s(nums.begin(),nums.end());
+        int best = 0;
+        for (int n : s)
+            if (!s.count(n-1)) {
+                int cur=n, len=1;
+                while (s.count(cur+1)) { cur++; len++; }
+                best = max(best, len);
+            }
+        return best;
+    }
+};</code></pre></div><div class="code-content" data-lang="java"><pre><code>class Solution {
+    public int longestConsecutive(int[] nums) {
+        Set&lt;Integer&gt; s = new HashSet&lt;&gt;();
+        for (int n : nums) s.add(n);
+        int best = 0;
+        for (int n : s)
+            if (!s.contains(n-1)) {
+                int cur=n, len=1;
+                while (s.contains(cur+1)) { cur++; len++; }
+                best = Math.max(best, len);
+            }
+        return best;
+    }
+}</code></pre></div><div class="code-content" data-lang="js"><pre><code>var longestConsecutive = function(nums) {
+    const s = new Set(nums);
+    let best = 0;
+    for (const n of s) {
+        if (!s.has(n-1)) {
+            let cur = n, len = 1;
+            while (s.has(cur + 1)) { cur++; len++; }
+            best = Math.max(best, len);
+        }
+    }
+    return best;
+};</code></pre></div>
+          <div class="expected-box optimal"><div class="expected-box-label"><i class="ti ti-terminal-2"></i> Expected Output</div><div>[100,4,200,1,3,2] &#8594; <span style="color:#34d399;">4</span> &nbsp;|&nbsp; [0,3,7,2,5,8,4,6,0,1] &#8594; <span style="color:#34d399;">9</span></div></div>
+        </div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-chart-dots"></i> 10. Complexity — Optimized</div><div class="complexity-row"><span class="c-badge c-time">Time: O(n)</span><span class="c-badge c-space">Space: O(n)</span></div></div>
+        <div class="sec-block"><div class="sec-title"><i class="ti ti-bookmark"></i> 12. Pattern / Key Takeaway</div><div class="intuition-box"><p><strong>Pattern: Hash Set for Sequence Detection</strong> — Convert to set for O(1) lookup. Start counting only from "sequence beginners" (n-1 not in set). Amortized O(n) because total iterations across all sequences = n.</p></div></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Command Palette Modal for Quick Search -->
+  <div class="cmd-palette-backdrop" id="cmdPaletteModal" onclick="if(event.target===this)closeSearchModal();">
+    <div class="cmd-palette-modal">
+      <div class="cmd-palette-header">
+        <i class="ti ti-search cmd-search-icon"></i>
+        <input type="text" id="cmdSearchInput" placeholder="Search Sheet 150 problems (e.g. Two Sum, Anagram)..." oninput="onCmdSearchInput(this.value);" autocomplete="off">
+        <kbd class="cmd-esc-tag">ESC</kbd>
+      </div>
+      <div class="cmd-palette-results" id="cmdSearchResults">
+        <!-- Dynamically populated problem search items -->
+      </div>
+      <div class="cmd-palette-footer">
+        <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+        <span><kbd>↵</kbd> Select</span>
+        <span><kbd>ESC</kbd> Close</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ── Theme ─────────────────────────────────────────────── */
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('cnote_theme', next); } catch(e){}
+      updateThemeIcons(next);
+    }
+    function updateThemeIcons(t) {
+      const cls = t === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+      ['themeIcon', 'mobileThemeIcon'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = cls;
+      });
+    }
+    updateThemeIcons(document.documentElement.getAttribute('data-theme') || 'dark');
+
+    /* ── Mobile Sidebar Drawer ───────────────────────────────── */
+    function toggleSidebar(forceOpen) {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (!sidebar || !overlay) return;
+      const isOpen = forceOpen !== undefined ? forceOpen : !sidebar.classList.contains('open');
+      if (isOpen) {
+        sidebar.classList.add('open');
+        overlay.style.display = 'block';
+        requestAnimationFrame(() => overlay.style.opacity = '1');
+        document.body.style.overflow = 'hidden';
+      } else {
+        sidebar.classList.remove('open');
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          if (!sidebar.classList.contains('open')) overlay.style.display = 'none';
+        }, 200);
+        document.body.style.overflow = '';
+      }
+    }
+    function closeSidebar() {
+      toggleSidebar(false);
+    }
+
+    /* ── Quick Search Command Palette Modal ───────────────────── */
+    function openSearch() {
+      const modal = document.getElementById('cmdPaletteModal');
+      const input = document.getElementById('cmdSearchInput');
+      if (modal && input) {
+        modal.classList.add('active');
+        input.value = '';
+        renderCmdSearchResults('');
+        setTimeout(() => input.focus(), 50);
+      }
+    }
+
+    function closeSearchModal() {
+      const modal = document.getElementById('cmdPaletteModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function renderCmdSearchResults(q) {
+      const container = document.getElementById('cmdSearchResults');
+      if (!container) return;
+      const query = q.toLowerCase().trim();
+      const problems = [
+        { id: 'lc-217', num: '01', title: 'Contains Duplicate', diff: 'EASY', tag: '#LC 217' },
+        { id: 'lc-242', num: '02', title: 'Valid Anagram', diff: 'EASY', tag: '#LC 242' },
+        { id: 'lc-1',   num: '03', title: 'Two Sum', diff: 'EASY', tag: '#LC 1' },
+        { id: 'lc-49',  num: '04', title: 'Group Anagrams', diff: 'MED', tag: '#LC 49' },
+        { id: 'lc-347', num: '05', title: 'Top K Frequent Elements', diff: 'MED', tag: '#LC 347' },
+        { id: 'lc-238', num: '06', title: 'Product of Array Except Self', diff: 'MED', tag: '#LC 238' },
+        { id: 'lc-36',  num: '07', title: 'Valid Sudoku', diff: 'MED', tag: '#LC 36' },
+        { id: 'lc-271', num: '08', title: 'Encode and Decode Strings', diff: 'MED', tag: '#LC 271' },
+        { id: 'lc-128', num: '09', title: 'Longest Consecutive Sequence', diff: 'HARD', tag: '#LC 128' }
+      ];
+
+      const filtered = problems.filter(p =>
+        p.title.toLowerCase().includes(query) ||
+        p.num.includes(query) ||
+        p.tag.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="cmd-empty"><i class="ti ti-search-off"></i><p>No matching problems found</p></div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="cmd-item" onclick="jumpToProblem('${p.id}')">
+          <div class="cmd-item-icon"><i class="ti ti-code"></i></div>
+          <div class="cmd-item-info">
+            <div class="cmd-item-title">${p.num}. ${p.title}</div>
+            <div class="cmd-item-desc">${p.tag} · ${p.diff}</div>
+          </div>
+          <i class="ti ti-corner-down-left cmd-item-arrow"></i>
+        </div>
+      `).join('');
+    }
+
+    function onCmdSearchInput(val) {
+      renderCmdSearchResults(val);
+    }
+
+    function jumpToProblem(id) {
+      closeSearchModal();
+      if (window.innerWidth <= 900) closeSidebar();
+      const card = document.getElementById(id);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    /* ── Code: Lang tabs + Copy ─────────────────────────────── */
+    function switchLang(btn, lang) {
+      const c = btn.closest('.code-container');
+      if (!c) return;
+      c.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+      c.querySelectorAll('.code-content').forEach(cc => cc.classList.remove('active'));
+      btn.classList.add('active');
+      const target = c.querySelector(`.code-content[data-lang="${lang}"]`);
+      if (target) target.classList.add('active');
+    }
+    function copyCode(btn) {
+      const c = btn.closest('.code-container');
+      const a = c?.querySelector('.code-content.active code, .code-content.active pre');
+      if (!a) return;
+      navigator.clipboard.writeText(a.innerText).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+        btn.style.color = 'var(--success)';
+        setTimeout(() => {
+          btn.innerHTML = orig;
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
+
+    /* ── Progress Store ─────────────────────────────────────── */
+    const STORE_KEY = 's150_progress';
+    function getProgress() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; } }
+    function saveProgress(d) { try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch {} }
+    function getStatus(id) { return getProgress()[id] || null; }
+    function setStatus(id, status) {
+      const d = getProgress();
+      if (!status) delete d[id];
+      else d[id] = status;
+      saveProgress(d);
+      updateCardUI(id, status);
+      updateNavPip(id, status);
+      updateProgressPill();
+    }
+
+    function updateCardUI(id, status) {
+      const card = document.getElementById(id);
+      if (!card) return;
+      card.classList.remove('is-solved', 'is-revisit');
+      if (status === 'solved') card.classList.add('is-solved');
+      if (status === 'revisit') card.classList.add('is-revisit');
+      const pill = card.querySelector('.s150-status-pill');
+      if (pill) {
+        pill.className = 's150-status-pill';
+        if (status === 'solved') {
+          pill.innerHTML = '<i class="ti ti-check"></i> Solved';
+          pill.classList.add('pill-solved');
+          pill.style.display = '';
+        } else if (status === 'revisit') {
+          pill.innerHTML = '<i class="ti ti-bookmark"></i> Revisit';
+          pill.classList.add('pill-revisit');
+          pill.style.display = '';
+        } else {
+          pill.innerHTML = '';
+          pill.style.display = 'none';
+        }
+      }
+    }
+
+    function updateNavPip(id, status) {
+      const item = document.querySelector(`.nav-item[data-id="${id}"]`);
+      if (!item) return;
+      let pip = item.querySelector('.status-pip');
+      if (!pip) {
+        let slot = item.querySelector('.status-pip-slot');
+        if (!slot) {
+          slot = document.createElement('span');
+          slot.className = 'status-pip-slot';
+          item.appendChild(slot);
+        }
+        pip = document.createElement('span');
+        pip.className = 'status-pip';
+        slot.appendChild(pip);
+      }
+      if (!status) {
+        pip.className = 'status-pip';
+      } else {
+        pip.className = `status-pip ${status === 'solved' ? 'pip-solved' : 'pip-revisit'}`;
+      }
+    }
+
+    function updateProgressPill() {
+      const d = getProgress();
+      const solved = Object.values(d).filter(v => v === 'solved').length;
+      const revisit = Object.values(d).filter(v => v === 'revisit').length;
+      const pill = document.getElementById('progressText');
+      if (pill) pill.textContent = `${solved}/9 Solved`;
+      const cnt = document.getElementById('solvedCount');
+      if (cnt) {
+        let txt = `${solved} / 9 Solved`;
+        if (revisit > 0) txt += ` · ${revisit} Revisit`;
+        cnt.textContent = txt;
+      }
+    }
+
+    /* ── Mark Buttons ───────────────────────────────────────── */
+    function injectMarkButtons() {
+      document.querySelectorAll('.problem-card').forEach(card => {
+        const id = card.getAttribute('id');
+        if (!id || card.querySelector('.s150-mark-bar')) return;
+        const status = getStatus(id);
+        card.classList.remove('is-solved', 'is-revisit');
+        if (status === 'solved') card.classList.add('is-solved');
+        if (status === 'revisit') card.classList.add('is-revisit');
+        const meta = card.querySelector('.problem-meta');
+        if (meta && !meta.querySelector('.s150-status-pill')) {
+          const pill = document.createElement('span');
+          pill.className = 's150-status-pill';
+          if (status === 'solved') {
+            pill.innerHTML = '<i class="ti ti-check"></i> Solved';
+            pill.classList.add('pill-solved');
+          } else if (status === 'revisit') {
+            pill.innerHTML = '<i class="ti ti-bookmark"></i> Revisit';
+            pill.classList.add('pill-revisit');
+          } else {
+            pill.style.display = 'none';
+          }
+          meta.prepend(pill);
+        }
+        const bar = document.createElement('div');
+        bar.className = 's150-mark-bar';
+        bar.innerHTML = `
+          <button class="s150-mark-btn btn-solved" onclick="setStatus('${id}','solved')"><i class="ti ti-check"></i> Mark Solved</button>
+          <button class="s150-mark-btn btn-revisit" onclick="setStatus('${id}','revisit')"><i class="ti ti-bookmark"></i> Revisit</button>
+          <button class="s150-mark-btn btn-unmark" onclick="setStatus('${id}',null)"><i class="ti ti-x"></i> Unmark</button>
+        `;
+        card.appendChild(bar);
+        updateNavPip(id, status);
+      });
+    }
+
+    /* ── Similar Questions ──────────────────────────────────── */
+    const SIMILAR = {'lc-217':[{t:'Find All Duplicates in an Array',lc:442,d:'medium'},{t:'Missing Number',lc:268,d:'easy'},{t:'Single Number',lc:136,d:'easy'},{t:'Find the Duplicate Number',lc:287,d:'medium'},{t:'Two Sum',lc:1,d:'easy'}],'lc-242':[{t:'Group Anagrams',lc:49,d:'medium'},{t:'Find All Anagrams in a String',lc:438,d:'medium'},{t:'Permutation in String',lc:567,d:'medium'},{t:'Ransom Note',lc:383,d:'easy'},{t:'Sort Characters By Frequency',lc:451,d:'medium'}],'lc-1':[{t:'Two Sum II',lc:167,d:'medium'},{t:'3Sum',lc:15,d:'medium'},{t:'Four Sum',lc:18,d:'medium'},{t:'Subarray Sum Equals K',lc:560,d:'medium'},{t:'Two Sum IV BST',lc:653,d:'easy'}],'lc-49':[{t:'Valid Anagram',lc:242,d:'easy'},{t:'Find All Anagrams in a String',lc:438,d:'medium'},{t:'Group Shifted Strings',lc:249,d:'medium'},{t:'Sort Characters By Frequency',lc:451,d:'medium'},{t:'Minimum Steps to Make Two Strings Anagram',lc:1347,d:'medium'}],'lc-347':[{t:'Top K Frequent Words',lc:692,d:'medium'},{t:'Sort Characters By Frequency',lc:451,d:'medium'},{t:'Kth Largest Element',lc:215,d:'medium'},{t:'K Closest Points to Origin',lc:973,d:'medium'},{t:'Find K Closest Elements',lc:658,d:'medium'}],'lc-238':[{t:'Trapping Rain Water',lc:42,d:'hard'},{t:'Maximum Product Subarray',lc:152,d:'medium'},{t:'Left and Right Sum Differences',lc:2574,d:'easy'},{t:'Running Sum of 1d Array',lc:1480,d:'easy'},{t:'Construct Product Matrix',lc:2906,d:'medium'}],'lc-36':[{t:'Sudoku Solver',lc:37,d:'hard'},{t:'Set Matrix Zeroes',lc:73,d:'medium'},{t:'Spiral Matrix',lc:54,d:'medium'},{t:'Find Numbers Disappeared in Array',lc:448,d:'easy'},{t:'Unique Paths II',lc:63,d:'medium'}],'lc-271':[{t:'Serialize Deserialize Binary Tree',lc:297,d:'hard'},{t:'String Compression',lc:443,d:'medium'},{t:'Design HashMap',lc:706,d:'easy'},{t:'Count and Say',lc:38,d:'medium'},{t:'Encode String Shortest Encoding',lc:820,d:'medium'}],'lc-128':[{t:'Longest Increasing Subsequence',lc:300,d:'medium'},{t:'Find Numbers Disappeared in Array',lc:448,d:'easy'},{t:'Missing Number',lc:268,d:'easy'},{t:'Binary Search',lc:704,d:'easy'},{t:'Longest Common Subsequence',lc:1143,d:'medium'}]};
+    function injectSimilarQuestions() {
+      document.querySelectorAll('.problem-card').forEach(card => {
+        const id = card.getAttribute('id');
+        if (!id || card.querySelector('.s150-similar') || !SIMILAR[id]) return;
+        const items = SIMILAR[id];
+        const details = document.createElement('details');
+        details.className = 's150-similar';
+        details.innerHTML = `<summary><i class="ti ti-git-compare" style="color:var(--accent)"></i> Similar Questions <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-left:4px;">(${items.length})</span><i class="ti ti-chevron-down chevron"></i></summary><div class="s150-similar-list">${items.map(q=>`<a class="s150-similar-link" href="https://leetcode.com/problems/${q.t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}/" target="_blank" rel="noopener"><span class="sim-name">LC ${q.lc} · ${q.t}</span><span class="sim-diff ${q.d}">${q.d}</span><i class="ti ti-external-link ext"></i></a>`).join('')}</div>`;
+        const markBar = card.querySelector('.s150-mark-bar');
+        markBar ? card.insertBefore(details, markBar) : card.appendChild(details);
+      });
+    }
+
+    /* ── Filter ─────────────────────────────────────────────── */
+    let activeFilter = 'all';
+    function applyFilter(type, btn) {
+      activeFilter = type;
+      document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.problem-card').forEach(card => {
+        const id = card.getAttribute('id');
+        const status = getStatus(id);
+        let show = true;
+        if (type === 'easy')    show = !!card.querySelector('.diff-easy');
+        if (type === 'medium')  show = !!card.querySelector('.diff-medium');
+        if (type === 'hard')    show = !!card.querySelector('.diff-hard');
+        if (type === 'solved')  show = status === 'solved';
+        if (type === 'revisit') show = status === 'revisit';
+        if (type === 'unsolved') show = !status;
+        card.style.display = show ? '' : 'none';
+      });
+    }
+
+    /* ── Scroll Spy ─────────────────────────────────────────── */
+    function initScrollSpy() {
+      const cards = document.querySelectorAll('.problem-card[id]');
+      const navItems = document.querySelectorAll('.nav-item[data-id]');
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            navItems.forEach(n => n.classList.remove('active'));
+            const active = document.querySelector(`.nav-item[data-id="${e.target.id}"]`);
+            if (active) {
+              active.classList.add('active');
+              active.scrollIntoView({ block: 'nearest' });
+            }
+          }
+        });
+      }, { rootMargin: '-15% 0px -65% 0px' });
+      cards.forEach(c => observer.observe(c));
+    }
+
+    /* ── Keyboard Shortcuts ──────────────────────────────────── */
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearch();
+      }
+      if (e.key === 'Escape') {
+        closeSearchModal();
+        closeSidebar();
+      }
+    });
+
+    /* ── Boot ───────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      injectMarkButtons();
+      injectSimilarQuestions();
+      updateProgressPill();
+      initScrollSpy();
+    });
+  </script>
+</body>
+</html>
