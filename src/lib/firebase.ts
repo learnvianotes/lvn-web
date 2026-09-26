@@ -1,42 +1,23 @@
 /* ============================================================
-   FIREBASE CONFIGURATION & INITIALIZATION
-   Connected to project: c-notes-4e9d3
+   FIREBASE — Firestore (lite) only.
+   No auth, no analytics: content is public and read-only
+   (see firestore.rules). Config comes from .env.local.
    ============================================================ */
 
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
-import { getFirestore, type Firestore } from 'firebase/firestore'
-import { getAuth, type Auth } from 'firebase/auth'
-import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics'
+import { initializeApp } from 'firebase/app'
+import { getFirestore } from 'firebase/firestore/lite'
 
-export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDQfNg66gT4J5nBWkE9RNdFg4Vq6RkoVWU',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'c-notes-4e9d3.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'c-notes-4e9d3',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'c-notes-4e9d3.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '744631117844',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:744631117844:web:66cd024ffabde869bf9f01',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-FJD44EBRL8',
-}
+const env = import.meta.env
 
-/** Initialize Firebase singleton instance */
-export const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+export const firebaseConfigured = Boolean(env.VITE_FIREBASE_API_KEY && env.VITE_FIREBASE_PROJECT_ID)
 
-/** Cloud Firestore Database */
-export const db: Firestore = getFirestore(app)
+const app = initializeApp({
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
+})
 
-/** Firebase Authentication */
-export const auth: Auth = getAuth(app)
-
-/** Optional Firebase Analytics with browser environment check */
-export let analytics: Analytics | null = null
-if (typeof window !== 'undefined') {
-  isSupported()
-    .then((supported) => {
-      if (supported) {
-        analytics = getAnalytics(app)
-      }
-    })
-    .catch(() => {
-      // Ignored if blocked or offline
-    })
-}
+export const db = getFirestore(app)

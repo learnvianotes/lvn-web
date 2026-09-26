@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// C-Note content is public and read-only. No authentication is used:
+// content is written only by scripts/content/seed-firestore.mjs (admin SDK,
+// which bypasses these rules). User progress stays in the browser.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /catalog/{docId} {
+      allow read: if true;
+    }
+    match /subjects/{subjectId}/{document=**} {
+      allow read: if true;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

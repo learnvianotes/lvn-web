@@ -27,3 +27,11 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# Content pipeline
+content-src/.code-check-cache.json
+service-account*.json
+firebase-debug.log
+.firebase/
+public/content.next/
+public/content.old/

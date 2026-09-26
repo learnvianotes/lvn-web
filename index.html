@@ -1,33 +1,32 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Favicon: uses the C-NOTE app icon image as-is -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/app-icon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="C-NOTE — Personal Computer Science learning and interview-preparation platform" />
-    <title>C-NOTE</title>
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="LearnViaNotes — quick, focused notes for CS interview preparation. Nothing required, just learn." />
+    <title>LearnViaNotes</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17171a" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="LearnViaNotes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <!-- Tabler icons are referenced inside the study content -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
     <script>
-      // Inline theme initializer — runs before React mounts to avoid flash
-      (function () {
-        try {
-          var stored = localStorage.getItem('cnote:theme');
-          var theme = stored === 'light' || stored === 'dark'
-            ? stored
-            : window.matchMedia('(prefers-color-scheme: light)').matches
-              ? 'light'
-              : 'dark';
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (_) {}
-      })();
+      // Apply the saved theme before first paint (no flash).
+      try {
+        var t = JSON.parse(localStorage.getItem('cnote:theme'))
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
     </script>
   </head>
   <body>

@@ -1,46 +1,58 @@
-import { useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
-import { GlobalHeader } from './GlobalHeader'
-import { MobileNavigation } from '@/components/navigation/MobileNavigation'
+/* ============================================================
+   AppShell — header + three columns that scroll independently:
+     [ contents sidebar | page | progress panel ]
+   The sidebar only exists on study pages (they portal into it,
+   see StudyLayout). The progress panel is available everywhere.
+   ============================================================ */
 
-interface AppShellProps {
-  children: ReactNode
-}
+import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom'
+import { X } from 'lucide-react'
+import { useSubject } from '@/content/hooks'
+import { Header } from '../Header'
+import { InsightsPanel } from '../insights/InsightsPanel'
+import { HelpCenter } from '../help/HelpCenter'
+import { useLayout } from './LayoutState'
 
-export function AppShell({ children }: AppShellProps) {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+export function AppShell() {
+  const { hasSidebar, sidebarOpen, insightsOpen, toggleInsights, closeDrawers, setSidebarNode, highlighted, setHighlighted } = useLayout()
+  const navigate = useNavigate()
   const location = useLocation()
+  const match = useMatch('/:subjectId/*')
+  const currentSubject = useSubject(match?.params.subjectId)
+  const onHome = location.pathname === '/'
 
-  // In learning workspace (/subjects/:id or /subjects/:id/topics/:topicId),
-  // hide the dashboard header so the workspace has a single unified toolbar.
-  const isLearningWorkspace =
-    location.pathname.startsWith('/subjects/') && location.pathname !== '/subjects'
+  const selectSubject = (id: string) => {
+    if (onHome) setHighlighted(id)
+    else navigate(`/${id}`)
+  }
+
+  const classes = ['shell', hasSidebar && sidebarOpen && 'sidebar-open', insightsOpen && 'insights-open'].filter(Boolean).join(' ')
 
   return (
-    <div className={`app-shell ${isLearningWorkspace ? 'app-shell--workspace' : ''}`}>
-      {/* Skip to content link for keyboard/screen reader users */}
-      <a
-        href="#main-content"
-        className="sr-only"
-        style={{ position: 'absolute' }}
-        onFocus={(e) => e.currentTarget.classList.remove('sr-only')}
-        onBlur={(e) => e.currentTarget.classList.add('sr-only')}
-      >
-        Skip to main content
-      </a>
+    <>
+      <Header />
+      <div className={classes}>
+        <aside className="ws-panel ws-sidebar" aria-label="Contents" inert={!(hasSidebar && sidebarOpen)}>
+          <div className="ws-panel-inner" ref={setSidebarNode} />
+        </aside>
 
-      {!isLearningWorkspace && (
-        <GlobalHeader onMenuOpen={() => setMobileNavOpen(true)} />
-      )}
+        <main className="ws-main">
+          <Outlet />
+        </main>
 
-      <MobileNavigation
-        isOpen={mobileNavOpen}
-        onClose={() => setMobileNavOpen(false)}
-      />
+        <aside className="ws-panel ws-insights" aria-label="Progress and streak" inert={!insightsOpen}>
+          <div className="ws-panel-inner">
+            <div className="ws-insights-head">
+              <span>Your progress</span>
+              <button className="icon-btn sm" onClick={toggleInsights} aria-label="Close progress"><X size={16} /></button>
+            </div>
+            <InsightsPanel selectedId={onHome ? highlighted : currentSubject?.id} onSelectSubject={selectSubject} />
+          </div>
+        </aside>
 
-      <div className="app-main">
-        {children}
+        <div className="ws-scrim" onClick={closeDrawers} aria-hidden />
       </div>
-    </div>
+      <HelpCenter />
+    </>
   )
 }

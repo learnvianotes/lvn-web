@@ -1,0 +1,115 @@
+/* ============================================================
+   BASE — design tokens (light + dark) and element defaults.
+   Every color in the app comes from these tokens.
+   ============================================================ */
+
+:root {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-2: #3f3f46;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff4ff;
+  --accent-text: #ffffff;
+  --track: #e8e8eb;
+
+  --easy: #15803d;
+  --easy-soft: #ecfdf3;
+  --medium: #b45309;
+  --medium-soft: #fffbeb;
+  --hard: #b91c1c;
+  --hard-soft: #fef2f2;
+  --revisit: #b45309;
+
+  --code-bg: #f6f7f9;
+  --code-text: #24292f;
+  --code-comment: #6e7781;
+  --code-keyword: #cf222e;
+  --code-string: #0a3069;
+  --code-number: #0550ae;
+  --code-title: #8250df;
+  --code-type: #953800;
+
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --header-h: 56px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e0e10;
+  --surface: #17171a;
+  --surface-2: #1f1f23;
+  --border: #2a2a2f;
+  --border-strong: #3a3a40;
+  --text: #f4f4f5;
+  --text-2: #d4d4d8;
+  --muted: #9a9aa3;
+  --accent: #6ea8fe;
+  --accent-hover: #8fbcff;
+  --accent-soft: rgb(110 168 254 / 0.12);
+  --accent-text: #0e0e10;
+  --track: #2a2a30;
+
+  --easy: #4ade80;
+  --easy-soft: rgb(74 222 128 / 0.1);
+  --medium: #fbbf24;
+  --medium-soft: rgb(251 191 36 / 0.1);
+  --hard: #f87171;
+  --hard-soft: rgb(248 113 113 / 0.1);
+  --revisit: #fbbf24;
+
+  --code-bg: #131316;
+  --code-text: #e6edf3;
+  --code-comment: #8b949e;
+  --code-keyword: #ff7b72;
+  --code-string: #a5d6ff;
+  --code-number: #79c0ff;
+  --code-title: #d2a8ff;
+  --code-type: #ffa657;
+
+  --shadow: none;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 16px); }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.6 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+code, kbd, pre { font-family: var(--mono); font-variant-ligatures: none; }
+ul, ol { margin: 0; }
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+.muted { color: var(--muted); }
+
+/* highlight.js tokens mapped to theme colors */
+.hljs { color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: var(--code-comment); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in { color: var(--code-keyword); }
+.hljs-string, .hljs-regexp, .hljs-addition { color: var(--code-string); }
+.hljs-number, .hljs-symbol { color: var(--code-number); }
+.hljs-title, .hljs-title.function_, .hljs-section { color: var(--code-title); }
+.hljs-type, .hljs-title.class_, .hljs-params, .hljs-attr, .hljs-meta { color: var(--code-type); }

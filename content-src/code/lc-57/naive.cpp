@@ -1,0 +1,21 @@
+class Solution {
+public:
+    vector<vector<int>> insert(vector<vector<int>>& intervals, vector<int>& newInterval) {
+        intervals.push_back(newInterval);
+        sort(intervals.begin(), intervals.end());
+
+        vector<vector<int>> result;
+
+        for (auto& interval : intervals) {
+            int start = interval[0], end = interval[1];
+
+            if (result.empty() || start > result.back()[1]) {
+                result.push_back({start, end});
+            } else {
+                result.back()[1] = max(result.back()[1], end);
+            }
+        }
+
+        return result;
+    }
+};
