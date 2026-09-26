@@ -1,0 +1,13 @@
+{
+  "projects": {},
+  "targets": {
+    "c-notes-4e9d3": {
+      "hosting": {
+        "main": [
+          "learnvianotes"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
