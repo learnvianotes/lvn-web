@@ -51,6 +51,11 @@ Each row contains:
      return ContentService.createTextOutput('ok')
    }
 
+   // Health check: opening the URL in a private window should show "LearnViaNotes feedback: ok".
+   function doGet() {
+     return ContentService.createTextOutput('LearnViaNotes feedback: ok')
+   }
+
    function folder_() {
      const found = DriveApp.getFoldersByName(FOLDER_NAME)
      return found.hasNext() ? found.next() : DriveApp.createFolder(FOLDER_NAME)
@@ -80,6 +85,18 @@ Each row contains:
 
 6. **Test it.** Open the Help center on any page and send a message. A new row appears in the sheet
    within a few seconds, and the screenshot appears in the Drive folder *LearnViaNotes feedback screenshots*.
+
+## Troubleshooting: the site says "sent" but no row appears
+
+The browser can't read the script's reply, so the site can't tell when Google rejects a message.
+Open the Web app URL in a **private/incognito window**:
+
+- **"LearnViaNotes feedback: ok"** → the script is reachable; check that the sheet has the header row and look at
+  *Apps Script → Executions* for errors.
+- **A Google sign-in page** → the deployment isn't public. Go to **Deploy → Manage deployments → ✏️ Edit**, set
+  **Who has access: Anyone**, choose **Version: New version**, and click **Deploy**. The URL stays the same.
+- **"Page not found"** → the deployment was deleted or the URL is wrong. Create a new deployment and paste its URL
+  into `src/config.ts`.
 
 ## Notes
 
