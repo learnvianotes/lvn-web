@@ -1,11 +1,11 @@
 /* ============================================================
-   FIREBASE — Firestore (lite) only.
-   No auth, no analytics: content is public and read-only
-   (see firestore.rules). Config comes from .env.local.
+   FIREBASE — Firestore (lite) + Analytics.
+   Config comes from .env.local.
    ============================================================ */
 
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore/lite'
+import { getAnalytics } from 'firebase/analytics'
 
 const env = import.meta.env
 
@@ -18,6 +18,8 @@ const app = initializeApp({
   storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: env.VITE_FIREBASE_APP_ID,
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID,
 })
 
 export const db = getFirestore(app)
+export const analytics = getAnalytics(app)
