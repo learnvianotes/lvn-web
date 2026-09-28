@@ -12,3 +12,10 @@ export const FEEDBACK_URL = 'https://script.google.com/macros/s/AKfycbwbtuRhZWjI
 
 /** Google AdSense client id (ca-pub-…). Empty = no ads and no ad script. */
 export const ADSENSE_CLIENT = ''
+
+/**
+ * Sign-in providers shown on the login page, in order. Add one only after enabling it in
+ * Firebase console → Authentication → Sign-in method (docs/auth-setup.md).
+ * Email + password is always shown.
+ */
+export const AUTH_PROVIDERS: ('google' | 'github' | 'linkedin')[] = ['google']

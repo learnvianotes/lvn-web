@@ -9,7 +9,14 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "content:extract": "node scripts/content/extract.mjs",
-    "content:seed": "node scripts/content/seed-firestore.mjs"
+    "content:seed": "node scripts/content/seed-firestore.mjs",
+    "emulators": "npm run functions:build && firebase emulators:start --only auth,firestore,functions --import=.emulator-data --export-on-exit",
+    "functions:build": "npm --prefix functions run build",
+    "deploy:rules": "firebase deploy --only firestore",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "emulators:auth": "firebase emulators:start --only auth --import=.emulator-data --export-on-exit",
+    "dev:local": "vite --mode emulators --port 9091"
   },
   "dependencies": {
     "firebase": "^12.19.0",

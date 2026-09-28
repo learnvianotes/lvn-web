@@ -1,16 +1,28 @@
 # LearnViaNotes
 
 A quick, focused interview sheet: 13 subjects of notes plus 150 coding problems with solutions in
-Python, C++, Java and JavaScript. Nothing is required: no sign-up, no login, no server. Just learn.
+Python, C++, Java and JavaScript. Nothing is required — sign-in is optional and only adds a synced
+streak, study history and notes. Just learn.
 
 Subjects: DSA Basics · DSA Advanced · Sheet 150 · OOPs · Computer Networks · DBMS · Operating Systems ·
 Cryptography · System Design · Git & GitHub · API Design · GenAI Fluency · Machine Learning & AI
 
 - **Static site.** All content is JSON in `public/content`, served with the app.
-- **Progress stays on the device.** Solved/revisit status, completed topics and the study streak live in
-  the browser's `localStorage`.
+- **Progress stays on the device** (`localStorage`) — unless the learner signs in (email, Google,
+  GitHub or LinkedIn via Firebase Auth); then progress, the streak, study history (topic, date, time
+  spent, revisits) and personal notes sync to their own Firestore documents. Setup and security
+  checklist: [docs/auth-setup.md](docs/auth-setup.md).
+- **Study tools.** Read-aloud for every topic and problem (Web Speech API, offline), a focus timer
+  that counts toward the streak, a spaced-repetition review queue, and a "smart study kit" per topic
+  (quick notes, side headings, key terms) generated in the browser from the topic's structure.
 - **Installable (PWA).** Works offline for anything already opened.
 - **Help center** (speech-bubble "?" icon in the header): feedback with an automatic screenshot goes straight to a Google Sheet (see below).
+
+## Architecture
+
+Feature-based React app + Firebase (Auth, Firestore, Cloud Functions). Folder layout, data flow,
+guest vs signed-in features, the event log for recommendations and the roadmap:
+[docs/architecture.md](docs/architecture.md).
 
 ## Development
 
@@ -19,6 +31,8 @@ npm install
 npm run dev              # http://localhost:9090
 npm run build            # production build in dist/
 npx vite preview         # serve dist/ locally (service worker active)
+npm run emulators        # local Firebase: Auth + Firestore + Functions (needs Java 21)
+npm run dev:local        # app on :9091 using the local emulators
 ```
 
 ## Going live

@@ -1,0 +1,38 @@
+/* Styles for this feature — tokens come from shared/styles/base.css. */
+
+/* ── History ────────────────────────────────────────────── */
+.history-title { margin: 8px 0 16px; }
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat { display: grid; gap: 2px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+.stat strong { font-size: 22px; letter-spacing: -0.02em; }
+.stat span { font-size: 12.5px; color: var(--muted); }
+.stat-icon { color: var(--accent); }
+.stat-icon.is-fire { color: var(--fire); }
+.history-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.history-side { display: grid; gap: 14px; position: sticky; top: calc(var(--header-h) + 16px); }
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.history-log { display: grid; gap: 12px; }
+.history-log .section-title { margin-bottom: 0; }
+.empty-card { display: grid; gap: 12px; justify-items: start; padding: 20px; border: 1px dashed var(--border-strong); border-radius: 12px; color: var(--text-2); }
+.day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; scroll-margin-top: calc(var(--header-h) + 16px); }
+.day-card:target { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.day-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.day-card-head h3 { font-size: 14.5px; font-weight: 650; }
+.day-list { list-style: none; padding: 4px; }
+.day-list > li.muted { padding: 8px 12px; }
+.day-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; }
+.day-item:hover { background: var(--surface-2); }
+.day-item-main { display: grid; flex: 1; min-width: 0; line-height: 1.35; }
+.day-item-title { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-item-time { font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 600; color: var(--text-2); min-width: 56px; text-align: right; }
+.tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.tag--revisit { background: var(--medium-soft); color: var(--revisit); }
+.tag--done { background: var(--easy-soft); color: var(--easy); }
+.review-list { list-style: none; padding: 0; display: grid; gap: 2px; }
+.review-list a { display: grid; padding: 7px 8px; border-radius: 8px; line-height: 1.35; font-size: 13.5px; font-weight: 550; }
+.review-list a:hover { background: var(--surface-2); }
+@media (max-width: 900px) {
+  .history-grid { grid-template-columns: 1fr; }
+  .history-side { position: static; order: -1; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+}

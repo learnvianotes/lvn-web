@@ -16,7 +16,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
-import { SUBJECTS, SHEET_150_CATEGORIES, SHEET_150_FILES, LEGACY_DIR, OUT_DIR } from './config.mjs'
+import { CATEGORIES, SUBJECTS, SHEET_150_CATEGORIES, SHEET_150_FILES, LEGACY_DIR, OUT_DIR } from './config.mjs'
 import { normalizeFragment, normalizeLang, codeText, cleanText, sectionize } from './sanitize.mjs'
 import { cppCompiles, javaParses, saveCache, cppErrors, javaErrors, jsErrors } from './validate-code.mjs'
 
@@ -260,9 +260,14 @@ function extractSheet150() {
 
 fs.rmSync(BUILD_DIR, { recursive: true, force: true })
 
+for (const s of SUBJECTS) {
+  if (!CATEGORIES.some((c) => c.id === s.category)) throw new Error(`${s.id}: unknown category "${s.category}" (see CATEGORIES in config.mjs)`)
+}
+
 const catalog = {
   version: 1,
   generatedAt: new Date().toISOString(),
+  categories: CATEGORIES,
   subjects: SUBJECTS.map(({ source, ...meta }) => {
     const topics = meta.kind === 'problems' ? extractSheet150() : extractNotes({ ...meta, source })
     const itemCount = meta.kind === 'problems'

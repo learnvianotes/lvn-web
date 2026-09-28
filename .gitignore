@@ -35,3 +35,7 @@ firebase-debug.log
 .firebase/
 public/content.next/
 public/content.old/
+
+# Firebase emulators (local data + logs)
+.emulator-data/
+*-debug.log

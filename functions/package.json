@@ -1,0 +1,20 @@
+{
+  "name": "learnvianotes-functions",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "engines": { "node": "22" },
+  "scripts": {
+    "sync-schema": "rm -rf src/schema && mkdir -p src/schema && cp ../schema/*.ts src/schema/",
+    "build": "npm run sync-schema && tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}

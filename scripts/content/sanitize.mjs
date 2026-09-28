@@ -1,6 +1,6 @@
 /* ============================================================
    CONTENT PIPELINE — HTML normalizer
-   Converts legacy, per-subject markup into the small C-Note
+   Converts legacy, per-subject markup into the small
    content vocabulary styled by src/styles/prose.css:
 
      callout (+ callout--def|example|note|warn|good|bad), callout-label
