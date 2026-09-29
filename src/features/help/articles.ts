@@ -87,10 +87,12 @@ It's generated instantly from the topic itself, works offline, and “Explain it
   },
   {
     id: 'focus', topic: 'Study tools', title: 'Focus timer',
-    body: `The timer in the header runs focus sessions of 15–60 minutes (or your own length) with an optional break. Completed focus minutes count toward your streak.
+    body: `The timer in the header runs focus sessions of 15–60 minutes, or your own length in minutes and seconds, with an optional break. Focus minutes count toward your streak.
 
-It keeps running if you reload or switch pages.`,
-    keywords: 'pomodoro timer concentrate',
+While a session runs, a small timer stays in the corner of every page — pause, stop or minimise it there. It keeps running if you reload or switch pages.
+
+When it ends you'll hear a chime (test it or turn it off in the timer menu) and see a summary with a quick break or another round. If the tab is in the background, your browser can also show a notification — allow it when asked.`,
+    keywords: 'pomodoro timer concentrate seconds sound chime notification',
   },
   {
     id: 'arrange', topic: 'Study tools', title: 'Sorting and rearranging subjects',
