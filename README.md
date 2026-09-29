@@ -1,11 +1,11 @@
 # LearnViaNotes
 
-A quick, focused interview sheet: 14 subjects of notes plus 150 coding problems with solutions in
+A quick, focused interview sheet: 15 subjects of notes plus 150 coding problems with solutions in
 Python, C++, Java and JavaScript. Nothing is required — sign-in is optional and only adds a synced
 streak, study history and notes. Just learn.
 
 Subjects: DSA Basics · DSA Advanced · Sheet 150 · Python · OOPs · Computer Networks · DBMS · Operating Systems ·
-Cryptography · System Design · Git & GitHub · API Design · GenAI Fluency · Machine Learning & AI
+Cryptography · System Design · Git & GitHub · API Design · GenAI Fluency · Machine Learning · Data Science
 
 - **Content from the database.** All 14 subjects live in Firestore as structured content (headings,
   paragraphs, code blocks, callouts, tables, …) and are rendered by reusable components. The site ships no

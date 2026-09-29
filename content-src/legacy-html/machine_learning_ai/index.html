@@ -1115,16 +1115,16 @@
           <div class="card">
             <h3>Missing Values</h3>
             <p>• **Definition:** Null entries in feature tables.<br>
-            • **Use Case:** Mean/Median/Mode imputation for numerical/categorical fields, or KNN Imputer for multivariate estimation. Dropping rows if missing rates exceed 50%.</p>
+            • **Use Case:** Mean/Median/Mode imputation for numerical/categorical fields, or KNN Imputer for multivariate estimation. Dropping a feature (column) if its missing rate is very high (e.g. >50%).</p>
           </div>
           <div class="card">
             <h3>Outliers</h3>
             <p>• **Definition:** Values lying far outside the typical distribution.<br>
-            • **Use Case:** Capping values using the Interquartile Range (IQR) method (below $Q1 - 1.5*IQR$ or above $Q3 + 1.5*IQR$) or Log Transformations to compress right-skewed tails.</p>
+            • **Use Case:** Capping values using the Interquartile Range (IQR) method (below Q1 − 1.5×IQR or above Q3 + 1.5×IQR) or Log Transformations to compress right-skewed tails.</p>
           </div>
           <div class="card">
             <h3>Normalization (Min-Max Scaler)</h3>
-            <p>• **Definition:** Rescaling feature ranges to $[0, 1]$. Highly sensitive to outliers.<br>
+            <p>• **Definition:** Rescaling feature ranges to [0, 1]. Highly sensitive to outliers.<br>
             <div class="math-block">X_norm = (X - X_min) / (X_max - X_min)</div>
             • **Use Case:** Neural networks and distance-based models (KNN, K-Means).</p>
           </div>
@@ -1132,15 +1132,15 @@
             <h3>Standardization (Z-Score Scaler)</h3>
             <p>• **Definition:** Centering data to mean = 0 and standard deviation = 1.<br>
             <div class="math-block">Z = (X - μ) / σ</div>
-            • **Use Case:** Models assuming Gaussian inputs (Linear Regression, SVMs, PCA).</p>
+            • **Use Case:** Scale-sensitive models (regularized linear/logistic regression, SVMs, PCA, gradient-descent training).</p>
           </div>
           <div class="card">
             <h3>Dimensionality Reduction</h3>
             <p>• **Definition:** Projecting high-dimensional spaces to lower-dimensional latent spaces.<br>
-            • **Use Case:** Applying **Principal Component Analysis (PCA)** to compress 100 features to 5 principal orthogonal components, reducing training time and preventing overfitting.</p>
+            • **Use Case:** Applying **Principal Component Analysis (PCA)** to compress 100 features to 5 principal orthogonal components, reducing training time and sometimes reducing overfitting (regularization is the primary tool).</p>
           </div>
           <div class="learn-box">
-            <strong>The Learning Way:</strong> Standard scaling centers and scales variables, whereas Min-Max bounds them. Standard scaling is generally safer because it handles outliers better.
+            <strong>The Learning Way:</strong> Standard scaling centers and scales variables, whereas Min-Max bounds them. Standard scaling is usually a safer default than Min-Max, but both are affected by outliers (mean/std and min/max shift); use RobustScaler (median/IQR) when outliers are present.
           </div>
         </div>
       </div>
@@ -1160,7 +1160,7 @@
             • **Test Set (10-15%):** Held out until the end. Used once to report final generalization metrics.
           </div>
           <div class="learn-box">
-            <strong>The Learning Way:</strong> Never let the model see the test set during training or validation, otherwise you risk model leakage and optimistic bias.
+            <strong>The Learning Way:</strong> Never let the model see the test set during training or validation, otherwise you risk data leakage and optimistic bias.
           </div>
         </div>
 
@@ -1187,7 +1187,7 @@
             <h3>K-Fold Cross-Validation</h3>
             <p>Dataset is split into <code>K</code> folds. Model is trained <code>K</code> times, using 1 fold for validation and <code>K-1</code> folds for training. Overcomes small-data validation noise.<br>
             <strong>Stratified K-Fold:</strong> Preserves target distribution across folds.<br>
-            <strong>Time-Series Split:</strong> Dynamic rolling windows (e.g., train Fold 1 on Jan, validate Feb; train Fold 2 on Jan-Feb, validate March) to avoid future temporal leakage.</p>
+            <strong>Time-Series Split:</strong> Expanding windows (e.g., train Fold 1 on Jan, validate Feb; train Fold 2 on Jan-Feb, validate March) to avoid future temporal leakage.</p>
           </div>
         </div>
 
@@ -1234,7 +1234,7 @@
               <!-- Variance (ascending) -->
               <path d="M 80 210 Q 250 200 440 50" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-dasharray="3" />
               <!-- Total Error (U-shape) -->
-              <path d="M 80 120 Q 230 220 440 90" fill="none" stroke="var(--accent)" stroke-width="3" />
+              <path d="M 80 40 Q 230 200 440 40" fill="none" stroke="var(--accent)" stroke-width="3" />
               
               <!-- Labels on curves -->
               <text x="110" y="80" fill="var(--red)" font-size="10" font-family="sans-serif" font-weight="bold">Bias²</text>
@@ -1242,8 +1242,8 @@
               <text x="235" y="130" fill="var(--accent)" font-size="10" font-family="sans-serif" font-weight="bold">Total Error</text>
               
               <!-- Optimum Line -->
-              <line x1="225" y1="30" x2="225" y2="220" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="3" />
-              <text x="225" y="24" fill="var(--green)" font-size="10" text-anchor="middle" font-family="sans-serif" font-weight="bold">Sweet Spot (Optimal Generalization)</text>
+              <line x1="245" y1="30" x2="245" y2="220" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="3" />
+              <text x="245" y="24" fill="var(--green)" font-size="10" text-anchor="middle" font-family="sans-serif" font-weight="bold">Sweet Spot (Optimal Generalization)</text>
               
               <!-- Zones -->
               <text x="130" y="205" fill="var(--text3)" font-size="10" text-anchor="middle" font-family="sans-serif">Underfitting (High Bias)</text>
@@ -1279,7 +1279,7 @@
             A **Confusion Matrix** is a grid summarizing predictions against true labels.
           </div>
           <div class="confusion-matrix-container">
-            <div class="matrix-grid">
+            <div class="matrix-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
               <div class="matrix-cell label-col"></div>
               <div class="matrix-cell header-row">Predicted Positive</div>
               <div class="matrix-cell header-row">Predicted Negative</div>
@@ -1384,9 +1384,9 @@
           <div class="section-title"><i class="ti ti-adjustments-horizontal"></i>Threshold Tuning</div>
           <div class="card">
             <h3>Choosing the Decision Cutoff</h3>
-            <p>Models output probability ranges $[0, 1]$. The default threshold is $0.5$. <br>
-            • For high-security login verification, raise the threshold (e.g., $0.98$) to reduce False Positives.<br>
-            • For medical diagnoses, lower the threshold (e.g., $0.15$) to prioritize Recall (minimizing False Negatives).</p>
+            <p>Models output probability ranges [0, 1]. The default threshold is 0.5. <br>
+            • For high-security login verification, raise the threshold (e.g., 0.98) to reduce False Positives.<br>
+            • For medical diagnoses, lower the threshold (e.g., 0.15) to prioritize Recall (minimizing False Negatives).</p>
           </div>
         </div>
 
@@ -1394,7 +1394,7 @@
           <div class="section-title"><i class="ti ti-git-pull-request"></i>Human vs. Model Error & Slice-Based Evaluation</div>
           <div class="card">
             <h3>Human Error vs. Model Error</h3>
-            <p>• **Human Error (Bayes Error):** The irreducible error limit (e.g. ambiguous image pixels).<br>
+            <p>• **Human-Level Error (proxy for Bayes Error):** Bayes error is the irreducible error limit (e.g. ambiguous image pixels).<br>
             • **Training Error:** Error rate on the training dataset.<br>
             • **Generalization (Test) Error:** Model performance on unseen datasets.</p>
           </div>
@@ -1439,13 +1439,13 @@
           <div class="card-grid">
             <div class="card">
               <h3>Mean vs. Median</h3>
-              <p>• **Mean ($μ$):** Average value. Highly sensitive to outliers.<br>
+              <p>• **Mean (μ):** Average value. Highly sensitive to outliers.<br>
               • **Median:** Middle sorted value. Robust to skew.</p>
             </div>
             <div class="card">
               <h3>Variance & Std Dev</h3>
-              <p>• **Variance ($σ^2$):** Mean squared deviations from Mean.<br>
-              • **Standard Deviation ($σ$):** Dispersion metric in the same units as the dataset.</p>
+              <p>• **Variance (σ²):** Mean squared deviations from Mean.<br>
+              • **Standard Deviation (σ):** Dispersion metric in the same units as the dataset.</p>
             </div>
           </div>
         </div>
@@ -1453,14 +1453,14 @@
         <div class="section">
           <div class="section-title"><i class="ti ti-chart-area"></i>Hypothesis Testing & p-values</div>
           <div class="def-card">
-            • **Null Hypothesis ($H_0$):** Assumption of no change (e.g., Conversion model A = model B).<br>
-            • **p-value:** The probability of obtaining the observed results (or more extreme) assuming $H_0$ is true.<br>
-            • **Significance Level ($α$):** Probability cutoff for rejecting $H_0$ (usually $0.05$).
+            • **Null Hypothesis (H₀):** Assumption of no change (e.g., Conversion model A = model B).<br>
+            • **p-value:** The probability of obtaining the observed results (or more extreme) assuming H₀ is true.<br>
+            • **Significance Level (α):** Probability cutoff for rejecting H₀ (usually 0.05).
           </div>
           <div style="text-align: center; margin: 15px 0;">
             <svg viewBox="0 0 400 200" width="100%" height="auto" style="background:var(--bg2); border-radius:var(--radius); border:1px solid var(--border); padding:10px;">
               <!-- Bell Curve -->
-              <path d="M 40 180 Q 120 180 160 120 T 200 30 T 240 120 T 360 180" fill="none" stroke="var(--accent)" stroke-width="2" />
+              <path d="M 40 180 C 130 180 150 30 200 30 C 250 30 270 180 360 180" fill="none" stroke="var(--accent)" stroke-width="2" />
               <!-- Rejection region left -->
               <path d="M 40 180 Q 80 180 120 156 L 120 180 Z" fill="rgba(239, 68, 68, 0.25)" stroke="var(--red)" stroke-width="1.2" />
               <!-- Rejection region right -->
@@ -1469,7 +1469,7 @@
               <line x1="200" y1="30" x2="200" y2="180" stroke="var(--green)" stroke-width="1.2" stroke-dasharray="3" />
               <text x="200" y="195" fill="var(--green)" font-size="9" text-anchor="middle" font-weight="bold">Mean (H₀)</text>
               <text x="325" y="145" fill="var(--red)" font-size="9" text-anchor="middle" font-weight="bold">Rejection Region (α/2 = 2.5%)</text>
-              <text x="200" y="100" fill="var(--text2)" font-size="10" text-anchor="middle">Acceptance Region (95%)</text>
+              <text x="200" y="100" fill="var(--text2)" font-size="10" text-anchor="middle">Fail-to-Reject Region (95%)</text>
             </svg>
           </div>
         </div>
@@ -1575,7 +1575,7 @@
           <div class="section-title"><i class="ti ti-device-gamepad"></i>Use Case: Spam Classifier Formulation Blueprint</div>
           <div class="def-card">
             • **Input:** Email body text, sender history, IP logs, metadata.<br>
-            • **Output:** Binary output probability `P(Spam)`. <br>
+            • **Output:** Binary output probability <code>P(Spam)</code>. <br>
             • **Type:** Supervised Binary Classification.<br>
             • **Labels:** User-flagged "Mark as Spam" actions.<br>
             • **Metrics:** Precision (to minimize False Positives) and F1 Score.
@@ -1677,7 +1677,7 @@
               <h3>Random Forest</h3>
               <p>• **Definition:** Ensemble of independent decision trees trained via bagging.<br>
               • **Use Case:** Credit scoring risk profiles.<br>
-              • **Why:** Reduces variance, handles non-linear relationships, hard to overfit.</p>
+              • **Why:** Reduces variance, handles non-linear relationships, adding more trees does not cause overfitting (though deep trees on noisy data still can).</p>
             </div>
             <div class="card">
               <h3>Gradient Boosting (XGBoost / LightGBM)</h3>
@@ -1693,7 +1693,7 @@
             </div>
             <div class="card">
               <h3>Naive Bayes</h3>
-              <p>• **Definition:** Classifier based on Bayes' theorem, assuming feature independence.<br>
+              <p>• **Definition:** Classifier based on Bayes' theorem, assuming features are conditionally independent given the class.<br>
               • **Use Case:** Spam text filtering.<br>
               • **Why:** Fast inference, requires small training sets.</p>
             </div>
@@ -1713,7 +1713,7 @@
               <h3>K-Means</h3>
               <p>• **Definition:** Minimizes within-cluster sum-of-squares (inertia).<br>
               • **Use Case:** Customer demographic segmentation.<br>
-              • **Pitfall:** Requires specifying `K` beforehand; sensitive to outliers.</p>
+              • **Pitfall:** Requires specifying <code>K</code> beforehand; sensitive to outliers.</p>
             </div>
             <div class="card">
               <h3>DBSCAN</h3>
@@ -1758,8 +1758,8 @@
             • **Environment:** Target context system.<br>
             • **Reward:** Performance feedback signal.<br>
             • **Policy:** Action mapping function.<br>
-            • **Q-Learning:** Learns state-action values ($Q$).<br>
-            • **Deep Q Networks (DQN):** Replaces tabular $Q$ metrics with deep neural networks for high-dimensional states.
+            • **Q-Learning:** Learns state-action values (Q).<br>
+            • **Deep Q Networks (DQN):** Replaces the tabular Q-value table with deep neural networks for high-dimensional states.
           </div>
         </div>
       </div>
@@ -1795,7 +1795,7 @@
             </div>
             <div class="card">
               <h3>ROC-AUC</h3>
-              <p>Overall ranking capability of the model across different thresholds. Sensitive to class imbalance.</p>
+              <p>Overall ranking capability of the model across different thresholds. Insensitive to the class ratio (TPR and FPR are each computed within one class), so it can look overly optimistic on highly imbalanced data.</p>
             </div>
             <div class="card">
               <h3>PR-AUC</h3>
@@ -1824,7 +1824,7 @@
             </div>
             <div class="card">
               <h3>R² Score</h3>
-              <p>Proportion of variance explained by model features. 1.0 is perfect; 0.0 means the model is no better than predicting the mean of the training data.</p>
+              <p>Proportion of variance explained by model features. 1.0 is perfect; 0.0 means the model is no better than always predicting the mean of the true targets; negative values mean worse than that baseline.</p>
             </div>
           </div>
         </div>
@@ -1838,7 +1838,7 @@
             </div>
             <div class="card">
               <h3>MAP (Mean Average Precision)</h3>
-              <p>Averages Precision@K scores across all relevant ranks. Useful for search and recommendation feeds.</p>
+              <p>Average Precision (AP) averages Precision@k at each rank k where a relevant item appears; MAP is the mean of AP across all queries/users. Useful for search and recommendation feeds.</p>
             </div>
             <div class="card">
               <h3>MRR (Mean Reciprocal Rank)</h3>
@@ -1863,7 +1863,7 @@
           <div class="card">
             <h3>1. Data Leakage</h3>
             <p>• **Cause:** Standardizing dataset using global mean/stddev prior to splitting.<br>
-            • **Fix:** Fit pre-processing transformers on training subsets *only*; use pipelines.</p>
+            • **Fix:** Fit pre-processing transformers on training subsets <em>only</em>; use pipelines.</p>
           </div>
           <div class="card">
             <h3>2. Overfitting vs. Underfitting</h3>
@@ -1887,14 +1887,14 @@
           </div>
           <div class="card">
             <h3>6. Distribution Shift & Concept Drift</h3>
-            <p>• **Covariate Shift:** Input features change, but the relationship $P(Y|X)$ remains constant.<br>
-            • **Concept Drift:** The relationship between features and labels changes $P(Y|X)$ (e.g., purchase intent changes during inflation).<br>
+            <p>• **Covariate Shift:** The input distribution P(X) changes, but P(Y|X) remains constant.<br>
+            • **Concept Drift:** The relationship between features and labels changes P(Y|X) (e.g., purchase intent changes during inflation).<br>
             • **Fix:** Monitor input distribution divergence (PSI metrics); schedule periodic model retraining.</p>
           </div>
           <div class="card">
             <h3>7. Spurious Correlations</h3>
             <p>• **Cause:** Model targets coincidentally correlated features rather than causal indicators.<br>
-            • **Fix:** Apply SHAP feature attribution audits; use adversarial validation splits.</p>
+            • **Fix:** Apply SHAP feature attribution audits; evaluate on out-of-distribution / counterfactual slices where the spurious feature is decorrelated.</p>
           </div>
           <div class="card">
             <h3>8. Missing & Duplicate Data</h3>
@@ -1915,7 +1915,7 @@
           <div class="card">
             <h3>Demographic Parity vs. Equalized Odds</h3>
             <p>• **Demographic Parity:** Model outputs positive classes at equal rates across demographic groups. (Can degrade performance).<br>
-            • **Equalized Odds:** True Positive Rate and False Positive Rate are identical across demographic groups (ensuring equal accuracy).</p>
+            • **Equalized Odds:** True Positive Rate and False Positive Rate are identical across demographic groups (equal error rates conditioned on the true label; overall accuracy can still differ when base rates differ).</p>
           </div>
         </div>
 
@@ -1965,7 +1965,7 @@
         <p class="page-subtitle">The continuous lifecycle of an engineering-grade Machine Learning system.</p>
 
         <div class="section">
-          <div class="section-title"><i class="ti ti-route"></i>12 Pipeline Stages</div>
+          <div class="section-title"><i class="ti ti-route"></i>Pipeline Overview</div>
           <div style="text-align: center; margin: 15px 0;">
             <svg viewBox="0 0 700 240" width="100%" height="auto" style="background:var(--bg2); border-radius:var(--radius); border:1px solid var(--border); padding:15px;">
               <defs>
@@ -2021,7 +2021,7 @@
             5. **Exploratory Data Analysis (EDA):** Identify feature statistics, distributions, and outliers.<br>
             6. **Feature Engineering:** Apply standardization, normalization, and scaling.<br>
             7. **Train Model:** Train candidate models (XGBoost, DNNs).<br>
-            8. **Validate Model:** Tune hyperparameters using cross-validation.<br>
+            8. **Validate Model:** Compare candidate models on the validation set or via cross-validation.<br>
             9. **Error Analysis:** Categorize wrong predictions and evaluate performance slices.<br>
             10. **Hyperparameter Tuning:** Run Grid Search or Random Search on best candidates.<br>
             11. **Final Evaluation:** Verify performance on held-out test datasets; calculate statistical significance.<br>
@@ -2045,7 +2045,7 @@
             <strong>Labeling:</strong> Click = 1, skip = 0.<br>
             <strong>Modeling:</strong> Two-stage pipeline. (1) **Retrieval:** Dual-tower neural networks to filter down to 100 candidates. (2) **Ranking:** Deep & Cross Network (DCN) to rank candidates by expected watch time.<br>
             <strong>Metric:</strong> Offline NDCG, online watch time.<br>
-            <strong>Deployment:</strong> Canary deployment to verify conversion lift.</p>
+            <strong>Deployment:</strong> Canary deployment for safety, then an A/B test to verify watch-time lift.</p>
           </div>
         </div>
 
@@ -2056,7 +2056,7 @@
             <p><strong>Formulation:</strong> Classify transactions as fraud/clean in under 50ms.<br>
             <strong>Imbalance:</strong> Fraud is 0.05%. Treat as extreme class imbalance. Use class weights in XGBoost loss.<br>
             <strong>Metrics:</strong> F1-score, Recall, and PR-AUC. Never use Accuracy.<br>
-            <strong>Feature Engineering:</strong> Cash profile logs in Redis cache (e.g., number of transactions in last hour).<br>
+            <strong>Feature Engineering:</strong> Cache real-time user profile aggregates in Redis (e.g., number of transactions in last hour).<br>
             <strong>Deployment:</strong> Shadow deployment to evaluate latency against the 50ms SLA before routing live traffic.</p>
           </div>
         </div>
@@ -2064,7 +2064,7 @@
         <div class="section">
           <div class="section-title"><i class="ti ti-history"></i>Scenario 3: Troubleshooting Production Performance Drop</div>
           <div class="card">
-            <h3>A conversion model's CTR drops significantly after 3 months. How do you fix it?</h3>
+            <h3>A CTR prediction model's performance drops significantly after 3 months. How do you fix it?</h3>
             <p><strong>1. Schema Verification:</strong> Check if input features have missing logs or invalid defaults.<br>
             <strong>2. Measure Drift:</strong> Calculate **Population Stability Index (PSI)** between training data and current production logs to detect Covariate Shift.<br>
             <strong>3. Concept Drift Audit:</strong> Check if user behavior trends have changed.<br>

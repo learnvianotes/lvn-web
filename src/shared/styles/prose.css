@@ -205,3 +205,16 @@
 
 /* Tabler icons inside content */
 .prose .ti { vertical-align: -0.1em; }
+
+/* Diagram colours used inside content SVGs (from the original notes) → the app's theme
+   tokens, so every drawing follows light / dark mode. */
+.prose svg {
+  --red: var(--hard);
+  --green: var(--easy);
+  --yellow: var(--medium);
+  --text2: var(--text-2);
+  --text3: var(--muted);
+  --bg3: var(--surface-2);
+  --bg4: var(--border);
+  --accent2: var(--accent-hover);
+}

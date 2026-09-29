@@ -246,7 +246,8 @@ export function normalizeFragment(root, doc) {
     // Attribute hygiene
     for (const attr of [...el.attributes]) {
       const name = attr.name.toLowerCase()
-      if (name.startsWith('on') || name === 'id' || name === 'tabindex' || name.startsWith('aria-') && name !== 'aria-label') {
+      // ids are meaningless in the app — except inside SVG drawings, where markers/gradients are referenced by url(#id).
+      if (name.startsWith('on') || (name === 'id' && !el.closest('svg')) || name === 'tabindex' || name.startsWith('aria-') && name !== 'aria-label') {
         el.removeAttribute(attr.name)
       } else if (name === 'style') {
         const s = filterStyle(attr.value)
@@ -272,8 +273,10 @@ export function normalizeFragment(root, doc) {
     if (!el.children.length && /!\[[^\]]*\]\(data:image\//.test(el.textContent)) el.textContent = el.textContent.replace(/!\[[^\]]*\]\(data:image\/[^)]*\)/g, '')
   }
 
-  // Remove empty wrappers left behind.
+  // Remove empty wrappers left behind — but not empty cells of a grid (e.g. the corner of a
+  // confusion matrix): removing one would shift every following cell into the wrong column.
   for (const el of [...root.querySelectorAll('div, span, p')].reverse()) {
+    if (el.parentElement?.classList.contains('grid')) continue
     if (!el.textContent.trim() && !el.querySelector('i, img, svg, br, hr, code')) el.remove()
   }
 

@@ -48,7 +48,7 @@ export const SUBJECTS = [
     description: 'REST, GraphQL, gRPC, versioning, pagination, auth and API best practices.' },
   { id: 'genai-fluency', category: 'ai', title: 'GenAI Fluency', icon: 'sparkles', kind: 'notes', source: 'genai_fluency/index.html',
     description: 'LLMs, prompting, embeddings, RAG, agents and interview-ready GenAI concepts.' },
-  { id: 'ml-ai', category: 'ai', title: 'Machine Learning & AI', icon: 'brain', kind: 'notes', source: 'machine_learning_ai/index.html',
+  { id: 'ml-ai', category: 'ai', title: 'Machine Learning', icon: 'brain', kind: 'notes', source: 'machine_learning_ai/index.html',
     description: 'Data modeling, training, evaluation, classic algorithms and neural networks.' },
   { id: 'data-science', category: 'ai', title: 'Data Science', icon: 'chart', kind: 'notes', source: 'data_science/index.html',
     description: 'Files, NumPy, pandas, web scraping, machine learning with scikit-learn and NLP with NLTK and spaCy.' },
