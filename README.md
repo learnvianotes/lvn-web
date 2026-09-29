@@ -71,7 +71,7 @@ content-build/                 scanned content as JSON (don't edit by hand; not 
 Firestore                      structured content the app reads
 ```
 
-- **Python, C, C++, Java, JavaScript, SQL, Artificial Intelligence, Data Science and Deep Learning** are authored as code in
+- **Python, C, C++, Java, JavaScript, SQL, Artificial Intelligence, Machine Learning, Data Science and Deep Learning** are authored as code in
   `content-src/authoring/<subject>/` (`npm run content:<subject>`): every example is executed — Python in
   process, C/C++ with clang + sanitizers, Java on JDK 21, JavaScript on Node, SQL on SQLite — and its output
   is checked before the HTML is generated. See [content-src/authoring/README.md](content-src/authoring/README.md).
