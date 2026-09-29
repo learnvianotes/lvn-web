@@ -13,6 +13,8 @@ import { InsightsPanel } from '@/features/progress/insights/InsightsPanel'
 import { HelpCenter } from '@/features/help/HelpCenter'
 import { useLayout } from '@/app/shell/LayoutState'
 import { ListenBar } from '@/features/voice/ListenBar'
+import { FocusRuntime } from '@/features/focus/FocusRuntime'
+import { useUser } from '@/features/auth/auth'
 import { trackPageView } from '@/services/analytics'
 import { useEffect, useRef } from 'react'
 
@@ -23,6 +25,7 @@ export function AppShell() {
   const match = useMatch('/:subjectId/*')
   const currentSubject = useSubject(match?.params.subjectId)
   const onHome = location.pathname === '/'
+  const user = useUser()
   const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(location.pathname)
 
   // Analytics logs the first page view itself; log client-side navigations after that.
@@ -65,6 +68,7 @@ export function AppShell() {
       </div>
       <HelpCenter />
       <ListenBar />
+      {user && <FocusRuntime />}
     </>
   )
 }

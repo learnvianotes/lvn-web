@@ -9,6 +9,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, RotateCcw } from 'lucide-react'
 import { useCatalog, useProblems, useSubject, useTopic } from '@/features/catalog/hooks'
+import { content } from '@/features/catalog/source'
 import type { Subject, TopicOutline } from '@/features/catalog/types'
 import { toggleTopicRevisit, topicKey, uncompleteTopic, useProgress } from '@/features/progress/store'
 import { useStudyTime } from '@/features/progress/useStudyTime'
@@ -34,10 +35,15 @@ export function TopicPage() {
   const topic = subject?.topics.find((t) => t.id === topicId)
   if (!subject || !topic) return <NotFound />
 
+  // Notes: the layout and sidebar stay mounted while moving between topics (keeping the sidebar's
+  // scroll position); only the article is swapped. Problem categories each have their own list.
   return subject.kind === 'problems'
     ? <CategoryView key={topic.id} subject={subject} category={topic} />
-    : <NotesView key={topic.id} subject={subject} topic={topic} />
+    : <NotesView subject={subject} topic={topic} />
 }
+
+/** Loads a topic into the cache (memory + IndexedDB) without rendering it. */
+const prefetchTopic = (subjectId: string, topicId: string) => content.topic(subjectId, topicId).catch(() => undefined)
 
 function SidebarTitle({ subject, back }: { subject: Subject; back: { to: string; label: string } }) {
   return (
@@ -51,6 +57,34 @@ function SidebarTitle({ subject, back }: { subject: Subject; back: { to: string;
 /* ── Notes ───────────────────────────────────────────────── */
 
 function NotesView({ subject, topic }: { subject: Subject; topic: TopicOutline }) {
+  const progress = useProgress()
+
+  const sidebar = (
+    <ul className="nav-list">
+      {subject.topics.map((t, i) => (
+        <Fragment key={t.id}>
+          {t.group && t.group !== subject.topics[i - 1]?.group && <li className="nav-group">{t.group}</li>}
+          <li>
+            <NavLink to={`/${subject.id}/${t.id}`} className="nav-item">
+              <span className="nav-item-label">{t.title}</span>
+              {progress.revisitTopics[topicKey(subject.id, t.id)] && <RotateCcw size={13} className="nav-revisit" aria-label="Revisit" />}
+              {progress.topics[topicKey(subject.id, t.id)] && <Check size={14} className="nav-done" aria-label="Completed" />}
+            </NavLink>
+          </li>
+        </Fragment>
+      ))}
+    </ul>
+  )
+
+  return (
+    <StudyLayout sidebarTitle={<SidebarTitle subject={subject} back={{ to: '/', label: 'All subjects' }} />} sidebar={sidebar}>
+      <NotesArticle key={topic.id} subject={subject} topic={topic} />
+    </StudyLayout>
+  )
+}
+
+/** One topic's content — remounted per topic, so tracking and loading start fresh. */
+function NotesArticle({ subject, topic }: { subject: Subject; topic: TopicOutline }) {
   const doc = useTopic(subject.id, topic.id)
   const progress = useProgress()
   const user = useUser()
@@ -73,79 +107,70 @@ function NotesView({ subject, topic }: { subject: Subject; topic: TopicOutline }
 
   useEffect(() => { window.scrollTo(0, 0) }, [topic.id])
 
-  const sidebar = (
-    <ul className="nav-list">
-      {subject.topics.map((t, i) => (
-        <Fragment key={t.id}>
-          {t.group && t.group !== subject.topics[i - 1]?.group && <li className="nav-group">{t.group}</li>}
-          <li>
-            <NavLink to={`/${subject.id}/${t.id}`} className="nav-item">
-              <span className="nav-item-label">{t.title}</span>
-              {progress.revisitTopics[topicKey(subject.id, t.id)] && <RotateCcw size={13} className="nav-revisit" aria-label="Revisit" />}
-              {progress.topics[topicKey(subject.id, t.id)] && <Check size={14} className="nav-done" aria-label="Completed" />}
-            </NavLink>
-          </li>
-        </Fragment>
-      ))}
-    </ul>
-  )
+  // Once this topic is in, warm the cache for the neighbours so Next / Previous open instantly.
+  const loaded = doc.status === 'ready'
+  useEffect(() => {
+    if (!loaded) return
+    const id = window.setTimeout(() => {
+      for (const t of [next, prev]) if (t) void prefetchTopic(subject.id, t.id)
+    }, 600)
+    return () => window.clearTimeout(id)
+  }, [loaded, subject.id, next, prev])
 
   return (
-    <StudyLayout sidebarTitle={<SidebarTitle subject={subject} back={{ to: '/', label: 'All subjects' }} />} sidebar={sidebar}>
-      <article className="topic" ref={articleRef}>
-        <header className="topic-head">
-          {topic.group && <p className="eyebrow">{topic.group}</p>}
-          <h1 className="page-title">{topic.title}</h1>
-          {user ? (
-          <div className="topic-tools">
-            {done && (
-              <button
-                className="done-badge"
-                onClick={() => uncompleteTopic(subject.id, topic.id)}
-                title="Read to the end — click to mark as unread"
-              >
-                <CheckCircle2 size={14} aria-hidden /> Completed
-              </button>
-            )}
-            {doc.data && (
-              <ListenButton
-                title={topic.title}
-                segments={() => {
-                  const body = articleRef.current?.querySelector<HTMLElement>('.prose')
-                  return [{ text: `${topic.title}.`, el: articleRef.current?.querySelector('h1') }, ...(body ? segmentsFrom(body) : [])]
-                }}
-              />
-            )}
+    <article className="topic" ref={articleRef}>
+      <header className="topic-head">
+        {topic.group && <p className="eyebrow">{topic.group}</p>}
+        <h1 className="page-title">{topic.title}</h1>
+        {user ? (
+        <div className="topic-tools">
+          {done && (
             <button
-              className={`btn btn-sm revisit-btn ${revisit ? 'is-on' : ''}`}
-              onClick={() => toggleTopicRevisit(subject.id, topic.id)}
-              aria-pressed={revisit}
-              title="Add to your review queue"
+              className="done-badge"
+              onClick={() => uncompleteTopic(subject.id, topic.id)}
+              title="Read to the end — click to mark as unread"
             >
-              <RotateCcw size={13} aria-hidden /> {revisit ? 'Marked to revisit' : 'Revisit later'}
+              <CheckCircle2 size={14} aria-hidden /> Completed
             </button>
-          </div>
-          ) : (
-            <UnlockHint />
           )}
-        </header>
-        {doc.status === 'loading' && <Loading />}
-        {doc.status === 'error' && <LoadError error={doc.error} retry={doc.retry} />}
-        {doc.data && (
-          <>
-            {user && <StudyKit content={doc.data.content} title={topic.title} noteKey={key} subjectId={subject.id} topicId={topic.id} />}
-            <ContentView content={doc.data.content} anchors />
-            <div ref={endRef} aria-hidden />
-            <footer className="topic-foot">
-              <div className="pager">
-                {prev && <Link className="btn" to={`/${subject.id}/${prev.id}`}><ArrowLeft size={14} aria-hidden /> {prev.title}</Link>}
-                {next && <Link className="btn" to={`/${subject.id}/${next.id}`}>{next.title} <ArrowRight size={14} aria-hidden /></Link>}
-              </div>
-            </footer>
-          </>
+          {doc.data && (
+            <ListenButton
+              title={topic.title}
+              segments={() => {
+                const body = articleRef.current?.querySelector<HTMLElement>('.prose')
+                return [{ text: `${topic.title}.`, el: articleRef.current?.querySelector('h1') }, ...(body ? segmentsFrom(body) : [])]
+              }}
+            />
+          )}
+          <button
+            className={`btn btn-sm revisit-btn ${revisit ? 'is-on' : ''}`}
+            onClick={() => toggleTopicRevisit(subject.id, topic.id)}
+            aria-pressed={revisit}
+            title="Add to your review queue"
+          >
+            <RotateCcw size={13} aria-hidden /> {revisit ? 'Marked to revisit' : 'Revisit later'}
+          </button>
+        </div>
+        ) : (
+          <UnlockHint />
         )}
-      </article>
-    </StudyLayout>
+      </header>
+      {doc.status === 'loading' && <Loading />}
+      {doc.status === 'error' && <LoadError error={doc.error} retry={doc.retry} />}
+      {doc.data && (
+        <>
+          {user && <StudyKit content={doc.data.content} title={topic.title} noteKey={key} subjectId={subject.id} topicId={topic.id} />}
+          <ContentView content={doc.data.content} anchors />
+          <div ref={endRef} aria-hidden />
+          <footer className="topic-foot">
+            <div className="pager">
+              {prev && <Link className="btn" to={`/${subject.id}/${prev.id}`}><ArrowLeft size={14} aria-hidden /> {prev.title}</Link>}
+              {next && <Link className="btn" to={`/${subject.id}/${next.id}`}>{next.title} <ArrowRight size={14} aria-hidden /></Link>}
+            </div>
+          </footer>
+        </>
+      )}
+    </article>
   )
 }
 

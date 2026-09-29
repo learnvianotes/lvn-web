@@ -1,7 +1,10 @@
 /* ============================================================
-   SubjectsSection — the 13 catalog subjects on the landing page.
+   SubjectsSection — the catalog subjects on the landing page.
 
-     Filter chips      everyone (DSA, Core CS, …) — kept in the URL (?c=dsa)
+     All               one section per category (DSA, CS Fundamentals,
+                       Engineering, AI & Data, Programming) — compact
+                       cards; on phones each section is a swipeable row
+     Filter chips      everyone — one category, full cards (?c=dsa)
      Sort              signed-in (recommended, my order, recent, progress, A–Z)
      Rearrange         signed-in: drag cards (desktop) or use the arrow
                        buttons (touch / keyboard); saved to the account
@@ -21,6 +24,15 @@ import { setSort, setSubjectOrder, usePrefs } from '@/features/progress/prefs'
 import { subjectProgress } from '@/features/progress/stats'
 import { track } from '@/features/telemetry/track'
 import { SORTS, customOrder, move, sortSubjects } from './subjectOrder'
+
+/** One line under each category heading on the landing page. */
+const CATEGORY_BLURB: Record<string, string> = {
+  dsa: 'Problem-solving patterns and 150 practice problems.',
+  fundamentals: 'The core computer science every interview expects.',
+  engineering: 'How real software is built, secured and shipped.',
+  ai: 'From classic AI to machine learning, deep learning and generative AI.',
+  programming: 'Language notes from the basics to interview level.',
+}
 
 interface Props {
   catalog: Catalog
@@ -72,6 +84,20 @@ export function SubjectsSection({ catalog, highlighted, cardRef }: Props) {
     setEditing(null)
   }
 
+  const renderCard = (s: Subject) => (
+    <SubjectCard
+      key={s.id}
+      ref={(el) => cardRef(s.id, el)}
+      to={`/${s.id}`}
+      icon={s.icon}
+      title={s.title}
+      description={s.description}
+      countLabel={`${s.itemCount} ${s.kind === 'problems' ? 'problems' : 'topics'}`}
+      progress={user ? subjectProgress(s, progress) : undefined}
+      highlighted={highlighted === s.id}
+    />
+  )
+
   return (
     <section className="home-section" id="subjects" aria-label="Subjects">
       {editing ? (
@@ -106,21 +132,26 @@ export function SubjectsSection({ catalog, highlighted, cardRef }: Props) {
               </div>
             )}
           </div>
-          <div className="card-grid">
-            {visible.map((s) => (
-              <SubjectCard
-                key={s.id}
-                ref={(el) => cardRef(s.id, el)}
-                to={`/${s.id}`}
-                icon={s.icon}
-                title={s.title}
-                description={s.description}
-                countLabel={`${s.itemCount} ${s.kind === 'problems' ? 'problems' : 'topics'}`}
-                progress={user ? subjectProgress(s, progress) : undefined}
-                highlighted={highlighted === s.id}
-              />
-            ))}
-          </div>
+          {filter === 'all' && categories.length > 0 ? (
+            categories.filter((c) => counts.get(c.id)).map((c) => (
+              <section key={c.id} className="subject-group" aria-labelledby={`group-${c.id}`}>
+                <div className="subject-group-head">
+                  <div>
+                    <h2 id={`group-${c.id}`}>{c.title} <span className="subject-group-count">{counts.get(c.id)}</span></h2>
+                    {CATEGORY_BLURB[c.id] && <p>{CATEGORY_BLURB[c.id]}</p>}
+                  </div>
+                  <button className="subject-group-more" onClick={() => chooseFilter(c.id)}>
+                    View <ArrowRight size={13} aria-hidden />
+                  </button>
+                </div>
+                <div className="card-grid subject-group-grid">
+                  {ordered.filter((s) => s.category === c.id).map(renderCard)}
+                </div>
+              </section>
+            ))
+          ) : (
+            <div className="card-grid">{visible.map(renderCard)}</div>
+          )}
         </>
       )}
     </section>

@@ -1,9 +1,18 @@
 /* Loading / error / not-found states shared by every page. */
 
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { NotFoundError } from '@/features/catalog/source'
 
-export function Loading({ label = 'Loading…' }: { label?: string }) {
+/** Spinner — shown only if loading takes longer than `delay` ms, so cached content never flashes one. */
+export function Loading({ label = 'Loading…', delay = 200 }: { label?: string; delay?: number }) {
+  const [visible, setVisible] = useState(delay <= 0)
+  useEffect(() => {
+    if (delay <= 0) return
+    const id = window.setTimeout(() => setVisible(true), delay)
+    return () => window.clearTimeout(id)
+  }, [delay])
+  if (!visible) return <div className="state" role="status" aria-label={label} />
   return (
     <div className="state" role="status">
       <span className="spinner" aria-hidden />

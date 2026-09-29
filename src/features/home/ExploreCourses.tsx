@@ -31,7 +31,7 @@ export function ExploreCourses({ live }: { live: Set<string> }) {
           <span className="explore-count">{total}</span>
           <ChevronDown size={15} aria-hidden className="explore-chevron" />
         </button>
-        {!open && <p className="muted small">Programming languages, AI, architecture and more — coming soon.</p>}
+        {!open && <p className="muted small">{areas.flatMap((a) => a.courses.map((c) => c.title)).join(', ')} — coming soon.</p>}
       </div>
 
       {open && (

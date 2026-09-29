@@ -1,7 +1,9 @@
 /* ============================================================
    FocusTimer — header control. Idle: a timer icon. Running: a
-   countdown pill with a progress ring. Click for presets,
-   custom length, pause / reset and the end-of-session sound.
+   countdown pill with a progress ring. Click for presets, a
+   custom length (minutes and seconds), pause / reset and the
+   end-of-session sound. The countdown itself, the floating timer
+   and the end screen live in FocusRuntime.
    ============================================================ */
 
 import './focus.css'
@@ -9,24 +11,18 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Bell, BellOff, Coffee, Pause, Play, RotateCcw, Target, Timer } from 'lucide-react'
 import { APP_NAME } from '@/config'
 import {
-  formatClock, pauseFocus, resetFocus, resumeFocus, secondsLeft, start, tick, toggleSound, useFocus,
+  chime, formatClock, formatDuration, MAX_SECONDS, MIN_SECONDS, pauseFocus, resetFocus, resumeFocus, secondsLeft, start,
+  startSeconds, toggleSound, useFocus,
 } from '@/features/focus/focus'
+import { useSecondTick } from '@/features/focus/clock'
 
 const PRESETS = [15, 25, 45, 60]
 
 export function FocusTimer() {
   const s = useFocus()
   const [open, setOpen] = useState(false)
-  const [, force] = useState(0)
   const root = useRef<HTMLDivElement>(null)
-
-  // Re-render every second while running (and let the store notice the end).
-  useEffect(() => {
-    if (s.phase !== 'running') return
-    tick()
-    const id = window.setInterval(() => { tick(); force((n) => n + 1) }, 1000)
-    return () => window.clearInterval(id)
-  }, [s.phase])
+  useSecondTick(s.phase === 'running')
 
   // Show the countdown in the tab title while running; announce the end.
   const left = secondsLeft(s)
@@ -39,7 +35,8 @@ export function FocusTimer() {
     return () => { document.title = document.title.replace(/^(\d\d:\d\d · |✓ .*? · )/, '') || APP_NAME }
   }, [left, s.phase, s.kind])
 
-  useEffect(() => { if (s.phase === 'done') setOpen(true) }, [s.phase])
+  // The end screen takes over when a session finishes.
+  useEffect(() => { if (s.phase === 'done') setOpen(false) }, [s.phase])
 
   useEffect(() => {
     if (!open) return
@@ -81,29 +78,38 @@ export function FocusTimer() {
 
 function FocusPopover({ close }: { close: () => void }) {
   const s = useFocus()
-  const [custom, setCustom] = useState('')
+  const [mins, setMins] = useState('')
+  const [secs, setSecs] = useState('')
   const left = secondsLeft(s)
+  const customSeconds = (Number(mins) || 0) * 60 + (Number(secs) || 0)
+  const customOk = customSeconds >= MIN_SECONDS && customSeconds <= MAX_SECONDS && Number(secs || 0) < 60
 
   const startCustom = (e: FormEvent) => {
     e.preventDefault()
-    const m = Number(custom)
-    if (m >= 1 && m <= 180) { start(m); setCustom('') }
+    if (!customOk) return
+    startSeconds(customSeconds)
+    setMins('')
+    setSecs('')
+    close()
   }
 
   return (
     <div className="focus-menu" role="dialog" aria-label="Focus timer">
       <div className="focus-menu-head">
         <strong><Target size={15} aria-hidden /> Focus time</strong>
-        <button className="icon-btn sm" onClick={toggleSound} aria-label={s.sound ? 'Mute end sound' : 'Play a sound at the end'} title={s.sound ? 'Sound on' : 'Sound off'}>
-          {s.sound ? <Bell size={15} /> : <BellOff size={15} />}
-        </button>
+        <span className="focus-menu-sound">
+          {s.sound && <button className="link-btn" onClick={chime}>Test</button>}
+          <button className="icon-btn sm" onClick={toggleSound} aria-label={s.sound ? 'Mute end sound' : 'Play a sound at the end'} title={s.sound ? 'Sound on' : 'Sound off'}>
+            {s.sound ? <Bell size={15} /> : <BellOff size={15} />}
+          </button>
+        </span>
       </div>
 
       {s.phase === 'done' ? (
         <div className="focus-done">
           <p className="focus-done-title">{s.kind === 'focus' ? '🎉 Session complete!' : 'Break’s over'}</p>
           <p className="muted small">
-            {s.kind === 'focus' ? `${Math.round(s.duration / 60)} focused minutes added to today’s streak.` : 'Ready for another round?'}
+            {s.kind === 'focus' ? `${formatDuration(s.duration)} of focus added to today’s streak.` : 'Ready for another round?'}
           </p>
           <div className="focus-actions">
             {s.kind === 'focus' ? (
@@ -116,26 +122,24 @@ function FocusPopover({ close }: { close: () => void }) {
         </div>
       ) : s.phase === 'idle' ? (
         <>
-          <p className="muted small">Pick a session length. Stay on the page — your focus minutes count toward your streak.</p>
+          <p className="muted small">Pick a session length. The timer keeps running while you browse, and your focus minutes count toward your streak.</p>
           <div className="focus-presets">
             {PRESETS.map((m) => (
-              <button key={m} className="focus-preset" onClick={() => start(m)}>
+              <button key={m} className="focus-preset" onClick={() => { start(m); close() }}>
                 <strong>{m}</strong><span>min</span>
               </button>
             ))}
           </div>
           <form className="focus-custom" onSubmit={startCustom}>
-            <input
-              type="number"
-              min={1}
-              max={180}
-              inputMode="numeric"
-              placeholder="Custom minutes"
-              value={custom}
-              onChange={(e) => setCustom(e.target.value)}
-              aria-label="Custom minutes"
-            />
-            <button className="btn btn-sm btn-primary" type="submit" disabled={!custom}>Start</button>
+            <label className="focus-custom-field">
+              <input type="number" min={0} max={180} inputMode="numeric" placeholder="0" value={mins} onChange={(e) => setMins(e.target.value)} aria-label="Minutes" />
+              <span>min</span>
+            </label>
+            <label className="focus-custom-field">
+              <input type="number" min={0} max={59} inputMode="numeric" placeholder="0" value={secs} onChange={(e) => setSecs(e.target.value)} aria-label="Seconds" />
+              <span>sec</span>
+            </label>
+            <button className="btn btn-sm btn-primary" type="submit" disabled={!customOk}>Start</button>
           </form>
         </>
       ) : (
