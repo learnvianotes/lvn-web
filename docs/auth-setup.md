@@ -75,3 +75,25 @@ users/{uid}/notes/{id}       { key, text, updatedAt }
   notes, so nothing is left behind on a shared computer. Local data from another account is never
   merged into a different one.
 - Deleting the account removes all of the learner's Firestore documents, then the account.
+
+## Sign-in on your own domain (mobile reliability)
+
+When a phone blocks the Google popup, the app falls back to a full-page redirect. With the default
+`authDomain` (`<project>.firebaseapp.com`) that redirect hands the result back through a third-party
+site, which Safari and newer Chrome/Firefox block — the user returns signed out.
+
+So on the domains listed in `SAME_SITE_AUTH_DOMAINS` (`src/config.ts`) the app uses the site's own
+domain as `authDomain` (Firebase Hosting serves `/__/auth/handler` on every connected domain).
+Each of those domains must be allowed as a redirect target of the Google OAuth client:
+
+1. [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials?project=learnvianotes-2e2d7)
+   → OAuth 2.0 Client IDs → the client **Firebase's Google provider uses** — its id is shown in
+   Firebase console → Authentication → Sign-in method → Google → *Web SDK configuration*
+   (for this project: `761935379919-92vi63rnkfrq5vqi5jphehsg2sd4jg7b…`). Editing any other client has no effect.
+2. **Authorized JavaScript origins** — add `https://www.learnvianotes.in` and `https://learnvianote.web.app`.
+3. **Authorized redirect URIs** — add `https://www.learnvianotes.in/__/auth/handler` and
+   `https://learnvianote.web.app/__/auth/handler`. Save (changes can take a few minutes).
+4. Put the domains into `SAME_SITE_AUTH_DOMAINS` in `src/config.ts` and deploy.
+
+Adding a new custom domain later: add it to `SAME_SITE_AUTH_DOMAINS`, to Firebase → Authentication →
+Authorized domains, and to the OAuth client as above.

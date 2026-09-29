@@ -32,6 +32,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html}', 'icons/*.png'],
         navigateFallback: '/index.html',
+        // Firebase Hosting's reserved URLs (/__/auth/handler for sign-in, /__/firebase/init.json)
+        // must reach the server — never answer them with the app shell.
+        navigateFallbackDenylist: [/^\/__\//],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'].includes(url.hostname),
