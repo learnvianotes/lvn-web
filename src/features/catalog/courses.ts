@@ -49,7 +49,7 @@ export const AREAS: Area[] = [
       { id: 'ai', title: 'Artificial Intelligence', icon: 'bot', description: 'Search, reasoning, knowledge representation, planning and intelligent agents.' },
       { id: 'machine-learning', title: 'Machine Learning', icon: 'brain', subjectId: 'ml-ai', description: 'Training, evaluation and classic algorithms.' },
       { id: 'deep-learning', title: 'Deep Learning', icon: 'brain-circuit', description: 'Neural networks, backpropagation, CNNs, RNNs, attention and Transformers.' },
-      { id: 'data-science', title: 'Data Science', icon: 'chart', description: 'Statistics, EDA, pandas, visualization and experiment design.' },
+      { id: 'data-science', title: 'Data Science', icon: 'chart', subjectId: 'data-science', description: 'Files, NumPy, pandas, web scraping, machine learning and NLP.' },
       { id: 'genai', title: 'Generative AI / LLMs', icon: 'sparkles', subjectId: 'genai-fluency', description: 'LLMs, prompting, embeddings, RAG and agents.' },
     ],
   },

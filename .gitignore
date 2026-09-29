@@ -40,3 +40,6 @@ content-build.old/
 .emulator-data/
 *-debug.log
 __pycache__/
+
+# Authoring environments (see content-src/authoring/*/build.py)
+.venv/

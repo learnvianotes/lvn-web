@@ -1,0 +1,1110 @@
+<!doctype html>
+<!--
+  Data Science — study notes source for the content pipeline (scripts/content/extract.mjs).
+  Vocabulary: see scripts/content/sanitize.mjs. Every code sample here was executed and its
+  printed output checked when this file was generated.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Data Science</title></head>
+<body>
+<nav class="sidebar">
+  <div class="nav-section">Working with Files</div>
+  <div class="nav-item" id="nav-files"><i class="ti ti-file-text"></i>Reading &amp; Writing Files</div>
+  <div class="nav-item" id="nav-os-module"><i class="ti ti-folders"></i>Files &amp; Folders with os</div>
+  <div class="nav-section">NumPy</div>
+  <div class="nav-item" id="nav-numpy-arrays"><i class="ti ti-grid-dots"></i>NumPy Arrays</div>
+  <div class="nav-item" id="nav-numpy-operations"><i class="ti ti-math"></i>Array Operations</div>
+  <div class="nav-section">Pandas</div>
+  <div class="nav-item" id="nav-pandas-basics"><i class="ti ti-table"></i>Series &amp; DataFrames</div>
+  <div class="nav-item" id="nav-pandas-analysis"><i class="ti ti-chart-bar"></i>Exploring a Dataset</div>
+  <div class="nav-section">Web Scraping</div>
+  <div class="nav-item" id="nav-scraping-basics"><i class="ti ti-world-www"></i>requests &amp; BeautifulSoup</div>
+  <div class="nav-item" id="nav-scraping-projects"><i class="ti ti-files"></i>Scraping Multiple Pages</div>
+  <div class="nav-item" id="nav-selenium"><i class="ti ti-browser"></i>Dynamic Pages with Selenium</div>
+  <div class="nav-section">Machine Learning</div>
+  <div class="nav-item" id="nav-ml-workflow"><i class="ti ti-route"></i>The scikit-learn Workflow</div>
+  <div class="nav-item" id="nav-regression"><i class="ti ti-chart-line"></i>Polynomial Regression</div>
+  <div class="nav-item" id="nav-classification"><i class="ti ti-binary-tree"></i>SVM, Decision Trees &amp; Random Forests</div>
+  <div class="nav-item" id="nav-naive-bayes"><i class="ti ti-message"></i>Text Classification with Naive Bayes</div>
+  <div class="nav-item" id="nav-clustering"><i class="ti ti-chart-dots"></i>K-Means Clustering</div>
+  <div class="nav-section">Natural Language Processing</div>
+  <div class="nav-item" id="nav-tokenization"><i class="ti ti-cut"></i>Tokenization, Stemming &amp; Lemmatization</div>
+  <div class="nav-item" id="nav-stop-words"><i class="ti ti-filter"></i>Stop Words</div>
+  <div class="nav-item" id="nav-characters"><i class="ti ti-letter-case"></i>Characters, ASCII &amp; DIY String Functions</div>
+  <div class="nav-item" id="nav-regex"><i class="ti ti-regex"></i>Regular Expressions</div>
+  <div class="nav-item" id="nav-spacy"><i class="ti ti-language"></i>spaCy Basics</div>
+  <div class="nav-item" id="nav-wordnet"><i class="ti ti-vocabulary"></i>Synonyms &amp; Antonyms with WordNet</div>
+  <div class="nav-item" id="nav-text-encoding"><i class="ti ti-binary"></i>Encoding Text as Numbers</div>
+  <div class="nav-section">Interview Prep</div>
+  <div class="nav-item" id="nav-interview-questions"><i class="ti ti-message-question"></i>Interview Questions</div>
+</nav>
+<main>
+<div class="topic" id="topic-files">
+<div class="page-tag">Working with Files</div>
+<h1 class="page-title">Reading &amp; Writing Files</h1>
+<p class="page-subtitle">Most data science starts with a file. Python's built-in <code>open()</code> reads and writes text files — and a few string methods already give you basic text statistics.</p>
+<div class="def-card"><p><strong>File object</strong> — what <code>open(path, mode)</code> returns: a handle with <code>read</code>, <code>readline</code>, <code>readlines</code>, <code>write</code> and <code>seek</code>. Always close it — or better, use <code>with</code>, which closes it for you.</p></div>
+<div class="section-title"><i class="ti ti-adjustments"></i>Modes</div>
+<table><thead><tr><th>Mode</th><th>Meaning</th><th>If the file exists</th><th>If it doesn't</th></tr></thead><tbody><tr><td><code>'r'</code></td><td>Read (default)</td><td>Reads from the start</td><td><code>FileNotFoundError</code></td></tr><tr><td><code>'w'</code></td><td>Write</td><td><strong>Erases</strong> it first</td><td>Creates it</td></tr><tr><td><code>'a'</code></td><td>Append</td><td>Writes at the end</td><td>Creates it</td></tr><tr><td><code>'r+'</code></td><td>Read and write</td><td>Starts at the beginning</td><td><code>FileNotFoundError</code></td></tr><tr><td><code>'x'</code></td><td>Create only</td><td><code>FileExistsError</code></td><td>Creates it</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-pencil"></i>Writing: write vs writelines</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>lines = ["This is Delhi \n", "This is Paris \n", "This is London \n"]
+with open("myfile.txt", "w", encoding="utf-8") as f:
+    f.write("Hello \n")          # one string
+    f.writelines(lines)          # an iterable of strings (no newlines are added for you)
+
+with open("myfile.txt", encoding="utf-8") as f:
+    print(f.read())</pre></div>
+<div class="code-block-container"><div class="code-lang">Output</div><pre>Hello
+This is Delhi
+This is Paris
+This is London</pre></div>
+<div class="section-title"><i class="ti ti-book"></i>Reading: read, readline, readlines, seek</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>with open("myfile.txt", encoding="utf-8") as f:
+    print(repr(f.read(9)))       # 'Hello \nTh'   ← 9 characters, across lines
+    f.seek(0)                    # jump back to the start
+    print(repr(f.readline()))    # 'Hello \n'     ← up to and including the newline
+    f.seek(0)
+    print(f.readlines())         # ['Hello \n', 'This is Delhi \n', 'This is Paris \n', 'This is London \n']</pre></div>
+<table><thead><tr><th>Method</th><th>Returns</th></tr></thead><tbody><tr><td><code>f.read()</code> / <code>f.read(n)</code></td><td>The whole file / the next <code>n</code> characters, as one string</td></tr><tr><td><code>f.readline()</code></td><td>The next line, including its <code>\n</code></td></tr><tr><td><code>f.readlines()</code></td><td>A list of all remaining lines</td></tr><tr><td><code>for line in f:</code></td><td>Lines one at a time — memory-friendly for big files</td></tr><tr><td><code>f.seek(n)</code></td><td>Moves the position to byte <code>n</code> (0 = start)</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-file-plus"></i>Append vs write</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>with open("notes.txt", "w") as f:
+    f.write("Today \n")
+with open("notes.txt", "a") as f:        # append keeps what was there
+    f.write("Tomorrow \n")
+with open("notes.txt") as f:
+    print(f.readlines())                  # ['Today \n', 'Tomorrow \n']
+
+with open("notes.txt", "w") as f:        # write erases it first
+    f.write("Only this \n")
+with open("notes.txt") as f:
+    print(f.readlines())                  # ['Only this \n']</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Opening with <code>'w'</code> silently wipes the file. Use <code>'a'</code> to add to it, or <code>'x'</code> to refuse overwriting.</p></div>
+<div class="section-title"><i class="ti ti-chart-bar"></i>Quick text statistics</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>text = """Data science turns raw data into insight. It mixes statistics and programming.
+
+Python is the most popular language for it."""
+
+paragraphs = [p for p in text.split("\n\n") if p.strip()]
+sentences = [s for s in text.replace("\n", " ").split(".") if s.strip()]
+words = text.split()                     # split() with no argument handles any whitespace
+
+print(len(paragraphs), len(sentences), len(words))   # 2 3 20</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>split(" ")</code> counts empty strings between double spaces and keeps newlines inside words — <code>split()</code> with no argument is almost always what you want for words.</p></div>
+<div class="section-title"><i class="ti ti-eraser"></i>Cleaning unwanted characters</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>raw = "Hello!! World@ #2026 [7] [12]"
+for ref in [f"[{i}]" for i in range(1, 20)]:     # remove citation markers like [7]
+    raw = raw.replace(ref, "")
+for ch in "!@#":                                 # remove unwanted symbols
+    raw = raw.replace(ch, "")
+print(" ".join(raw.split()))                     # Hello World 2026</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>For anything more than a few characters, a regular expression is cleaner: <code>re.sub(r"\[\d+\]|[!@#]", "", raw)</code> — see <em>Regular Expressions</em>.</p></div>
+</div>
+<div class="topic" id="topic-os-module">
+<div class="page-tag">Working with Files</div>
+<h1 class="page-title">Files &amp; Folders with os</h1>
+<p class="page-subtitle">The <code>os</code> module talks to the operating system: where you are, what's in a folder, and creating, renaming or removing directories — the plumbing behind organising datasets.</p>
+<div class="section-title"><i class="ti ti-map-pin"></i>Where am I?</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import os
+start = os.getcwd()              # current working directory
+os.mkdir("project")              # create one folder
+os.chdir("project")              # move into it
+print(os.path.basename(os.getcwd()))   # project
+os.chdir("..")                   # back to the parent
+print(os.getcwd() == start)      # True</pre></div>
+<table><thead><tr><th>Function</th><th>Does</th></tr></thead><tbody><tr><td><code>os.getcwd()</code></td><td>Current working directory</td></tr><tr><td><code>os.chdir(path)</code></td><td>Change directory (<code>..</code> = parent)</td></tr><tr><td><code>os.listdir(path='.')</code></td><td>Names of files and folders in a directory</td></tr><tr><td><code>os.mkdir(path)</code></td><td>Create <strong>one</strong> folder (parent must exist)</td></tr><tr><td><code>os.makedirs(path, exist_ok=True)</code></td><td>Create a whole chain of folders</td></tr><tr><td><code>os.rmdir(path)</code></td><td>Remove an <strong>empty</strong> folder</td></tr><tr><td><code>os.rename(old, new)</code></td><td>Rename or move</td></tr><tr><td><code>os.remove(path)</code></td><td>Delete a file</td></tr><tr><td><code>os.path.join(a, b)</code></td><td>Build a path with the right separator</td></tr><tr><td><code>os.path.exists(p)</code> / <code>isdir</code> / <code>isfile</code></td><td>Check what's there</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-folder"></i>Nested folders</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import os
+os.makedirs("data/raw/2026", exist_ok=True)     # creates data, data/raw and data/raw/2026
+os.rmdir("data/raw/2026")                       # only works because it's empty
+os.rename("data", "dataset")
+print(sorted(os.listdir("dataset")))            # ['raw']</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p><code>os.rmdir</code> refuses non-empty folders. To delete a whole tree use <code>shutil.rmtree(path)</code> — carefully: there's no recycle bin.</p></div>
+<div class="section-title"><i class="ti ti-copy"></i>Creating folders in bulk</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import os
+master = "KT"
+n, m = 5, 5
+for i in range(1, n + 1):
+    for j in range(1, m + 1):
+        os.makedirs(os.path.join(master, f"{master} {i}", f"{master} {i}.{j}"), exist_ok=True)
+
+total = sum(len(dirs) for _, dirs, _ in os.walk(master)) + 1   # + the master folder itself
+print(total)                                                    # 31</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>That's the notebook's <code>n*m + n + 1</code> = 5×5 + 5 + 1 folders. <code>os.walk(top)</code> yields <code>(folder, subfolders, files)</code> for every folder under <code>top</code>.</p></div>
+<div class="section-title"><i class="ti ti-files"></i>Reading many text files</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import os
+os.makedirs("Files", exist_ok=True)
+for name, text in [("a.txt", "first"), ("b.txt", "second"), (".DS_Store", "junk")]:
+    with open(os.path.join("Files", name), "w") as f:
+        f.write(text)
+
+contents = []
+for name in sorted(os.listdir("Files")):
+    if name.startswith("."):                    # skip hidden files like .DS_Store
+        continue
+    with open(os.path.join("Files", name)) as f:
+        contents.append(f.read())
+print(contents)                                 # ['first', 'second']</pre></div>
+<div class="highlight-box"><div class="label">Tip</div><p>Modern alternative: <code>pathlib</code> — <code>[p.read_text() for p in Path("Files").glob("*.txt")]</code> does the same in one line.</p></div>
+</div>
+<div class="topic" id="topic-numpy-arrays">
+<div class="page-tag">NumPy</div>
+<h1 class="page-title">NumPy Arrays</h1>
+<p class="page-subtitle">NumPy's <code>ndarray</code> stores numbers in one contiguous block of memory with a single type — which makes maths on millions of values fast and concise.</p>
+<div class="def-card"><p><strong>ndarray</strong> — an N-dimensional array of values that all share one <code>dtype</code>. Operations apply to every element at once (<em>vectorisation</em>), running in C instead of a Python loop.</p></div>
+<div class="section-title"><i class="ti ti-arrows-exchange"></i>List vs array</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+l = [2, 3, 4, 5]
+arr = np.array(l)
+print(l, type(l).__name__)            # [2, 3, 4, 5] list
+print(arr, type(arr).__name__)        # [2 3 4 5] ndarray
+print(l * 2)                          # [2, 3, 4, 5, 2, 3, 4, 5]
+print(arr * 2)                        # [ 4  6  8 10]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>list * 2</code> repeats the list; <code>array * 2</code> multiplies every element. That difference is the whole point of NumPy.</p></div>
+<div class="section-title"><i class="ti ti-ruler"></i>Shape, size and type</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+a = np.array([2, 3, 4, 5])
+b = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+print(a.ndim, b.ndim)           # 1 2
+print(b.shape, b.size)          # (2, 4) 8
+print(b.dtype)                  # int64</pre></div>
+<table><thead><tr><th>Attribute</th><th>Meaning</th><th>For <code>b</code> above</th></tr></thead><tbody><tr><td><code>ndim</code></td><td>Number of dimensions (axes)</td><td><code>2</code></td></tr><tr><td><code>shape</code></td><td>Length along each axis — (rows, columns)</td><td><code>(2, 4)</code></td></tr><tr><td><code>size</code></td><td>Total number of elements</td><td><code>8</code></td></tr><tr><td><code>dtype</code></td><td>Element type</td><td><code>int64</code></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-plus"></i>Creating arrays</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+print(np.zeros(3, dtype=int))                # [0 0 0]
+print(np.ones((2, 2), dtype=int))            # [[1 1]
+                                             #  [1 1]]
+print(np.arange(4, 20, 3))                   # [ 4  7 10 13 16 19]
+print(np.linspace(2.0, 3.0, num=5))          # [2.   2.25 2.5  2.75 3.  ]
+print(np.full(3, 7))                         # [7 7 7]
+print(np.eye(2, dtype=int))                  # [[1 0]
+                                             #  [0 1]]</pre></div>
+<table><thead><tr><th>Function</th><th>Gives</th><th>Note</th></tr></thead><tbody><tr><td><code>np.zeros(shape)</code> / <code>np.ones(shape)</code></td><td>All 0s / all 1s</td><td>Float by default — pass <code>dtype=int</code> for ints</td></tr><tr><td><code>np.arange(start, stop, step)</code></td><td>Evenly spaced by <strong>step</strong></td><td>Like <code>range</code>; <code>stop</code> excluded</td></tr><tr><td><code>np.linspace(start, stop, num)</code></td><td>Exactly <strong>num</strong> points</td><td><code>stop</code> included by default</td></tr><tr><td><code>np.full(shape, v)</code></td><td>All <code>v</code></td><td></td></tr><tr><td><code>np.eye(n)</code></td><td>Identity matrix</td><td></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-dice"></i>Random numbers</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+rng = np.random.default_rng(seed=42)       # the modern API; a seed makes results repeatable
+print(rng.random(3).round(3))              # [0.774 0.439 0.859]
+print(rng.integers(1, 7, size=5))          # [1 5 2 1 4]
+print(rng.normal(0, 1, size=2).round(3))   # [ 0.128 -0.316]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>The notebook uses <code>np.random.random(3)</code> — the older API. Both work; <code>default_rng</code> is recommended, and <strong>seeding</strong> matters whenever results must be reproducible (experiments, tests).</p></div>
+<div class="section-title"><i class="ti ti-transform"></i>reshape</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+arr = np.arange(10)
+print(arr.reshape(2, 5))        # [[0 1 2 3 4]
+                                #  [5 6 7 8 9]]
+print(arr.reshape(5, -1).shape) # (5, 2)   ← -1 means "work it out"
+print(np.arange(16).reshape(2, 8, 1).shape)   # (2, 8, 1)</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>The new shape must hold exactly the same number of elements: <code>np.arange(10).reshape(3, 3)</code> raises <code>ValueError</code>.</p></div>
+</div>
+<div class="topic" id="topic-numpy-operations">
+<div class="page-tag">NumPy</div>
+<h1 class="page-title">Array Operations</h1>
+<p class="page-subtitle">Arithmetic, aggregation, sorting, joining, splitting and filtering — all without writing a loop.</p>
+<div class="section-title"><i class="ti ti-math-symbols"></i>Element-wise arithmetic</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+a = np.array([1, 2, 3, 4])
+b = np.array([5, 6, 7, 8])
+print(a + 2, a * 2, a / 2)        # [3 4 5 6] [2 4 6 8] [0.5 1.  1.5 2. ]
+print(a + b, b - a)               # [ 6  8 10 12] [4 4 4 4]
+print(np.add(1, b), np.multiply(a, b))   # [6 7 8 9] [ 5 12 21 32]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Combining an array with a single number (or arrays of compatible shapes) is called <strong>broadcasting</strong> — the number is applied to every element.</p></div>
+<div class="section-title"><i class="ti ti-sum"></i>Aggregations and axes</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+m = np.array([[1, 4, 2],
+              [3, 4, 6]])
+print(m.max(), m.min(), m.sum())      # 6 1 20
+print(m.max(axis=0))                  # [3 4 6]   ← down each column
+print(m.max(axis=1))                  # [4 6]     ← across each row
+print(m.mean(axis=1))                 # [2.33333333 4.33333333]</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-arrow-down"></i><code>axis=0</code></h3><p>Collapse the rows — one result <strong>per column</strong>.</p></div><div class="card"><h3><i class="ti ti-arrow-right"></i><code>axis=1</code></h3><p>Collapse the columns — one result <strong>per row</strong>.</p></div></div>
+<div class="section-title"><i class="ti ti-sort-ascending"></i>Sorting</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+arr = np.array([[1, 4, 2], [3, 4, 6], [0, -1, 5]])
+print(np.sort(arr))                   # sorts each row (axis=-1 by default)
+print(np.sort(arr, axis=0))           # sorts each column</pre></div>
+<div class="code-block-container"><div class="code-lang">Output</div><pre>[[ 1  2  4]
+ [ 3  4  6]
+ [-1  0  5]]
+[[ 0 -1  2]
+ [ 1  4  5]
+ [ 3  4  6]]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>kind="quicksort" | "mergesort" | "stable"</code> picks the algorithm; the result is the same, only speed and stability (order of equal elements) differ.</p></div>
+<div class="section-title"><i class="ti ti-arrows-join"></i>Joining and splitting</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+a = np.array([1, 2, 3, 4])
+b = np.array([5, 6, 7, 8])
+print(np.vstack((a, b)).shape)        # (2, 4)   ← stacked as rows
+print(np.hstack((a, b)))              # [1 2 3 4 5 6 7 8]
+m = np.array([[1, 2], [3, 4]])
+print(np.concatenate((m, m), axis=0).shape)   # (4, 2)
+top, bottom = np.vsplit(np.vstack((a, b)), 2)
+left, right = np.hsplit(np.vstack((a, b)), 2)
+print(top, right[1])                  # [[1 2 3 4]] [7 8]</pre></div>
+<div class="section-title"><i class="ti ti-cut"></i>Slicing and boolean filtering</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+arr = np.array([1, 2, 3, 4, 5, 6, 7])
+print(arr[1:5], arr[1:5:2], arr[-3:-1], arr[::2])   # [2 3 4 5] [2 4] [5 6] [1 3 5 7]
+
+nums = np.arange(1, 40)
+print(nums[nums &gt; 35])                  # [36 37 38 39]
+print(nums[(nums % 10 == 0)])           # [10 20 30]
+m = np.arange(12).reshape(3, 4)
+print(m[1], m[:, 2], m[1:, :2].tolist())   # [4 5 6 7] [ 2  6 10] [[4, 5], [8, 9]]</pre></div>
+<div class="highlight-box"><div class="label">Correction</div><p>The notebook labels slicing “DAP (Distributed Array Protocol)” — that's unrelated. Slicing is plain <code>start:stop:step</code> indexing, per axis, separated by commas.</p></div>
+<div class="warning-box"><div class="label">Watch out</div><p>A slice of a NumPy array is a <strong>view</strong> — changing it changes the original. Use <code>.copy()</code> when you need an independent array. (List slices, by contrast, are copies.)</p></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Replace Python loops over numbers with vectorised expressions: <code>arr[arr &gt; 2]</code>, <code>arr * 2</code>, <code>arr.sum()</code>.</p></div><div class="cons"><div class="label">Avoid</div><p>Building NumPy arrays by appending in a loop — collect into a list first, then call <code>np.array(list)</code> once.</p></div></div>
+</div>
+<div class="topic" id="topic-pandas-basics">
+<div class="page-tag">Pandas</div>
+<h1 class="page-title">Series &amp; DataFrames</h1>
+<p class="page-subtitle">Pandas gives Python two labelled data structures — the one-dimensional <code>Series</code> and the two-dimensional <code>DataFrame</code> — the everyday tools for tabular data.</p>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-list"></i>Series</h3><p>One column: values plus an <strong>index</strong> (labels). Like a NumPy array with names.</p></div><div class="card"><h3><i class="ti ti-table"></i>DataFrame</h3><p>A table: several Series sharing one index — rows and named columns, like a spreadsheet or SQL table.</p></div></div>
+<div class="section-title"><i class="ti ti-list"></i>Series</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import pandas as pd
+s = pd.Series(np.array(["g", "e", "e", "k", "s"]))
+print(s.tolist(), s.index.tolist())      # ['g', 'e', 'e', 'k', 's'] [0, 1, 2, 3, 4]
+prices = pd.Series([40, 25, 60], index=["tea", "milk", "coffee"])
+print(prices["coffee"], prices.max())    # 60 60
+print(prices[prices &gt; 30].to_dict())     # {'tea': 40, 'coffee': 60}</pre></div>
+<div class="section-title"><i class="ti ti-table-plus"></i>Creating DataFrames</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from_rows = pd.DataFrame([["a", 10], ["b", 15], ["c", 14]], columns=["Name", "Age"])
+from_dict = pd.DataFrame({"Name": ["Tom", "Jack", "Steve", "Ricky"], "Age": [28, 34, 29, 42]})
+print(from_rows.shape, from_dict.shape)          # (3, 2) (4, 2)
+print(from_dict)</pre></div>
+<div class="code-block-container"><div class="code-lang">Output</div><pre>(3, 2) (4, 2)
+    Name  Age
+0    Tom   28
+1   Jack   34
+2  Steve   29
+3  Ricky   42</pre></div>
+<div class="warning-box"><div class="label">Pitfall</div><p>Building a DataFrame from a NumPy array of mixed values (as the notebook does with <code>np.array([['a', 10], …])</code>) turns <strong>every</strong> value into a string — <code>Age</code> would be text. Use lists or a dict so each column keeps its own type.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import pandas as pd
+bad = pd.DataFrame(np.array([["a", 10], ["b", 15]]), columns=["Name", "Age"])
+good = pd.DataFrame([["a", 10], ["b", 15]], columns=["Name", "Age"])
+print(bad["Age"].tolist(), good["Age"].tolist())    # ['10', '15'] [10, 15]</pre></div>
+<div class="section-title"><i class="ti ti-click"></i>Selecting columns and rows</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from io import StringIO
+
+csv = """species,size,fragrance,height_cm
+rose,medium,mild,48.55
+shoeblack plant,medium,mild,147.07
+shoeblack plant,medium,none,102.93
+hibiscus,large,none,184.00
+shoeblack plant,large,mild,83.07
+rose,small,strong,35.20
+hibiscus,large,,126.69
+rose,medium,mild,88.11
+"""
+df = pd.read_csv(StringIO(csv))       # same call you'd use with a file path
+
+print(df.columns.tolist())             # ['species', 'size', 'fragrance', 'height_cm']
+print(type(df["species"]).__name__)    # Series
+print(df[["species", "fragrance"]].shape)   # (8, 2)
+print(df.loc[3, "species"])            # hibiscus      ← by label
+print(df.iloc[0]["species"], df.iloc[0]["height_cm"])   # rose 48.55     ← by position</pre></div>
+<table><thead><tr><th>Syntax</th><th>Selects</th></tr></thead><tbody><tr><td><code>df["col"]</code></td><td>One column → Series</td></tr><tr><td><code>df[["a", "b"]]</code></td><td>Several columns → DataFrame</td></tr><tr><td><code>df.loc[row_label, col_label]</code></td><td>By labels (slices include the end)</td></tr><tr><td><code>df.iloc[i, j]</code></td><td>By integer position (slices exclude the end)</td></tr><tr><td><code>df[df["x"] &gt; 5]</code></td><td>Rows matching a condition</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-file-spreadsheet"></i>Reading and writing files</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+df = pd.DataFrame({"Names": ["Geeks", "For", "Geeks"]}, index=["a", "b", "c"])
+df.to_csv("names.csv")                         # writes the index too
+back = pd.read_csv("names.csv", index_col=0)   # read it back, using column 0 as the index
+print(back.equals(df))                         # True
+df.to_csv("names_no_index.csv", index=False)   # usually what you want for exports</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>read_csv</code> has many options: <code>sep</code>, <code>header</code>, <code>index_col</code>, <code>usecols</code> (pick columns), <code>nrows</code> (read only the first n rows), <code>skiprows</code>, <code>parse_dates</code>. There's also <code>read_excel</code>, <code>read_json</code>, <code>read_sql</code> and <code>to_…</code> counterparts.</p></div>
+</div>
+<div class="topic" id="topic-pandas-analysis">
+<div class="page-tag">Pandas</div>
+<h1 class="page-title">Exploring a Dataset</h1>
+<p class="page-subtitle">A first pass over any new dataset: look at it, check types and missing values, summarise, filter, group. Here with a small version of the notebook's flower dataset.</p>
+<div class="section-title"><i class="ti ti-eye"></i>First look</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from io import StringIO
+
+csv = """species,size,fragrance,height_cm
+rose,medium,mild,48.55
+shoeblack plant,medium,mild,147.07
+shoeblack plant,medium,none,102.93
+hibiscus,large,none,184.00
+shoeblack plant,large,mild,83.07
+rose,small,strong,35.20
+hibiscus,large,,126.69
+rose,medium,mild,88.11
+"""
+df = pd.read_csv(StringIO(csv))       # same call you'd use with a file path
+
+print(df.shape)                                  # (8, 4)
+print(df.head(2).to_dict("records"))             # [{'species': 'rose', 'size': 'medium', 'fragrance': 'mild', 'height_cm': 48.55}, {'species': 'shoeblack plant', 'size': 'medium', 'fragrance': 'mild', 'height_cm': 147.07}]
+print(df.dtypes.astype(str).to_dict())           # {'species': 'str', 'size': 'str', 'fragrance': 'str', 'height_cm': 'float64'}</pre></div>
+<table><thead><tr><th>Method</th><th>Tells you</th></tr></thead><tbody><tr><td><code>df.head(n)</code> / <code>df.tail(n)</code></td><td>First / last rows</td></tr><tr><td><code>df.shape</code></td><td>(rows, columns)</td></tr><tr><td><code>df.info()</code></td><td>Column types and non-null counts</td></tr><tr><td><code>df.describe()</code></td><td>Count, mean, std, min, quartiles, max of numeric columns</td></tr><tr><td><code>df["col"].value_counts()</code></td><td>How often each value appears</td></tr><tr><td><code>df.isna().sum()</code></td><td>Missing values per column</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-alert-circle"></i>Missing values</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from io import StringIO
+
+csv = """species,size,fragrance,height_cm
+rose,medium,mild,48.55
+shoeblack plant,medium,mild,147.07
+shoeblack plant,medium,none,102.93
+hibiscus,large,none,184.00
+shoeblack plant,large,mild,83.07
+rose,small,strong,35.20
+hibiscus,large,,126.69
+rose,medium,mild,88.11
+"""
+df = pd.read_csv(StringIO(csv))       # same call you'd use with a file path
+
+print(df.isna().sum().to_dict())                 # {'species': 0, 'size': 0, 'fragrance': 1, 'height_cm': 0}
+filled = df.fillna({"fragrance": "unknown"})
+print(filled.loc[6, "fragrance"])                # unknown
+print(len(df.dropna()))                          # 7</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Decide per column: <strong>drop</strong> rows (<code>dropna</code>), <strong>fill</strong> with a value or the mean/median (<code>fillna</code>), or keep and flag. Never silently ignore them.</p></div>
+<div class="section-title"><i class="ti ti-chart-histogram"></i>Summaries</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from io import StringIO
+
+csv = """species,size,fragrance,height_cm
+rose,medium,mild,48.55
+shoeblack plant,medium,mild,147.07
+shoeblack plant,medium,none,102.93
+hibiscus,large,none,184.00
+shoeblack plant,large,mild,83.07
+rose,small,strong,35.20
+hibiscus,large,,126.69
+rose,medium,mild,88.11
+"""
+df = pd.read_csv(StringIO(csv))       # same call you'd use with a file path
+
+print(df["species"].value_counts().to_dict())     # {'rose': 3, 'shoeblack plant': 3, 'hibiscus': 2}
+print(round(df["height_cm"].mean(), 2))           # 101.95
+print(df["height_cm"].describe()[["min", "max"]].tolist())   # [35.2, 184.0]</pre></div>
+<div class="section-title"><i class="ti ti-filter"></i>Filtering, sorting and grouping</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from io import StringIO
+
+csv = """species,size,fragrance,height_cm
+rose,medium,mild,48.55
+shoeblack plant,medium,mild,147.07
+shoeblack plant,medium,none,102.93
+hibiscus,large,none,184.00
+shoeblack plant,large,mild,83.07
+rose,small,strong,35.20
+hibiscus,large,,126.69
+rose,medium,mild,88.11
+"""
+df = pd.read_csv(StringIO(csv))       # same call you'd use with a file path
+
+tall = df[df["height_cm"] &gt; 100]
+print(tall["species"].tolist())                                   # ['shoeblack plant', 'shoeblack plant', 'hibiscus', 'hibiscus']
+print(df[(df["size"] == "medium") &amp; (df["fragrance"] == "mild")].shape[0])   # 3
+print(df.sort_values("height_cm", ascending=False).iloc[0]["species"])       # hibiscus
+print(df.groupby("species")["height_cm"].mean().round(1).to_dict())
+# {'hibiscus': 155.3, 'rose': 57.3, 'shoeblack plant': 111.0}</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Combine conditions with <code>&amp;</code> (and), <code>|</code> (or), <code>~</code> (not) — <strong>not</strong> <code>and</code>/<code>or</code> — and wrap each condition in parentheses.</p></div>
+<div class="section-title"><i class="ti ti-column-insert-right"></i>New columns</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+from io import StringIO
+
+csv = """species,size,fragrance,height_cm
+rose,medium,mild,48.55
+shoeblack plant,medium,mild,147.07
+shoeblack plant,medium,none,102.93
+hibiscus,large,none,184.00
+shoeblack plant,large,mild,83.07
+rose,small,strong,35.20
+hibiscus,large,,126.69
+rose,medium,mild,88.11
+"""
+df = pd.read_csv(StringIO(csv))       # same call you'd use with a file path
+
+df["height_m"] = (df["height_cm"] / 100).round(2)
+df["is_tall"] = df["height_cm"] &gt; 100
+print(df.loc[1, "height_m"], df.loc[1, "is_tall"])   # 1.47 True</pre></div>
+</div>
+<div class="topic" id="topic-scraping-basics">
+<div class="page-tag">Web Scraping</div>
+<h1 class="page-title">requests &amp; BeautifulSoup</h1>
+<p class="page-subtitle">Web scraping = download a page's HTML (<code>requests</code>), then pick out the data you need (<code>BeautifulSoup</code>). It's how you build datasets that don't come as a CSV.</p>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Request</div><div class="step-desc"><code>requests.get(url, headers=…)</code> downloads the page.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Parse</div><div class="step-desc"><code>BeautifulSoup(html, "html.parser")</code> turns HTML text into a searchable tree.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Extract</div><div class="step-desc"><code>find</code> / <code>find_all</code> / <code>select</code> locate elements; <code>.text</code> and <code>.get("href")</code> read them.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title">Store</div><div class="step-desc">Collect rows in a list, then save with pandas (<code>to_csv</code>).</div></div></div>
+<div class="section-title"><i class="ti ti-download"></i>1. Download the page</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import requests
+
+headers = {"User-Agent": "Mozilla/5.0 (compatible; LearnViaNotesBot/1.0)"}
+r = requests.get("https://quotes.toscrape.com/page/1/", headers=headers, timeout=10)
+print(r.status_code)          # 200 means OK; 404 not found, 403 forbidden, 429 too many requests
+html = r.text                 # decoded text (r.content is the raw bytes)</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Some sites reject requests without a browser-like <code>User-Agent</code> header — that's why the notebook sets one. Always pass a <code>timeout</code> so a slow site can't hang your script.</p></div>
+<div class="section-title"><i class="ti ti-code"></i>2. Parse and extract</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>html = """
+&lt;div class="quote"&gt;
+  &lt;span class="text"&gt;“The world as we have created it is a process of our thinking.”&lt;/span&gt;
+  &lt;small class="author"&gt;Albert Einstein&lt;/small&gt; &lt;a href="/author/Albert-Einstein"&gt;(about)&lt;/a&gt;
+  &lt;a class="tag" href="/tag/change/"&gt;change&lt;/a&gt; &lt;a class="tag" href="/tag/thinking/"&gt;thinking&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="quote"&gt;
+  &lt;span class="text"&gt;“It is our choices that show what we truly are.”&lt;/span&gt;
+  &lt;small class="author"&gt;J.K. Rowling&lt;/small&gt; &lt;a href="/author/J-K-Rowling"&gt;(about)&lt;/a&gt;
+  &lt;a class="tag" href="/tag/choices/"&gt;choices&lt;/a&gt;
+&lt;/div&gt;
+"""
+
+from bs4 import BeautifulSoup
+soup = BeautifulSoup(html, "html.parser")
+
+first = soup.find("div", class_="quote")                      # first match (or None)
+print(first.find("small", class_="author").text)              # Albert Einstein
+
+for q in soup.find_all("div", class_="quote"):                # every match
+    text = q.find("span", class_="text").text.strip("“”")
+    tags = [t.text for t in q.find_all("a", class_="tag")]
+    print(text[:22], "|", ", ".join(tags))</pre></div>
+<div class="code-block-container"><div class="code-lang">Output</div><pre>Albert Einstein
+The world as we have c | change, thinking
+It is our choices that | choices</pre></div>
+<table><thead><tr><th>Call</th><th>Returns</th></tr></thead><tbody><tr><td><code>soup.find(tag, class_=…)</code></td><td>The first matching element, or <code>None</code></td></tr><tr><td><code>soup.find_all(tag, attrs={…})</code></td><td>A list of all matches</td></tr><tr><td><code>soup.select("div.quote span.text")</code></td><td>Matches for a CSS selector</td></tr><tr><td><code>el.text</code> / <code>el.get_text(strip=True)</code></td><td>The element's text</td></tr><tr><td><code>el.get("href")</code> / <code>el["href"]</code></td><td>An attribute (<code>get</code> returns <code>None</code> if missing)</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>html = """
+&lt;div class="quote"&gt;
+  &lt;span class="text"&gt;“The world as we have created it is a process of our thinking.”&lt;/span&gt;
+  &lt;small class="author"&gt;Albert Einstein&lt;/small&gt; &lt;a href="/author/Albert-Einstein"&gt;(about)&lt;/a&gt;
+  &lt;a class="tag" href="/tag/change/"&gt;change&lt;/a&gt; &lt;a class="tag" href="/tag/thinking/"&gt;thinking&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="quote"&gt;
+  &lt;span class="text"&gt;“It is our choices that show what we truly are.”&lt;/span&gt;
+  &lt;small class="author"&gt;J.K. Rowling&lt;/small&gt; &lt;a href="/author/J-K-Rowling"&gt;(about)&lt;/a&gt;
+  &lt;a class="tag" href="/tag/choices/"&gt;choices&lt;/a&gt;
+&lt;/div&gt;
+"""
+
+from bs4 import BeautifulSoup
+soup = BeautifulSoup(html, "html.parser")
+print([a.get("href") for a in soup.select("div.quote &gt; a:not(.tag)")])   # ['/author/Albert-Einstein', '/author/J-K-Rowling']
+print(len(soup.select("a.tag")))                                          # 3</pre></div>
+<div class="section-title"><i class="ti ti-settings"></i>Parsers</div>
+<table><thead><tr><th>Parser</th><th>Install</th><th>Notes</th></tr></thead><tbody><tr><td><code>html.parser</code></td><td>Built in</td><td>Good default</td></tr><tr><td><code>lxml</code></td><td><code>pip install lxml</code></td><td>Fastest</td></tr><tr><td><code>html5lib</code></td><td><code>pip install html5lib</code></td><td>Most forgiving with broken HTML, slowest</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-shield-check"></i>Scrape responsibly</div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Check the site's terms and <code>robots.txt</code>, identify yourself in the User-Agent, pause between requests (<code>time.sleep(1)</code>), and prefer an official API when there is one.</p></div><div class="cons"><div class="label">Avoid</div><p>Hammering a site with rapid requests, scraping personal data, or ignoring a site's terms — it can get you blocked or break the law.</p></div></div>
+</div>
+<div class="topic" id="topic-scraping-projects">
+<div class="page-tag">Web Scraping</div>
+<h1 class="page-title">Scraping Multiple Pages</h1>
+<p class="page-subtitle">Real datasets span many pages. Loop over page URLs, reuse the same extraction code, collect rows, and save them as a table — the notebook's quotes and books scrapers.</p>
+<div class="section-title"><i class="ti ti-link"></i>Page URLs</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>urls = [f"https://quotes.toscrape.com/page/{page}/" for page in range(1, 6)]
+print(urls[0])       # https://quotes.toscrape.com/page/1/
+print(len(urls))     # 5</pre></div>
+<div class="section-title"><i class="ti ti-table"></i>Extract → rows → DataFrame</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>html = """
+&lt;div class="quote"&gt;
+  &lt;span class="text"&gt;“The world as we have created it is a process of our thinking.”&lt;/span&gt;
+  &lt;small class="author"&gt;Albert Einstein&lt;/small&gt; &lt;a href="/author/Albert-Einstein"&gt;(about)&lt;/a&gt;
+  &lt;a class="tag" href="/tag/change/"&gt;change&lt;/a&gt; &lt;a class="tag" href="/tag/thinking/"&gt;thinking&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="quote"&gt;
+  &lt;span class="text"&gt;“It is our choices that show what we truly are.”&lt;/span&gt;
+  &lt;small class="author"&gt;J.K. Rowling&lt;/small&gt; &lt;a href="/author/J-K-Rowling"&gt;(about)&lt;/a&gt;
+  &lt;a class="tag" href="/tag/choices/"&gt;choices&lt;/a&gt;
+&lt;/div&gt;
+"""
+
+import pandas as pd
+from bs4 import BeautifulSoup
+
+def parse_quotes(html):
+    rows = []
+    for q in BeautifulSoup(html, "html.parser").find_all("div", class_="quote"):
+        rows.append({
+            "quote": q.find("span", class_="text").text[1:-1],       # strip the curly quotes
+            "author": q.find("small", class_="author").text,
+            "details": q.find("a").get("href"),
+            "tags": ",".join(t.text for t in q.find_all("a", class_="tag")),
+        })
+    return rows
+
+pages = [html, html]                        # stand-ins for page 1 and page 2
+rows = [row for page in pages for row in parse_quotes(page)]
+df = pd.DataFrame(rows)
+print(df.shape, df.columns.tolist())        # (4, 4) ['quote', 'author', 'details', 'tags']
+print(df.loc[0, "tags"])                    # change,thinking
+df.to_csv("quotes.csv", index=False)</pre></div>
+<div class="section-title"><i class="ti ti-world"></i>The full live scraper</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import time
+import requests
+import pandas as pd
+from tqdm import tqdm                              # progress bar: pip install tqdm
+
+rows = []
+for page in tqdm(range(1, 11)):
+    r = requests.get(f"https://quotes.toscrape.com/page/{page}/", timeout=10)
+    if r.status_code != 200:
+        break                                     # no more pages
+    rows += parse_quotes(r.text)
+    time.sleep(0.5)                               # be polite
+pd.DataFrame(rows).to_csv("quotes.csv", index=False)</pre></div>
+<div class="section-title"><i class="ti ti-books"></i>Books: fields from attributes</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from bs4 import BeautifulSoup
+html = """
+&lt;li class="col-xs-6 col-sm-4 col-md-3 col-lg-3"&gt;&lt;article class="product_pod"&gt;
+  &lt;a href="a-light-in-the-attic_1000/index.html"&gt;&lt;img src="../media/cache/2c/da/cover.jpg"&gt;&lt;/a&gt;
+  &lt;p class="star-rating Three"&gt;&lt;/p&gt;
+  &lt;h3&gt;&lt;a href="a-light-in-the-attic_1000/index.html" title="A Light in the Attic"&gt;A Light in the ...&lt;/a&gt;&lt;/h3&gt;
+  &lt;p class="price_color"&gt;£51.77&lt;/p&gt; &lt;p class="instock availability"&gt; In stock &lt;/p&gt;
+&lt;/article&gt;&lt;/li&gt;
+"""
+book = BeautifulSoup(html, "html.parser").find("article", class_="product_pod")
+title = book.h3.a["title"]                                   # the full title lives in an attribute
+rating = book.find("p", class_="star-rating")["class"][-1]   # the rating is a CSS class
+price = float(book.find("p", class_="price_color").text.lstrip("£"))
+stock = book.find("p", class_="instock").text.strip()
+link = "https://books.toscrape.com/catalogue/" + book.h3.a["href"]
+print(title, rating, price, stock)     # A Light in the Attic Three 51.77 In stock
+print(link)                            # https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Visible text is often shortened (“A Light in the ...”); the complete value sits in an attribute (<code>title</code>, <code>alt</code>, <code>data-*</code>). Inspect the page (right-click → <em>Inspect</em>) before writing selectors.</p></div>
+<div class="section-title"><i class="ti ti-arrows-join"></i>Joining list pages with detail pages</div>
+<p>The notebook scrapes 50 list pages for title/price/link, then visits each book's own page for extra fields (UPC, tax, reviews) and joins the two tables. Join on a shared key, not on row position:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import pandas as pd
+books = pd.DataFrame({"link": ["b1", "b2"], "title": ["Attic", "Velvet"]})
+details = pd.DataFrame({"link": ["b2", "b1"], "upc": ["u-2", "u-1"]})
+print(books.merge(details, on="link").to_dict("records"))
+# [{'link': 'b1', 'title': 'Attic', 'upc': 'u-1'}, {'link': 'b2', 'title': 'Velvet', 'upc': 'u-2'}]</pre></div>
+<div class="warning-box"><div class="label">Correction</div><p>The notebook builds the final table with <code>df['UPC'] = df_2['UPC']</code> next to <code>df_1['Title']</code> — that only lines up if both lists are in exactly the same order and length. A failed detail page (the notebook's 404) silently shifts every row. Use <code>merge</code> on the link.</p></div>
+</div>
+<div class="topic" id="topic-selenium">
+<div class="page-tag">Web Scraping</div>
+<h1 class="page-title">Dynamic Pages with Selenium</h1>
+<p class="page-subtitle">Some pages build their content with JavaScript after loading — <code>requests</code> only sees the empty shell. Selenium drives a real browser, so you scrape what a user actually sees.</p>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-bolt"></i>requests + BeautifulSoup</h3><p>Fast and light. Works when the data is in the HTML the server sends.</p></div><div class="card"><h3><i class="ti ti-browser"></i>Selenium</h3><p>Slower, needs a browser. Needed for infinite scroll, clicks, logins and JavaScript-rendered content (YouTube, dashboards).</p></div></div>
+<div class="section-title"><i class="ti ti-settings"></i>Setup (Selenium 4.6+)</div>
+<div class="code-block-container"><div class="code-lang">Terminal</div><pre>pip install selenium beautifulsoup4</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Selenium 4.6 and later include <strong>Selenium Manager</strong>, which downloads a matching driver automatically. You no longer install <code>chromedriver</code> by hand.</p></div>
+<div class="warning-box"><div class="label">What went wrong in the notebook</div><p>Most of the notebook's Selenium cells failed with <em>“This version of ChromeDriver only supports Chrome version 114 — current browser version is 127”</em>. That's the classic manual-driver problem: the driver and the browser must match. Letting Selenium Manager handle it (just <code>webdriver.Chrome()</code>) avoids it.</p></div>
+<div class="section-title"><i class="ti ti-arrow-down"></i>Scrolling a dynamic page</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import time
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.add_argument("--headless=new")        # no visible window
+driver = webdriver.Chrome(options=options)    # Selenium Manager finds a matching driver
+try:
+    driver.get("https://quotes.toscrape.com/scroll")
+    last = driver.execute_script("return document.body.scrollHeight")
+    while True:                               # scroll until the page stops growing
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(1.5)
+        height = driver.execute_script("return document.body.scrollHeight")
+        if height == last:
+            break
+        last = height
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    print(len(soup.find_all("div", class_="quote")))
+finally:
+    driver.quit()                             # always close the browser</pre></div>
+<div class="section-title"><i class="ti ti-clock"></i>Waiting for elements</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# Better than time.sleep: wait up to 10 s, continue as soon as the element appears.
+first = WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.CSS_SELECTOR, "div.quote span.text"))
+)
+print(first.text)</pre></div>
+<table><thead><tr><th>Selenium</th><th>Does</th></tr></thead><tbody><tr><td><code>driver.get(url)</code></td><td>Open a page</td></tr><tr><td><code>driver.find_element(By.CSS_SELECTOR, …)</code></td><td>Find one element (<code>find_elements</code> for all)</td></tr><tr><td><code>element.click()</code> / <code>.send_keys("text")</code></td><td>Interact like a user</td></tr><tr><td><code>driver.execute_script(js)</code></td><td>Run JavaScript (e.g. scroll)</td></tr><tr><td><code>driver.page_source</code></td><td>The current HTML — hand it to BeautifulSoup</td></tr><tr><td><code>driver.quit()</code></td><td>Close the browser (use <code>try/finally</code>)</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>Big sites like YouTube change their HTML often and forbid scraping in their terms; their official APIs (e.g. the YouTube Data API) are the reliable, allowed route.</p></div>
+</div>
+<div class="topic" id="topic-ml-workflow">
+<div class="page-tag">Machine Learning</div>
+<h1 class="page-title">The scikit-learn Workflow</h1>
+<p class="page-subtitle">Every scikit-learn model follows the same few steps — so once you know one, you know them all.</p>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Load data</div><div class="step-desc">Features <code>X</code> (a 2-D table: rows = samples, columns = features) and target <code>y</code> (what to predict).</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Split</div><div class="step-desc"><code>train_test_split</code> holds back unseen data to measure honestly.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Create &amp; fit</div><div class="step-desc"><code>model = SomeModel(...)</code> then <code>model.fit(X_train, y_train)</code> learns from the training set.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title">Predict</div><div class="step-desc"><code>model.predict(X_test)</code> on data it has never seen.</div></div></div><div class="step-row"><div class="step-num">5</div><div class="step-body"><div class="step-title">Evaluate</div><div class="step-desc">Compare predictions with the truth: <code>accuracy_score</code>, <code>classification_report</code>, <code>mean_squared_error</code>…</div></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+
+X, y = load_iris(return_X_y=True)                        # 150 flowers, 4 measurements, 3 species
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+print(X.shape, X_train.shape, X_test.shape)              # (150, 4) (105, 4) (45, 4)
+
+model = KNeighborsClassifier(n_neighbors=5)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+print(round(accuracy_score(y_test, y_pred), 2))          # 0.98</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-school"></i>Supervised</h3><p>Learns from labelled examples: <strong>classification</strong> (a category — spam / not spam) or <strong>regression</strong> (a number — price).</p></div><div class="card"><h3><i class="ti ti-chart-dots"></i>Unsupervised</h3><p>Finds structure in unlabelled data: <strong>clustering</strong> (K-Means), dimensionality reduction (PCA).</p></div></div>
+<div class="section-title"><i class="ti ti-arrows-split"></i>Why split the data?</div>
+<p>A model scored on the data it trained on can simply memorise it. Testing on held-out data shows how it will do on new, real inputs. <code>random_state</code> fixes the shuffle so results are reproducible.</p>
+<div class="warning-box"><div class="label">Watch out</div><p><strong>Overfitting</strong> = great on training data, poor on test data (the model memorised noise). <strong>Underfitting</strong> = poor on both (the model is too simple). Compare train vs test scores to tell them apart.</p></div>
+<table><thead><tr><th>Metric</th><th>For</th><th>Meaning</th></tr></thead><tbody><tr><td>Accuracy</td><td>Classification</td><td>Share of correct predictions — misleading when classes are imbalanced</td></tr><tr><td>Precision</td><td>Classification</td><td>Of those predicted positive, how many really are</td></tr><tr><td>Recall</td><td>Classification</td><td>Of the real positives, how many were found</td></tr><tr><td>F1-score</td><td>Classification</td><td>Balance of precision and recall</td></tr><tr><td>MSE / RMSE, R²</td><td>Regression</td><td>Average squared error / share of variance explained</td></tr></tbody></table>
+</div>
+<div class="topic" id="topic-regression">
+<div class="page-tag">Machine Learning</div>
+<h1 class="page-title">Polynomial Regression</h1>
+<p class="page-subtitle">Linear regression fits a straight line. When the relationship curves, add powers of the input (x², x³…) as extra features — the model stays linear in its coefficients, but the fitted curve bends.</p>
+<div class="def-card"><p><strong>Polynomial features</strong> — turning <code>[x]</code> into <code>[1, x, x²]</code> (degree 2). <code>PolynomialFeatures</code> does this; <code>LinearRegression</code> then fits <code>y ≈ b₀ + b₁x + b₂x²</code>.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+X = np.array([[1], [2], [3], [4], [5]])
+y = np.array([3, 8, 9, 70, 80])
+
+poly = PolynomialFeatures(degree=2)
+X_poly = poly.fit_transform(X)
+print(X_poly[1])                                  # [1. 2. 4.]   ← 1, x, x² for x = 2
+
+model = LinearRegression().fit(X_poly, y)
+print(model.predict(poly.transform([[6]])).round(1))   # [133.8]
+print(round(model.score(X_poly, y), 3))           # 0.884</pre></div>
+<div class="section-title"><i class="ti ti-git-merge"></i>Cleaner with a pipeline</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+X = np.array([[1], [2], [3], [4], [5]])
+y = np.array([3, 8, 9, 70, 80])
+model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
+model.fit(X, y)                                   # transform + fit in one step
+print(model.predict([[6]]).round(1))              # [133.8]</pre></div>
+<div class="section-title"><i class="ti ti-chart-line"></i>Plotting the fit</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+X = np.array([[1], [2], [3], [4], [5]])
+y = np.array([3, 8, 9, 70, 80])
+model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression()).fit(X, y)
+
+X_range = np.linspace(0, 6, 100).reshape(-1, 1)   # 100 points to draw a smooth curve
+plt.scatter(X, y, label="Data points")
+plt.plot(X_range, model.predict(X_range), color="red", label="Polynomial fit")
+plt.xlabel("X"); plt.ylabel("y"); plt.legend()
+plt.show()</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Higher degree isn't better: with 5 points, degree 4 passes through every point exactly and predicts nonsense between and beyond them. Choose the degree by testing on held-out data.</p></div>
+</div>
+<div class="topic" id="topic-classification">
+<div class="page-tag">Machine Learning</div>
+<h1 class="page-title">SVM, Decision Trees &amp; Random Forests</h1>
+<p class="page-subtitle">Three classic classifiers on the Iris dataset (150 flowers, 4 measurements, 3 species) — how they decide, and what each is good at.</p>
+<div class="section-title"><i class="ti ti-separator"></i>Support Vector Machine (SVM)</div>
+<div class="def-card"><p><strong>SVM</strong> — finds the boundary that separates the classes with the <strong>widest margin</strong>. With a kernel such as <code>rbf</code>, the boundary can curve.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+
+iris = datasets.load_iris()
+X = iris.data[:, :2]              # only 2 features (sepal length &amp; width) so it can be plotted in 2-D
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+model = SVC(kernel="rbf", C=1.0, gamma="auto").fit(X_train, y_train)
+print(f"Accuracy: {accuracy_score(y_test, model.predict(X_test)):.2f}")   # Accuracy: 0.80</pre></div>
+<table><thead><tr><th>Parameter</th><th>Effect</th></tr></thead><tbody><tr><td><code>kernel</code></td><td><code>linear</code> (straight boundary), <code>rbf</code> (curved), <code>poly</code></td></tr><tr><td><code>C</code></td><td>Low = wider margin, tolerates mistakes; high = fits training data tightly (risk of overfitting)</td></tr><tr><td><code>gamma</code></td><td>For <code>rbf</code>: how far one sample's influence reaches — high gamma makes wiggly boundaries</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>Using only two features caps the accuracy (0.80). Features matter more than the algorithm — the trees below use all four and score 0.98.</p></div>
+<div class="section-title"><i class="ti ti-binary-tree-2"></i>Decision Tree</div>
+<div class="def-card"><p><strong>Decision tree</strong> — a flowchart of yes/no questions on the features (“petal length ≤ 2.45?”). Each split is chosen to make the groups as pure as possible, measured by <strong>Gini impurity</strong> or <strong>entropy</strong>.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.metrics import accuracy_score
+
+iris = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, test_size=0.3, random_state=0)
+model = DecisionTreeClassifier(criterion="entropy", max_depth=3, random_state=0).fit(X_train, y_train)
+print(f"Accuracy: {accuracy_score(y_test, model.predict(X_test)):.2f}")   # Accuracy: 0.98
+print(export_text(model, feature_names=iris.feature_names).splitlines()[0])   # |--- petal width (cm) &lt;= 0.75</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>max_depth</code> limits how many questions deep the tree can go — the main defence against a tree memorising the training data. Draw it with <code>sklearn.tree.plot_tree(model, filled=True)</code>.</p></div>
+<div class="section-title"><i class="ti ti-trees"></i>Random Forest</div>
+<div class="def-card"><p><strong>Random forest</strong> — many decision trees, each trained on a random sample of rows and features; they <strong>vote</strong>. Averaging many noisy trees gives a stronger, more stable model (an <em>ensemble</em>).</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+iris = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, test_size=0.3, random_state=0)
+model = RandomForestClassifier(n_estimators=100, max_depth=3, random_state=0).fit(X_train, y_train)
+print(f"Accuracy: {accuracy_score(y_test, model.predict(X_test)):.2f}")   # Accuracy: 0.98
+
+ranked = sorted(zip(model.feature_importances_, iris.feature_names), reverse=True)
+print([name for _, name in ranked[:2]])          # ['petal length (cm)', 'petal width (cm)']</pre></div>
+<table><thead><tr><th></th><th>SVM</th><th>Decision tree</th><th>Random forest</th></tr></thead><tbody><tr><td>Idea</td><td>Widest-margin boundary</td><td>Sequence of feature questions</td><td>Many trees voting</td></tr><tr><td>Interpretable</td><td>Low</td><td><strong>High</strong> (you can read the tree)</td><td>Medium (feature importances)</td></tr><tr><td>Scaling features</td><td><strong>Needed</strong></td><td>Not needed</td><td>Not needed</td></tr><tr><td>Overfitting risk</td><td>Tune <code>C</code>, <code>gamma</code></td><td>High — limit depth</td><td>Low</td></tr></tbody></table>
+</div>
+<div class="topic" id="topic-naive-bayes">
+<div class="page-tag">Machine Learning</div>
+<h1 class="page-title">Text Classification with Naive Bayes</h1>
+<p class="page-subtitle">Classify documents by their words: turn each text into word counts, then let Naive Bayes estimate which class makes those words most likely.</p>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Vectorise</div><div class="step-desc"><code>CountVectorizer</code> builds a vocabulary and turns each document into a vector of word counts (bag of words).</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Train</div><div class="step-desc"><code>MultinomialNB</code> learns how often each word appears in each class.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Predict</div><div class="step-desc">For a new text it picks the class with the highest probability, assuming words are independent — the “naive” part.</div></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+
+texts = ["the team won the cricket match", "stocks fell as markets closed lower",
+         "a great goal in the final", "the bank raised interest rates",
+         "fans cheered the winning shot", "investors sold shares today"]
+labels = ["sports", "finance", "sports", "finance", "sports", "finance"]
+
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(texts)          # sparse matrix: 6 documents × vocabulary
+print(X.shape)                               # (6, 27)
+
+model = MultinomialNB().fit(X, labels)
+new = vectorizer.transform(["the match was a great win", "interest rates and shares"])
+print(model.predict(new).tolist())           # ['sports', 'finance']</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Call <code>fit_transform</code> on training text only, then <code>transform</code> on new text — otherwise the vocabulary (and the columns) change between training and prediction.</p></div>
+<div class="section-title"><i class="ti ti-database"></i>The notebook's real dataset</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
+data = fetch_20newsgroups(subset="all")                  # ~18,800 posts in 20 topics (downloads once)
+X = CountVectorizer().fit_transform(data.data)
+X_train, X_test, y_train, y_test = train_test_split(X, data.target, test_size=0.3, random_state=0)
+model = MultinomialNB().fit(X_train, y_train)
+y_pred = model.predict(X_test)
+print(f"Accuracy: {metrics.accuracy_score(y_test, y_pred):.2f}")   # 0.85 in the notebook run
+print(metrics.classification_report(y_test, y_pred, target_names=data.target_names))</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>The report shows per-class precision and recall. In the notebook, <code>comp.os.ms-windows.misc</code> had precision 0.97 but recall 0.25 — the model was rarely wrong when it chose that class, but missed most of its posts. Accuracy alone would hide that.</p></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-bolt"></i>Why Naive Bayes for text</h3><p>Fast, works with little data, handles huge vocabularies — a strong baseline for spam filters and topic tagging.</p></div><div class="card"><h3><i class="ti ti-adjustments"></i>Improving it</h3><p><code>TfidfVectorizer</code> (down-weights common words), removing stop words, bigrams (<code>ngram_range=(1, 2)</code>).</p></div></div>
+</div>
+<div class="topic" id="topic-clustering">
+<div class="page-tag">Machine Learning</div>
+<h1 class="page-title">K-Means Clustering</h1>
+<p class="page-subtitle">K-Means groups unlabelled points into K clusters around centres (centroids). The elbow method helps choose K.</p>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Start</div><div class="step-desc">Pick K initial centroids (<code>k-means++</code> spreads them out smartly).</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Assign</div><div class="step-desc">Each point joins its nearest centroid.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Update</div><div class="step-desc">Each centroid moves to the mean of its points.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title">Repeat</div><div class="step-desc">Until assignments stop changing (or <code>max_iter</code>).</div></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from collections import Counter
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+
+X, _ = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
+km = KMeans(n_clusters=4, init="k-means++", n_init=10, random_state=0).fit(X)
+print(km.cluster_centers_.shape)          # (4, 2)
+print(sorted(Counter(km.labels_).values()))   # [75, 75, 75, 75]   ← 4 equal clusters</pre></div>
+<div class="section-title"><i class="ti ti-chart-line"></i>Choosing K: the elbow method</div>
+<p>Run K-Means for K = 1…10 and record the <strong>WCSS</strong> (within-cluster sum of squares, <code>inertia_</code>). It always falls as K grows; the “elbow” where it stops falling sharply is a good K.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+
+X, _ = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
+wcss = [KMeans(n_clusters=k, n_init=10, random_state=0).fit(X).inertia_ for k in range(1, 11)]
+drops = [round(wcss[i] - wcss[i + 1]) for i in range(5)]
+print(drops)       # [1621, 644, 335, 23, 18]   ← big drops until K = 4, then small ones</pre></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import matplotlib.pyplot as plt
+plt.plot(range(1, 11), wcss, marker="o")
+plt.xlabel("Number of clusters (K)"); plt.ylabel("WCSS"); plt.title("Elbow Method")
+plt.show()</pre></div>
+<div class="section-title"><i class="ti ti-math"></i>The same with SciPy</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+from scipy.cluster.vq import kmeans, vq
+from sklearn.datasets import make_blobs
+
+X, _ = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
+centroids, _ = kmeans(X, 4, seed=0)       # centroids
+labels, _ = vq(X, centroids)              # nearest centroid for each point
+print(centroids.shape, len(np.unique(labels)))   # (4, 2) 4</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>K-Means assumes round, similar-sized clusters and is sensitive to feature scales — standardise features first (<code>StandardScaler</code>). For odd shapes, try DBSCAN.</p></div>
+</div>
+<div class="topic" id="topic-tokenization">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">Tokenization, Stemming &amp; Lemmatization</h1>
+<p class="page-subtitle">Before a computer can work with text, it has to be cut into pieces (tokens) and words have to be brought to a common form.</p>
+<div class="highlight-box"><div class="label">About this module</div><p>The notebook calls this module “Deep Learning”, but everything in it is <strong>text processing (NLP)</strong> — the groundwork that comes before any language model.</p></div>
+<div class="section-title"><i class="ti ti-question-mark"></i>Why not just split()?</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>txt = "Hello Geeks. We're hoping you guys are doing great."
+print(len(txt.split(".")))      # 3        ← counts an empty piece after the last "."
+print(txt.split()[:3])          # ['Hello', 'Geeks.', "We're"]   ← punctuation stuck to words</pre></div>
+<div class="section-title"><i class="ti ti-scissors"></i>Tokenizing with NLTK</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from nltk.tokenize import sent_tokenize, word_tokenize
+
+txt = "Hello Geeks. We're hoping you guys are doing great."
+print(len(sent_tokenize(txt)))                    # 2
+print(word_tokenize(txt))                         # ['Hello', 'Geeks', '.', 'We', "'re", 'hoping', 'you', 'guys', 'are', 'doing', 'great', '.']
+print([w for w in word_tokenize(txt) if w.isalnum()])   # ['Hello', 'Geeks', 'We', 'hoping', 'you', 'guys', 'are', 'doing', 'great']</pre></div>
+<div class="code-block-container"><div class="code-lang">Setup</div><pre>pip install nltk
+python -m nltk.downloader punkt punkt_tab stopwords wordnet omw-1.4</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>sent_tokenize</code> knows that “Dr.” or “U.K.” don't end a sentence; <code>word_tokenize</code> splits off punctuation and contractions (“We're” → “We”, “'re”).</p></div>
+<div class="section-title"><i class="ti ti-git-compare"></i>Stemming vs lemmatization</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from nltk.stem import PorterStemmer, WordNetLemmatizer
+stem, lem = PorterStemmer(), WordNetLemmatizer()
+
+words = ["change", "changes", "changed", "studies", "better"]
+print([stem.stem(w) for w in words])              # ['chang', 'chang', 'chang', 'studi', 'better']
+print([lem.lemmatize(w) for w in words])          # ['change', 'change', 'changed', 'study', 'better']
+print(lem.lemmatize("changed", pos="v"), lem.lemmatize("better", pos="a"))   # change good</pre></div>
+<table><thead><tr><th></th><th>Stemming</th><th>Lemmatization</th></tr></thead><tbody><tr><td>How</td><td>Chops suffixes by rules</td><td>Looks words up in a dictionary (WordNet)</td></tr><tr><td>Output</td><td>May not be a real word (<code>chang</code>)</td><td>Always a real word (<code>change</code>)</td></tr><tr><td>Speed</td><td>Fast</td><td>Slower</td></tr><tr><td>Needs part of speech</td><td>No</td><td>For best results (<code>pos="v"</code> verb, <code>"a"</code> adjective)</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>Without <code>pos</code>, the lemmatizer treats every word as a noun — that's why the notebook got <code>changed</code> back unchanged. Tell it the word is a verb and it returns <code>change</code>.</p></div>
+</div>
+<div class="topic" id="topic-stop-words">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">Stop Words</h1>
+<p class="page-subtitle">Stop words are very common words (“is”, “the”, “a”) that carry little meaning on their own. Removing them shrinks the text and highlights the words that matter.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+stop_words = set(stopwords.words("english"))
+print(len(stop_words), "is" in stop_words, "good" in stop_words)   # 198 True False
+
+txt = "This is not a good time to talk."
+kept = [w for w in word_tokenize(txt) if w.lower() not in stop_words and len(w) &gt;= 2]
+print(kept)                                  # ['good', 'time', 'talk']</pre></div>
+<div class="warning-box"><div class="label">Careful</div><p>“not” is a stop word in NLTK's list — so “not a good time” becomes “good time”. For sentiment analysis, removing stop words can flip the meaning; keep negations.</p></div>
+<div class="section-title"><i class="ti ti-language"></i>Stop words in spaCy</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import spacy
+nlp = spacy.load("en_core_web_sm")          # python -m spacy download en_core_web_sm
+
+print(len(nlp.Defaults.stop_words) &gt; 300)   # True
+print(nlp.vocab["is"].is_stop, nlp.vocab["GFG"].is_stop)   # True False
+
+nlp.Defaults.stop_words.add("i.e")          # add your own
+nlp.vocab["i.e"].is_stop = True
+nlp.Defaults.stop_words.discard("done")     # or remove one
+nlp.vocab["done"].is_stop = False
+print(nlp.vocab["i.e"].is_stop, nlp.vocab["done"].is_stop)  # True False</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Change both <code>nlp.Defaults.stop_words</code> (the list) and <code>nlp.vocab[word].is_stop</code> (the flag tokens check) — spaCy keeps them separately.</p></div>
+</div>
+<div class="topic" id="topic-characters">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">Characters, ASCII &amp; DIY String Functions</h1>
+<p class="page-subtitle">Every character is a number. Knowing the codes lets you build string functions yourself — a common interview exercise and the basis of text encoding.</p>
+<div class="section-title"><i class="ti ti-arrows-exchange"></i>ord() and chr()</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>text = "The quick brown fox"
+print([ord(c) for c in "Tq "])                    # [84, 113, 32]
+print(chr(97), chr(65), chr(93))                  # a A ]
+codes = [ord(c) for c in text]
+print("".join(chr(n) for n in codes) == text)     # True
+print("".join(chr(n) for n in range(65, 91)))     # ABCDEFGHIJKLMNOPQRSTUVWXYZ
+print("".join(chr(n) for n in range(90, 64, -1))) # ZYXWVUTSRQPONMLKJIHGFEDCBA</pre></div>
+<table><thead><tr><th>Range</th><th>Characters</th></tr></thead><tbody><tr><td>48–57</td><td><code>0</code>–<code>9</code></td></tr><tr><td>65–90</td><td><code>A</code>–<code>Z</code></td></tr><tr><td>97–122</td><td><code>a</code>–<code>z</code> (each lowercase letter = its uppercase + 32)</td></tr><tr><td>32</td><td>space</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Correction</div><p>The notebook prints <code>ascii</code> instead of its list <code>ascii_</code> and gets <code>&lt;built-in function ascii&gt;</code> — <code>ascii</code> is a built-in function. Avoid names that shadow built-ins (<code>list</code>, <code>str</code>, <code>sum</code>, <code>ascii</code>…).</p></div>
+<div class="section-title"><i class="ti ti-code"></i>DIY upper, lower and title</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def upper(text):
+    return "".join(chr(ord(c) - 32) if "a" &lt;= c &lt;= "z" else c for c in text)
+
+def lower(text):
+    return "".join(chr(ord(c) + 32) if "A" &lt;= c &lt;= "Z" else c for c in text)
+
+def title(text):
+    return " ".join(upper(w[:1]) + lower(w[1:]) for w in text.split(" "))
+
+print(upper("delhi"), lower("CARTOON"))               # DELHI cartoon
+print(title("let us study machine learning today"))   # Let Us Study Machine Learning Today
+print(title("hello  world"))                          # Hello  World</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>w[:1]</code> instead of <code>w[0]</code> keeps <code>title</code> from crashing on empty words (two spaces in a row).</p></div>
+<div class="section-title"><i class="ti ti-check"></i>DIY isalpha and isdigit</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def is_alpha(text):
+    return len(text) &gt; 0 and all("A" &lt;= c &lt;= "Z" or "a" &lt;= c &lt;= "z" for c in text)
+
+def is_digit(text):
+    return len(text) &gt; 0 and all("0" &lt;= c &lt;= "9" for c in text)
+
+print(is_alpha("datascience"), is_alpha("1234"))     # True False
+print(is_digit("1234"), is_digit("machinelearning")) # True False</pre></div>
+<div class="warning-box"><div class="label">Bug in the notebook</div><p>The notebook's <code>check_alpha</code> returns <code>False</code> for <code>'datascience'</code> — its <code>if len(text) == c</code> check sits <strong>inside</strong> the loop, so it decides after the first character. Check after the loop (or use <code>all()</code> as above).</p></div>
+<div class="section-title"><i class="ti ti-search"></i>Finding runs of digits and words</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>txt = "The number is 8372493 not 423423"
+runs, current = [], ""
+for ch in txt:
+    if ch.isdigit():
+        current += ch
+    elif current:
+        runs.append(current)
+        current = ""
+if current:
+    runs.append(current)
+print(runs)                                     # ['8372493', '423423']
+
+sentence = "GFG is launching a new Data Structure in Python Course"
+print([w for w in sentence.split() if w.lower().startswith("i")])   # ['is', 'in']
+print([w for w in sentence.split() if w.lower().endswith("e")])     # ['Structure', 'Course']
+print("let us study data science".find("data"))                     # 13</pre></div>
+</div>
+<div class="topic" id="topic-regex">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">Regular Expressions</h1>
+<p class="page-subtitle">Regular expressions describe text patterns — phone numbers, emails, hyphenated words — and find, extract or replace them in one line. Python's <code>re</code> module.</p>
+<div class="section-title"><i class="ti ti-search"></i>search, findall, finditer</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import re
+m = re.search("hello", "hello world")
+print(m.span(), m.start(), m.end(), m.group())    # (0, 5) 0 5 hello
+print(re.search("data", "hello world"))           # None
+print(re.findall("at", "The rat sat on the mat"))                 # ['at', 'at', 'at']
+print([m.span() for m in re.finditer("hello", "hello world hello earth")])   # [(0, 5), (12, 17)]</pre></div>
+<table><thead><tr><th>Function</th><th>Returns</th></tr></thead><tbody><tr><td><code>re.search(p, s)</code></td><td>The first match (a Match object) or <code>None</code></td></tr><tr><td><code>re.match(p, s)</code></td><td>A match only at the <strong>start</strong> of <code>s</code></td></tr><tr><td><code>re.findall(p, s)</code></td><td>A list of all matching strings (or groups)</td></tr><tr><td><code>re.finditer(p, s)</code></td><td>Match objects one by one — with positions</td></tr><tr><td><code>re.sub(p, repl, s)</code></td><td><code>s</code> with matches replaced</td></tr><tr><td><code>re.split(p, s)</code></td><td><code>s</code> split at matches</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-puzzle"></i>The building blocks</div>
+<table><thead><tr><th>Pattern</th><th>Matches</th></tr></thead><tbody><tr><td><code>.</code></td><td>Any character except newline</td></tr><tr><td><code>\d</code> / <code>\D</code></td><td>A digit / anything but a digit</td></tr><tr><td><code>\w</code> / <code>\W</code></td><td>A word character (letter, digit, _) / anything else</td></tr><tr><td><code>\s</code></td><td>Whitespace</td></tr><tr><td><code>[A-Za-z]</code>, <code>[^!,$@]</code></td><td>One character from a set / <strong>not</strong> in a set</td></tr><tr><td><code>^</code> / <code>$</code></td><td>Start / end of the string</td></tr><tr><td><code>*</code> <code>+</code> <code>?</code> <code>{3}</code> <code>{2,4}</code></td><td>0+, 1+, 0 or 1, exactly 3, 2 to 4 times</td></tr><tr><td><code>(a|b)</code></td><td>Group with alternatives</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import re
+print(re.findall(".at", "The rat sat on the mat and a cat"))     # ['rat', 'sat', 'mat', 'cat']
+print(re.findall(r"^\d", "4 is divisible by 2"), re.findall(r"^\d", "Hi, 4"))   # ['4'] []
+print(re.findall(r"\d$", "4 is divisible by 2 and not by 3"))   # ['3']
+print(re.findall("[A-Z]", "Welcome to GFG 1"))                   # ['W', 'G', 'F', 'G']
+print(re.search(r"\d{3}-\d{4}-\d{3}", "call 834-4324-345").group())   # 834-4324-345</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Write patterns as <strong>raw strings</strong> — <code>r"\d"</code> — so Python doesn't treat the backslash as an escape. The notebook's <code>'\d'</code> works but triggers a warning in modern Python.</p></div>
+<div class="section-title"><i class="ti ti-eraser"></i>Cleaning text</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import re
+print(re.sub(r"[!,$@]", "", "Eshant $ is happ@y !,").strip())    # Eshant  is happy
+print(re.sub(r"\d", "", "I'm Ashish and 24").strip())            # I'm Ashish and
+print(re.findall(r"\w+-\w+-\w+", "Geeks-for-Geeks and works-it-out"))   # ['Geeks-for-Geeks', 'works-it-out']
+print(re.sub(r"\s+", " ", "too    many   spaces"))              # too many spaces</pre></div>
+<div class="section-title"><i class="ti ti-mail"></i>Email patterns</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import re
+EMAIL = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
+text = "Mail eshant@gfg.in or esh@aap.gov.in to contact us"
+print([m.group() for m in re.finditer(EMAIL, text)])        # ['eshant@gfg.in', 'esh@aap.gov.in']
+
+GFG_OR_GMAIL = r"[\w.]+@(gfg|gmail)\.(org|net|in|com)"
+for mail in ["eshant@gfg.org", "eshant@gmail.com", "eshant@yahoo.com"]:
+    print(mail, bool(re.fullmatch(GFG_OR_GMAIL, mail)))</pre></div>
+<div class="code-block-container"><div class="code-lang">Output</div><pre>['eshant@gfg.in', 'esh@aap.gov.in']
+eshant@gfg.org True
+eshant@gmail.com True
+eshant@yahoo.com False</pre></div>
+<div class="highlight-box"><div class="label">Correction</div><p>Two slips in the notebook's patterns: <code>[A-Za-z0-2]</code> allows only the digits 0–2 (should be <code>0-9</code>), and an unescaped <code>.</code> matches <strong>any</strong> character — write <code>\.</code> for a literal dot. Use <code>re.fullmatch</code> to validate a whole string instead of finding a pattern inside it.</p></div>
+<div class="section-title"><i class="ti ti-cut"></i>Without regex: splitting an email</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>mails = ["eshant@gmail.com", "eshant@aap.gov.in", "esh@geeksforgeeks.com"]
+parts = [(m.split("@")[0], *m.split("@")[1].split(".", 1)) for m in mails]
+print(parts)      # [('eshant', 'gmail', 'com'), ('eshant', 'aap', 'gov.in'), ('esh', 'geeksforgeeks', 'com')]</pre></div>
+</div>
+<div class="topic" id="topic-spacy">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">spaCy Basics</h1>
+<p class="page-subtitle">spaCy is an industrial-strength NLP library: one call runs tokenization, part-of-speech tagging, sentence splitting, lemmatization and named-entity recognition.</p>
+<div class="code-block-container"><div class="code-lang">Setup</div><pre>pip install spacy
+python -m spacy download en_core_web_sm</pre></div>
+<div class="section-title"><i class="ti ti-cut"></i>Tokens</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import spacy
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("The cost of Iphone in U.K is 699$")
+print([t.text for t in doc])            # ['The', 'cost', 'of', 'Iphone', 'in', 'U.K', 'is', '699', '$']</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>spaCy keeps “U.K” together and splits “699$” into the number and the currency sign — rules that a plain <code>split()</code> can't know.</p></div>
+<div class="section-title"><i class="ti ti-tags"></i>Parts of speech &amp; lemmas</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import spacy
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("The cost of Iphone in U.K is 699$")
+print([(t.text, t.pos_) for t in doc][:4])   # [('The', 'DET'), ('cost', 'NOUN'), ('of', 'ADP'), ('Iphone', 'PROPN')]
+print([t.lemma_ for t in nlp("She was running faster")])   # ['she', 'be', 'run', 'fast']</pre></div>
+<table><thead><tr><th>Tag</th><th>Meaning</th><th>Tag</th><th>Meaning</th></tr></thead><tbody><tr><td><code>NOUN</code></td><td>Noun</td><td><code>VERB</code></td><td>Verb</td></tr><tr><td><code>PROPN</code></td><td>Proper noun</td><td><code>AUX</code></td><td>Auxiliary (is, was)</td></tr><tr><td><code>ADJ</code></td><td>Adjective</td><td><code>ADP</code></td><td>Preposition</td></tr><tr><td><code>DET</code></td><td>Determiner (the, a)</td><td><code>NUM</code></td><td>Number</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-list-details"></i>Sentences &amp; entities</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import spacy
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("This is the first sentence. Please check it. Let's study now")
+print([s.text for s in doc.sents])     # ['This is the first sentence.', 'Please check it.', "Let's study now"]
+ents = nlp("Sundar Pichai joined Google in 2004 in California.").ents
+print([(e.text, e.label_) for e in ents])   # [('Sundar Pichai', 'PERSON'), ('Google', 'ORG'), ('2004', 'DATE'), ('California', 'GPE')]</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-school"></i>NLTK</h3><p>A teaching toolkit: many algorithms and corpora, you assemble the pipeline yourself.</p></div><div class="card"><h3><i class="ti ti-rocket"></i>spaCy</h3><p>Production-ready pipelines, fast, one object (<code>doc</code>) with everything — tokens, tags, lemmas, entities.</p></div></div>
+</div>
+<div class="topic" id="topic-wordnet">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">Synonyms &amp; Antonyms with WordNet</h1>
+<p class="page-subtitle">WordNet is a dictionary for programs: words are grouped into sets of synonyms (<em>synsets</em>) with definitions, and linked to antonyms and broader or narrower words.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from nltk.corpus import wordnet
+
+syn = wordnet.synsets("book")
+print(syn[0].definition())      # a written work or composition that has been published (printed on pages bound together)
+print(syn[0].name())            # book.n.01</pre></div>
+<div class="section-title"><i class="ti ti-arrows-shuffle"></i>Synonyms</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from nltk.corpus import wordnet
+synonyms = []
+for s in wordnet.synsets("happy"):
+    for lemma in s.lemmas():
+        synonyms.append(lemma.name())
+print(sorted(set(synonyms)))    # ['felicitous', 'glad', 'happy', 'well-chosen']</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Use a <code>set</code> to drop duplicates — the notebook's list repeats “happy” four times because it appears in four synsets.</p></div>
+<div class="section-title"><i class="ti ti-arrows-diff"></i>Antonyms</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from nltk.corpus import wordnet
+antonyms = {a.name() for s in wordnet.synsets("healthy") for l in s.lemmas() for a in l.antonyms()}
+print(sorted(antonyms))         # ['unhealthy']</pre></div>
+<table><thead><tr><th>Call</th><th>Gives</th></tr></thead><tbody><tr><td><code>wordnet.synsets(word)</code></td><td>Every sense of the word</td></tr><tr><td><code>synset.definition()</code> / <code>.examples()</code></td><td>Its meaning / example sentences</td></tr><tr><td><code>synset.lemmas()</code></td><td>The words in that sense (synonyms)</td></tr><tr><td><code>lemma.antonyms()</code></td><td>Opposites</td></tr><tr><td><code>synset.hypernyms()</code></td><td>Broader terms (dog → canine)</td></tr></tbody></table>
+</div>
+<div class="topic" id="topic-text-encoding">
+<div class="page-tag">Natural Language Processing</div>
+<h1 class="page-title">Encoding Text as Numbers</h1>
+<p class="page-subtitle">Models work with numbers, not words. The simplest encoding gives every word in the vocabulary an ID — then each sentence becomes a list of IDs, and can be turned back.</p>
+<div class="section-title"><i class="ti ti-list-numbers"></i>Build a vocabulary</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>corpus = ("India, officially the Republic of India, is a country in South Asia. "
+          "It is the seventh-largest country by area, the second-most populous country, "
+          "and the most populous democracy in the world. "
+          "In the Indian Ocean, India is in the vicinity of Sri Lanka and the Maldives.")
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.corpus import stopwords
+
+stop = set(stopwords.words("english"))
+def keep(word):
+    return word.lower() not in stop and len(word) &gt;= 2      # drop stop words and punctuation
+
+words = [w.lower() for w in word_tokenize(corpus) if keep(w)]
+vocab = sorted(set(words))                                   # sorted → same IDs every run
+word_to_num = {w: i for i, w in enumerate(vocab, start=1)}
+num_to_word = {i: w for w, i in word_to_num.items()}
+print(len(vocab), vocab[:4])                                 # 18 ['area', 'asia', 'country', 'democracy']</pre></div>
+<div class="highlight-box"><div class="label">Correction</div><p>The notebook builds the vocabulary from <code>list(set(words))</code> — sets have no fixed order, so the IDs change every run. Sort first to make the mapping reproducible.</p></div>
+<div class="section-title"><i class="ti ti-arrows-exchange"></i>Encode and decode</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>corpus = ("India, officially the Republic of India, is a country in South Asia. "
+          "It is the seventh-largest country by area, the second-most populous country, "
+          "and the most populous democracy in the world. "
+          "In the Indian Ocean, India is in the vicinity of Sri Lanka and the Maldives.")
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.corpus import stopwords
+
+stop = set(stopwords.words("english"))
+keep = lambda w: w.lower() not in stop and len(w) &gt;= 2
+vocab = sorted({w.lower() for w in word_tokenize(corpus) if keep(w)})
+word_to_num = {w: i for i, w in enumerate(vocab, start=1)}
+num_to_word = {i: w for w, i in word_to_num.items()}
+
+encoded = [[word_to_num[w.lower()] for w in word_tokenize(s) if keep(w)] for s in sent_tokenize(corpus)]
+print(encoded[0])                                            # [5, 10, 12, 5, 3, 15, 2]
+print(" ".join(num_to_word[n] for n in encoded[0]))          # india officially republic india country south asia</pre></div>
+<div class="section-title"><i class="ti ti-list"></i>Keeping every word</div>
+<p>To decode back to the full sentence, keep stop words and drop only punctuation. The vocabulary grows, but nothing is lost except capitalisation and punctuation:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>corpus = ("India, officially the Republic of India, is a country in South Asia. "
+          "It is the seventh-largest country by area, the second-most populous country, "
+          "and the most populous democracy in the world. "
+          "In the Indian Ocean, India is in the vicinity of Sri Lanka and the Maldives.")
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+is_word = lambda w: any(c.isalpha() for c in w)
+vocab = sorted({w.lower() for w in word_tokenize(corpus) if is_word(w)})
+word_to_num = {w: i for i, w in enumerate(vocab, start=1)}
+num_to_word = {i: w for w, i in word_to_num.items()}
+first = sent_tokenize(corpus)[0]
+ids = [word_to_num[w.lower()] for w in word_tokenize(first) if is_word(w)]
+print(" ".join(num_to_word[i] for i in ids))   # india officially the republic of india is a country in south asia</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-chart-bar"></i>Bag of words / counts</h3><p><code>CountVectorizer</code> — how often each vocabulary word occurs (see <em>Naive Bayes</em>).</p></div><div class="card"><h3><i class="ti ti-scale"></i>TF-IDF</h3><p>Counts weighted down for words common across all documents.</p></div><div class="card"><h3><i class="ti ti-brain"></i>Word embeddings</h3><p>Dense vectors where similar words are close (Word2Vec, GloVe) — what neural networks and LLMs build on.</p></div></div>
+</div>
+<div class="topic" id="topic-interview-questions">
+<div class="page-tag">Interview Prep</div>
+<h1 class="page-title">Interview Questions</h1>
+<p class="page-subtitle">Data science questions that come up in placements and interviews — short answers you can say out loud.</p>
+<div class="section-title"><i class="ti ti-brand-python"></i>Python &amp; data handling</div>
+<div class="qa-card"><div class="qa-question">What's the difference between a Python list and a NumPy array?</div><div class="qa-answer"><p>A list holds any objects and grows easily, but maths needs a loop. A NumPy array holds one type in contiguous memory, so operations are <strong>vectorised</strong> — <code>arr * 2</code> multiplies every element in C, far faster. Arrays also support multi-dimensional shapes, axes and broadcasting.</p></div></div>
+<div class="qa-card"><div class="qa-question">What does axis=0 vs axis=1 mean?</div><div class="qa-answer"><p><code>axis=0</code> works down the rows — one result per <strong>column</strong>. <code>axis=1</code> works across the columns — one result per <strong>row</strong>. For a (rows, cols) array, <code>sum(axis=0)</code> has one value per column.</p></div></div>
+<div class="qa-card"><div class="qa-question">Series vs DataFrame?</div><div class="qa-answer"><p>A Series is one labelled column (values + index). A DataFrame is a table of Series sharing the same index — rows and named columns.</p></div></div>
+<div class="qa-card"><div class="qa-question">loc vs iloc?</div><div class="qa-answer"><p><code>loc</code> selects by <strong>labels</strong> (index values and column names; slices include the end). <code>iloc</code> selects by integer <strong>position</strong> (slices exclude the end).</p></div></div>
+<div class="qa-card"><div class="qa-question">How do you handle missing values?</div><div class="qa-answer"><p>First measure them (<code>df.isna().sum()</code>). Then per column: drop rows (<code>dropna</code>), fill with a constant or the mean/median/mode (<code>fillna</code>), or model them; sometimes add a “was missing” flag. The choice depends on how much is missing and why.</p></div></div>
+<div class="section-title"><i class="ti ti-brain"></i>Machine learning</div>
+<div class="qa-card"><div class="qa-question">Supervised vs unsupervised learning?</div><div class="qa-answer"><p>Supervised learning uses labelled examples to predict a target — classification (categories) or regression (numbers). Unsupervised learning finds structure without labels — clustering (K-Means) or dimensionality reduction (PCA).</p></div></div>
+<div class="qa-card"><div class="qa-question">Why do we split data into train and test sets?</div><div class="qa-answer"><p>To measure performance on data the model hasn't seen. A score on training data rewards memorisation; the test score estimates real-world performance. Cross-validation repeats the split several times for a more reliable estimate.</p></div></div>
+<div class="qa-card"><div class="qa-question">What are overfitting and underfitting?</div><div class="qa-answer"><p>Overfitting: great on training data, poor on test data — the model learned noise (fix: simpler model, regularisation, more data, limit tree depth). Underfitting: poor on both — the model is too simple (fix: more features, a more flexible model).</p></div></div>
+<div class="qa-card"><div class="qa-question">Precision vs recall?</div><div class="qa-answer"><p>Precision: of everything predicted positive, how much really is positive. Recall: of all real positives, how many were found. Spam filters favour precision (don't lose real mail); disease screening favours recall (don't miss a case). F1 balances both.</p></div></div>
+<div class="qa-card"><div class="qa-question">Decision tree vs random forest?</div><div class="qa-answer"><p>A single tree is easy to read but overfits easily. A random forest trains many trees on random samples of rows and features and lets them vote — more accurate and stable, less interpretable, with feature importances as a summary.</p></div></div>
+<div class="qa-card"><div class="qa-question">How does K-Means work, and how do you choose K?</div><div class="qa-answer"><p>Pick K centroids, assign each point to the nearest, move each centroid to the mean of its points, repeat until stable. Choose K with the elbow method (plot within-cluster sum of squares against K) or the silhouette score.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why is Naive Bayes “naive”?</div><div class="qa-answer"><p>It assumes features (e.g. words) are independent given the class. That's rarely true, but the model is fast, needs little data and works surprisingly well for text classification.</p></div></div>
+<div class="section-title"><i class="ti ti-world-www"></i>Text &amp; scraping</div>
+<div class="qa-card"><div class="qa-question">Stemming vs lemmatization?</div><div class="qa-answer"><p>Stemming chops suffixes by rules and may produce non-words (<code>changes</code> → <code>chang</code>). Lemmatization uses a dictionary and part of speech to return the real base form (<code>changed</code> → <code>change</code>, <code>better</code> → <code>good</code>). Lemmatization is more accurate, stemming faster.</p></div></div>
+<div class="qa-card"><div class="qa-question">What are stop words, and when should you keep them?</div><div class="qa-answer"><p>Very common words (“the”, “is”) removed to focus on meaningful words. Keep them when they matter — negations like “not” in sentiment analysis, or for models that read full sentences.</p></div></div>
+<div class="qa-card"><div class="qa-question">How do you turn text into numbers for a model?</div><div class="qa-answer"><p>Tokenize, build a vocabulary, then encode: word IDs, bag-of-words counts (<code>CountVectorizer</code>), TF-IDF weights, or dense embeddings (Word2Vec, transformer models).</p></div></div>
+<div class="qa-card"><div class="qa-question">requests + BeautifulSoup vs Selenium — when do you need Selenium?</div><div class="qa-answer"><p>requests fetches the HTML the server sends; BeautifulSoup parses it — fast and light. If content is created by JavaScript after the page loads (infinite scroll, clicks, logins), <code>requests</code> sees an empty shell; Selenium drives a real browser so you get what users see.</p></div></div>
+<div class="section-title"><i class="ti ti-checklist"></i>Quick-fire checklist</div>
+<div class="chips"><span class="chip">File modes r/w/a</span><span class="chip">os.walk</span><span class="chip">ndarray vs list</span><span class="chip">Broadcasting</span><span class="chip">axis</span><span class="chip">loc vs iloc</span><span class="chip">Missing values</span><span class="chip">groupby</span><span class="chip">BeautifulSoup find/find_all</span><span class="chip">Selenium waits</span><span class="chip">Train/test split</span><span class="chip">Overfitting</span><span class="chip">Precision &amp; recall</span><span class="chip">Random forest</span><span class="chip">K-Means &amp; elbow</span><span class="chip">Naive Bayes</span><span class="chip">Tokenization</span><span class="chip">Lemmatization</span><span class="chip">Stop words</span><span class="chip">Regex</span><span class="chip">TF-IDF &amp; embeddings</span></div>
+</div>
+</main>
+</body>
+</html>

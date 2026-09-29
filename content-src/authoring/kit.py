@@ -1,9 +1,10 @@
-"""Tiny authoring kit that emits the legacy-HTML vocabulary the content pipeline understands
+"""Shared authoring kit (used by python/ and data-science/). Emits the legacy-HTML vocabulary the content pipeline understands
 (scripts/content/sanitize.mjs): page-subtitle, section-title, def-card, highlight-box, warning-box,
 pros/cons, card-grid/card, code-block-container, step-row, chips, qa-card, tables.
 
 Every code() snippet is executed at build time. With check=True, each `print(...)` line must carry a
 trailing `# expected output` comment, and the real output must match — so the notes never lie.
+Anything after a `←` in that comment is an explanation for the reader and isn't compared.
 """
 import contextlib
 import html
@@ -161,8 +162,60 @@ def verify():
             continue
         if not check:
             continue
-        expected = [m.group(2).rstrip() for line in src.splitlines() if (m := PRINT_LINE.match(line))]
+        expected = [m.group(2).split("←")[0].rstrip() for line in src.splitlines() if (m := PRINT_LINE.match(line))]
         actual = buf.getvalue().rstrip("\n").split("\n") if buf.getvalue() else []
         if expected and expected != actual:
             failures.append(f"{tid}: output mismatch\n  expected {expected}\n  actual   {actual}\n{src}\n")
     return failures
+
+
+# ── page assembly ──────────────────────────────────────────
+
+def build(out, subject_title, header_note="", env_setup=None):
+    """Verify every snippet, then write the subject's source HTML to `out`. Exits 1 on any failure."""
+    import sys
+    from pathlib import Path
+    if env_setup:
+        env_setup()
+    failures = verify()
+    if failures:
+        print(f"{len(failures)} snippet problem(s):\n")
+        print("\n".join(failures))
+        sys.exit(1)
+    nav, pages, group = [], [], None
+    for g, tid, title, icon, body in TOPICS:
+        if g != group:
+            nav.append(f'  <div class="nav-section">{esc(g)}</div>')
+            group = g
+        nav.append(f'  <div class="nav-item" id="nav-{tid}"><i class="ti ti-{icon}"></i>{esc(title)}</div>')
+        pages.append(
+            f'<div class="topic" id="topic-{tid}">\n'
+            f'<div class="page-tag">{esc(g)}</div>\n'
+            f'<h1 class="page-title">{esc(title)}</h1>\n'
+            f"{body}\n</div>"
+        )
+    nl = "\n"
+    html_out = f"""<!doctype html>
+<!--
+  {subject_title} — study notes source for the content pipeline (scripts/content/extract.mjs).
+  Vocabulary: see scripts/content/sanitize.mjs. Every code sample here was executed and its
+  printed output checked when this file was generated.{header_note}
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>{esc(subject_title)}</title></head>
+<body>
+<nav class="sidebar">
+{nl.join(nav)}
+</nav>
+<main>
+{nl.join(pages)}
+</main>
+</body>
+</html>
+"""
+    out = Path(out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(html_out, encoding="utf-8")
+    ran = sum(1 for s in SNIPPETS if s[3])
+    checked = sum(1 for s in SNIPPETS if s[3] and s[4])
+    print(f"{len(TOPICS)} topics, {len(SNIPPETS)} code samples ({ran} executed, {checked} output-checked) → {out}")
