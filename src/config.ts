@@ -27,6 +27,5 @@ export const AUTH_PROVIDERS: ('google' | 'github' | 'linkedin')[] = ['google']
  * Each one needs its https://<domain>/__/auth/handler added as an authorized redirect URI of the
  * Google OAuth client (docs/auth-setup.md → "Sign-in on your own domain").
  */
-// Empty until the redirect URIs are added to the OAuth client Firebase actually uses
-// (client id 761935379919-92vi63rnkfrq5vqi5jphehsg2sd4jg7b…). Then: ['www.learnvianotes.in', 'learnvianote.web.app']
-export const SAME_SITE_AUTH_DOMAINS: string[] = []
+// Redirect URIs are registered on the OAuth client Firebase uses (761935379919-92vi63rnkfrq5vqi5jphehsg2sd4jg7b…).
+export const SAME_SITE_AUTH_DOMAINS: string[] = ['www.learnvianotes.in', 'learnvianote.web.app']
