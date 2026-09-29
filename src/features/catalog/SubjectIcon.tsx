@@ -1,5 +1,5 @@
 import {
-  Bot, BookOpen, Braces, Brain, BrainCircuit, ChartNoAxesCombined, Code2, MessagesSquare, Cpu, Database, GitMerge, Grid3x3, Layers, Lightbulb, ListChecks, Network, Plug, Sigma,
+  Binary, Bot, BookOpen, Coffee, FileCode2, SquareCode, Table2, Braces, Brain, BrainCircuit, ChartNoAxesCombined, Code2, MessagesSquare, Cpu, Database, GitMerge, Grid3x3, Layers, Lightbulb, ListChecks, Network, Plug, Sigma,
   ShieldCheck, Sparkles, Terminal, Workflow, type LucideIcon, type LucideProps,
 } from 'lucide-react'
 
@@ -10,6 +10,7 @@ const ICONS: Record<string, LucideIcon> = {
   'git-merge': GitMerge, plug: Plug, sparkles: Sparkles, brain: Brain,
   bot: Bot, 'brain-circuit': BrainCircuit, chart: ChartNoAxesCombined, message: MessagesSquare,
   sigma: Sigma, grid: Grid3x3, lightbulb: Lightbulb, terminal: Terminal,
+  binary: Binary, 'file-code': FileCode2, coffee: Coffee, 'square-code': SquareCode, table: Table2,
 }
 
 export function SubjectIcon({ name, ...props }: { name: string } & LucideProps) {

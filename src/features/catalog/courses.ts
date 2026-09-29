@@ -48,7 +48,7 @@ export const AREAS: Area[] = [
     courses: [
       { id: 'ai', title: 'Artificial Intelligence', icon: 'bot', description: 'Search, reasoning, knowledge representation, planning and intelligent agents.' },
       { id: 'machine-learning', title: 'Machine Learning', icon: 'brain', subjectId: 'ml-ai', description: 'Training, evaluation and classic algorithms.' },
-      { id: 'deep-learning', title: 'Deep Learning', icon: 'brain-circuit', description: 'Neural networks, backpropagation, CNNs, RNNs, attention and Transformers.' },
+      { id: 'deep-learning', title: 'Deep Learning', icon: 'brain-circuit', subjectId: 'deep-learning', description: 'Neural networks, backpropagation, CNNs, RNNs, attention and Transformers.' },
       { id: 'data-science', title: 'Data Science', icon: 'chart', subjectId: 'data-science', description: 'Files, NumPy, pandas, web scraping, machine learning and NLP.' },
       { id: 'genai', title: 'Generative AI', icon: 'sparkles', subjectId: 'genai-fluency', description: 'LLMs, prompting, embeddings, RAG and agents.' },
     ],
@@ -57,11 +57,11 @@ export const AREAS: Area[] = [
     id: 'programming', title: 'Programming', emoji: '💻',
     courses: [
       { id: 'python', title: 'Python', badge: 'Py', color: '#3776ab', subjectId: 'python', description: 'Syntax, data structures, OOP, iterators, generators and interview idioms.' },
-      { id: 'cpp', title: 'C++', badge: 'C++', color: '#00599c', description: 'STL, pointers, references, memory, templates and competitive-coding tricks.' },
-      { id: 'java', title: 'Java', badge: 'Jv', color: '#e76f00', description: 'Collections, OOP, JVM, exceptions, generics and multithreading.' },
-      { id: 'javascript', title: 'JavaScript', badge: 'JS', color: '#c9a400', description: 'Closures, prototypes, event loop, promises, async/await and ES features.' },
-      { id: 'c', title: 'C', badge: 'C', color: '#5c6bc0', description: 'Pointers, arrays, structs, memory management and the compilation model.' },
-      { id: 'sql', title: 'SQL', badge: 'SQL', color: '#0f9d8a', description: 'Joins, grouping, subqueries, window functions and query practice.' },
+      { id: 'cpp', title: 'C++', badge: 'C++', color: '#00599c', subjectId: 'cpp', description: 'STL, pointers, references, memory, templates and competitive-coding tricks.' },
+      { id: 'java', title: 'Java', badge: 'Jv', color: '#e76f00', subjectId: 'java', description: 'Collections, OOP, JVM, exceptions, generics and multithreading.' },
+      { id: 'javascript', title: 'JavaScript', badge: 'JS', color: '#c9a400', subjectId: 'javascript', description: 'Closures, prototypes, event loop, promises, async/await and ES features.' },
+      { id: 'c', title: 'C', badge: 'C', color: '#5c6bc0', subjectId: 'c', description: 'Pointers, arrays, structs, memory management and the compilation model.' },
+      { id: 'sql', title: 'SQL', badge: 'SQL', color: '#0f9d8a', subjectId: 'sql', description: 'Joins, grouping, subqueries, window functions and query practice.' },
     ],
   },
 ]

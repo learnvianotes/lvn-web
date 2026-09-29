@@ -1,13 +1,14 @@
 # LearnViaNotes
 
-A quick, focused interview sheet: 15 subjects of notes plus 150 coding problems with solutions in
+A quick, focused interview sheet: 21 subjects of notes plus 150 coding problems with solutions in
 Python, C++, Java and JavaScript. Nothing is required — sign-in is optional and only adds a synced
 streak, study history and notes. Just learn.
 
-Subjects: DSA Basics · DSA Advanced · Sheet 150 · Python · OOPs · Computer Networks · DBMS · Operating Systems ·
-Cryptography · System Design · Git & GitHub · API Design · Generative AI · Machine Learning · Data Science
+Subjects: DSA Basics · DSA Advanced · Sheet 150 · OOPs · Computer Networks · DBMS · Operating Systems ·
+Cryptography · System Design · Git & GitHub · API Design · Generative AI · Machine Learning · Deep Learning ·
+Data Science · Python · C · C++ · Java · JavaScript · SQL
 
-- **Content from the database.** All 14 subjects live in Firestore as structured content (headings,
+- **Content from the database.** All subjects live in Firestore as structured content (headings,
   paragraphs, code blocks, callouts, tables, …) and are rendered by reusable components. The site ships no
   content files; what's fetched is cached on the device. See [docs/content-database.md](docs/content-database.md).
 - **Progress stays on the device** (`localStorage`) — unless the learner signs in (email, Google,
@@ -70,8 +71,10 @@ content-build/                 scanned content as JSON (don't edit by hand; not 
 Firestore                      structured content the app reads
 ```
 
-- **Python** is authored as code in `content-src/authoring/python/` (`npm run content:python`): every
-  example is executed and its `# expected output` comments are checked before the HTML is generated.
+- **Python, C, C++, Java, JavaScript, SQL, Data Science and Deep Learning** are authored as code in
+  `content-src/authoring/<subject>/` (`npm run content:<subject>`): every example is executed — Python in
+  process, C/C++ with clang + sanitizers, Java on JDK 21, JavaScript on Node, SQL on SQLite — and its output
+  is checked before the HTML is generated. See [content-src/authoring/README.md](content-src/authoring/README.md).
 - Topic HTML is normalized into one small style vocabulary (`scripts/content/sanitize.mjs` →
   `src/styles/prose.css`), so every subject looks the same in light and dark mode.
 - Code is validated on every extract. C++ is compiled with `clang++`, and Java and JavaScript are

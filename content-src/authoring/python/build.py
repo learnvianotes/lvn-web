@@ -12,7 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))  # shared kit.py
 
 import kit
-import g1_basics, g2_data, g3_functions, g4_oop, g5_advanced, g6_interview  # noqa: F401,E402  (register topics)
+import g01_basics, g02_strings_numbers, g03_data, g04_functions, g05_oop, g06_advanced  # noqa: F401,E402  (register topics,
+import g07_errors_modules_files, g08_stdlib, g09_concurrency, g10_testing_tooling, g11_interview  # noqa: F401,E402  in sidebar order)
 
 out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[2] / "legacy-html" / "python" / "index.html"
 kit.build(out, "Python")

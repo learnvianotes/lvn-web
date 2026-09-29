@@ -1,0 +1,1704 @@
+<!doctype html>
+<!--
+  Deep Learning — study notes source for the content pipeline (scripts/content/extract.mjs).
+  Vocabulary: see scripts/content/sanitize.mjs. Every code sample here was executed and its
+  printed output checked when this file was generated.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Deep Learning</title></head>
+<body>
+<nav class="sidebar">
+  <div class="nav-section">Foundations</div>
+  <div class="nav-item" id="nav-what-is-deep-learning"><i class="ti ti-brain"></i>What Is Deep Learning?</div>
+  <div class="nav-item" id="nav-neuron-perceptron"><i class="ti ti-circle-dot"></i>The Neuron &amp; Perceptron</div>
+  <div class="nav-item" id="nav-activation-functions"><i class="ti ti-wave-sine"></i>Activation Functions</div>
+  <div class="nav-item" id="nav-mlp-forward-pass"><i class="ti ti-stack-2"></i>MLPs &amp; the Forward Pass</div>
+  <div class="nav-section">Training Neural Networks</div>
+  <div class="nav-item" id="nav-loss-functions"><i class="ti ti-target-arrow"></i>Loss Functions</div>
+  <div class="nav-item" id="nav-gradient-descent"><i class="ti ti-trending-down"></i>Gradient Descent</div>
+  <div class="nav-item" id="nav-backpropagation"><i class="ti ti-git-branch"></i>Backpropagation</div>
+  <div class="nav-item" id="nav-optimizers"><i class="ti ti-rocket"></i>Optimizers: Momentum, RMSProp, Adam</div>
+  <div class="nav-item" id="nav-learning-rate-schedules"><i class="ti ti-calendar-stats"></i>Learning-Rate Schedules &amp; Warmup</div>
+  <div class="nav-section">Stable Training &amp; Regularization</div>
+  <div class="nav-item" id="nav-vanishing-gradients-initialization"><i class="ti ti-arrows-vertical"></i>Vanishing Gradients &amp; Weight Init</div>
+  <div class="nav-item" id="nav-normalization"><i class="ti ti-adjustments"></i>Batch Norm &amp; Layer Norm</div>
+  <div class="nav-item" id="nav-regularization"><i class="ti ti-shield-check"></i>Regularization</div>
+  <div class="nav-section">PyTorch in Practice</div>
+  <div class="nav-item" id="nav-pytorch-tensors-autograd"><i class="ti ti-flame"></i>Tensors &amp; Autograd</div>
+  <div class="nav-item" id="nav-pytorch-modules-data"><i class="ti ti-box"></i>nn.Module, Dataset &amp; DataLoader</div>
+  <div class="nav-item" id="nav-pytorch-training-loop"><i class="ti ti-refresh"></i>The Training Loop</div>
+  <div class="nav-item" id="nav-training-in-practice"><i class="ti ti-bug"></i>Training in Practice</div>
+  <div class="nav-item" id="nav-evaluating-models"><i class="ti ti-chart-bar"></i>Evaluating Deep Learning Models</div>
+  <div class="nav-section">Convolutional Networks</div>
+  <div class="nav-item" id="nav-convolutions"><i class="ti ti-grid-dots"></i>Convolutions, Padding, Stride &amp; Pooling</div>
+  <div class="nav-item" id="nav-cnn-architectures"><i class="ti ti-building"></i>CNN Architectures &amp; ResNet</div>
+  <div class="nav-item" id="nav-transfer-learning"><i class="ti ti-transfer"></i>Transfer Learning &amp; Fine-Tuning</div>
+  <div class="nav-section">Sequences &amp; Transformers</div>
+  <div class="nav-item" id="nav-rnn-lstm-gru"><i class="ti ti-repeat"></i>RNNs, LSTM &amp; GRU</div>
+  <div class="nav-item" id="nav-embeddings"><i class="ti ti-vector"></i>Embeddings</div>
+  <div class="nav-item" id="nav-attention"><i class="ti ti-eye"></i>Attention &amp; Self-Attention</div>
+  <div class="nav-item" id="nav-transformers"><i class="ti ti-cube-send"></i>Transformers</div>
+  <div class="nav-section">Generative Models</div>
+  <div class="nav-item" id="nav-autoencoders-vae"><i class="ti ti-arrows-minimize"></i>Autoencoders &amp; VAEs</div>
+  <div class="nav-item" id="nav-gans"><i class="ti ti-swords"></i>GANs</div>
+  <div class="nav-item" id="nav-diffusion-models"><i class="ti ti-sparkles"></i>Diffusion Models</div>
+  <div class="nav-section">Interview Prep</div>
+  <div class="nav-item" id="nav-interview-questions"><i class="ti ti-message-question"></i>Interview Questions</div>
+</nav>
+<main>
+<div class="topic" id="topic-what-is-deep-learning">
+<div class="page-tag">Foundations</div>
+<h1 class="page-title">What Is Deep Learning?</h1>
+<p class="page-subtitle">Deep learning is machine learning with <strong>neural networks of many layers</strong> that learn their own features from raw data — pixels, audio samples, characters — instead of relying on hand-crafted ones.</p>
+<div class="def-card"><p><strong>Deep learning</strong> — a family of ML methods that stack many simple, differentiable layers. Each layer transforms its input into a slightly more useful <em>representation</em>; the whole stack is trained end-to-end with gradient descent.</p></div>
+<div class="flow"><div class="flow-box">Artificial Intelligence</div><div class="flow-arrow">→</div><div class="flow-box">Machine Learning</div><div class="flow-arrow">→</div><div class="flow-box">Neural Networks</div><div class="flow-arrow">→</div><div class="flow-box">Deep Learning (many layers)</div></div>
+<p>In classic ML (see the <strong>Machine Learning</strong> notes) a person designs the features — word counts, edge histograms, ratios — and a model such as a random forest learns from them. A deep network learns the features too: early layers of an image model detect edges, middle layers textures and parts, late layers whole objects.</p>
+<div class="section-title"><i class="ti ti-arrows-left-right"></i>Deep learning vs classic ML</div>
+<table><thead><tr><th></th><th>Classic ML</th><th>Deep learning</th></tr></thead><tbody><tr><td>Features</td><td>Hand-engineered</td><td><strong>Learned</strong> from raw data</td></tr><tr><td>Best on</td><td>Tabular data, small datasets</td><td>Images, audio, text, video — unstructured data</td></tr><tr><td>Data needed</td><td>Hundreds to thousands of rows</td><td>Usually thousands to billions of examples (or a pretrained model)</td></tr><tr><td>Compute</td><td>CPU, seconds to minutes</td><td>GPUs/TPUs, minutes to months</td></tr><tr><td>Interpretability</td><td>Often readable (trees, coefficients)</td><td>Hard — millions of weights</td></tr><tr><td>Scaling with data</td><td>Plateaus</td><td>Keeps improving with more data and bigger models</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-stack-2"></i>A network is a stack of functions</div>
+<p>Each layer is a matrix multiply plus a non-linearity. Stacking them turns a raw input vector into a prediction:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+x = rng.normal(size=(1, 784))                  # one 28×28 image, flattened
+W1, W2, W3 = rng.normal(size=(784, 128)), rng.normal(size=(128, 64)), rng.normal(size=(64, 10))
+
+h1 = np.maximum(0, x @ W1)                     # layer 1: 784 → 128 features
+h2 = np.maximum(0, h1 @ W2)                    # layer 2: 128 → 64 features
+logits = h2 @ W3                               # output: 64 → 10 class scores
+print(h1.shape, h2.shape, logits.shape)        # (1, 128) (1, 64) (1, 10)
+print(W1.size + W2.size + W3.size)             # 109184   ← weights to learn (biases left out)</pre></div>
+<div class="section-title"><i class="ti ti-route"></i>The training recipe</div>
+<p>Every deep learning model — from a 3-layer classifier to a large language model — is trained with the same loop:</p>
+<div class="flow"><div class="flow-box">Batch of data</div><div class="flow-arrow">→</div><div class="flow-box">Forward pass → prediction</div><div class="flow-arrow">→</div><div class="flow-box">Loss (how wrong?)</div><div class="flow-arrow">→</div><div class="flow-box">Backprop → gradients</div><div class="flow-arrow">→</div><div class="flow-box">Optimizer updates weights</div></div>
+<div class="section-title"><i class="ti ti-rocket"></i>Why now?</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-database"></i>Data</h3><p>The web, phones and sensors produced labelled datasets such as ImageNet (1.2 M images) and huge text corpora.</p></div><div class="card"><h3><i class="ti ti-cpu"></i>Compute</h3><p>GPUs do thousands of matrix multiplies in parallel; AlexNet (2012) trained on two gaming GPUs.</p></div><div class="card"><h3><i class="ti ti-bulb"></i>Algorithms</h3><p>ReLU, good initialisation, dropout, BatchNorm, Adam, residual connections, attention — tricks that make deep stacks trainable.</p></div><div class="card"><h3><i class="ti ti-code"></i>Software</h3><p>PyTorch, TensorFlow and JAX compute gradients automatically, so a new model is a few dozen lines.</p></div></div>
+<div class="section-title"><i class="ti ti-world"></i>Where it's used</div>
+<table><thead><tr><th>Domain</th><th>Typical architecture</th><th>Examples</th></tr></thead><tbody><tr><td>Vision</td><td>CNNs, Vision Transformers</td><td>Classification, detection, segmentation, medical imaging</td></tr><tr><td>Language</td><td>Transformers</td><td>Translation, chatbots, search, code completion</td></tr><tr><td>Speech &amp; audio</td><td>CNNs + Transformers</td><td>Speech recognition, text-to-speech</td></tr><tr><td>Generation</td><td>Diffusion models, GANs, VAEs, LLMs</td><td>Image generation, text generation</td></tr><tr><td>Sequences &amp; time series</td><td>RNNs/LSTMs, Transformers</td><td>Forecasting, anomaly detection</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>Deep learning is not automatically the best choice. On small <strong>tabular</strong> datasets, gradient-boosted trees (XGBoost, LightGBM) usually match or beat a neural network with far less effort.</p></div>
+<div class="qa-card"><div class="qa-question">When would you not use deep learning?</div><div class="qa-answer"><p>When data is small or tabular, when you need a simple interpretable model (credit decisions, regulated settings), or when compute and latency budgets are tight. Start with a simple baseline; reach for deep learning when the data is unstructured or plentiful — or when a pretrained model can be fine-tuned.</p></div></div>
+<div class="qa-card"><div class="qa-question">What does “deep” mean?</div><div class="qa-answer"><p>Many layers between input and output. Depth lets the network build features hierarchically — edges → textures → parts → objects — which is far more parameter-efficient than one enormous layer.</p></div></div>
+</div>
+<div class="topic" id="topic-neuron-perceptron">
+<div class="page-tag">Foundations</div>
+<h1 class="page-title">The Neuron &amp; Perceptron</h1>
+<p class="page-subtitle">An artificial neuron takes a weighted sum of its inputs, adds a bias and passes the result through an activation function. The perceptron is the oldest version — and its failure on XOR explains why we need hidden layers.</p>
+<div class="math-formula">z = w₁x₁ + w₂x₂ + … + wₙxₙ + b = w · x + b        a = f(z)</div>
+<table><thead><tr><th>Part</th><th>Role</th></tr></thead><tbody><tr><td>Inputs <code>x</code></td><td>Features (pixel values, measurements, outputs of the previous layer)</td></tr><tr><td>Weights <code>w</code></td><td>How much each input matters — learned</td></tr><tr><td>Bias <code>b</code></td><td>Shifts the threshold — lets the neuron fire even when all inputs are 0</td></tr><tr><td>Activation <code>f</code></td><td>A non-linearity (step, sigmoid, ReLU…) applied to the sum <code>z</code></td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+x = np.array([0.5, -1.0, 2.0])     # inputs
+w = np.array([0.4, 0.3, -0.2])     # weights
+b = 0.1                            # bias
+
+z = w @ x + b                      # weighted sum: 0.2 - 0.3 - 0.4 + 0.1
+a = 1 / (1 + np.exp(-z))           # sigmoid activation
+print(round(z, 2), round(a, 3))    # -0.4 0.401</pre></div>
+<div class="section-title"><i class="ti ti-school"></i>The perceptron learning rule</div>
+<p>Rosenblatt's perceptron (1958) uses a <strong>step</strong> activation (output 1 if <code>z &gt; 0</code>, else 0) and a simple rule: after each example, nudge the weights toward the right answer.</p>
+<div class="math-formula">w ← w + η (y − ŷ) x        b ← b + η (y − ŷ)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+
+def train_perceptron(X, y, epochs=20, lr=0.1):
+    w, b = np.zeros(2), 0.0
+    for _ in range(epochs):
+        for xi, yi in zip(X, y):
+            pred = int(xi @ w + b &gt; 0)
+            w += lr * (yi - pred) * xi          # no change when the prediction is right
+            b += lr * (yi - pred)
+    return (X @ w + b &gt; 0).astype(int).tolist()
+
+print(train_perceptron(X, np.array([0, 0, 0, 1])))       # [0, 0, 0, 1] ← AND: learned
+print(train_perceptron(X, np.array([0, 1, 1, 1])))       # [0, 1, 1, 1] ← OR: learned
+print(train_perceptron(X, np.array([0, 1, 1, 0]), 1000)) # [1, 1, 0, 0] ← XOR: wrong, whatever the epochs</pre></div>
+<div class="section-title"><i class="ti ti-separator"></i>Why XOR breaks it</div>
+<p>A single neuron draws one straight line (a hyperplane) through the input space. AND and OR are <strong>linearly separable</strong>; XOR is not — no single line puts (0,1) and (1,0) on one side and (0,0), (1,1) on the other. Minsky &amp; Papert's 1969 book made this point and helped cause the first “AI winter”.</p>
+<div class="highlight-box"><div class="label">Key point</div><p>The fix is a <strong>hidden layer</strong>: two neurons each draw a line, and a third combines them. That is a multi-layer perceptron (next topics), trained with backpropagation.</p></div>
+<table><thead><tr><th></th><th>Biological neuron</th><th>Artificial neuron</th></tr></thead><tbody><tr><td>Inputs</td><td>Dendrites receive signals</td><td>Numbers <code>x₁…xₙ</code></td></tr><tr><td>Integration</td><td>Cell body sums charge</td><td>Weighted sum <code>w · x + b</code></td></tr><tr><td>Firing</td><td>Spikes past a threshold</td><td>Activation function <code>f(z)</code></td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>The biological analogy is loose inspiration only. Modern networks are best understood as differentiable functions optimised by gradient descent.</p></div>
+<div class="qa-card"><div class="qa-question">What is the role of the bias term?</div><div class="qa-answer"><p>Without it, <code>w · x</code> is 0 whenever <code>x</code> is 0, so the decision boundary must pass through the origin. The bias shifts the boundary (or the activation's threshold), giving the neuron one more degree of freedom.</p></div></div>
+<div class="qa-card"><div class="qa-question">Can a single perceptron learn XOR?</div><div class="qa-answer"><p>No. It can only separate classes with a straight line, and XOR isn't linearly separable. One hidden layer with a non-linear activation is enough.</p></div></div>
+</div>
+<div class="topic" id="topic-activation-functions">
+<div class="page-tag">Foundations</div>
+<h1 class="page-title">Activation Functions</h1>
+<p class="page-subtitle">Activations add the non-linearity that lets networks learn curved decision boundaries. Without them, any stack of layers collapses into one linear layer.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+W1, W2 = rng.normal(size=(3, 4)), rng.normal(size=(4, 2))
+x = rng.normal(size=(5, 3))
+
+two_layers = (x @ W1) @ W2           # two linear layers, no activation…
+one_layer = x @ (W1 @ W2)            # …equal one linear layer with weights W1 @ W2
+print(np.allclose(two_layers, one_layer))   # True</pre></div>
+<div class="section-title"><i class="ti ti-list-details"></i>The common ones</div>
+<table><thead><tr><th>Function</th><th>Formula</th><th>Range</th><th>Used for</th><th>Watch out</th></tr></thead><tbody><tr><td>Sigmoid</td><td><code>σ(z) = 1 / (1 + e^-z)</code></td><td>(0, 1)</td><td>Binary output (probability), gates in LSTMs</td><td>Saturates → vanishing gradients; max slope 0.25; not zero-centred</td></tr><tr><td>Tanh</td><td><code>tanh(z)</code></td><td>(−1, 1)</td><td>RNN hidden states</td><td>Zero-centred but still saturates</td></tr><tr><td>ReLU</td><td><code>max(0, z)</code></td><td>[0, ∞)</td><td>Default for CNNs &amp; MLPs</td><td>“Dying ReLU” — units stuck at 0 never recover</td></tr><tr><td>Leaky ReLU</td><td><code>z if z &gt; 0 else 0.01·z</code></td><td>(−∞, ∞)</td><td>When many ReLUs die</td><td>Extra hyper-parameter (slope)</td></tr><tr><td>GELU</td><td><code>z · Φ(z)</code> (Φ = normal CDF)</td><td>≈ (−0.17, ∞)</td><td>Transformers (BERT, GPT)</td><td>Slightly more compute</td></tr><tr><td>SiLU / Swish</td><td><code>z · σ(z)</code></td><td>≈ (−0.28, ∞)</td><td>Modern CNNs, LLaMA-style FFNs (SwiGLU)</td><td>—</td></tr><tr><td>Softmax</td><td><code>e^zᵢ / Σⱼ e^zⱼ</code></td><td>(0, 1), sums to 1</td><td>Multi-class output layer</td><td>Overflows without the max-subtraction trick</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+from math import erf, sqrt
+
+z = np.array([-2.0, 0.0, 2.0])
+sigmoid = 1 / (1 + np.exp(-z))
+tanh = np.tanh(z)
+relu = np.maximum(0, z)
+leaky = np.where(z &gt; 0, z, 0.01 * z)
+gelu = z * 0.5 * (1 + np.array([erf(v / sqrt(2)) for v in z]))
+
+print(sigmoid.round(3).tolist())    # [0.119, 0.5, 0.881]
+print(tanh.round(3).tolist())       # [-0.964, 0.0, 0.964]
+print(relu.tolist())                # [0.0, 0.0, 2.0]
+print(leaky.tolist())               # [-0.02, 0.0, 2.0]
+print(gelu.round(3).tolist())       # [-0.046, 0.0, 1.954]</pre></div>
+<div class="section-title"><i class="ti ti-trending-down"></i>Derivatives — why ReLU won</div>
+<p>Backprop multiplies one activation derivative per layer. Sigmoid's derivative is at most 0.25, so ten sigmoid layers can shrink a gradient by <code>0.25¹⁰ ≈ 10⁻⁶</code>. ReLU's derivative is exactly 1 for positive inputs, so gradients pass through unchanged.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+z = np.array([-4.0, 0.0, 4.0])
+s = 1 / (1 + np.exp(-z))
+print((s * (1 - s)).round(4).tolist())     # [0.0177, 0.25, 0.0177] ← σ'(z) = σ(z)(1 − σ(z)); max 0.25
+print((1 - np.tanh(z) ** 2).round(4).tolist())   # [0.0013, 1.0, 0.0013] ← tanh'(z); max 1
+print((z &gt; 0).astype(float).tolist())      # [0.0, 0.0, 1.0] ← ReLU'(z)
+print(0.25 ** 10)                          # 9.5367431640625e-07 ← best case after 10 sigmoid layers</pre></div>
+<div class="section-title"><i class="ti ti-percentage"></i>Softmax, safely</div>
+<p>Softmax turns a vector of scores (<strong>logits</strong>) into probabilities. Subtracting the maximum first gives the same answer (it cancels in the ratio) but prevents <code>exp</code> from overflowing.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+def softmax(z):
+    e = np.exp(z - z.max())            # shift so the largest exponent is e^0 = 1
+    return e / e.sum()
+
+logits = np.array([2.0, 1.0, 0.1])
+p = softmax(logits)
+print(p.round(3).tolist(), round(p.sum(), 6))    # [0.659, 0.242, 0.099] 1.0
+
+big = np.array([1000.0, 999.0, 998.1])           # same gaps, huge values
+with np.errstate(over="ignore", invalid="ignore"):
+    naive = np.exp(big) / np.exp(big).sum()
+print(naive.tolist())                            # [nan, nan, nan] ← inf / inf
+print(softmax(big).round(3).tolist())            # [0.659, 0.242, 0.099]</pre></div>
+<div class="section-title"><i class="ti ti-flame"></i>In PyTorch</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+import torch.nn.functional as F
+
+z = torch.tensor([-2.0, 0.0, 2.0])
+print(torch.relu(z))                        # tensor([0., 0., 2.])
+print(torch.sigmoid(z).round(decimals=3))   # tensor([0.1190, 0.5000, 0.8810])
+print(F.gelu(z).round(decimals=3))          # tensor([-0.0460,  0.0000,  1.9540])
+print(torch.softmax(torch.tensor([2.0, 1.0, 0.1]), dim=0).round(decimals=3))   # tensor([0.6590, 0.2420, 0.0990])</pre></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Use ReLU (or GELU/SiLU) in hidden layers; pick the <strong>output</strong> activation from the task: none for regression, sigmoid for binary, softmax for multi-class.</p></div><div class="cons"><div class="label">Avoid</div><p>Sigmoid/tanh in the hidden layers of a deep feed-forward net — gradients vanish.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why do we need non-linear activation functions?</div><div class="qa-answer"><p>A composition of linear maps is linear, so without non-linearities a 100-layer network could only learn what logistic/linear regression learns. Non-linearities let it approximate curved functions.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is the dying ReLU problem?</div><div class="qa-answer"><p>If a unit's pre-activation becomes negative for every input (e.g. after a large update or a bad bias), its output and gradient are 0 everywhere and it never recovers. Fixes: lower learning rate, He initialisation, Leaky ReLU/GELU.</p></div></div>
+<div class="qa-card"><div class="qa-question">Sigmoid vs softmax at the output?</div><div class="qa-answer"><p>Sigmoid gives an independent probability per output — binary or <strong>multi-label</strong> (an image can be both “dog” and “outdoor”). Softmax gives a distribution over mutually exclusive classes that sums to 1 — <strong>multi-class</strong>.</p></div></div>
+</div>
+<div class="topic" id="topic-mlp-forward-pass">
+<div class="page-tag">Foundations</div>
+<h1 class="page-title">MLPs &amp; the Forward Pass</h1>
+<p class="page-subtitle">A multi-layer perceptron (MLP) stacks fully-connected layers with activations in between. The forward pass is just matrix multiplies — computed for a whole batch at once.</p>
+<div class="def-card"><p><strong>Fully-connected (dense / linear) layer</strong> — every output unit is connected to every input: <code>Y = X W + b</code>, where <code>X</code> is (batch, n_in), <code>W</code> is (n_in, n_out) and <code>b</code> is (n_out,).</p></div>
+<div class="flow"><div class="flow-box">Input layer (features)</div><div class="flow-arrow">→</div><div class="flow-box">Hidden layer 1 + ReLU</div><div class="flow-arrow">→</div><div class="flow-box">Hidden layer 2 + ReLU</div><div class="flow-arrow">→</div><div class="flow-box">Output layer (logits)</div></div>
+<div class="section-title"><i class="ti ti-ruler"></i>Shapes and parameter counts</div>
+<div class="math-formula">parameters of a dense layer = n_in × n_out + n_out   (weights + biases)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+sizes = [4, 16, 8, 3]                  # 4 features → 16 → 8 → 3 classes
+params = [(rng.normal(0, 0.5, (a, b)), np.zeros(b)) for a, b in zip(sizes, sizes[1:])]
+
+def forward(X):
+    h = X
+    for i, (W, b) in enumerate(params):
+        h = h @ W + b
+        if i &lt; len(params) - 1:       # ReLU on hidden layers only
+            h = np.maximum(0, h)
+    return h                           # logits
+
+X = rng.normal(size=(5, 4))            # a batch of 5 samples
+print(forward(X).shape)                # (5, 3)
+print(sum(W.size + b.size for W, b in params))   # 243 ← (4·16+16) + (16·8+8) + (8·3+3)</pre></div>
+<div class="section-title"><i class="ti ti-puzzle"></i>A hidden layer solves XOR</div>
+<p>With hand-picked weights, two ReLU units are enough: <code>h₁ = relu(x₁ + x₂)</code> counts the ones, <code>h₂ = relu(x₁ + x₂ − 1)</code> fires only when both are 1, and the output is <code>h₁ − 2h₂</code>.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+W1 = np.array([[1, 1], [1, 1]]); b1 = np.array([0, -1])
+W2 = np.array([1, -2]);          b2 = 0
+
+H = np.maximum(0, X @ W1 + b1)
+print(H.tolist())                  # [[0, 0], [1, 0], [1, 0], [2, 1]] ← the hidden representation
+print((H @ W2 + b2).tolist())      # [0, 1, 1, 0] ← XOR</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>The hidden layer re-maps the inputs so that the classes <em>become</em> linearly separable — (0,1) and (1,0) both land on <code>[1, 0]</code>. That is what “learning a representation” means. Backpropagation finds such weights automatically (see <strong>Backpropagation</strong>).</p></div>
+<div class="section-title"><i class="ti ti-flame"></i>The same network in PyTorch</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+model = nn.Sequential(
+    nn.Linear(4, 16), nn.ReLU(),
+    nn.Linear(16, 8), nn.ReLU(),
+    nn.Linear(8, 3),                  # raw logits — the loss applies softmax
+)
+X = torch.randn(5, 4)
+print(model(X).shape)                                    # torch.Size([5, 3])
+print(sum(p.numel() for p in model.parameters()))       # 243</pre></div>
+<div class="section-title"><i class="ti ti-infinity"></i>Universal approximation</div>
+<div class="def-card"><p><strong>Universal approximation theorem</strong> — an MLP with <strong>one</strong> hidden layer and a non-linear activation can approximate any continuous function on a bounded domain as closely as you like — given enough hidden units.</p></div>
+<div class="warning-box"><div class="label">Watch out</div><p>The theorem says a good network <em>exists</em>, not that gradient descent will find it or that it will generalise. The required width can be astronomically large; in practice <strong>depth</strong> gives the same power with far fewer parameters.</p></div>
+<table><thead><tr><th>Choice</th><th>Rule of thumb</th></tr></thead><tbody><tr><td>Hidden layers</td><td>1–3 for tabular data; deeper nets need tricks (normalisation, residuals)</td></tr><tr><td>Width</td><td>Powers of two (64, 128, 256…) — wide enough to overfit a small batch</td></tr><tr><td>Hidden activation</td><td>ReLU / GELU</td></tr><tr><td>Output layer</td><td>Linear, with <code>n_out</code> = 1 (regression / binary) or number of classes</td></tr></tbody></table>
+<div class="qa-card"><div class="qa-question">What happens in a forward pass?</div><div class="qa-answer"><p>Input flows layer by layer: each layer computes <code>XW + b</code>, applies its activation and passes the result on, until the output layer produces predictions (logits). Intermediate activations are kept in memory because backprop needs them.</p></div></div>
+<div class="qa-card"><div class="qa-question">How many parameters does a Linear(512, 256) layer have?</div><div class="qa-answer"><p><code>512 × 256 + 256 = 131,328</code> — one weight per input–output pair plus one bias per output.</p></div></div>
+</div>
+<div class="topic" id="topic-loss-functions">
+<div class="page-tag">Training Neural Networks</div>
+<h1 class="page-title">Loss Functions</h1>
+<p class="page-subtitle">The loss turns “how wrong is the network?” into one number to minimise. Pick it from the task — and in PyTorch, feed classification losses <strong>raw logits</strong>, not probabilities.</p>
+<table><thead><tr><th>Task</th><th>Output layer</th><th>Loss</th><th>PyTorch</th></tr></thead><tbody><tr><td>Regression</td><td>Linear (no activation)</td><td>MSE (or MAE / Huber if outliers)</td><td><code>nn.MSELoss</code>, <code>nn.L1Loss</code>, <code>nn.HuberLoss</code></td></tr><tr><td>Binary / multi-label</td><td>1 logit per label</td><td>Binary cross-entropy</td><td><code>nn.BCEWithLogitsLoss</code></td></tr><tr><td>Multi-class (one label)</td><td>1 logit per class</td><td>Cross-entropy</td><td><code>nn.CrossEntropyLoss</code></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-chart-line"></i>Regression: MSE, MAE, Huber</div>
+<div class="math-formula">MSE = (1/n) Σ (yᵢ − ŷᵢ)²        MAE = (1/n) Σ |yᵢ − ŷᵢ|</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+y     = np.array([3.0, 5.0, 2.0, 8.0])
+y_hat = np.array([2.5, 5.0, 3.0, 4.0])      # the last prediction is badly off
+
+err = y - y_hat
+print(np.mean(err ** 2))                    # 4.3125 ← MSE: the outlier dominates (4² = 16)
+print(np.mean(np.abs(err)))                 # 1.375 ← MAE: every unit of error counts the same</pre></div>
+<p>MSE punishes large errors quadratically (good when big mistakes are very bad, bad when labels contain outliers). MAE is robust to outliers but its gradient doesn't shrink near the optimum. <strong>Huber</strong> is quadratic for small errors and linear for large ones — a compromise.</p>
+<div class="section-title"><i class="ti ti-toggle-right"></i>Binary cross-entropy</div>
+<div class="math-formula">BCE = −(1/n) Σ [ yᵢ log pᵢ + (1 − yᵢ) log(1 − pᵢ) ]        p = σ(logit)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+def bce(y, p):
+    return -np.mean(y * np.log(p) + (1 - y) * np.log(1 - p))
+
+y = np.array([1, 0, 1])
+print(round(bce(y, np.array([0.9, 0.1, 0.8])), 4))    # 0.1446 ← confident and right
+print(round(bce(y, np.array([0.1, 0.9, 0.2])), 4))    # 2.0715 ← confident and wrong: huge loss</pre></div>
+<div class="section-title"><i class="ti ti-category"></i>Cross-entropy for multi-class</div>
+<div class="math-formula">CE = −log p_true = −log softmax(z)_true = −z_true + log Σⱼ e^zⱼ</div>
+<p>Cross-entropy only looks at the probability given to the <strong>correct</strong> class. Predicting 0.7 for the right class costs <code>−log 0.7 ≈ 0.36</code>; predicting 0.01 costs 4.6. With <code>k</code> classes, a model that guesses uniformly scores <code>log k</code> — a handy sanity check for the first loss you see.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import torch
+from torch import nn
+
+logits = np.array([[2.0, 1.0, 0.1],       # sample 0: true class 0
+                   [0.5, 2.5, 0.3]])      # sample 1: true class 1
+target = np.array([0, 1])
+
+log_probs = logits - np.log(np.exp(logits).sum(axis=1, keepdims=True))   # log-softmax
+ce = -log_probs[np.arange(2), target].mean()
+print(round(ce, 4))                                            # 0.3185
+
+loss_fn = nn.CrossEntropyLoss()                               # log-softmax + NLL in one stable op
+print(round(loss_fn(torch.tensor(logits), torch.tensor(target)).item(), 4))   # 0.3185
+print(round(np.log(3), 4))                                    # 1.0986 ← loss of a uniform guess over 3 classes</pre></div>
+<div class="section-title"><i class="ti ti-alert-triangle"></i>Logits in, not probabilities</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+logits = torch.tensor([[2.0, -1.0]])      # one sample, 2 classes; true class 0
+target = torch.tensor([0])
+ce = nn.CrossEntropyLoss()
+
+print(round(ce(logits, target).item(), 4))                        # 0.0486 ← correct usage
+print(round(ce(torch.softmax(logits, 1), target).item(), 4))      # 0.3397 ← softmax applied twice: wrong
+
+bce = nn.BCEWithLogitsLoss()               # sigmoid + BCE, numerically stable
+print(round(bce(torch.tensor([3.0]), torch.tensor([1.0])).item(), 4))   # 0.0486</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p><code>nn.CrossEntropyLoss</code> and <code>nn.BCEWithLogitsLoss</code> apply softmax/sigmoid <strong>internally</strong>. Adding your own softmax/sigmoid before them squashes the gradients and training stalls. Apply softmax only when you need probabilities for display or decisions.</p></div>
+<div class="qa-card"><div class="qa-question">Why cross-entropy instead of MSE for classification?</div><div class="qa-answer"><p>Cross-entropy is the negative log-likelihood of the correct class, so it punishes confident wrong answers heavily and its gradient with softmax is simply <code>p − y</code> — large when wrong. MSE on sigmoid/softmax outputs gives tiny gradients when the output saturates, so learning is slow.</p></div></div>
+<div class="qa-card"><div class="qa-question">What loss would you expect at the start of training a 10-class classifier?</div><div class="qa-answer"><p>About <code>ln 10 ≈ 2.30</code>. Much higher means the initial logits are too large (bad init or a bug); it's one of the quickest sanity checks.</p></div></div>
+</div>
+<div class="topic" id="topic-gradient-descent">
+<div class="page-tag">Training Neural Networks</div>
+<h1 class="page-title">Gradient Descent</h1>
+<p class="page-subtitle">Training = walking downhill on the loss surface. The gradient points uphill, so each step moves the weights a little in the opposite direction.</p>
+<div class="math-formula">θ ← θ − η · ∇θ L(θ)        η = learning rate</div>
+<div class="section-title"><i class="ti ti-stack"></i>Batch, mini-batch and stochastic</div>
+<table><thead><tr><th>Variant</th><th>Gradient computed on</th><th>Pros</th><th>Cons</th></tr></thead><tbody><tr><td>Batch GD</td><td>The whole dataset</td><td>Exact gradient, smooth path</td><td>Slow per step; dataset must fit in memory</td></tr><tr><td>Stochastic GD (SGD)</td><td>One example</td><td>Cheap steps, noise can escape bad regions</td><td>Very noisy; poor hardware use</td></tr><tr><td><strong>Mini-batch</strong> GD</td><td>A batch of 32–1024 examples</td><td>GPU-friendly, reasonably stable — <strong>the default</strong></td><td>Batch size is another hyper-parameter</td></tr></tbody></table>
+<p>In deep learning “SGD” almost always means mini-batch SGD. Vocabulary: one <strong>iteration</strong> (step) processes one batch; one <strong>epoch</strong> is a full pass over the data — <code>ceil(N / batch_size)</code> iterations.</p>
+<div class="section-title"><i class="ti ti-code"></i>Mini-batch GD from scratch</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+X = rng.uniform(-1, 1, size=200)
+y = 3 * X + 2 + rng.normal(0, 0.1, size=200)     # true line: y = 3x + 2
+
+w, b, lr, batch = 0.0, 0.0, 0.1, 20
+for epoch in range(50):
+    idx = rng.permutation(len(X))                 # reshuffle every epoch
+    for start in range(0, len(X), batch):
+        j = idx[start:start + batch]
+        err = (w * X[j] + b) - y[j]
+        w -= lr * 2 * np.mean(err * X[j])         # ∂MSE/∂w
+        b -= lr * 2 * np.mean(err)                # ∂MSE/∂b
+
+print(round(w, 2), round(b, 2))                   # 2.99 2.0
+print(len(X) // batch * 50)                       # 500 ← updates made (10 per epoch × 50 epochs)</pre></div>
+<div class="section-title"><i class="ti ti-adjustments-horizontal"></i>The learning rate</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def descend(lr, steps=20, w=5.0):
+    for _ in range(steps):
+        w -= lr * 2 * w            # minimise f(w) = w², gradient 2w
+    return w
+
+print(round(descend(0.01), 3))     # 3.338 ← too small: barely moved
+print(round(descend(0.1), 3))      # 0.058 ← good: close to the minimum at 0
+print(round(descend(1.1), 1))      # 191.7 ← too large: diverges</pre></div>
+<table><thead><tr><th>Symptom</th><th>Likely cause</th></tr></thead><tbody><tr><td>Loss goes to <code>nan</code> or explodes</td><td>Learning rate too high</td></tr><tr><td>Loss drops very slowly</td><td>Learning rate too low</td></tr><tr><td>Loss oscillates / is very noisy</td><td>LR a bit high or batch too small</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>Typical starting points: <code>1e-3</code> for Adam/AdamW, <code>0.1</code> for SGD with momentum on CNNs. If you change the batch size a lot, retune the learning rate (a common heuristic scales it linearly with the batch size).</p></div>
+<div class="warning-box"><div class="label">Watch out</div><p>The loss surface of a deep network is not a bowl — it has saddle points, flat regions and many minima. Mini-batch noise actually helps: it keeps the optimiser moving through flat areas and tends to find wider minima that generalise better.</p></div>
+<div class="qa-card"><div class="qa-question">What is the difference between an epoch, a batch and an iteration?</div><div class="qa-answer"><p>A batch is the subset of examples used for one gradient step; an iteration is one such step; an epoch is one pass over the whole training set. With 10,000 examples and batch size 100, one epoch is 100 iterations.</p></div></div>
+<div class="qa-card"><div class="qa-question">How does batch size affect training?</div><div class="qa-answer"><p>Bigger batches give smoother gradients and better GPU utilisation but need more memory, often a larger learning rate, and can generalise slightly worse. Smaller batches are noisier (a mild regulariser) but slower per epoch.</p></div></div>
+</div>
+<div class="topic" id="topic-backpropagation">
+<div class="page-tag">Training Neural Networks</div>
+<h1 class="page-title">Backpropagation</h1>
+<p class="page-subtitle">Backpropagation computes the gradient of the loss with respect to every weight in one backward sweep, reusing intermediate results via the chain rule. It's what makes training deep networks affordable.</p>
+<div class="def-card"><p><strong>Backpropagation</strong> — reverse-mode automatic differentiation: run the forward pass and remember the intermediate values, then walk the computational graph backwards, multiplying each node's <strong>local gradient</strong> by the gradient flowing in from above.</p></div>
+<div class="math-formula">chain rule:  ∂L/∂w = ∂L/∂a · ∂a/∂z · ∂z/∂w</div>
+<div class="section-title"><i class="ti ti-sitemap"></i>A computational graph by hand</div>
+<p>One neuron with a squared-error loss: <code>z = w·x + b</code>, <code>a = σ(z)</code>, <code>L = (a − y)²</code>.</p>
+<div class="flow"><div class="flow-box">x, w, b</div><div class="flow-arrow">→</div><div class="flow-box">z = w·x + b</div><div class="flow-arrow">→</div><div class="flow-box">a = σ(z)</div><div class="flow-arrow">→</div><div class="flow-box">L = (a − y)²</div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import math
+
+x, y, w, b = 2.0, 1.0, 0.5, -0.5
+# forward
+z = w * x + b                           # 0.5
+a = 1 / (1 + math.exp(-z))              # σ(0.5)
+L = (a - y) ** 2
+# backward — one local derivative per edge, multiplied right to left
+dL_da = 2 * (a - y)
+da_dz = a * (1 - a)
+dL_dz = dL_da * da_dz
+dL_dw = dL_dz * x                       # ∂z/∂w = x
+dL_db = dL_dz * 1                       # ∂z/∂b = 1
+print(round(L, 4), round(dL_dw, 4), round(dL_db, 4))   # 0.1425 -0.3549 -0.1774</pre></div>
+<p>PyTorch's autograd does exactly this bookkeeping for you:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+x, y = torch.tensor(2.0), torch.tensor(1.0)
+w = torch.tensor(0.5, requires_grad=True)
+b = torch.tensor(-0.5, requires_grad=True)
+
+L = (torch.sigmoid(w * x + b) - y) ** 2
+L.backward()                            # fills w.grad and b.grad
+print(round(w.grad.item(), 4), round(b.grad.item(), 4))   # -0.3549 -0.1774</pre></div>
+<div class="section-title"><i class="ti ti-code"></i>A 2-layer network from scratch</div>
+<p>Forward: <code>H = relu(X W₁ + b₁)</code>, <code>P = σ(H W₂ + b₂)</code>, BCE loss. Backward, the key results are: for sigmoid + BCE, <code>∂L/∂logits = (P − y) / n</code>; for a linear layer <code>Y = XW</code>, <code>∂L/∂W = Xᵀ · ∂L/∂Y</code> and <code>∂L/∂X = ∂L/∂Y · Wᵀ</code>; for ReLU, pass the gradient where the input was positive.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)
+y = np.array([[0], [1], [1], [0]], dtype=float)              # XOR
+
+params = {"W1": rng.normal(0, 1, (2, 8)), "b1": np.full(8, 0.1),
+          "W2": rng.normal(0, 1, (8, 1)), "b2": np.zeros(1)}
+
+def forward_backward(p):
+    Z1 = X @ p["W1"] + p["b1"]; H = np.maximum(0, Z1)       # forward
+    Z2 = H @ p["W2"] + p["b2"]; P = 1 / (1 + np.exp(-Z2))
+    loss = -np.mean(y * np.log(P) + (1 - y) * np.log(1 - P))
+    dZ2 = (P - y) / len(X)                                   # backward
+    dW2, db2 = H.T @ dZ2, dZ2.sum(0)
+    dH = dZ2 @ p["W2"].T
+    dZ1 = dH * (Z1 &gt; 0)
+    dW1, db1 = X.T @ dZ1, dZ1.sum(0)
+    return loss, {"W1": dW1, "b1": db1, "W2": dW2, "b2": db2}
+
+loss, grads = forward_backward(params)
+print(round(loss, 4))                     # 0.7371 ← before training</pre></div>
+<div class="section-title"><i class="ti ti-checks"></i>Gradient checking</div>
+<p>Always verify a hand-written backward pass numerically. Nudge each weight by <code>±ε</code> and compare the slope of the loss with the analytic gradient:</p>
+<div class="math-formula">∂L/∂θ ≈ [ L(θ + ε) − L(θ − ε) ] / 2ε        relative error = |g_analytic − g_numeric| / (|g_analytic| + |g_numeric|)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)
+y = np.array([[0], [1], [1], [0]], dtype=float)
+params = {"W1": rng.normal(0, 1, (2, 8)), "b1": np.full(8, 0.1),
+          "W2": rng.normal(0, 1, (8, 1)), "b2": np.zeros(1)}
+
+def forward_backward(p):
+    Z1 = X @ p["W1"] + p["b1"]; H = np.maximum(0, Z1)
+    Z2 = H @ p["W2"] + p["b2"]; P = 1 / (1 + np.exp(-Z2))
+    loss = -np.mean(y * np.log(P) + (1 - y) * np.log(1 - P))
+    dZ2 = (P - y) / len(X)
+    dH = dZ2 @ p["W2"].T
+    dZ1 = dH * (Z1 &gt; 0)
+    return loss, {"W1": X.T @ dZ1, "b1": dZ1.sum(0), "W2": H.T @ dZ2, "b2": dZ2.sum(0)}
+
+_, grads = forward_backward(params)
+eps, worst = 1e-6, 0.0
+for name, value in params.items():
+    for i in np.ndindex(value.shape):
+        old = value[i]
+        value[i] = old + eps; up, _ = forward_backward(params)
+        value[i] = old - eps; down, _ = forward_backward(params)
+        value[i] = old
+        numeric, analytic = (up - down) / (2 * eps), grads[name][i]
+        if abs(numeric) + abs(analytic) &gt; 0:
+            worst = max(worst, abs(numeric - analytic) / (abs(numeric) + abs(analytic)))
+print(worst &lt; 1e-6)            # True ← analytic and numeric gradients agree</pre></div>
+<div class="section-title"><i class="ti ti-player-play"></i>Training it</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)
+y = np.array([[0], [1], [1], [0]], dtype=float)
+p = {"W1": rng.normal(0, 1, (2, 8)), "b1": np.full(8, 0.1),
+     "W2": rng.normal(0, 1, (8, 1)), "b2": np.zeros(1)}
+
+def forward_backward(p):
+    Z1 = X @ p["W1"] + p["b1"]; H = np.maximum(0, Z1)
+    Z2 = H @ p["W2"] + p["b2"]; P = 1 / (1 + np.exp(-Z2))
+    loss = -np.mean(y * np.log(P) + (1 - y) * np.log(1 - P))
+    dZ2 = (P - y) / len(X)
+    dH = dZ2 @ p["W2"].T
+    dZ1 = dH * (Z1 &gt; 0)
+    return loss, P, {"W1": X.T @ dZ1, "b1": dZ1.sum(0), "W2": H.T @ dZ2, "b2": dZ2.sum(0)}
+
+history = []
+for step in range(2000):
+    loss, P, grads = forward_backward(p)
+    for k in p:
+        p[k] -= 0.5 * grads[k]                  # plain gradient descent
+    if step % 500 == 0:
+        history.append(round(float(loss), 3))
+print(history)                                  # [0.737, 0.003, 0.001, 0.001] ← loss every 500 steps
+print((P &gt; 0.5).astype(int).ravel().tolist())   # [0, 1, 1, 0] ← XOR learned</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Cost: the backward pass costs roughly <strong>2×</strong> the forward pass, and it needs the stored activations — which is why training uses much more memory than inference.</p></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Gradient checking is for debugging only — it costs two forward passes per parameter. Use <code>float64</code>, a small <code>ε</code> (~1e-6) and avoid points where ReLU is exactly at its kink.</p></div>
+<div class="qa-card"><div class="qa-question">Explain backpropagation in two sentences.</div><div class="qa-answer"><p>After a forward pass that stores intermediate values, we apply the chain rule backwards from the loss: each node multiplies the incoming gradient by its local derivative and passes it to its inputs. This gives the gradient for every parameter in about the cost of one extra forward pass.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why reverse mode and not forward mode differentiation?</div><div class="qa-answer"><p>A network has millions of inputs (parameters) and one scalar output (the loss). Reverse mode gets all parameter gradients in one backward pass; forward mode would need one pass per parameter.</p></div></div>
+</div>
+<div class="topic" id="topic-optimizers">
+<div class="page-tag">Training Neural Networks</div>
+<h1 class="page-title">Optimizers: Momentum, RMSProp, Adam</h1>
+<p class="page-subtitle">Plain SGD uses only the current gradient. Modern optimizers also remember past gradients — to build speed in consistent directions (momentum) and to give each parameter its own step size (RMSProp, Adam).</p>
+<table><thead><tr><th>Optimizer</th><th>Update (g = gradient)</th><th>Idea</th></tr></thead><tbody><tr><td>SGD</td><td><code>θ ← θ − η·g</code></td><td>Step against the gradient</td></tr><tr><td>Momentum</td><td><code>v ← βv + g;  θ ← θ − η·v</code></td><td>A heavy ball: speeds up along consistent directions, damps zig-zag</td></tr><tr><td>Nesterov</td><td>Gradient evaluated at the look-ahead point <code>θ − ηβv</code></td><td>Momentum that corrects earlier</td></tr><tr><td>RMSProp</td><td><code>s ← ρs + (1−ρ)g²;  θ ← θ − η·g / (√s + ε)</code></td><td>Divide by recent gradient size — per-parameter step</td></tr><tr><td>Adam</td><td><code>m ← β₁m + (1−β₁)g;  v ← β₂v + (1−β₂)g²;  θ ← θ − η·m̂ / (√v̂ + ε)</code></td><td>Momentum + RMSProp, with bias correction <code>m̂ = m / (1−β₁ᵗ)</code></td></tr><tr><td>AdamW</td><td>Adam + <code>θ ← θ − η·λ·θ</code> applied separately</td><td>Weight decay <strong>decoupled</strong> from the adaptive step</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-chart-line"></i>Racing them on a narrow valley</div>
+<p><code>f(x, y) = x² + 100y²</code> is steep in <code>y</code> and flat in <code>x</code> — like many real loss surfaces. Plain SGD must keep its step below 0.01 to avoid bouncing out of the valley in <code>y</code>, and then crawls along <code>x</code>. All three start at <code>(5, 1)</code> and take 100 steps; the minimum is <code>f = 0</code>.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+grad = lambda t: np.array([2 * t[0], 200 * t[1]])     # ∇ of f = x² + 100y²
+f = lambda t: t[0] ** 2 + 100 * t[1] ** 2
+start, steps = np.array([5.0, 1.0]), 100
+
+def sgd(lr=0.009):                                    # above 0.01 it diverges in y
+    t = start.copy()
+    for _ in range(steps):
+        t -= lr * grad(t)
+    return f(t)
+
+def momentum(lr=0.005, beta=0.9):
+    t, v = start.copy(), np.zeros(2)
+    for _ in range(steps):
+        v = beta * v + grad(t)
+        t -= lr * v
+    return f(t)
+
+def adam(lr=0.3, b1=0.9, b2=0.999, eps=1e-8):
+    t, m, v = start.copy(), np.zeros(2), np.zeros(2)
+    for k in range(1, steps + 1):
+        g = grad(t)
+        m = b1 * m + (1 - b1) * g
+        v = b2 * v + (1 - b2) * g ** 2
+        m_hat, v_hat = m / (1 - b1 ** k), v / (1 - b2 ** k)
+        t -= lr * m_hat / (np.sqrt(v_hat) + eps)
+    return f(t)
+
+print(f"{sgd():.4f}")        # 0.6611 ← still far from the minimum
+print(f"{momentum():.4f}")   # 0.0004
+print(f"{adam():.4f}")       # 0.0007</pre></div>
+<div class="section-title"><i class="ti ti-flame"></i>In PyTorch</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+model = nn.Linear(10, 1)
+opt_sgd = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, nesterov=True)
+opt_adam = torch.optim.Adam(model.parameters(), lr=1e-3)
+opt_adamw = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
+
+print(opt_adamw.defaults["betas"], opt_adamw.defaults["eps"])   # (0.9, 0.999) 1e-08</pre></div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title"><code>optimizer.zero_grad()</code></div><div class="step-desc">Clear old gradients — PyTorch <strong>accumulates</strong> them otherwise.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title"><code>loss.backward()</code></div><div class="step-desc">Compute fresh gradients into each parameter's <code>.grad</code>.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title"><code>optimizer.step()</code></div><div class="step-desc">Update the parameters using those gradients (and the optimizer's memory).</div></div></div>
+<div class="section-title"><i class="ti ti-scale"></i>Adam vs AdamW</div>
+<p>L2 regularisation adds <code>λθ</code> to the gradient. In Adam that term is then divided by <code>√v̂</code>, so parameters with large gradients get <em>less</em> regularisation — not what we want. <strong>AdamW</strong> applies the decay directly to the weights, outside the adaptive step. It's the default for Transformers.</p>
+<table><thead><tr><th>Choose</th><th>When</th></tr></thead><tbody><tr><td>AdamW (lr ≈ 1e-3 … 1e-4)</td><td>Default for most work: Transformers, MLPs, fine-tuning</td></tr><tr><td>SGD + momentum 0.9 (lr ≈ 0.1) + schedule</td><td>CNNs on images, when you can tune — often generalises slightly better</td></tr><tr><td>Adam</td><td>Quick prototypes; same as AdamW with <code>weight_decay=0</code></td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>An optimizer keeps state: Adam stores two extra tensors (<code>m</code>, <code>v</code>) per parameter — the model's weights ×3 in memory. Save the optimizer's <code>state_dict()</code> with checkpoints or resumed training will behave differently.</p></div>
+<div class="qa-card"><div class="qa-question">Why does Adam need bias correction?</div><div class="qa-answer"><p><code>m</code> and <code>v</code> start at zero, so during the first steps they're biased toward zero (e.g. after step 1, <code>m = 0.1·g</code>). Dividing by <code>1 − βᵗ</code> rescales them to proper averages; the correction fades as <code>t</code> grows.</p></div></div>
+<div class="qa-card"><div class="qa-question">What does momentum do?</div><div class="qa-answer"><p>It keeps an exponentially-weighted running sum of past gradients. Components that point the same way every step add up (faster progress along valleys); components that flip sign cancel (less zig-zagging).</p></div></div>
+</div>
+<div class="topic" id="topic-learning-rate-schedules">
+<div class="page-tag">Training Neural Networks</div>
+<h1 class="page-title">Learning-Rate Schedules &amp; Warmup</h1>
+<p class="page-subtitle">The best learning rate changes during training: large early to make progress, small late to settle into a minimum. Schedules automate that — and warmup protects the fragile first steps.</p>
+<table><thead><tr><th>Schedule</th><th>Shape</th><th>Typical use</th></tr></thead><tbody><tr><td>Step decay</td><td>Multiply by γ (e.g. 0.1) every N epochs</td><td>Classic CNN training (ResNet)</td></tr><tr><td>Exponential</td><td>Multiply by γ every epoch</td><td>Simple smooth decay</td></tr><tr><td>Cosine annealing</td><td>Half a cosine from max to ~0</td><td>Modern default for vision &amp; LLMs</td></tr><tr><td>Linear warmup + decay</td><td>Ramp 0 → max over the first steps, then cosine/linear down</td><td>Transformers, large batches, fine-tuning</td></tr><tr><td>One-cycle</td><td>Up then down in one cycle</td><td>Fast training on a fixed budget</td></tr><tr><td>Reduce on plateau</td><td>Cut LR when validation loss stops improving</td><td>When you don't know the length of training</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-flame"></i>Step and cosine in PyTorch</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+def lrs(make_scheduler, epochs=8):
+    opt = torch.optim.SGD(nn.Linear(2, 1).parameters(), lr=0.1)
+    sched = make_scheduler(opt)
+    out = []
+    for _ in range(epochs):
+        out.append(round(opt.param_groups[0]["lr"], 4))
+        opt.step()                    # (training for one epoch would go here)
+        sched.step()                  # then advance the schedule
+    return out
+
+print(lrs(lambda o: torch.optim.lr_scheduler.StepLR(o, step_size=3, gamma=0.1)))   # [0.1, 0.1, 0.1, 0.01, 0.01, 0.01, 0.001, 0.001]
+print(lrs(lambda o: torch.optim.lr_scheduler.CosineAnnealingLR(o, T_max=8)))       # [0.1, 0.0962, 0.0854, 0.0691, 0.05, 0.0309, 0.0146, 0.0038]</pre></div>
+<div class="section-title"><i class="ti ti-flame"></i>Warmup + cosine</div>
+<p>Adam's early estimates of <code>v</code> are noisy, and a freshly initialised network has large, badly-scaled gradients. Starting with a tiny LR and ramping up over the first few hundred or thousand steps avoids early divergence.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import math
+import torch
+from torch import nn
+
+warmup, total = 3, 10
+def factor(step):                                   # multiplier on the base LR
+    if step &lt; warmup:
+        return (step + 1) / warmup                  # linear ramp
+    progress = (step - warmup) / (total - warmup)
+    return 0.5 * (1 + math.cos(math.pi * progress)) # cosine down to 0
+
+opt = torch.optim.AdamW(nn.Linear(2, 1).parameters(), lr=1e-3)
+sched = torch.optim.lr_scheduler.LambdaLR(opt, factor)
+seen = []
+for _ in range(total):
+    seen.append(round(opt.param_groups[0]["lr"] * 1000, 2))   # in units of 1e-3
+    opt.step(); sched.step()
+print(seen)     # [0.33, 0.67, 1.0, 1.0, 0.95, 0.81, 0.61, 0.39, 0.19, 0.05]</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Call <code>scheduler.step()</code> <strong>after</strong> <code>optimizer.step()</code>, and be consistent about the unit — per epoch or per batch. Transformers usually step the schedule every batch; <code>ReduceLROnPlateau.step(val_loss)</code> takes the metric as an argument.</p></div>
+<div class="section-title"><i class="ti ti-search"></i>Finding a good max LR</div>
+<p>An <strong>LR range test</strong>: train for a few hundred steps while increasing the LR exponentially (1e-7 → 1), plot loss vs LR, and pick a value about 10× smaller than where the loss is lowest (before it blows up).</p>
+<div class="qa-card"><div class="qa-question">Why use learning-rate warmup?</div><div class="qa-answer"><p>At the start, weights are random and optimizer statistics are unreliable, so large steps can push the network into a bad region or cause <code>nan</code>s. A short linear warmup lets things stabilise before the full learning rate kicks in; it matters most for Transformers, Adam and large batch sizes.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why decay the learning rate?</div><div class="qa-answer"><p>A large LR explores and makes fast progress but bounces around the minimum; lowering it lets the weights settle into the bottom of the basin, which usually lowers both training and validation loss at the end.</p></div></div>
+</div>
+<div class="topic" id="topic-vanishing-gradients-initialization">
+<div class="page-tag">Stable Training &amp; Regularization</div>
+<h1 class="page-title">Vanishing Gradients &amp; Weight Init</h1>
+<p class="page-subtitle">In a deep network the signal is multiplied by one weight matrix per layer — forwards and backwards. If each multiplication shrinks it a little, gradients vanish; if each grows it a little, they explode. Good initialisation keeps the scale steady.</p>
+<div class="section-title"><i class="ti ti-equal"></i>Why not start from zero?</div>
+<p>If every weight in a layer starts equal, every unit computes the same output and receives the same gradient — they stay identical forever (<strong>symmetry</strong>). Random initialisation breaks the tie; the question is how large the random values should be.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+X = np.array([[1.0, 2.0], [0.5, -1.0]])
+W1 = np.full((2, 3), 0.5)                     # all hidden weights equal
+H = np.tanh(X @ W1)
+print(H.round(3).tolist())                    # [[0.905, 0.905, 0.905], [-0.245, -0.245, -0.245]] ← 3 hidden units, identical columns</pre></div>
+<div class="section-title"><i class="ti ti-chart-line"></i>Watching activations vanish</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+def final_std(scale, act, layers=20, width=256):
+    rng = np.random.default_rng(0)
+    h = rng.normal(size=(512, width))
+    for _ in range(layers):
+        W = rng.normal(0, scale, size=(width, width))
+        h = act(h @ W)
+    return float(h.std())
+
+relu = lambda z: np.maximum(0, z)
+print(f"{final_std(0.01, np.tanh):.1e}")               # 1.1e-16 ← too small: signal dies
+print(f"{final_std(1.0, relu):.1e}")                   # 1.2e+21 ← too large: explodes
+print(f"{final_std(np.sqrt(1 / 256), np.tanh):.2f}")   # 0.15 ← Xavier with tanh: survives
+print(f"{final_std(np.sqrt(2 / 256), relu):.2f}")      # 1.05 ← He with ReLU: stays ~1</pre></div>
+<div class="section-title"><i class="ti ti-math-function"></i>Xavier and He</div>
+<table><thead><tr><th>Scheme</th><th>Weight variance</th><th>Use with</th><th>PyTorch</th></tr></thead><tbody><tr><td>Xavier / Glorot</td><td><code>2 / (fan_in + fan_out)</code>  (≈ <code>1 / fan_in</code>)</td><td>tanh, sigmoid, linear</td><td><code>nn.init.xavier_uniform_</code></td></tr><tr><td>He / Kaiming</td><td><code>2 / fan_in</code></td><td>ReLU and variants</td><td><code>nn.init.kaiming_normal_(w, nonlinearity='relu')</code></td></tr><tr><td>PyTorch default for <code>nn.Linear</code></td><td>Uniform(±1/√fan_in)</td><td>Reasonable baseline</td><td>applied automatically</td></tr></tbody></table>
+<p>The idea: a sum of <code>fan_in</code> random terms has variance <code>fan_in × Var(w) × Var(x)</code>. Setting <code>Var(w) = 1/fan_in</code> keeps the output variance equal to the input's. ReLU zeroes half its inputs, halving the variance — so He doubles it back with <code>2/fan_in</code>.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+layer = nn.Linear(512, 512)
+nn.init.kaiming_normal_(layer.weight, nonlinearity="relu")
+nn.init.zeros_(layer.bias)
+print(round(layer.weight.std().item(), 3), round((2 / 512) ** 0.5, 3))   # 0.063 0.062 ← measured vs target std</pre></div>
+<div class="section-title"><i class="ti ti-trending-down"></i>Vanishing and exploding gradients</div>
+<p>By the chain rule, the gradient at layer 1 is a <strong>product</strong> of one factor per layer above it. Factors below 1 (saturated sigmoids: slope ≤ 0.25) shrink it exponentially — early layers stop learning. Factors above 1 (large weights, long RNN unrolls) blow it up — the loss becomes <code>nan</code>.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+def first_layer_grad(act, he=False, depth=15):
+    torch.manual_seed(0)
+    layers = []
+    for _ in range(depth):
+        lin = nn.Linear(32, 32)
+        if he:
+            nn.init.kaiming_normal_(lin.weight, nonlinearity="relu")
+        layers += [lin, act()]
+    net = nn.Sequential(*layers, nn.Linear(32, 1))
+    net(torch.randn(64, 32)).pow(2).mean().backward()
+    return net[0].weight.grad.abs().mean().item()
+
+print(f"{first_layer_grad(nn.Sigmoid):.0e}")        # 3e-15 ← sigmoid: vanished
+print(f"{first_layer_grad(nn.ReLU):.0e}")           # 2e-10 ← ReLU, default init: still shrinks
+print(f"{first_layer_grad(nn.ReLU, he=True):.0e}")  # 1e-03 ← ReLU + He init: healthy</pre></div>
+<table><thead><tr><th>Fix</th><th>Helps with</th></tr></thead><tbody><tr><td>ReLU-family activations</td><td>Vanishing (slope 1 for positive inputs)</td></tr><tr><td>Xavier / He initialisation</td><td>Both — keeps the scale steady at the start</td></tr><tr><td>BatchNorm / LayerNorm</td><td>Both — re-normalises activations every layer</td></tr><tr><td>Residual (skip) connections</td><td>Vanishing — gradient flows through the identity path (ResNets, Transformers)</td></tr><tr><td>Gradient clipping</td><td>Exploding — caps the gradient norm</td></tr><tr><td>LSTM / GRU gates</td><td>Vanishing through time in RNNs</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-scissors"></i>Gradient clipping</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+model = nn.Linear(4, 1)
+for p in model.parameters():
+    p.grad = torch.full_like(p, 10.0)             # pretend a huge gradient arrived
+
+before = nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)   # returns the norm before clipping
+after = torch.cat([p.grad.flatten() for p in model.parameters()]).norm()
+print(round(before.item(), 2), round(after.item(), 2))   # 22.36 1.0</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Clipping rescales the whole gradient vector when its norm exceeds <code>max_norm</code> — the direction is kept, only the step length is capped. Call it between <code>loss.backward()</code> and <code>optimizer.step()</code>. It's standard for RNNs and Transformers (<code>max_norm=1.0</code>).</p></div>
+<div class="qa-card"><div class="qa-question">What is the vanishing gradient problem and how do you fix it?</div><div class="qa-answer"><p>Gradients shrink exponentially as they flow backwards through many layers (or time steps) because they're multiplied by factors smaller than 1, so early layers barely learn. Fixes: ReLU-type activations, He/Xavier init, normalisation layers, residual connections, and gated RNNs (LSTM/GRU).</p></div></div>
+<div class="qa-card"><div class="qa-question">Why can't all weights be initialised to zero?</div><div class="qa-answer"><p>Every unit in a layer would compute the same function and get the same update, so the layer behaves like a single unit forever. (Biases can start at zero — the random weights already break the symmetry.)</p></div></div>
+</div>
+<div class="topic" id="topic-normalization">
+<div class="page-tag">Stable Training &amp; Regularization</div>
+<h1 class="page-title">Batch Norm &amp; Layer Norm</h1>
+<p class="page-subtitle">Normalisation layers rescale activations to zero mean and unit variance inside the network, then let it learn the best scale and shift. Training becomes faster, more stable and less sensitive to initialisation.</p>
+<div class="math-formula">x̂ = (x − μ) / √(σ² + ε)        y = γ · x̂ + β      (γ, β learned)</div>
+<table><thead><tr><th></th><th>BatchNorm</th><th>LayerNorm</th></tr></thead><tbody><tr><td>Statistics over</td><td>The <strong>batch</strong> (per feature/channel)</td><td>The <strong>features</strong> of each sample</td></tr><tr><td>Depends on batch size</td><td>Yes — noisy for small batches</td><td>No</td></tr><tr><td>Train vs eval</td><td>Different: uses running averages at eval</td><td>Same computation</td></tr><tr><td>Used in</td><td>CNNs</td><td>Transformers, RNNs</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-code"></i>BatchNorm by hand</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import torch
+from torch import nn
+
+x = np.array([[1.0, 200.0], [2.0, 220.0], [3.0, 240.0], [4.0, 260.0]])   # 4 samples, 2 features
+mu, var = x.mean(axis=0), x.var(axis=0)             # per feature, over the batch
+x_hat = (x - mu) / np.sqrt(var + 1e-5)
+print(x_hat[:, 0].round(3).tolist())               # [-1.342, -0.447, 0.447, 1.342]
+print(x_hat[:, 1].round(3).tolist())               # [-1.342, -0.447, 0.447, 1.342] ← same, whatever the original scale
+
+bn = nn.BatchNorm1d(2)                             # γ = 1, β = 0 at the start
+out = bn(torch.tensor(x, dtype=torch.float32))     # training mode: batch statistics
+print(np.allclose(out.detach().numpy(), x_hat, atol=1e-4))   # True</pre></div>
+<div class="section-title"><i class="ti ti-toggle-left"></i>Train vs eval mode</div>
+<p>During training BatchNorm uses the current batch's mean and variance and updates <strong>running averages</strong>. In <code>model.eval()</code> it uses those running averages instead, so a single example gets a deterministic output.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+bn = nn.BatchNorm1d(1, momentum=0.1)
+print(bn.running_mean.item(), bn.running_var.item())   # 0.0 1.0 ← initial values
+
+bn.train()
+for _ in range(100):
+    bn(torch.randn(32, 1) * 3 + 10)                    # data with mean 10, std 3
+print(round(bn.running_mean.item(), 1), round(bn.running_var.item() ** 0.5, 1))   # 9.8 2.9
+
+bn.eval()
+print(round(bn(torch.tensor([[10.0]])).item(), 2))     # 0.07 ← ≈ 0: the value sits at the mean</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Forgetting <code>model.eval()</code> before validation or inference is a classic bug: BatchNorm then normalises with the statistics of whatever batch you pass in (and a batch of 1 breaks it), and dropout stays on. Always switch modes.</p></div>
+<div class="section-title"><i class="ti ti-layout-rows"></i>LayerNorm</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+x = torch.tensor([[1.0, 2.0, 3.0, 4.0],
+                  [10.0, 20.0, 30.0, 40.0]])
+ln = nn.LayerNorm(4)                          # normalise over the last dimension of each sample
+out = ln(x).detach()
+print([round(v, 3) for v in out[0].tolist()])   # [-1.342, -0.447, 0.447, 1.342]
+print([round(v, 3) for v in out[1].tolist()])   # [-1.342, -0.447, 0.447, 1.342] ← same: each row is scaled on its own</pre></div>
+<p>Each row is normalised on its own, so it works with any batch size (even 1) and with variable-length sequences — why Transformers use it. Many LLMs use <strong>RMSNorm</strong>, a cheaper variant that only divides by the root-mean-square (no mean subtraction).</p>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-layout-grid"></i>GroupNorm</h3><p>Normalises groups of channels per sample — a BatchNorm replacement for tiny batches (detection, segmentation).</p></div><div class="card"><h3><i class="ti ti-arrows-sort"></i>Pre-LN vs Post-LN</h3><p>Transformers normalise <em>before</em> each sub-layer (Pre-LN) in most modern models — more stable to train than the original Post-LN.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why does batch normalization help?</div><div class="qa-answer"><p>It keeps each layer's inputs in a well-scaled range, which allows higher learning rates, reduces sensitivity to initialisation and smooths the loss landscape. The batch noise also gives a mild regularising effect.</p></div></div>
+<div class="qa-card"><div class="qa-question">BatchNorm vs LayerNorm — when do you use which?</div><div class="qa-answer"><p>BatchNorm for CNNs with reasonably large batches. LayerNorm (or RMSNorm) for Transformers and RNNs, where sequence lengths vary, batches can be small, and train/inference behaviour should be identical.</p></div></div>
+</div>
+<div class="topic" id="topic-regularization">
+<div class="page-tag">Stable Training &amp; Regularization</div>
+<h1 class="page-title">Regularization</h1>
+<p class="page-subtitle">Big networks can memorise their training set. Regularisation makes memorising harder or less attractive, so the model learns patterns that generalise: weight decay, dropout, early stopping, data augmentation and more.</p>
+<p>First diagnose (see the <strong>Machine Learning</strong> notes on train/test protocols): training loss far below validation loss means <strong>overfitting</strong> → regularise or get more data. Both losses high means <strong>underfitting</strong> → bigger model, train longer, less regularisation.</p>
+<div class="section-title"><i class="ti ti-scale"></i>L2 regularisation / weight decay</div>
+<div class="math-formula">L_total = L_data + (λ/2) Σ w²        ⇒        w ← w − η(∇L_data + λw) = (1 − ηλ)·w − η∇L_data</div>
+<p>Each step shrinks (“decays”) every weight towards zero; only weights that keep earning their place in the loss stay large. Smaller weights mean a smoother function. In PyTorch: <code>AdamW(..., weight_decay=0.01)</code>; it's usual to exclude biases and normalisation parameters.</p>
+<div class="section-title"><i class="ti ti-grid-dots"></i>Dropout</div>
+<p>During training, dropout zeroes each activation with probability <code>p</code> and scales the survivors by <code>1/(1−p)</code> (<strong>inverted dropout</strong>), so the expected value is unchanged and nothing needs rescaling at test time. The network can't rely on any single unit — like training an ensemble of thinned networks.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+drop = nn.Dropout(p=0.5)
+x = torch.ones(8)
+
+drop.train()
+print(drop(x))             # tensor([0., 0., 2., 0., 0., 0., 2., 2.]) ← half zeroed, survivors scaled ×2
+drop.eval()
+print(drop(x))             # tensor([1., 1., 1., 1., 1., 1., 1., 1.]) ← identity at inference</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Typical rates: 0.1 in Transformers, 0.2–0.5 in MLP heads. Dropout is used less in modern CNNs (BatchNorm + augmentation do the job).</p></div>
+<div class="section-title"><i class="ti ti-player-stop"></i>Early stopping</div>
+<p>Track the validation loss every epoch, keep the best weights, and stop when it hasn't improved for <code>patience</code> epochs.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>val_losses = [0.90, 0.72, 0.61, 0.55, 0.53, 0.54, 0.56, 0.55, 0.58, 0.60]
+
+best, best_epoch, patience, waited = float("inf"), None, 3, 0
+for epoch, loss in enumerate(val_losses):
+    if loss &lt; best:
+        best, best_epoch, waited = loss, epoch, 0     # save a checkpoint here
+    else:
+        waited += 1
+        if waited &gt;= patience:
+            break
+print(epoch, best_epoch, best)     # 7 4 0.53 ← stopped at epoch 7, restore epoch 4</pre></div>
+<div class="section-title"><i class="ti ti-photo"></i>Data augmentation</div>
+<p>Create new, label-preserving variations of the training data so the model sees more diversity. Applied on the fly, only to the training set.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+torch.manual_seed(0)
+img = torch.arange(9.0).reshape(1, 3, 3)                 # (channels, height, width)
+flipped = torch.flip(img, dims=[2])                      # horizontal flip
+noisy = img + 0.1 * torch.randn_like(img)                # small Gaussian noise
+print(img[0, 0].tolist(), flipped[0, 0].tolist())        # [0.0, 1.0, 2.0] [2.0, 1.0, 0.0]
+print(noisy.shape == img.shape)                          # True</pre></div>
+<table><thead><tr><th>Data</th><th>Common augmentations</th></tr></thead><tbody><tr><td>Images</td><td>Random crop &amp; resize, horizontal flip, colour jitter, rotation, Cutout, MixUp/CutMix (<code>torchvision.transforms.v2</code>)</td></tr><tr><td>Text</td><td>Back-translation, synonym replacement, token masking</td></tr><tr><td>Audio</td><td>Time shift, pitch shift, added noise, SpecAugment (masking spectrogram bands)</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>Augmentations must keep the label valid: flipping a “6” vertically makes a “9”; flipping a road sign mirrors its text. Never augment the validation or test sets.</p></div>
+<div class="section-title"><i class="ti ti-tools"></i>The toolbox</div>
+<table><thead><tr><th>Technique</th><th>How it regularises</th></tr></thead><tbody><tr><td>More data</td><td>The best regulariser of all</td></tr><tr><td>Weight decay (L2)</td><td>Penalises large weights</td></tr><tr><td>Dropout</td><td>Random unit removal — no co-adaptation</td></tr><tr><td>Early stopping</td><td>Stops before memorisation starts</td></tr><tr><td>Data augmentation</td><td>More diverse training examples</td></tr><tr><td>Label smoothing</td><td>Targets like 0.9 / 0.1 instead of 1 / 0 — discourages over-confidence (<code>CrossEntropyLoss(label_smoothing=0.1)</code>)</td></tr><tr><td>Smaller model</td><td>Less capacity to memorise</td></tr><tr><td>Transfer learning</td><td>Start from features learned on lots of data</td></tr></tbody></table>
+<div class="qa-card"><div class="qa-question">How does dropout work, and what changes at test time?</div><div class="qa-answer"><p>During training each unit is zeroed with probability <code>p</code> and the rest are scaled by <code>1/(1−p)</code>, so the network learns redundant features and can't depend on any one unit. At test time dropout is switched off (<code>model.eval()</code>); thanks to the inverted scaling no further adjustment is needed.</p></div></div>
+<div class="qa-card"><div class="qa-question">L2 regularisation vs weight decay — are they the same?</div><div class="qa-answer"><p>For plain SGD, yes: adding <code>λw</code> to the gradient is the same as shrinking the weights each step. For adaptive optimisers like Adam they differ, because the L2 term gets divided by the adaptive denominator. AdamW implements true (decoupled) weight decay.</p></div></div>
+<div class="qa-card"><div class="qa-question">Your model has 99% training accuracy and 70% validation accuracy. What do you do?</div><div class="qa-answer"><p>It's overfitting. Get more data or augment it, add weight decay/dropout, use early stopping, reduce model size, or start from a pretrained model. Also check the validation set comes from the same distribution and there's no leakage or label noise.</p></div></div>
+</div>
+<div class="topic" id="topic-pytorch-tensors-autograd">
+<div class="page-tag">PyTorch in Practice</div>
+<h1 class="page-title">Tensors &amp; Autograd</h1>
+<p class="page-subtitle">PyTorch is NumPy with two superpowers: tensors can live on a GPU, and every operation can be recorded so gradients are computed automatically.</p>
+<div class="section-title"><i class="ti ti-cube"></i>Creating tensors</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+a = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+print(a.shape, a.dtype)                      # torch.Size([2, 2]) torch.float32
+print(torch.zeros(2, 3).shape, torch.ones(4).tolist())   # torch.Size([2, 3]) [1.0, 1.0, 1.0, 1.0]
+print(torch.arange(0, 10, 3).tolist())       # [0, 3, 6, 9]
+print(torch.tensor([1, 2]).dtype)            # torch.int64 ← integers default to int64
+
+torch.manual_seed(0)
+r = torch.randn(3)                           # standard normal, reproducible with the seed
+print(r.round(decimals=4))                   # tensor([ 1.5410, -0.2934, -2.1788])</pre></div>
+<div class="section-title"><i class="ti ti-arrows-maximize"></i>Shapes, maths and broadcasting</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+x = torch.arange(6.0)
+m = x.reshape(2, 3)                         # or x.view(2, 3) — same data, new shape
+print(m.tolist())                           # [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]
+print(m.T.shape, m.unsqueeze(0).shape, m.flatten().shape)   # torch.Size([3, 2]) torch.Size([1, 2, 3]) torch.Size([6])
+
+print((m @ m.T).tolist())                   # [[5.0, 14.0], [14.0, 50.0]] ← matrix multiply (2×3 @ 3×2)
+print((m * 10).tolist())                    # [[0.0, 10.0, 20.0], [30.0, 40.0, 50.0]] ← element-wise
+print((m + torch.tensor([100.0, 200.0, 300.0])).tolist())   # [[100.0, 201.0, 302.0], [103.0, 204.0, 305.0]] ← broadcast over rows
+print(m.sum(dim=0).tolist(), m.mean(dim=1).tolist())        # [3.0, 5.0, 7.0] [1.0, 4.0] ← per column / per row
+print(m.argmax(dim=1).tolist())             # [2, 2]</pre></div>
+<table><thead><tr><th>Operation</th><th>PyTorch</th><th>NumPy equivalent</th></tr></thead><tbody><tr><td>Change shape</td><td><code>x.view(...)</code>, <code>x.reshape(...)</code></td><td><code>x.reshape(...)</code></td></tr><tr><td>Add / remove a size-1 axis</td><td><code>x.unsqueeze(0)</code>, <code>x.squeeze()</code></td><td><code>x[None]</code>, <code>x.squeeze()</code></td></tr><tr><td>Reorder axes</td><td><code>x.permute(0, 2, 1)</code>, <code>x.T</code></td><td><code>x.transpose(0, 2, 1)</code></td></tr><tr><td>Join</td><td><code>torch.cat([a, b], dim=0)</code>, <code>torch.stack</code></td><td><code>np.concatenate</code>, <code>np.stack</code></td></tr><tr><td>Reduce along an axis</td><td><code>x.sum(dim=1)</code></td><td><code>x.sum(axis=1)</code></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-device-desktop"></i>NumPy bridge and devices</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import torch
+
+arr = np.array([1.0, 2.0, 3.0])
+t = torch.from_numpy(arr)          # shares memory with arr
+arr[0] = 99
+print(t.tolist())                  # [99.0, 2.0, 3.0] ← the change shows up
+print(t.dtype)                     # torch.float64 ← NumPy's float64 is kept
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+x = torch.ones(2, device=device)   # create directly on the device
+print(x.cpu().numpy().tolist())    # [1.0, 1.0] ← back to NumPy (must be on the CPU)</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Tensors in one operation must be on the same device and usually the same dtype: <code>float32</code> weights × <code>float64</code> data raises an error. Convert data with <code>torch.tensor(arr, dtype=torch.float32)</code> or <code>.float()</code>. On Apple silicon the GPU device is <code>"mps"</code>.</p></div>
+<div class="section-title"><i class="ti ti-git-branch"></i>Autograd</div>
+<p>Set <code>requires_grad=True</code> on a tensor and PyTorch records every operation on it in a graph. <code>loss.backward()</code> walks that graph backwards and stores <code>∂loss/∂x</code> in <code>x.grad</code>.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+x = torch.tensor(3.0, requires_grad=True)
+y = x ** 2 + 2 * x              # y = x² + 2x
+y.backward()
+print(x.grad)                   # tensor(8.) ← dy/dx = 2x + 2 = 8
+
+w = torch.tensor([1.0, -2.0], requires_grad=True)
+loss = (w ** 2).sum()
+loss.backward()
+print(w.grad)                   # tensor([ 2., -4.]) ← 2w
+loss = (w ** 2).sum()
+loss.backward()
+print(w.grad)                   # tensor([ 4., -8.]) ← gradients ACCUMULATE
+w.grad.zero_()                  # what optimizer.zero_grad() does
+print(w.grad)                   # tensor([0., 0.])</pre></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+w = torch.tensor([1.0, 2.0], requires_grad=True)
+with torch.no_grad():                   # no graph: for evaluation and manual weight updates
+    y = w * 2
+print(y.requires_grad)                  # False
+
+z = (w * 3).detach()                    # a copy cut off from the graph
+print(z.requires_grad, z.tolist())      # False [3.0, 6.0]
+print((w * 3).grad_fn is not None)      # True ← operations remember how they were made</pre></div>
+<table><thead><tr><th>Tool</th><th>Use it for</th></tr></thead><tbody><tr><td><code>requires_grad=True</code></td><td>Tensors you want gradients for (model parameters have it already)</td></tr><tr><td><code>loss.backward()</code></td><td>Compute gradients of a <strong>scalar</strong> loss</td></tr><tr><td><code>.grad</code> / <code>.zero_()</code></td><td>Read / reset accumulated gradients</td></tr><tr><td><code>torch.no_grad()</code></td><td>Inference and evaluation — saves memory and time</td></tr><tr><td><code>.detach()</code></td><td>Use a value without letting gradients flow back through it</td></tr><tr><td><code>.item()</code></td><td>Pull a Python number out of a one-element tensor (e.g. for logging)</td></tr></tbody></table>
+<div class="qa-card"><div class="qa-question">Why do we call zero_grad() every iteration?</div><div class="qa-answer"><p>PyTorch adds new gradients to whatever is in <code>.grad</code> (useful for gradient accumulation across micro-batches). Without resetting, each step would use the sum of all past gradients.</p></div></div>
+<div class="qa-card"><div class="qa-question">view vs reshape?</div><div class="qa-answer"><p><code>view</code> never copies — it needs the tensor's memory to be laid out compatibly (contiguous) and errors otherwise. <code>reshape</code> returns a view when it can and copies when it must.</p></div></div>
+</div>
+<div class="topic" id="topic-pytorch-modules-data">
+<div class="page-tag">PyTorch in Practice</div>
+<h1 class="page-title">nn.Module, Dataset &amp; DataLoader</h1>
+<p class="page-subtitle">Models are <code>nn.Module</code> subclasses: declare layers in <code>__init__</code>, describe the computation in <code>forward</code>. Data comes in through a <code>Dataset</code> (one example at a time) wrapped in a <code>DataLoader</code> (batches, shuffling, workers).</p>
+<div class="section-title"><i class="ti ti-code"></i>Writing a model</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+class MLP(nn.Module):
+    def __init__(self, n_in, n_hidden, n_out, p_drop=0.1):
+        super().__init__()                          # always call this first
+        self.net = nn.Sequential(
+            nn.Linear(n_in, n_hidden), nn.ReLU(), nn.Dropout(p_drop),
+            nn.Linear(n_hidden, n_out),
+        )
+
+    def forward(self, x):                           # call model(x), never model.forward(x)
+        return self.net(x)
+
+torch.manual_seed(0)
+model = MLP(4, 32, 3)
+print(model(torch.randn(8, 4)).shape)               # torch.Size([8, 3])
+print([name for name, _ in model.named_parameters()])   # ['net.0.weight', 'net.0.bias', 'net.3.weight', 'net.3.bias']
+print(sum(p.numel() for p in model.parameters() if p.requires_grad))   # 259</pre></div>
+<table><thead><tr><th>Building block</th><th>What it is</th></tr></thead><tbody><tr><td><code>nn.Linear</code>, <code>nn.Conv2d</code>, <code>nn.LSTM</code>, <code>nn.Embedding</code>…</td><td>Layers with learnable parameters</td></tr><tr><td><code>nn.ReLU</code>, <code>nn.Dropout</code>, <code>nn.LayerNorm</code>…</td><td>Activations, regularisers, normalisers</td></tr><tr><td><code>nn.Sequential</code></td><td>Chains modules; <code>forward</code> is automatic</td></tr><tr><td><code>nn.ModuleList</code> / <code>nn.ModuleDict</code></td><td>Lists/dicts of layers that are <strong>registered</strong> (a plain Python list is not)</td></tr><tr><td><code>model.parameters()</code></td><td>Every learnable tensor — what you hand to the optimizer</td></tr><tr><td><code>model.to(device)</code></td><td>Moves all parameters and buffers to CPU/GPU</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>Layers kept in a plain Python <code>list</code> are invisible to <code>model.parameters()</code>, <code>.to(device)</code> and <code>state_dict()</code> — they silently never train. Use <code>nn.ModuleList</code>.</p></div>
+<div class="section-title"><i class="ti ti-database"></i>Dataset and DataLoader</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch.utils.data import Dataset, DataLoader, TensorDataset
+
+class SquaresDataset(Dataset):
+    """x → x², generated on demand."""
+    def __init__(self, n):
+        self.x = torch.arange(n, dtype=torch.float32)
+    def __len__(self):
+        return len(self.x)
+    def __getitem__(self, i):                      # one (input, target) pair
+        return self.x[i:i + 1], self.x[i:i + 1] ** 2
+
+ds = SquaresDataset(10)
+print(len(ds), ds[3])                              # 10 (tensor([3.]), tensor([9.]))
+
+loader = DataLoader(ds, batch_size=4, shuffle=False)
+print([xb.shape[0] for xb, yb in loader])          # [4, 4, 2] ← last batch is smaller
+xb, yb = next(iter(loader))
+print(xb.shape, yb.ravel().tolist())               # torch.Size([4, 1]) [0.0, 1.0, 4.0, 9.0]
+
+# For tensors already in memory, TensorDataset does the same job:
+tds = TensorDataset(torch.randn(100, 5), torch.randint(0, 2, (100,)))
+train_loader = DataLoader(tds, batch_size=32, shuffle=True, drop_last=True)
+print(len(train_loader))                           # 3 ← 100 // 32 full batches</pre></div>
+<table><thead><tr><th><code>DataLoader</code> argument</th><th>Meaning</th></tr></thead><tbody><tr><td><code>batch_size</code></td><td>Examples per batch</td></tr><tr><td><code>shuffle=True</code></td><td>New random order each epoch — <strong>training only</strong></td></tr><tr><td><code>num_workers</code></td><td>Background processes that load/augment data in parallel</td></tr><tr><td><code>pin_memory=True</code></td><td>Faster CPU → GPU copies</td></tr><tr><td><code>drop_last=True</code></td><td>Skip the smaller final batch (keeps BatchNorm statistics sane)</td></tr><tr><td><code>collate_fn</code></td><td>Custom batching — e.g. padding variable-length sequences</td></tr></tbody></table>
+<div class="qa-card"><div class="qa-question">What's the difference between a Dataset and a DataLoader?</div><div class="qa-answer"><p>A <code>Dataset</code> knows how many examples there are and how to fetch example <code>i</code> (<code>__len__</code>, <code>__getitem__</code>). A <code>DataLoader</code> wraps it to produce shuffled mini-batches, stacking examples into tensors and optionally loading in parallel worker processes.</p></div></div>
+</div>
+<div class="topic" id="topic-pytorch-training-loop">
+<div class="page-tag">PyTorch in Practice</div>
+<h1 class="page-title">The Training Loop</h1>
+<p class="page-subtitle">Every PyTorch project has the same heartbeat: for each batch — forward, loss, zero_grad, backward, step. Around it: an evaluation loop in <code>eval()</code> mode under <code>no_grad()</code>, and checkpoints.</p>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title"><code>model.train()</code></div><div class="step-desc">Dropout on, BatchNorm uses batch statistics.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Forward</div><div class="step-desc"><code>logits = model(xb)</code> then <code>loss = loss_fn(logits, yb)</code>.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title"><code>optimizer.zero_grad()</code></div><div class="step-desc">Clear gradients from the previous step.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title"><code>loss.backward()</code></div><div class="step-desc">Compute gradients.</div></div></div><div class="step-row"><div class="step-num">5</div><div class="step-body"><div class="step-title"><code>optimizer.step()</code></div><div class="step-desc">Update weights (then <code>scheduler.step()</code> if you use one).</div></div></div><div class="step-row"><div class="step-num">6</div><div class="step-body"><div class="step-title">Evaluate</div><div class="step-desc"><code>model.eval()</code> + <code>torch.no_grad()</code> on the validation set; keep the best checkpoint.</div></div></div>
+<div class="section-title"><i class="ti ti-player-play"></i>A complete example</div>
+<p>Classify points by whether they lie inside a circle — a non-linear boundary a linear model can't learn.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+from torch.utils.data import DataLoader, TensorDataset
+
+torch.manual_seed(0)
+X = torch.rand(1000, 2) * 2 - 1                      # points in [-1, 1]²
+y = ((X ** 2).sum(dim=1) &lt; 0.5).long()               # class 1 inside the circle
+train_ds, val_ds = TensorDataset(X[:800], y[:800]), TensorDataset(X[800:], y[800:])
+train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
+val_loader = DataLoader(val_ds, batch_size=200)
+
+model = nn.Sequential(nn.Linear(2, 32), nn.ReLU(), nn.Linear(32, 32), nn.ReLU(), nn.Linear(32, 2))
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2)
+
+def evaluate(loader):
+    model.eval()
+    correct = total = 0
+    with torch.no_grad():
+        for xb, yb in loader:
+            correct += (model(xb).argmax(dim=1) == yb).sum().item()
+            total += len(yb)
+    return correct / total
+
+for epoch in range(20):
+    model.train()
+    for xb, yb in train_loader:
+        loss = loss_fn(model(xb), yb)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+print(f"train acc {evaluate(train_loader):.2f}, val acc {evaluate(val_loader):.2f}")   # train acc 0.99, val acc 0.97</pre></div>
+<div class="section-title"><i class="ti ti-device-floppy"></i>Saving and loading</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+model = nn.Linear(3, 1)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+
+torch.save(model.state_dict(), "model.pt")                   # weights only — the usual way
+torch.save({"epoch": 5, "model": model.state_dict(),          # full checkpoint to resume training
+            "optimizer": optimizer.state_dict()}, "checkpoint.pt")
+
+restored = nn.Linear(3, 1)                                    # rebuild the architecture first…
+restored.load_state_dict(torch.load("model.pt"))              # …then load the weights
+restored.eval()
+x = torch.ones(1, 3)
+print(torch.equal(model(x), restored(x)))                     # True
+
+ckpt = torch.load("checkpoint.pt")
+print(ckpt["epoch"], list(ckpt["model"].keys()))              # 5 ['weight', 'bias']</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>A <code>state_dict</code> is an ordered dict of parameter and buffer tensors keyed by name. Save that (not the whole pickled model object) — it survives code refactors and is safe to load with <code>torch.load(..., weights_only=True)</code>, the default in recent PyTorch.</p></div>
+<div class="section-title"><i class="ti ti-cpu"></i>Using a GPU</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>device = torch.device("cuda" if torch.cuda.is_available()
+                      else "mps" if torch.backends.mps.is_available() else "cpu")
+model = model.to(device)                     # parameters move once
+for xb, yb in train_loader:
+    xb, yb = xb.to(device), yb.to(device)    # every batch must follow
+    ...
+# load a GPU checkpoint on a CPU-only machine:
+state = torch.load("model.pt", map_location="cpu")</pre></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Call <code>model.eval()</code> and wrap validation/inference in <code>torch.no_grad()</code> (or <code>torch.inference_mode()</code>); log <code>loss.item()</code>, not the tensor.</p></div><div class="cons"><div class="label">Avoid</div><p>Accumulate <code>total_loss += loss</code> — it keeps every step's graph alive and leaks memory.</p></div></div>
+<div class="qa-card"><div class="qa-question">Walk me through a PyTorch training step.</div><div class="qa-answer"><p>Put the model in train mode, move the batch to the device, run the forward pass to get logits, compute the loss, call <code>optimizer.zero_grad()</code>, <code>loss.backward()</code> to compute gradients, optionally clip them, then <code>optimizer.step()</code> to update the weights (and step the LR scheduler).</p></div></div>
+<div class="qa-card"><div class="qa-question">What does model.eval() change?</div><div class="qa-answer"><p>It switches layers that behave differently at inference: dropout is disabled and BatchNorm uses its running statistics. It does <strong>not</strong> disable gradient tracking — that's what <code>torch.no_grad()</code> is for.</p></div></div>
+</div>
+<div class="topic" id="topic-training-in-practice">
+<div class="page-tag">PyTorch in Practice</div>
+<h1 class="page-title">Training in Practice</h1>
+<p class="page-subtitle">Most failed training runs are bugs or bad settings, not bad architectures. A short, disciplined routine — start small, overfit one batch, read the loss curves, then tune — finds problems quickly.</p>
+<div class="section-title"><i class="ti ti-list-check"></i>A debugging routine</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Look at the data</div><div class="step-desc">Plot samples with their labels; check shapes, ranges, class balance, normalisation, and that inputs and labels still line up after shuffling.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Check the first loss</div><div class="step-desc">For <code>k</code> balanced classes it should be ≈ <code>ln k</code>. Far off → wrong loss, wrong labels or bad init.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Overfit one small batch</div><div class="step-desc">A healthy model + training loop drives the loss on 10–50 examples to ~0. If it can't, there's a bug.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title">Train a simple baseline</div><div class="step-desc">Small model, Adam(W) at <code>1e-3</code>, no fancy tricks. Get something working end-to-end.</div></div></div><div class="step-row"><div class="step-num">5</div><div class="step-body"><div class="step-title">Scale up and regularise</div><div class="step-desc">Bigger model, more data, augmentation, schedules — one change at a time, tracking validation metrics.</div></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+xb = torch.randn(16, 10)                          # one small batch with random labels —
+yb = torch.randint(0, 4, (16,))                   # impossible to generalise, easy to memorise
+model = nn.Sequential(nn.Linear(10, 64), nn.ReLU(), nn.Linear(64, 4))
+opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+loss_fn = nn.CrossEntropyLoss()
+
+first = loss_fn(model(xb), yb).item()
+for _ in range(200):
+    loss = loss_fn(model(xb), yb)
+    opt.zero_grad(); loss.backward(); opt.step()
+
+print(round(first, 1), round(torch.log(torch.tensor(4.0)).item(), 1))   # 1.4 1.4 ← first loss ≈ ln 4
+print(loss.item() &lt; 0.01)                                              # True ← memorised: the loop works</pre></div>
+<div class="section-title"><i class="ti ti-chart-line"></i>Reading loss curves</div>
+<table><thead><tr><th>What you see</th><th>Diagnosis</th><th>Try</th></tr></thead><tbody><tr><td>Train ↓, validation ↓ then ↑</td><td>Overfitting</td><td>Early stopping, regularisation, augmentation, more data</td></tr><tr><td>Both high and flat</td><td>Underfitting or LR too low</td><td>Bigger model, higher LR, train longer, check for bugs</td></tr><tr><td>Loss jumps to <code>nan</code> / <code>inf</code></td><td>Exploding gradients, LR too high, <code>log(0)</code></td><td>Lower LR, gradient clipping, warmup, check the loss inputs</td></tr><tr><td>Very noisy loss</td><td>LR too high or batch too small</td><td>Lower LR, larger batch, LR decay</td></tr><tr><td>Validation better than training</td><td>Dropout/augmentation only in training — or a leaky validation set</td><td>Usually fine; check for leakage</td></tr><tr><td>Plateau, then sudden drop</td><td>Poor init or LR schedule kicking in</td><td>Warmup, better init</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-adjustments-horizontal"></i>Hyper-parameter tuning</div>
+<table><thead><tr><th>Priority</th><th>Hyper-parameter</th><th>Typical search</th></tr></thead><tbody><tr><td>1</td><td>Learning rate</td><td>Log scale: 1e-4, 3e-4, 1e-3, 3e-3…</td></tr><tr><td>2</td><td>Batch size / schedule / epochs</td><td>As large as memory allows; cosine + warmup</td></tr><tr><td>3</td><td>Weight decay, dropout</td><td>0–0.1; 0–0.5</td></tr><tr><td>4</td><td>Architecture (depth, width)</td><td>Scale up until validation stops improving</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>Prefer <strong>random search</strong> over grid search (it explores important dimensions better), sample learning rates on a log scale, and tune on a smaller budget before full runs. Tools such as Optuna or Ray Tune automate this; Weights &amp; Biases or TensorBoard track the runs.</p></div>
+<div class="section-title"><i class="ti ti-bolt"></i>Mixed precision</div>
+<p>Running most operations in 16-bit floats (<code>float16</code> or <code>bfloat16</code>) halves memory and uses fast tensor cores, with little accuracy loss. <code>torch.autocast</code> picks the precision per operation — matrix multiplies in 16-bit, sensitive reductions in 32-bit.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+model = nn.Linear(8, 4)
+x = torch.randn(2, 8)
+with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+    out = model(x)
+print(out.dtype, model.weight.dtype)      # torch.bfloat16 torch.float32 ← compute in bf16, weights stay fp32</pre></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>scaler = torch.amp.GradScaler("cuda")          # float16 on CUDA needs loss scaling (bfloat16 doesn't)
+for xb, yb in loader:
+    optimizer.zero_grad()
+    with torch.autocast(device_type="cuda", dtype=torch.float16):
+        loss = loss_fn(model(xb), yb)
+    scaler.scale(loss).backward()              # scale up so small gradients don't underflow
+    scaler.step(optimizer)                     # unscales; skips the step if inf/nan appeared
+    scaler.update()</pre></div>
+<div class="section-title"><i class="ti ti-cpu"></i>GPU memory and gradient accumulation</div>
+<p>Memory holds weights, gradients, optimizer state (Adam: 2× weights) and the activations saved for backprop, which grow with batch size. When a batch doesn't fit, <strong>accumulate</strong> gradients over several micro-batches before stepping:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+model = nn.Linear(4, 1)
+X, y = torch.randn(8, 4), torch.randn(8, 1)
+loss_fn = nn.MSELoss()
+
+model.zero_grad()
+loss_fn(model(X), y).backward()                    # one batch of 8
+full = model.weight.grad.clone()
+
+model.zero_grad()
+for xb, yb in zip(X.split(2), y.split(2)):         # 4 micro-batches of 2
+    (loss_fn(model(xb), yb) / 4).backward()        # divide by the number of micro-batches
+print(torch.allclose(full, model.weight.grad, atol=1e-6))   # True ← same gradient</pre></div>
+<table><thead><tr><th>Speed-up</th><th>How</th></tr></thead><tbody><tr><td>Keep the GPU fed</td><td><code>num_workers &gt; 0</code>, <code>pin_memory=True</code>, avoid <code>.item()</code> / <code>.cpu()</code> inside the loop</td></tr><tr><td>Mixed precision</td><td><code>torch.autocast</code> + bf16/fp16</td></tr><tr><td>Compile</td><td><code>model = torch.compile(model)</code> fuses operations</td></tr><tr><td>Bigger batches</td><td>Better hardware use (retune the LR)</td></tr><tr><td>Multiple GPUs</td><td><code>DistributedDataParallel</code> (DDP); FSDP to shard huge models</td></tr><tr><td>Save memory</td><td>Gradient checkpointing (recompute activations), smaller batch + accumulation</td></tr></tbody></table>
+<div class="qa-card"><div class="qa-question">Your loss isn't decreasing. How do you debug it?</div><div class="qa-answer"><p>Check the data and labels first, then the initial loss against <code>ln k</code>, then try to overfit a single small batch. If that fails, look for bugs: missing <code>zero_grad</code>, softmax before <code>CrossEntropyLoss</code>, wrong label dtype/shape, frozen parameters, forgetting <code>optimizer.step()</code>, or an LR that's far too high or low. Then inspect gradient norms per layer.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is mixed precision training?</div><div class="qa-answer"><p>Doing most computation in 16-bit floats while keeping a 32-bit master copy of the weights. It cuts memory and speeds up training on tensor-core GPUs. With float16 a gradient scaler prevents small gradients from underflowing; bfloat16 has float32's range and usually doesn't need one.</p></div></div>
+</div>
+<div class="topic" id="topic-evaluating-models">
+<div class="page-tag">PyTorch in Practice</div>
+<h1 class="page-title">Evaluating Deep Learning Models</h1>
+<p class="page-subtitle">Measure on data the model never trained on, in eval mode, with the metric that matches the real goal. Loss tells you how training is going; task metrics tell you whether the model is useful.</p>
+<div class="section-title"><i class="ti ti-arrows-split"></i>Three splits</div>
+<table><thead><tr><th>Split</th><th>Used for</th><th>Touched</th></tr></thead><tbody><tr><td>Training</td><td>Computing gradients</td><td>Every step</td></tr><tr><td>Validation</td><td>Early stopping, hyper-parameters, model selection</td><td>Every epoch</td></tr><tr><td>Test</td><td>Final, unbiased estimate</td><td><strong>Once</strong>, at the end</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>Tuning on the test set turns it into a second validation set — the final number becomes optimistic. Also watch for leakage: near-duplicate images, the same patient/user in two splits, or time series split randomly instead of by time.</p></div>
+<div class="section-title"><i class="ti ti-calculator"></i>From logits to metrics</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+
+logits = torch.tensor([[2.0, 0.1, -1.0], [0.2, 1.5, 0.3], [1.2, 0.8, 0.1],
+                       [-0.5, 0.2, 2.2], [0.1, 2.0, -0.3], [0.3, 0.1, 0.9]])
+y_true = torch.tensor([0, 1, 1, 2, 1, 0])
+
+probs = torch.softmax(logits, dim=1)
+y_pred = probs.argmax(dim=1)
+print(y_pred.tolist())                                   # [0, 1, 0, 2, 1, 2]
+print(round((y_pred == y_true).float().mean().item(), 3))   # 0.667 ← accuracy
+
+k = 3
+cm = torch.zeros(k, k, dtype=torch.long)                 # rows = true class, cols = predicted
+for t, p in zip(y_true, y_pred):
+    cm[t, p] += 1
+print(cm.tolist())                                       # [[1, 0, 1], [1, 2, 0], [0, 0, 1]]
+
+tp = cm.diag().float()
+precision = tp / cm.sum(dim=0).clamp(min=1)              # per predicted column
+recall = tp / cm.sum(dim=1).clamp(min=1)                 # per true row
+print([round(v, 2) for v in precision.tolist()], [round(v, 2) for v in recall.tolist()])   # [0.5, 1.0, 0.5] [0.5, 0.67, 1.0]
+
+top2 = logits.topk(2, dim=1).indices
+print(round((top2 == y_true[:, None]).any(dim=1).float().mean().item(), 3))   # 1.0 ← top-2 accuracy</pre></div>
+<table><thead><tr><th>Task</th><th>Metrics</th></tr></thead><tbody><tr><td>Classification</td><td>Accuracy, precision/recall/F1 (per class, macro/weighted), ROC-AUC, top-k accuracy, confusion matrix</td></tr><tr><td>Regression</td><td>MAE, RMSE, R²</td></tr><tr><td>Detection / segmentation</td><td>mAP (mean average precision), IoU, Dice</td></tr><tr><td>Language models</td><td>Perplexity = <code>exp(mean cross-entropy)</code>, plus task benchmarks</td></tr><tr><td>Generation</td><td>FID (images), BLEU/ROUGE (text), human or LLM-judge evaluation</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import math
+mean_ce = 2.0                     # average cross-entropy per token, in nats
+print(round(math.exp(mean_ce), 2))   # 7.39 ← perplexity: as unsure as choosing among ~7.4 tokens</pre></div>
+<div class="section-title"><i class="ti ti-zoom-check"></i>Beyond one number</div>
+<ul><li><strong>Calibration</strong> — does 90% confidence mean right 90% of the time? Deep nets are often over-confident; temperature scaling on the validation set fixes much of it.</li><li><strong>Slices</strong> — accuracy per class, per demographic, per data source; averages hide failures.</li><li><strong>Error analysis</strong> — look at the worst mistakes (see <strong>Error Analysis</strong> in the Machine Learning notes).</li><li><strong>Variance</strong> — rerun with a few seeds; differences smaller than seed-to-seed noise aren't real.</li><li><strong>Cost</strong> — latency, memory and throughput at inference matter as much as accuracy in production.</li></ul>
+<div class="qa-card"><div class="qa-question">Why is accuracy misleading on imbalanced data?</div><div class="qa-answer"><p>If 99% of transactions are legitimate, predicting “legit” for everything scores 99% while catching zero fraud. Use per-class precision/recall, F1, PR-AUC and a confusion matrix instead.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is perplexity?</div><div class="qa-answer"><p>The exponential of the average per-token cross-entropy of a language model. It's the effective number of equally likely choices the model is torn between at each step — lower is better.</p></div></div>
+</div>
+<div class="topic" id="topic-convolutions">
+<div class="page-tag">Convolutional Networks</div>
+<h1 class="page-title">Convolutions, Padding, Stride &amp; Pooling</h1>
+<p class="page-subtitle">A convolutional layer slides small learned filters over an image. Each filter detects one local pattern (an edge, a texture) everywhere in the image, using the same few weights at every position.</p>
+<div class="section-title"><i class="ti ti-question-mark"></i>Why not a dense layer?</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-focus-2"></i>Locality</h3><p>Nearby pixels are related; a 3×3 filter looks only at a small neighbourhood.</p></div><div class="card"><h3><i class="ti ti-copy"></i>Weight sharing</h3><p>The same filter is used at every position — far fewer parameters than connecting every pixel to every unit.</p></div><div class="card"><h3><i class="ti ti-arrows-move"></i>Translation equivariance</h3><p>Shift the input and the feature map shifts the same way: a cat is detected wherever it is.</p></div><div class="card"><h3><i class="ti ti-stack-2"></i>Hierarchy</h3><p>Stacked layers see larger regions: edges → textures → parts → objects.</p></div></div>
+<div class="section-title"><i class="ti ti-math"></i>The operation</div>
+<p>At each position, multiply the filter element-wise with the patch underneath and sum (deep-learning “convolution” is technically cross-correlation — the filter isn't flipped).</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+def conv2d(img, k):
+    kh, kw = k.shape
+    out = np.zeros((img.shape[0] - kh + 1, img.shape[1] - kw + 1))
+    for i in range(out.shape[0]):
+        for j in range(out.shape[1]):
+            out[i, j] = np.sum(img[i:i + kh, j:j + kw] * k)
+    return out
+
+img = np.array([[0, 0, 0, 9, 9, 9]] * 5, dtype=float)    # dark left half, bright right half
+vertical_edge = np.array([[-1, 0, 1],
+                          [-1, 0, 1],
+                          [-1, 0, 1]], dtype=float)     # Sobel-like filter
+out = conv2d(img, vertical_edge)
+print(out.shape)            # (3, 4) ← 5×6 input, 3×3 filter
+print(out[0].tolist())      # [0.0, 27.0, 27.0, 0.0] ← fires only where brightness changes</pre></div>
+<div class="section-title"><i class="ti ti-ruler"></i>Output size: padding and stride</div>
+<div class="math-formula">out = ⌊ (n + 2p − k) / s ⌋ + 1        n = input size, k = kernel, p = padding, s = stride</div>
+<table><thead><tr><th>Setting</th><th>Effect</th></tr></thead><tbody><tr><td>Padding <code>p = (k−1)/2</code> (“same”)</td><td>Output keeps the input size (stride 1) — edges get processed too</td></tr><tr><td>No padding (“valid”)</td><td>Output shrinks by <code>k − 1</code></td></tr><tr><td>Stride 2</td><td>Moves the filter 2 pixels at a time — roughly halves height and width</td></tr><tr><td>Dilation <code>d</code></td><td>Spreads the filter taps out — larger view, same parameters</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+out_size = lambda n, k, p=0, s=1: (n + 2 * p - k) // s + 1
+print(out_size(32, 3), out_size(32, 3, p=1), out_size(32, 3, p=1, s=2), out_size(224, 7, p=3, s=2))   # 30 32 16 112
+
+x = torch.randn(8, 3, 32, 32)                    # (batch, channels, height, width)
+conv = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1, stride=2)
+print(conv(x).shape)                             # torch.Size([8, 16, 16, 16])
+print(conv.weight.shape, conv.bias.shape)        # torch.Size([16, 3, 3, 3]) torch.Size([16]) ← 16 filters, each 3×3×3
+print(sum(p.numel() for p in conv.parameters()))   # 448 ← 16·(3·3·3) + 16</pre></div>
+<div class="math-formula">conv parameters = C_out × (C_in × k × k) + C_out        — independent of the image size</div>
+<div class="highlight-box"><div class="label">Key point</div><p>Each filter spans <strong>all</strong> input channels: a 3×3 filter on an RGB image has 3×3×3 = 27 weights. The layer's output has one channel (feature map) per filter. Compare: a dense layer from a 32×32×3 image to 16×16×16 outputs would need about 12.6 million weights; this conv has 448.</p></div>
+<div class="section-title"><i class="ti ti-arrows-minimize"></i>Pooling</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+x = torch.tensor([[[[1.0, 3.0, 2.0, 0.0],
+                    [4.0, 2.0, 1.0, 1.0],
+                    [0.0, 1.0, 5.0, 6.0],
+                    [2.0, 2.0, 7.0, 8.0]]]])            # (1, 1, 4, 4)
+print(nn.MaxPool2d(2)(x).squeeze().tolist())          # [[4.0, 2.0], [2.0, 8.0]] ← max of each 2×2 block
+print(nn.AvgPool2d(2)(x).squeeze().tolist())          # [[2.5, 1.0], [1.25, 6.5]]
+print(nn.AdaptiveAvgPool2d(1)(x).flatten().tolist())  # [2.8125] ← global average pooling</pre></div>
+<p>Pooling shrinks feature maps (less compute, bigger receptive field) and adds a little tolerance to small shifts. It has <strong>no parameters</strong>. Modern CNNs often use stride-2 convolutions instead, and end with <strong>global average pooling</strong> — one number per channel — before the classifier.</p>
+<div class="section-title"><i class="ti ti-focus-centered"></i>Receptive field</div>
+<p>The receptive field is the patch of the input that can influence one output unit. Each 3×3 conv (stride 1) adds 2 pixels; each stride multiplies how fast later layers grow it.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def receptive_field(layers):          # layers: list of (kernel, stride)
+    rf, jump = 1, 1
+    for k, s in layers:
+        rf += (k - 1) * jump
+        jump *= s
+    return rf
+
+print(receptive_field([(3, 1)] * 2))                 # 5 ← two 3×3 convs see 5×5 (like one 5×5)
+print(receptive_field([(3, 1)] * 3))                 # 7 ← three see 7×7
+print(receptive_field([(3, 1), (2, 2), (3, 1), (2, 2), (3, 1)]))   # 18 ← pooling speeds growth</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Two stacked 3×3 convs see the same 5×5 area as one 5×5 conv but use <code>2·9 = 18</code> weights per channel pair instead of 25 — and add an extra non-linearity. That's VGG's key insight.</p></div>
+<div class="qa-card"><div class="qa-question">How do you compute the output size of a conv layer?</div><div class="qa-answer"><p><code>⌊(n + 2p − k)/s⌋ + 1</code>. Example: 224×224 input, 7×7 kernel, padding 3, stride 2 → <code>⌊(224 + 6 − 7)/2⌋ + 1 = 112</code>.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why are CNNs better than MLPs for images?</div><div class="qa-answer"><p>They exploit image structure: local connectivity and weight sharing cut parameters by orders of magnitude, translation equivariance means a pattern is recognised anywhere, and stacking builds a feature hierarchy. An MLP on raw pixels has to learn every pattern separately at every position.</p></div></div>
+</div>
+<div class="topic" id="topic-cnn-architectures">
+<div class="page-tag">Convolutional Networks</div>
+<h1 class="page-title">CNN Architectures &amp; ResNet</h1>
+<p class="page-subtitle">The classic CNNs trace how the field learned to go deeper: bigger datasets and GPUs (AlexNet), small stacked filters (VGG), and finally skip connections (ResNet) that made 100+ layers trainable.</p>
+<table><thead><tr><th>Model</th><th>Year</th><th>Key idea</th><th>Depth / params</th></tr></thead><tbody><tr><td>LeNet-5</td><td>1998</td><td>Conv → pool → conv → pool → dense; read handwritten digits</td><td>5 layers, 60 K</td></tr><tr><td>AlexNet</td><td>2012</td><td>ReLU, dropout, data augmentation, trained on GPUs — won ImageNet by a wide margin</td><td>8 layers, 60 M</td></tr><tr><td>VGG-16</td><td>2014</td><td>Only 3×3 convs, stacked deep; simple and uniform</td><td>16 layers, 138 M</td></tr><tr><td>GoogLeNet / Inception</td><td>2014</td><td>Parallel 1×1, 3×3, 5×5 branches; 1×1 convs to cut channels</td><td>22 layers, 7 M</td></tr><tr><td>ResNet</td><td>2015</td><td><strong>Residual connections</strong> <code>y = F(x) + x</code></td><td>18–152 layers, 11–60 M</td></tr><tr><td>MobileNet / EfficientNet</td><td>2017–19</td><td>Depthwise-separable convs; scaling width/depth/resolution together</td><td>Few M, for phones</td></tr><tr><td>ConvNeXt, ViT</td><td>2020–22</td><td>Transformer ideas for vision: patches + attention (ViT), modernised CNNs</td><td>—</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-stack-2"></i>A small CNN, shape by shape</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+model = nn.Sequential(
+    nn.Conv2d(1, 16, 3, padding=1), nn.BatchNorm2d(16), nn.ReLU(),   # 28×28
+    nn.MaxPool2d(2),                                                  # → 14×14
+    nn.Conv2d(16, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(),
+    nn.MaxPool2d(2),                                                  # → 7×7
+    nn.AdaptiveAvgPool2d(1), nn.Flatten(),                            # → 32 numbers
+    nn.Linear(32, 10),                                                # → 10 class logits
+)
+x = torch.randn(4, 1, 28, 28)             # a batch of 4 MNIST-sized images
+shapes = []
+for layer in model:
+    x = layer(x)
+    if isinstance(layer, (nn.MaxPool2d, nn.Flatten, nn.Linear)):
+        shapes.append(tuple(x.shape))
+print(shapes)                             # [(4, 16, 14, 14), (4, 32, 7, 7), (4, 32), (4, 10)]
+print(sum(p.numel() for p in model.parameters()))   # 5226</pre></div>
+<p>The pattern — conv/BN/ReLU blocks, downsampling that halves the resolution while channels double, global pooling, a linear head — describes most CNNs.</p>
+<div class="section-title"><i class="ti ti-arrow-back-up"></i>Residual connections</div>
+<div class="def-card"><p><strong>Residual block</strong> — instead of learning <code>H(x)</code> directly, the block learns the change <code>F(x) = H(x) − x</code> and outputs <code>F(x) + x</code>. If the best thing is to do nothing, it only has to push <code>F</code> to zero.</p></div>
+<div class="flow"><div class="flow-box">x</div><div class="flow-arrow">→</div><div class="flow-box">conv → BN → ReLU → conv → BN = F(x)</div><div class="flow-arrow">→</div><div class="flow-box">F(x) + x</div><div class="flow-arrow">→</div><div class="flow-box">ReLU</div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+class ResidualBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.body = nn.Sequential(
+            nn.Conv2d(channels, channels, 3, padding=1, bias=False), nn.BatchNorm2d(channels), nn.ReLU(),
+            nn.Conv2d(channels, channels, 3, padding=1, bias=False), nn.BatchNorm2d(channels),
+        )
+
+    def forward(self, x):
+        return torch.relu(self.body(x) + x)          # the skip connection
+
+torch.manual_seed(0)
+block = ResidualBlock(8)
+x = torch.randn(2, 8, 16, 16)
+print(block(x).shape)                                # torch.Size([2, 8, 16, 16]) ← shape preserved so x can be added
+
+nn.init.zeros_(block.body[4].weight)                 # zero the last BN's scale → F(x) = 0
+print(torch.allclose(block(x), torch.relu(x)))       # True ← the block passes x straight through</pre></div>
+<p>Why it works: the gradient of <code>F(x) + x</code> with respect to <code>x</code> is <code>∂F/∂x + 1</code>. The <strong>+1</strong> path carries gradients straight back through any number of blocks, so early layers keep learning. When the shapes differ (more channels, stride 2), the shortcut uses a 1×1 conv to match them.</p>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-arrows-diagonal-minimize"></i>1×1 convolutions</h3><p>Mix channels at each pixel without looking at neighbours — cheap way to shrink or expand channel count (bottlenecks in Inception/ResNet-50).</p></div><div class="card"><h3><i class="ti ti-bolt"></i>Depthwise-separable conv</h3><p>A per-channel 3×3 conv followed by a 1×1 conv: ~8–9× fewer operations than a full 3×3 conv (MobileNet).</p></div></div>
+<div class="qa-card"><div class="qa-question">Why do residual connections help train very deep networks?</div><div class="qa-answer"><p>They give gradients an identity path (the <code>+x</code>), so they don't vanish through many layers, and they make it easy for extra layers to do nothing harmful (learn <code>F = 0</code>). Plain 56-layer nets trained worse than 20-layer ones; ResNets kept improving past 100 layers.</p></div></div>
+<div class="qa-card"><div class="qa-question">What does a 1×1 convolution do?</div><div class="qa-answer"><p>It's a linear layer applied at every pixel across channels: it changes the number of channels (e.g. 256 → 64) and mixes information between them, cheaply, without changing the spatial size.</p></div></div>
+</div>
+<div class="topic" id="topic-transfer-learning">
+<div class="page-tag">Convolutional Networks</div>
+<h1 class="page-title">Transfer Learning &amp; Fine-Tuning</h1>
+<p class="page-subtitle">Don't train from scratch when someone has already trained a model on millions of examples. Reuse its learned features, replace the head for your task, and fine-tune — you need far less data and compute.</p>
+<div class="flow"><div class="flow-box">Pretrained backbone (e.g. ImageNet ResNet)</div><div class="flow-arrow">→</div><div class="flow-box">Replace the head</div><div class="flow-arrow">→</div><div class="flow-box">Train head (backbone frozen)</div><div class="flow-arrow">→</div><div class="flow-box">Optionally unfreeze &amp; fine-tune with a low LR</div></div>
+<table><thead><tr><th>Your data</th><th>Similar to pretraining data</th><th>Different from it</th></tr></thead><tbody><tr><td><strong>Small</strong></td><td>Feature extraction: freeze everything, train only the head</td><td>Freeze early layers, fine-tune later ones carefully</td></tr><tr><td><strong>Large</strong></td><td>Fine-tune the whole network</td><td>Fine-tune everything (or train longer / from scratch)</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-lock"></i>Freezing and replacing the head</div>
+<p>Here a small network stands in for a pretrained backbone; with a real one the code is identical.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+backbone = nn.Sequential(                              # pretend these weights came from ImageNet
+    nn.Conv2d(3, 32, 3, padding=1), nn.ReLU(),
+    nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
+    nn.AdaptiveAvgPool2d(1), nn.Flatten(),
+)
+for p in backbone.parameters():
+    p.requires_grad = False                            # freeze: no gradients, no updates
+
+model = nn.Sequential(backbone, nn.Linear(64, 5))      # new head for our 5 classes
+trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+total = sum(p.numel() for p in model.parameters())
+print(trainable, total)                                # 325 19717 ← only the head trains
+
+optimizer = torch.optim.AdamW((p for p in model.parameters() if p.requires_grad), lr=1e-3)
+print(model(torch.randn(2, 3, 32, 32)).shape)          # torch.Size([2, 5])</pre></div>
+<div class="section-title"><i class="ti ti-adjustments"></i>Fine-tuning with smaller learning rates for the backbone</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+backbone, head = nn.Linear(10, 10), nn.Linear(10, 2)
+optimizer = torch.optim.AdamW([
+    {"params": backbone.parameters(), "lr": 1e-5},     # gentle: keep the pretrained features
+    {"params": head.parameters(), "lr": 1e-3},         # the new head learns faster
+], weight_decay=0.01)
+print([g["lr"] for g in optimizer.param_groups])       # [1e-05, 0.001]</pre></div>
+<div class="section-title"><i class="ti ti-photo"></i>With torchvision</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+from torchvision import models
+
+weights = models.ResNet18_Weights.DEFAULT
+model = models.resnet18(weights=weights)            # downloads ImageNet weights once
+for p in model.parameters():
+    p.requires_grad = False
+model.fc = nn.Linear(model.fc.in_features, 5)       # 512 → 5 classes (new layer is trainable)
+preprocess = weights.transforms()                    # the exact resize/normalisation used in pretraining</pre></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Use the pretrained model's own preprocessing (input size, mean/std normalisation); start with a frozen backbone, then unfreeze with an LR 10–100× smaller.</p></div><div class="cons"><div class="label">Avoid</div><p>Fine-tune the whole network at a large learning rate — it wrecks the pretrained features (“catastrophic forgetting”).</p></div></div>
+<div class="highlight-box"><div class="label">Key point</div><p>The same recipe powers NLP: take a pretrained Transformer (BERT, an LLM) and fine-tune it — fully, or with parameter-efficient methods like LoRA, covered in the <strong>GenAI</strong> notes (Fine-Tuning &amp; PEFT).</p></div>
+<div class="qa-card"><div class="qa-question">What is transfer learning and why does it work?</div><div class="qa-answer"><p>Reusing a model trained on a large dataset as the starting point for a new task. Early layers learn general features (edges, textures; or syntax in language models) that are useful across tasks, so the new task only needs to learn a small head or small adjustments — with much less data and compute.</p></div></div>
+<div class="qa-card"><div class="qa-question">Feature extraction vs fine-tuning?</div><div class="qa-answer"><p>Feature extraction freezes the pretrained network and trains only the new head — fast, safe for small datasets. Fine-tuning also updates some or all pretrained layers (with a lower learning rate) — better accuracy when you have more data or the domain differs.</p></div></div>
+</div>
+<div class="topic" id="topic-rnn-lstm-gru">
+<div class="page-tag">Sequences &amp; Transformers</div>
+<h1 class="page-title">RNNs, LSTM &amp; GRU</h1>
+<p class="page-subtitle">Recurrent networks read a sequence one step at a time, carrying a hidden state that summarises everything seen so far. LSTMs and GRUs add gates so that memory survives over long sequences.</p>
+<table><thead><tr><th>Pattern</th><th>Input → output</th><th>Example</th></tr></thead><tbody><tr><td>Many-to-one</td><td>Sequence → one label</td><td>Sentiment of a review, activity from sensor data</td></tr><tr><td>One-to-many</td><td>One input → sequence</td><td>Image captioning, music generation</td></tr><tr><td>Many-to-many (aligned)</td><td>One output per step</td><td>Part-of-speech tagging, frame labelling</td></tr><tr><td>Many-to-many (seq2seq)</td><td>Sequence → different-length sequence</td><td>Translation, summarisation (encoder–decoder)</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-refresh"></i>The vanilla RNN</div>
+<div class="math-formula">hₜ = tanh(W_x xₜ + W_h hₜ₋₁ + b)        the same weights at every time step</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+d_in, d_h, T = 3, 4, 5
+W_x, W_h, b = rng.normal(0, 0.5, (d_in, d_h)), rng.normal(0, 0.5, (d_h, d_h)), np.zeros(d_h)
+xs = rng.normal(size=(T, d_in))            # a sequence of 5 steps, 3 features each
+
+h = np.zeros(d_h)
+for x_t in xs:                             # unroll through time
+    h = np.tanh(x_t @ W_x + h @ W_h + b)
+print(h.shape, h.round(3).tolist())        # (4,) [0.403, -0.613, 0.626, 0.503] ← final state summarises the sequence</pre></div>
+<p>Training unrolls the loop and backpropagates through every step (<strong>backpropagation through time</strong>, BPTT). The gradient reaching step 1 has been multiplied by <code>W_h</code> and a tanh slope once per step — so over long sequences it vanishes (or explodes). A plain RNN effectively remembers only the last few steps.</p>
+<div class="section-title"><i class="ti ti-lock-open"></i>LSTM and GRU</div>
+<table><thead><tr><th></th><th>LSTM</th><th>GRU</th></tr></thead><tbody><tr><td>State</td><td>Hidden <code>h</code> + separate <strong>cell</strong> <code>c</code> (long-term memory)</td><td>Hidden <code>h</code> only</td></tr><tr><td>Gates</td><td>Forget, input, output (+ candidate)</td><td>Update, reset (+ candidate)</td></tr><tr><td>Key update</td><td><code>c ← f ⊙ c + i ⊙ c̃</code> — additive, so gradients flow</td><td><code>h ← (1 − z) ⊙ h + z ⊙ h̃</code></td></tr><tr><td>Parameters</td><td>4× a vanilla RNN</td><td>3× a vanilla RNN</td></tr><tr><td>Use</td><td>The default for long dependencies</td><td>Slightly faster, often as good</td></tr></tbody></table>
+<p>Gates are sigmoid layers (outputs between 0 and 1) that decide what to erase, what to write and what to expose. Because the cell state is updated by <strong>addition</strong> rather than repeated multiplication, information and gradients can travel across many steps — the forget gate set near 1 keeps a memory intact.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+x = torch.randn(2, 7, 10)                      # (batch, time steps, features) with batch_first=True
+lstm = nn.LSTM(input_size=10, hidden_size=20, num_layers=1, batch_first=True)
+out, (h_n, c_n) = lstm(x)
+print(out.shape, h_n.shape, c_n.shape)         # torch.Size([2, 7, 20]) torch.Size([1, 2, 20]) torch.Size([1, 2, 20])
+print(torch.allclose(out[:, -1], h_n[0]))      # True ← last output = final hidden state
+
+count = lambda m: sum(p.numel() for p in m.parameters())
+print(count(nn.RNN(10, 20)), count(nn.GRU(10, 20)), count(lstm))   # 640 1920 2560 ← 1× : 3× : 4×</pre></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+class SentimentLSTM(nn.Module):                 # many-to-one classifier
+    def __init__(self, vocab, emb=32, hidden=64, classes=2):
+        super().__init__()
+        self.embed = nn.Embedding(vocab, emb, padding_idx=0)
+        self.lstm = nn.LSTM(emb, hidden, batch_first=True, bidirectional=True)
+        self.head = nn.Linear(2 * hidden, classes)     # forward + backward directions
+
+    def forward(self, tokens):
+        _, (h_n, _) = self.lstm(self.embed(tokens))
+        return self.head(torch.cat([h_n[0], h_n[1]], dim=1))
+
+torch.manual_seed(0)
+model = SentimentLSTM(vocab=1000)
+print(model(torch.randint(1, 1000, (4, 12))).shape)   # torch.Size([4, 2]) ← 4 reviews of 12 tokens</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>RNNs process steps sequentially, so they can't parallelise over time and are slow on long sequences. For most language tasks Transformers replaced them; RNNs remain useful for streaming, small on-device models and some time-series work.</p></div>
+<div class="qa-card"><div class="qa-question">How does an LSTM solve the vanishing gradient problem?</div><div class="qa-answer"><p>Its cell state is updated additively (<code>c = f·c + i·c̃</code>) and controlled by gates. When the forget gate is near 1 the gradient flows back through the cell almost unchanged, instead of being squashed by a matrix and tanh at every step.</p></div></div>
+<div class="qa-card"><div class="qa-question">LSTM vs GRU?</div><div class="qa-answer"><p>GRU merges the cell and hidden state and uses two gates instead of three, so it has ~25% fewer parameters and trains faster. Performance is usually similar; LSTM can be better on very long dependencies.</p></div></div>
+</div>
+<div class="topic" id="topic-embeddings">
+<div class="page-tag">Sequences &amp; Transformers</div>
+<h1 class="page-title">Embeddings</h1>
+<p class="page-subtitle">An embedding maps each discrete item — a word, token, user or product — to a learned dense vector. Similar items end up close together, and the vectors feed straight into a network.</p>
+<table><thead><tr><th></th><th>One-hot</th><th>Embedding</th></tr></thead><tbody><tr><td>Size</td><td>Vocabulary size (e.g. 50,000), all zeros but one</td><td>Small and dense (e.g. 64–4096)</td></tr><tr><td>Similarity</td><td>Every pair equally different</td><td>Learned: <code>cat</code> is near <code>dog</code></td></tr><tr><td>Parameters</td><td>None</td><td><code>vocab × dim</code> table, trained with the model</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-table"></i>An embedding layer is a lookup table</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+emb = nn.Embedding(num_embeddings=5, embedding_dim=3)     # 5 tokens, 3-D vectors
+ids = torch.tensor([[1, 4, 1]])                           # a batch with one sequence of token ids
+vectors = emb(ids)
+print(vectors.shape)                                      # torch.Size([1, 3, 3]) ← (batch, sequence, dim)
+print(torch.equal(vectors[0, 0], emb.weight[1]))          # True ← row 1 of the table
+
+one_hot = nn.functional.one_hot(torch.tensor(4), 5).float()
+print(torch.allclose(one_hot @ emb.weight, emb.weight[4]))   # True ← same as one-hot × matrix, but cheaper</pre></div>
+<p>Mathematically, an embedding is a linear layer applied to a one-hot vector — but indexing a row is far cheaper than multiplying a 50,000-wide sparse vector. Gradients only update the rows that were used in the batch.</p>
+<div class="section-title"><i class="ti ti-angle"></i>Similarity between vectors</div>
+<div class="math-formula">cosine similarity(a, b) = (a · b) / (‖a‖ ‖b‖)        1 = same direction, 0 = unrelated, −1 = opposite</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+# toy 4-D vectors (real ones are learned and have hundreds of dimensions)
+vec = {"king":  np.array([0.9, 0.8, 0.1, 0.7]),
+       "queen": np.array([0.9, 0.1, 0.8, 0.7]),
+       "man":   np.array([0.1, 0.9, 0.1, 0.2]),
+       "woman": np.array([0.1, 0.2, 0.8, 0.2]),
+       "apple": np.array([0.0, 0.1, 0.1, -0.9])}
+
+cos = lambda a, b: a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+print(round(cos(vec["king"], vec["queen"]), 2), round(cos(vec["king"], vec["apple"]), 2))   # 0.75 -0.42
+
+target = vec["king"] - vec["man"] + vec["woman"]         # the famous analogy
+best = max((w for w in vec if w not in ("king", "man", "woman")), key=lambda w: cos(vec[w], target))
+print(best)                                              # queen</pre></div>
+<table><thead><tr><th>Kind</th><th>How it's learned</th><th>Examples</th></tr></thead><tbody><tr><td>Static word embeddings</td><td>Predict neighbouring words</td><td>word2vec, GloVe, fastText</td></tr><tr><td>Task embeddings</td><td>End-to-end with the model (<code>nn.Embedding</code>)</td><td>Token embeddings in every Transformer</td></tr><tr><td>Contextual embeddings</td><td>Transformer hidden states — the vector depends on the sentence</td><td>BERT (“bank” of a river vs a bank account)</td></tr><tr><td>Sentence / document embeddings</td><td>Contrastive training on similar pairs</td><td>Semantic search, RAG (see the <strong>GenAI</strong> notes)</td></tr><tr><td>Entity embeddings</td><td>Learned inside a recommender or tabular model</td><td>Users, products, categories</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p><code>padding_idx=0</code> keeps the padding token's vector fixed at zero and excluded from updates. Embedding tables are often the largest part of small language models: 50,000 tokens × 768 dims = 38 M parameters.</p></div>
+<div class="qa-card"><div class="qa-question">What is an embedding, and why not use one-hot vectors?</div><div class="qa-answer"><p>A dense, learned vector for each discrete item. One-hot vectors are huge, sparse and make every pair of items equally distant; embeddings are compact and place related items near each other, which lets the model generalise from one item to similar ones.</p></div></div>
+</div>
+<div class="topic" id="topic-attention">
+<div class="page-tag">Sequences &amp; Transformers</div>
+<h1 class="page-title">Attention &amp; Self-Attention</h1>
+<p class="page-subtitle">Attention lets every position look at every other position and take a weighted average of what it finds, with weights computed from the data. It's the core operation of Transformers.</p>
+<p>The analogy is a soft dictionary lookup. Each token produces a <strong>query</strong> (what am I looking for?), a <strong>key</strong> (what do I contain?) and a <strong>value</strong> (what I'll hand over). A query is compared with every key; the softmax of those scores says how much of each value to take.</p>
+<div class="math-formula">Attention(Q, K, V) = softmax( Q Kᵀ / √d_k ) V</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Project</div><div class="step-desc"><code>Q = X W_Q</code>, <code>K = X W_K</code>, <code>V = X W_V</code> — three learned linear maps of the same input (that's what makes it <em>self</em>-attention).</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Score</div><div class="step-desc"><code>Q Kᵀ</code> — dot product of every query with every key: an (n × n) matrix.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Scale</div><div class="step-desc">Divide by <code>√d_k</code> so the scores don't grow with the vector size.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title">Mask (optional)</div><div class="step-desc">Set forbidden scores to <code>−∞</code> — future tokens in a decoder, padding.</div></div></div><div class="step-row"><div class="step-num">5</div><div class="step-body"><div class="step-title">Softmax</div><div class="step-desc">Row-wise: each token's weights over all tokens sum to 1.</div></div></div><div class="step-row"><div class="step-num">6</div><div class="step-body"><div class="step-title">Mix</div><div class="step-desc">Multiply by <code>V</code>: each output is a weighted average of value vectors.</div></div></div>
+<div class="section-title"><i class="ti ti-code"></i>From scratch</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+def softmax(z):
+    e = np.exp(z - z.max(axis=-1, keepdims=True))
+    return e / e.sum(axis=-1, keepdims=True)
+
+def attention(Q, K, V, mask=None):
+    scores = Q @ K.T / np.sqrt(K.shape[-1])
+    if mask is not None:
+        scores = np.where(mask, scores, -np.inf)
+    weights = softmax(scores)
+    return weights @ V, weights
+
+rng = np.random.default_rng(0)
+n, d_model, d_k = 4, 8, 8                      # 4 tokens
+X = rng.normal(size=(n, d_model))
+W_q, W_k, W_v = (rng.normal(0, d_model ** -0.5, (d_model, d_k)) for _ in range(3))
+Q, K, V = X @ W_q, X @ W_k, X @ W_v
+
+out, w = attention(Q, K, V)
+print(out.shape, w.shape)                      # (4, 8) (4, 4) ← one output per token; n × n weights
+print(w.sum(axis=1).round(6).tolist())         # [1.0, 1.0, 1.0, 1.0] ← each row sums to 1
+
+causal = np.tril(np.ones((n, n), dtype=bool))  # token i may only look at tokens ≤ i
+_, w_causal = attention(Q, K, V, mask=causal)
+print(w_causal[2].round(2).tolist())           # [0.31, 0.34, 0.35, 0.0] ← token 2 sees tokens 0–2; token 3 is masked
+print(w_causal[0].round(2).tolist())           # [1.0, 0.0, 0.0, 0.0] ← token 0 can only attend to itself</pre></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+import torch
+import torch.nn.functional as F
+
+torch.manual_seed(0)
+Q, K, V = torch.randn(1, 4, 8), torch.randn(1, 4, 8), torch.randn(1, 4, 8)   # (batch, tokens, d_k)
+
+manual = torch.softmax(Q @ K.transpose(-2, -1) / 8 ** 0.5, dim=-1) @ V
+fused = F.scaled_dot_product_attention(Q, K, V)          # PyTorch's optimised kernel (FlashAttention on GPUs)
+print(torch.allclose(manual, fused, atol=1e-6))          # True
+first = F.scaled_dot_product_attention(Q, K, V, is_causal=True)[0, 0]
+print(torch.allclose(first, V[0, 0]))                    # True ← causal: the first token can only copy its own value</pre></div>
+<div class="section-title"><i class="ti ti-divide"></i>Why divide by √d_k?</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+rng = np.random.default_rng(0)
+for_d = {}
+for d in (4, 64, 1024):
+    q, k = rng.normal(size=(10000, d)), rng.normal(size=(10000, d))
+    dots = (q * k).sum(axis=1)
+    for_d[d] = (round(float(dots.std()), 1), round(float((dots / np.sqrt(d)).std()), 2))
+print(for_d)       # {4: (2.0, 1.0), 64: (8.1, 1.01), 1024: (32.0, 1.0)} ← raw std ≈ √d; scaled std ≈ 1</pre></div>
+<p>Dot products of random <code>d</code>-dimensional vectors have standard deviation <code>√d</code>. Large scores push softmax into saturation — nearly one-hot, with vanishing gradients. Dividing by <code>√d_k</code> keeps the scores at unit scale.</p>
+<table><thead><tr><th>Variant</th><th>Q comes from</th><th>K, V come from</th><th>Used in</th></tr></thead><tbody><tr><td>Self-attention</td><td>The sequence</td><td>The same sequence</td><td>Encoders (BERT), decoders (GPT)</td></tr><tr><td>Masked (causal) self-attention</td><td>The sequence</td><td>Earlier positions only</td><td>Decoders / LLMs — no peeking at the future</td></tr><tr><td>Cross-attention</td><td>The decoder</td><td>The encoder's output</td><td>Translation, image captioning, diffusion text conditioning</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>Attention compares every token with every other: time and memory grow as <strong>O(n²)</strong> in sequence length. Doubling the context quadruples the attention cost — the reason for FlashAttention, sparse/sliding-window attention and KV caching.</p></div>
+<div class="qa-card"><div class="qa-question">Explain self-attention.</div><div class="qa-answer"><p>Each token is projected into a query, key and value. A token's output is a weighted average of all value vectors, where the weights are the softmax of its query's (scaled) dot products with every key. This lets each token gather information from the most relevant other tokens, in parallel for the whole sequence.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why is attention better than an RNN for long sequences?</div><div class="qa-answer"><p>Any two positions interact directly in one step (path length 1 instead of n), so long-range dependencies are easy to learn and gradients don't vanish across time; and all positions are processed in parallel on a GPU. The cost is O(n²) compute and memory in the sequence length.</p></div></div>
+</div>
+<div class="topic" id="topic-transformers">
+<div class="page-tag">Sequences &amp; Transformers</div>
+<h1 class="page-title">Transformers</h1>
+<p class="page-subtitle">The Transformer (“Attention Is All You Need”, 2017) drops recurrence entirely: stacks of self-attention and feed-forward layers, with residual connections and layer norm. It powers modern language, vision and audio models.</p>
+<div class="flow"><div class="flow-box">Tokens</div><div class="flow-arrow">→</div><div class="flow-box">Embeddings + positional encoding</div><div class="flow-arrow">→</div><div class="flow-box">N × [Multi-head attention → Add &amp; Norm → Feed-forward → Add &amp; Norm]</div><div class="flow-arrow">→</div><div class="flow-box">Output head</div></div>
+<div class="section-title"><i class="ti ti-arrows-left-right"></i>Encoder, decoder, or both</div>
+<table><thead><tr><th>Type</th><th>Attention</th><th>Trained to</th><th>Examples</th><th>Good for</th></tr></thead><tbody><tr><td>Encoder-only</td><td>Bidirectional self-attention</td><td>Fill in masked tokens</td><td>BERT, RoBERTa</td><td>Classification, embeddings, extraction</td></tr><tr><td>Decoder-only</td><td>Causal self-attention</td><td>Predict the next token</td><td>GPT, LLaMA, Claude</td><td>Text generation, chat — today's LLMs</td></tr><tr><td>Encoder–decoder</td><td>Encoder self-attention + decoder cross-attention</td><td>Map input sequence → output sequence</td><td>Original Transformer, T5, Whisper</td><td>Translation, summarisation, speech-to-text</td></tr></tbody></table>
+<p>The <strong>GenAI</strong> notes cover the LLM side (GPT vs BERT, tokens, context windows, sampling); here we look at the machinery.</p>
+<div class="section-title"><i class="ti ti-list-numbers"></i>Positional encoding</div>
+<p>Attention is permutation-invariant — shuffle the tokens and each output is just shuffled too — so order must be injected. The original paper adds sinusoids of different frequencies to the embeddings; many models learn position embeddings, and modern LLMs use rotary embeddings (RoPE) applied inside attention.</p>
+<div class="math-formula">PE(pos, 2i) = sin(pos / 10000^(2i/d))        PE(pos, 2i+1) = cos(pos / 10000^(2i/d))</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+def positional_encoding(n_positions, d):
+    pos = np.arange(n_positions)[:, None]
+    i = np.arange(0, d, 2)[None, :]
+    angle = pos / 10000 ** (i / d)
+    pe = np.zeros((n_positions, d))
+    pe[:, 0::2], pe[:, 1::2] = np.sin(angle), np.cos(angle)
+    return pe
+
+pe = positional_encoding(50, 16)
+print(pe.shape)                          # (50, 16)
+print(pe[0, :4].tolist())                # [0.0, 1.0, 0.0, 1.0] ← position 0: sin 0, cos 0, …
+print(pe[1, :4].round(3).tolist())       # [0.841, 0.54, 0.311, 0.95]
+near, far = pe[10] @ pe[11], pe[10] @ pe[40]
+print(near &gt; far)                        # True ← nearby positions have more similar codes</pre></div>
+<div class="section-title"><i class="ti ti-layout-columns"></i>Multi-head attention</div>
+<p>Instead of one attention with <code>d_model</code>-wide vectors, split into <code>h</code> heads of size <code>d_model / h</code>, attend in each independently, concatenate and project. Different heads learn different relations — one follows syntax, another coreference, another nearby tokens — at the same total cost.</p>
+<div class="math-formula">MultiHead(X) = Concat(head₁, …, head_h) W_O        headᵢ = Attention(X W_Qⁱ, X W_Kⁱ, X W_Vⁱ)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+mha = nn.MultiheadAttention(embed_dim=64, num_heads=8, batch_first=True)   # 8 heads of size 8
+x = torch.randn(2, 10, 64)                       # (batch, tokens, d_model)
+out, weights = mha(x, x, x)                      # self-attention: query = key = value = x
+print(out.shape, weights.shape)                  # torch.Size([2, 10, 64]) torch.Size([2, 10, 10]) ← weights averaged over heads
+print(sum(p.numel() for p in mha.parameters()))  # 16640 ← 4 projections of 64×64 (+ biases)</pre></div>
+<div class="section-title"><i class="ti ti-box"></i>A Transformer block</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+class TransformerBlock(nn.Module):
+    """Pre-LN block, as in GPT-2 and most modern models."""
+    def __init__(self, d_model=64, n_heads=4, d_ff=256, dropout=0.1):
+        super().__init__()
+        self.ln1, self.ln2 = nn.LayerNorm(d_model), nn.LayerNorm(d_model)
+        self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
+        self.ff = nn.Sequential(nn.Linear(d_model, d_ff), nn.GELU(), nn.Linear(d_ff, d_model), nn.Dropout(dropout))
+
+    def forward(self, x, causal=True):
+        n = x.shape[1]
+        mask = torch.triu(torch.ones(n, n, dtype=torch.bool), diagonal=1) if causal else None   # True = blocked
+        h = self.ln1(x)
+        x = x + self.attn(h, h, h, attn_mask=mask, need_weights=False)[0]   # residual 1
+        x = x + self.ff(self.ln2(x))                                         # residual 2
+        return x
+
+torch.manual_seed(0)
+block = TransformerBlock()
+x = torch.randn(2, 10, 64)
+print(block(x).shape)                                   # torch.Size([2, 10, 64]) ← same shape in and out: blocks stack
+print(sum(p.numel() for p in block.parameters()))       # 49984
+
+layer = nn.TransformerEncoderLayer(d_model=64, nhead=4, dim_feedforward=256, batch_first=True, norm_first=True)
+encoder = nn.TransformerEncoder(layer, num_layers=6, enable_nested_tensor=False)   # built-in, 6 deep
+print(encoder(x).shape)                                 # torch.Size([2, 10, 64])</pre></div>
+<table><thead><tr><th>Component</th><th>Role</th></tr></thead><tbody><tr><td>Multi-head self-attention</td><td>Tokens exchange information</td></tr><tr><td>Feed-forward network (FFN)</td><td>Processes each token independently; usually 4× wider; holds most parameters</td></tr><tr><td>Residual connections</td><td>Gradient highway; each sub-layer adds a refinement</td></tr><tr><td>LayerNorm (Pre-LN)</td><td>Stable training of deep stacks</td></tr><tr><td>Output head</td><td>Linear layer to vocabulary logits (often tied to the input embedding matrix)</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-trophy"></i>Why Transformers won</div>
+<ul><li><strong>Parallel</strong> training over all positions — unlike RNNs — so they use GPUs efficiently.</li><li><strong>Direct long-range interactions</strong> between any two tokens.</li><li><strong>Scale predictably</strong>: loss keeps falling as data, parameters and compute grow (scaling laws).</li><li><strong>General</strong>: the same block works on text tokens, image patches (ViT), audio frames and more.</li></ul>
+<div class="warning-box"><div class="label">Watch out</div><p>Costs: attention is O(n²) in context length, and generation is sequential — one token at a time, with a KV cache storing past keys and values. Serving tricks (KV caching, quantisation, speculative decoding) are covered in the <strong>GenAI</strong> notes under LLM Optimization.</p></div>
+<div class="qa-card"><div class="qa-question">Walk through a Transformer layer.</div><div class="qa-answer"><p>Input vectors (token embeddings + positions) go through LayerNorm and multi-head self-attention, whose output is added back to the input (residual). Then another LayerNorm and a position-wise feed-forward network (two linear layers with GELU), again added residually. The shape is unchanged, so N such layers stack.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why do Transformers need positional encodings?</div><div class="qa-answer"><p>Self-attention treats the input as a set — it has no notion of order. Positional encodings (sinusoidal, learned, or rotary) inject each token's position so “dog bites man” differs from “man bites dog”.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is the purpose of multiple attention heads?</div><div class="qa-answer"><p>Each head attends in its own lower-dimensional subspace, so the layer can capture several kinds of relationships at once (syntax, coreference, position) for about the same cost as one full-width head.</p></div></div>
+</div>
+<div class="topic" id="topic-autoencoders-vae">
+<div class="page-tag">Generative Models</div>
+<h1 class="page-title">Autoencoders &amp; VAEs</h1>
+<p class="page-subtitle">An autoencoder squeezes its input through a narrow bottleneck and learns to rebuild it — so the bottleneck must capture what matters. A variational autoencoder (VAE) makes that bottleneck a smooth probability space you can sample new data from.</p>
+<div class="flow"><div class="flow-box">Input x</div><div class="flow-arrow">→</div><div class="flow-box">Encoder</div><div class="flow-arrow">→</div><div class="flow-box">Latent code z (small)</div><div class="flow-arrow">→</div><div class="flow-box">Decoder</div><div class="flow-arrow">→</div><div class="flow-box">Reconstruction x̂</div></div>
+<div class="section-title"><i class="ti ti-arrows-minimize"></i>A plain autoencoder</div>
+<p>Trained only to minimise reconstruction error <code>‖x − x̂‖²</code> — no labels needed (self-supervised). Here the 10-D data secretly lives on a 2-D plane, and a 2-unit bottleneck is enough to rebuild it:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+basis = torch.randn(2, 10)
+X = torch.randn(512, 2) @ basis                   # 512 points in 10-D that lie on a 2-D plane
+
+encoder = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 2))
+decoder = nn.Sequential(nn.Linear(2, 32), nn.ReLU(), nn.Linear(32, 10))
+params = list(encoder.parameters()) + list(decoder.parameters())
+opt = torch.optim.Adam(params, lr=1e-2)
+
+for step in range(1000):
+    loss = ((decoder(encoder(X)) - X) ** 2).mean()
+    opt.zero_grad(); loss.backward(); opt.step()
+
+print(encoder(X).shape)                                 # torch.Size([512, 2]) ← 10 numbers compressed to 2
+print(round(X.var().item(), 2), loss.item() &lt; 0.05)     # 2.46 True ← data variance vs reconstruction error</pre></div>
+<table><thead><tr><th>Use</th><th>How</th></tr></thead><tbody><tr><td>Dimensionality reduction</td><td>Use <code>z</code> as compact features (a non-linear PCA)</td></tr><tr><td>Denoising</td><td>Train on noisy inputs to reconstruct clean ones</td></tr><tr><td>Anomaly detection</td><td>Normal data reconstructs well; high reconstruction error flags anomalies</td></tr><tr><td>Pretraining / compression</td><td>Learn features from unlabelled data; latent space for diffusion models (Stable Diffusion's VAE)</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>A plain autoencoder's latent space has gaps: decoding a random <code>z</code> usually gives garbage. It compresses, but it isn't a generator.</p></div>
+<div class="section-title"><i class="ti ti-chart-dots-3"></i>Variational autoencoder</div>
+<p>The VAE encoder outputs a <strong>distribution</strong> — a mean <code>μ</code> and a standard deviation <code>σ</code> per latent dimension. We sample <code>z</code> from it, decode, and add a penalty that keeps every such distribution close to a standard normal <code>N(0, I)</code>. The latent space becomes smooth and filled in, so decoding <code>z ~ N(0, I)</code> produces new, plausible data.</p>
+<div class="math-formula">loss = reconstruction(x, x̂) + KL( N(μ, σ²) ‖ N(0, 1) )        KL = ½ Σ ( μ² + σ² − log σ² − 1 )</div>
+<div class="def-card"><p><strong>Reparameterisation trick</strong> — sampling isn't differentiable, so write <code>z = μ + σ ⊙ ε</code> with <code>ε ~ N(0, I)</code>. The randomness sits in <code>ε</code>; gradients flow through <code>μ</code> and <code>σ</code>.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+import torch.nn.functional as F
+
+class VAE(nn.Module):
+    def __init__(self, d_in=784, d_hidden=256, d_latent=16):
+        super().__init__()
+        self.enc = nn.Sequential(nn.Linear(d_in, d_hidden), nn.ReLU())
+        self.mu = nn.Linear(d_hidden, d_latent)
+        self.log_var = nn.Linear(d_hidden, d_latent)       # predict log σ² — any real number is valid
+        self.dec = nn.Sequential(nn.Linear(d_latent, d_hidden), nn.ReLU(), nn.Linear(d_hidden, d_in))
+
+    def forward(self, x):
+        h = self.enc(x)
+        mu, log_var = self.mu(h), self.log_var(h)
+        z = mu + torch.exp(0.5 * log_var) * torch.randn_like(mu)   # reparameterisation
+        return self.dec(z), mu, log_var
+
+def vae_loss(logits, x, mu, log_var):
+    recon = F.binary_cross_entropy_with_logits(logits, x, reduction="sum") / len(x)
+    kl = 0.5 * (mu ** 2 + log_var.exp() - log_var - 1).sum() / len(x)
+    return recon + kl, kl
+
+torch.manual_seed(0)
+vae = VAE()
+x = torch.rand(8, 784)                                # a batch of 8 "images" with pixels in [0, 1]
+logits, mu, log_var = vae(x)
+loss, kl = vae_loss(logits, x, mu, log_var)
+print(logits.shape, mu.shape)                         # torch.Size([8, 784]) torch.Size([8, 16])
+print(loss.item() &gt; 0, kl.item() &gt;= 0)                # True True
+
+new_images = torch.sigmoid(vae.dec(torch.randn(4, 16)))   # generate: decode samples from the prior
+print(new_images.shape)                               # torch.Size([4, 784])</pre></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+kl = lambda mu, sigma: 0.5 * np.sum(mu ** 2 + sigma ** 2 - np.log(sigma ** 2) - 1)
+print(kl(np.array([0.0]), np.array([1.0])))            # 0.0 ← already N(0, 1): no penalty
+print(round(kl(np.array([2.0]), np.array([0.5])), 3))  # 2.318 ← far from N(0, 1): penalised</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>The two terms pull against each other: reconstruction wants distinct, precise codes; KL wants everything to look like <code>N(0, 1)</code>. That's why VAE samples tend to be slightly blurry — and why β-VAE adds a weight on the KL term to trade one for the other.</p></div>
+<div class="qa-card"><div class="qa-question">Autoencoder vs VAE?</div><div class="qa-answer"><p>An autoencoder maps each input to a single point and is trained only to reconstruct — good for compression and anomaly detection, but its latent space has holes. A VAE maps each input to a distribution and adds a KL penalty toward <code>N(0, I)</code>, giving a continuous latent space you can sample from to generate new data.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is the reparameterization trick?</div><div class="qa-answer"><p>Writing a sample as <code>z = μ + σ·ε</code> with <code>ε</code> drawn from a fixed <code>N(0, 1)</code>. The random draw no longer depends on the parameters, so backpropagation can compute gradients with respect to <code>μ</code> and <code>σ</code>.</p></div></div>
+</div>
+<div class="topic" id="topic-gans">
+<div class="page-tag">Generative Models</div>
+<h1 class="page-title">GANs</h1>
+<p class="page-subtitle">A generative adversarial network trains two networks against each other: a generator that turns random noise into fake samples, and a discriminator that tries to tell fakes from real data. Each improves by beating the other.</p>
+<div class="flow"><div class="flow-box">Noise z</div><div class="flow-arrow">→</div><div class="flow-box">Generator G</div><div class="flow-arrow">→</div><div class="flow-box">Fake sample G(z)</div><div class="flow-arrow">→</div><div class="flow-box">Discriminator D ← also sees real data</div><div class="flow-arrow">→</div><div class="flow-box">Real or fake?</div></div>
+<div class="math-formula">min_G max_D   E[ log D(x) ] + E[ log(1 − D(G(z))) ]</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Train D</div><div class="step-desc">On a batch of real data (label 1) and generated data (label 0): ordinary binary classification.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Train G</div><div class="step-desc">Generate a batch and label it <strong>real</strong>; backprop through D (frozen for this step) into G. G improves when it fools D.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Alternate</div><div class="step-desc">Repeat. At the ideal equilibrium, fakes match the data distribution and D outputs 0.5 everywhere.</div></div></div>
+<div class="section-title"><i class="ti ti-code"></i>A GAN in 1-D</div>
+<p>Real data: numbers drawn from <code>N(4, 1.25²)</code>. The generator starts out producing values near 0 and must learn to imitate them.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+real_data = lambda n: torch.randn(n, 1) * 1.25 + 4.0
+
+G = nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))                # noise → sample
+D = nn.Sequential(nn.Linear(1, 16), nn.LeakyReLU(0.2), nn.Linear(16, 1))        # sample → real/fake logit
+opt_g = torch.optim.Adam(G.parameters(), lr=1e-3, betas=(0.5, 0.999))
+opt_d = torch.optim.Adam(D.parameters(), lr=1e-3, betas=(0.5, 0.999))
+bce = nn.BCEWithLogitsLoss()
+ones, zeros = torch.ones(64, 1), torch.zeros(64, 1)
+
+with torch.no_grad():
+    print(round(G(torch.randn(10000, 1)).mean().item(), 1))    # 0.0 ← before training
+
+for step in range(3000):
+    real, fake = real_data(64), G(torch.randn(64, 1))
+    loss_d = bce(D(real), ones) + bce(D(fake.detach()), zeros)   # detach: don't update G here
+    opt_d.zero_grad(); loss_d.backward(); opt_d.step()
+
+    loss_g = bce(D(fake), ones)                                  # G wants D to say "real"
+    opt_g.zero_grad(); loss_g.backward(); opt_g.step()
+
+with torch.no_grad():
+    samples = G(torch.randn(10000, 1))
+print(round(samples.mean().item(), 1), round(samples.std().item(), 1))   # 4.0 0.5 ← mean learned; spread too narrow</pre></div>
+<p>The generator found the right centre but its samples are too concentrated (std 0.5 instead of 1.25) — a mild form of <strong>mode collapse</strong>: producing a narrow slice of plausible outputs is enough to fool this discriminator. Real GANs need care to avoid it.</p>
+<div class="section-title"><i class="ti ti-alert-triangle"></i>Why GANs are hard to train</div>
+<table><thead><tr><th>Problem</th><th>What happens</th><th>Remedies</th></tr></thead><tbody><tr><td>Mode collapse</td><td>G produces only a few kinds of output</td><td>Minibatch discrimination, Wasserstein loss, unrolled GANs</td></tr><tr><td>Non-convergence</td><td>G and D oscillate instead of settling</td><td>Lower LRs, Adam with β₁ = 0.5, two-timescale updates</td></tr><tr><td>Vanishing G gradient</td><td>D wins too easily, <code>log(1 − D(G(z)))</code> saturates</td><td>Non-saturating loss (train G to maximise <code>log D(G(z))</code>, as above)</td></tr><tr><td>Hard to evaluate</td><td>No likelihood to report</td><td>FID, Inception Score, human evaluation</td></tr></tbody></table>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-photo"></i>DCGAN</h3><p>Conv generator/discriminator with BatchNorm — the first stable image GAN recipe.</p></div><div class="card"><h3><i class="ti ti-ruler-measure"></i>WGAN / WGAN-GP</h3><p>Wasserstein distance + gradient penalty: smoother, more informative gradients.</p></div><div class="card"><h3><i class="ti ti-user"></i>StyleGAN</h3><p>Style-based generator; photorealistic faces at 1024×1024.</p></div><div class="card"><h3><i class="ti ti-arrows-exchange"></i>CycleGAN / pix2pix</h3><p>Image-to-image translation: horses ↔ zebras, sketches → photos.</p></div></div>
+<div class="qa-card"><div class="qa-question">How does a GAN work?</div><div class="qa-answer"><p>Two networks play a minimax game. The generator maps random noise to samples; the discriminator classifies samples as real or generated. The discriminator is trained to classify correctly, the generator to make the discriminator wrong. Over training, generated samples become harder to distinguish from real data.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is mode collapse?</div><div class="qa-answer"><p>The generator learns to produce only a small variety of outputs (one kind of face, one digit) because those reliably fool the discriminator, ignoring the rest of the data distribution.</p></div></div>
+</div>
+<div class="topic" id="topic-diffusion-models">
+<div class="page-tag">Generative Models</div>
+<h1 class="page-title">Diffusion Models</h1>
+<p class="page-subtitle">A diffusion model learns to reverse a gradual noising process. Training: add noise to real data and teach a network to predict that noise. Generation: start from pure noise and remove it step by step. It's the engine behind Stable Diffusion, DALL·E 3 and most image and video generators.</p>
+<div class="flow"><div class="flow-box">Image x₀</div><div class="flow-arrow">→</div><div class="flow-box">add a little noise … ×T</div><div class="flow-arrow">→</div><div class="flow-box">Pure noise x_T</div><div class="flow-arrow">→</div><div class="flow-box">denoise step by step (learned)</div><div class="flow-arrow">→</div><div class="flow-box">New image</div></div>
+<div class="section-title"><i class="ti ti-arrow-right"></i>The forward (noising) process</div>
+<p>Each step mixes in a little Gaussian noise according to a schedule <code>β₁ … β_T</code>. Conveniently, you can jump straight to any step <code>t</code> in closed form — no need to loop:</p>
+<div class="math-formula">x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · ε        ε ~ N(0, I),   ᾱ_t = Π (1 − β_s)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import numpy as np
+
+T = 1000
+betas = np.linspace(1e-4, 0.02, T)          # the original DDPM linear schedule
+alpha_bar = np.cumprod(1 - betas)
+
+for_steps = {t: round(float(np.sqrt(alpha_bar[t])), 3) for t in (0, 250, 500, 999)}
+print(for_steps)          # {0: 1.0, 250: 0.722, 500: 0.279, 999: 0.006} ← how much of the original signal remains
+
+rng = np.random.default_rng(0)
+x0 = np.array([1.0, -1.0, 0.5])
+t = 500
+xt = np.sqrt(alpha_bar[t]) * x0 + np.sqrt(1 - alpha_bar[t]) * rng.normal(size=3)
+print(xt.round(2).tolist())                 # [0.4, -0.41, 0.75] ← x₀ at step 500: mostly noise</pre></div>
+<div class="section-title"><i class="ti ti-target-arrow"></i>Training: predict the noise</div>
+<div class="math-formula">loss = ‖ ε − ε_θ(x_t, t) ‖²        (t random, ε random, x₀ from the data)</div>
+<p>That's the whole objective: a plain mean-squared error. The network (a U-Net or a Transformer — “DiT”) takes the noisy input and the step <code>t</code>, and guesses the noise that was added. A toy version on 1-D data — a mixture of two bumps at −2 and +2:</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import torch
+from torch import nn
+
+torch.manual_seed(0)
+T = 100
+betas = torch.linspace(1e-4, 0.1, T)
+alphas, alpha_bar = 1 - betas, torch.cumprod(1 - betas, dim=0)
+data = lambda n: torch.where(torch.rand(n, 1) &lt; 0.5, -2.0, 2.0) + 0.3 * torch.randn(n, 1)
+
+model = nn.Sequential(nn.Linear(2, 64), nn.SiLU(), nn.Linear(64, 64), nn.SiLU(), nn.Linear(64, 1))
+opt = torch.optim.Adam(model.parameters(), lr=2e-3)
+
+for step in range(3000):                                      # training
+    x0 = data(256)
+    t = torch.randint(0, T, (256, 1))
+    eps = torch.randn_like(x0)
+    xt = alpha_bar[t].sqrt() * x0 + (1 - alpha_bar[t]).sqrt() * eps   # jump to step t
+    loss = ((model(torch.cat([xt, t / T], dim=1)) - eps) ** 2).mean()
+    opt.zero_grad(); loss.backward(); opt.step()
+
+with torch.no_grad():                                         # sampling (DDPM)
+    x = torch.randn(2000, 1)                                  # start from pure noise
+    for t in reversed(range(T)):
+        eps_hat = model(torch.cat([x, torch.full_like(x, t / T)], dim=1))
+        x = (x - betas[t] / (1 - alpha_bar[t]).sqrt() * eps_hat) / alphas[t].sqrt()
+        if t &gt; 0:
+            x = x + betas[t].sqrt() * torch.randn_like(x)     # a little fresh noise each step
+
+print(round(alpha_bar[-1].item(), 3))                         # 0.006 ← x_T is essentially pure noise
+print(round((x &lt; 0).float().mean().item(), 2))                # 0.49 ← about half the samples in each bump
+print(round(x[x &lt; 0].mean().item(), 1), round(x[x &gt; 0].mean().item(), 1))   # -2.0 2.0 ← centred on the two modes</pre></div>
+<div class="section-title"><i class="ti ti-adjustments"></i>Making it practical</div>
+<table><thead><tr><th>Idea</th><th>What it does</th></tr></thead><tbody><tr><td>DDIM &amp; faster samplers</td><td>Deterministic updates that skip steps: 20–50 steps instead of 1000</td></tr><tr><td>Latent diffusion</td><td>Diffuse in a VAE's small latent space instead of pixels — much cheaper (Stable Diffusion)</td></tr><tr><td>Text conditioning</td><td>Feed a text encoder's embeddings to the denoiser via cross-attention</td></tr><tr><td>Classifier-free guidance</td><td><code>ε = ε_uncond + w · (ε_cond − ε_uncond)</code>, <code>w</code> ≈ 3–8: follow the prompt more strongly</td></tr><tr><td>Distillation / consistency models</td><td>Few-step or one-step generation from a trained diffusion model</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-scale"></i>Comparing generative models</div>
+<table><thead><tr><th></th><th>VAE</th><th>GAN</th><th>Diffusion</th></tr></thead><tbody><tr><td>Sample quality</td><td>Blurry</td><td>Sharp</td><td><strong>Sharp and diverse</strong></td></tr><tr><td>Diversity / mode coverage</td><td>Good</td><td>Mode collapse risk</td><td>Good</td></tr><tr><td>Training</td><td>Stable</td><td>Unstable (adversarial)</td><td>Stable (simple MSE)</td></tr><tr><td>Sampling speed</td><td>One pass</td><td>One pass</td><td>Many steps (slow) — samplers help</td></tr><tr><td>Likelihood / latent</td><td>Yes / yes</td><td>No / noise vector</td><td>Approximate / no compact latent</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>The <strong>GenAI</strong> notes (Diffusion &amp; GANs) cover these models from the product side; the key mechanical idea is simply: learn to denoise at every noise level, then chain the denoising steps.</p></div>
+<div class="qa-card"><div class="qa-question">How do diffusion models generate images?</div><div class="qa-answer"><p>They're trained to predict the noise added to real images at random noise levels. To generate, start from pure Gaussian noise and repeatedly subtract the predicted noise (plus a little fresh noise), moving from step T to 0 until a clean image remains; text prompts steer each step through cross-attention and classifier-free guidance.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why did diffusion models overtake GANs for image generation?</div><div class="qa-answer"><p>Their training objective is a stable regression loss (no adversarial game), they cover the data distribution without mode collapse, and they scale well with data and compute. The main drawback — slow multi-step sampling — was largely solved by better samplers, latent diffusion and distillation.</p></div></div>
+</div>
+<div class="topic" id="topic-interview-questions">
+<div class="page-tag">Interview Prep</div>
+<h1 class="page-title">Interview Questions</h1>
+<p class="page-subtitle">Deep learning questions that come up in ML engineer and data scientist interviews — short answers you can say out loud, with pointers to the topic that explains each one.</p>
+<div class="section-title"><i class="ti ti-brain"></i>Fundamentals</div>
+<div class="qa-card"><div class="qa-question">What is the difference between machine learning and deep learning?</div><div class="qa-answer"><p>Deep learning is a subset of ML that uses many-layered neural networks to learn features directly from raw data. Classic ML relies on hand-engineered features and shines on small/tabular data; deep learning shines on images, audio and text, and when data and compute are plentiful.</p></div></div>
+<div class="qa-card"><div class="qa-question">Why do neural networks need activation functions?</div><div class="qa-answer"><p>Without non-linearities, stacked linear layers collapse into a single linear map. Activations like ReLU let the network represent non-linear functions. (See <strong>Activation Functions</strong>.)</p></div></div>
+<div class="qa-card"><div class="qa-question">What does the universal approximation theorem say — and not say?</div><div class="qa-answer"><p>A single hidden layer with enough units can approximate any continuous function on a bounded domain. It doesn't say how many units, whether gradient descent will find the weights, or whether the result will generalise; depth is far more efficient in practice.</p></div></div>
+<div class="qa-card"><div class="qa-question">How many parameters does a Conv2d(64, 128, kernel_size=3) have?</div><div class="qa-answer"><p><code>128 × (64 × 3 × 3) + 128 = 73,856</code>. Parameters don't depend on the image size.</p></div></div>
+<div class="section-title"><i class="ti ti-trending-down"></i>Training</div>
+<div class="qa-card"><div class="qa-question">Explain backpropagation.</div><div class="qa-answer"><p>Run a forward pass storing intermediate values, then apply the chain rule from the loss backwards: each operation multiplies the incoming gradient by its local derivative and passes it on. One backward pass yields gradients for all parameters at roughly twice the cost of a forward pass.</p></div></div>
+<div class="qa-card"><div class="qa-question">Batch vs mini-batch vs stochastic gradient descent?</div><div class="qa-answer"><p>Batch uses the whole dataset per step (exact but slow), SGD one example (cheap but noisy), mini-batch a few dozen to a few thousand (the practical default: GPU-efficient with useful noise).</p></div></div>
+<div class="qa-card"><div class="qa-question">How does Adam work? Why AdamW?</div><div class="qa-answer"><p>Adam keeps an exponential average of gradients (momentum) and of squared gradients (per-parameter scale), with bias correction, and steps by <code>m̂ / (√v̂ + ε)</code>. AdamW applies weight decay directly to the weights instead of through the gradient, so regularisation isn't distorted by the adaptive scaling.</p></div></div>
+<div class="qa-card"><div class="qa-question">What happens if the learning rate is too high or too low?</div><div class="qa-answer"><p>Too high: the loss oscillates, diverges or becomes <code>nan</code>. Too low: training crawls and may stall on plateaus. Use an LR range test, warmup and a decay schedule (cosine is a good default).</p></div></div>
+<div class="qa-card"><div class="qa-question">Why use cross-entropy loss for classification, and what should the initial loss be?</div><div class="qa-answer"><p>It's the negative log-likelihood of the correct class and gives strong gradients (<code>p − y</code>) when the model is confidently wrong. With <code>k</code> balanced classes and a fresh model, expect about <code>ln k</code> (2.30 for 10 classes).</p></div></div>
+<div class="section-title"><i class="ti ti-shield-check"></i>Stability &amp; generalisation</div>
+<div class="qa-card"><div class="qa-question">What causes vanishing/exploding gradients and how do you fix them?</div><div class="qa-answer"><p>Gradients are products of per-layer factors; below 1 they shrink exponentially, above 1 they blow up. Fixes: ReLU-family activations, He/Xavier init, BatchNorm/LayerNorm, residual connections, gradient clipping, LSTM/GRU for sequences.</p></div></div>
+<div class="qa-card"><div class="qa-question">How does batch normalization behave differently at train and test time?</div><div class="qa-answer"><p>In training it normalises with the current batch's mean/variance and updates running averages; in eval mode it uses those running averages. Forgetting <code>model.eval()</code> is a common bug.</p></div></div>
+<div class="qa-card"><div class="qa-question">How does dropout work?</div><div class="qa-answer"><p>In training each unit is zeroed with probability <code>p</code> and survivors are scaled by <code>1/(1−p)</code>; at test time it's off. It prevents co-adaptation and acts like an ensemble of sub-networks.</p></div></div>
+<div class="qa-card"><div class="qa-question">Your training accuracy is 99% but validation is 75%. What do you do?</div><div class="qa-answer"><p>Overfitting: add data or augmentation, weight decay, dropout, early stopping, a smaller or pretrained model. Also check for distribution mismatch or leakage between splits.</p></div></div>
+<div class="qa-card"><div class="qa-question">Your training loss is not decreasing. How do you debug?</div><div class="qa-answer"><p>Verify data and labels, check the initial loss (≈ <code>ln k</code>), try to overfit a tiny batch, then look for bugs — missing <code>zero_grad</code>, softmax before <code>CrossEntropyLoss</code>, wrong shapes/dtypes, frozen parameters, bad LR. Inspect gradient norms per layer.</p></div></div>
+<div class="section-title"><i class="ti ti-building"></i>Architectures</div>
+<div class="qa-card"><div class="qa-question">Why do CNNs work well for images?</div><div class="qa-answer"><p>Local receptive fields, weight sharing and pooling exploit spatial structure: far fewer parameters than dense layers, translation equivariance, and a hierarchy from edges to objects.</p></div></div>
+<div class="qa-card"><div class="qa-question">What problem do residual connections solve?</div><div class="qa-answer"><p>Very deep plain networks trained worse than shallower ones (degradation). Skip connections <code>y = F(x) + x</code> give gradients an identity path and make identity mappings easy, enabling 100+ layer networks. Transformers use them in every block.</p></div></div>
+<div class="qa-card"><div class="qa-question">RNN vs LSTM vs Transformer?</div><div class="qa-answer"><p>RNNs process sequences step by step and struggle with long-range dependencies (vanishing gradients). LSTMs add gates and an additive cell state to remember longer. Transformers use self-attention: any two positions interact directly and training is parallel — at O(n²) cost in sequence length.</p></div></div>
+<div class="qa-card"><div class="qa-question">Explain scaled dot-product attention. Why the scaling?</div><div class="qa-answer"><p><code>softmax(QKᵀ/√d_k)V</code>: each query scores every key, softmax turns scores into weights, and the output is the weighted sum of values. Dot products grow like <code>√d_k</code>; without scaling, softmax saturates and gradients vanish.</p></div></div>
+<div class="qa-card"><div class="qa-question">Encoder-only vs decoder-only Transformers?</div><div class="qa-answer"><p>Encoder-only (BERT) uses bidirectional attention and suits understanding tasks — classification, embeddings. Decoder-only (GPT-style LLMs) uses causal attention and is trained to predict the next token — generation. Encoder–decoder (T5) maps one sequence to another.</p></div></div>
+<div class="qa-card"><div class="qa-question">When would you use transfer learning?</div><div class="qa-answer"><p>Almost always when a relevant pretrained model exists and your labelled data is limited: replace the head, train it with the backbone frozen, then optionally fine-tune deeper layers with a small learning rate.</p></div></div>
+<div class="section-title"><i class="ti ti-sparkles"></i>Generative models</div>
+<div class="qa-card"><div class="qa-question">Compare VAEs, GANs and diffusion models.</div><div class="qa-answer"><p>VAEs: encoder–decoder with a KL-regularised latent space; stable, but samples are blurry. GANs: generator vs discriminator; sharp samples, unstable training and mode collapse. Diffusion: learn to denoise at every noise level, sample by iterative denoising; high quality and diversity, stable training, slower sampling.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is the reparameterization trick in VAEs?</div><div class="qa-answer"><p>Sampling <code>z = μ + σ·ε</code> with <code>ε ~ N(0, 1)</code> moves the randomness outside the network, so gradients can flow through <code>μ</code> and <code>σ</code>.</p></div></div>
+<div class="section-title"><i class="ti ti-tools"></i>Practical</div>
+<div class="qa-card"><div class="qa-question">What's the difference between model.eval() and torch.no_grad()?</div><div class="qa-answer"><p><code>model.eval()</code> changes layer behaviour (dropout off, BatchNorm uses running stats). <code>torch.no_grad()</code> stops gradient tracking to save memory and time. For inference you want both.</p></div></div>
+<div class="qa-card"><div class="qa-question">How do you train with a batch that doesn't fit in GPU memory?</div><div class="qa-answer"><p>Gradient accumulation (several micro-batches, divide the loss, step once), mixed precision (bf16/fp16), gradient checkpointing, a smaller model, or sharding across GPUs (FSDP).</p></div></div>
+<div class="qa-card"><div class="qa-question">What is mixed precision training?</div><div class="qa-answer"><p>Computing in 16-bit floats with 32-bit master weights to cut memory and speed up tensor-core math; float16 needs a gradient scaler to avoid underflow, bfloat16 usually doesn't.</p></div></div>
+<div class="section-title"><i class="ti ti-checklist"></i>Quick-fire checklist</div>
+<div class="chips"><span class="chip">Neuron &amp; bias</span><span class="chip">XOR &amp; hidden layers</span><span class="chip">ReLU vs sigmoid</span><span class="chip">Softmax &amp; logits</span><span class="chip">Cross-entropy</span><span class="chip">Mini-batch SGD</span><span class="chip">Chain rule</span><span class="chip">Gradient check</span><span class="chip">Momentum</span><span class="chip">Adam vs AdamW</span><span class="chip">Warmup + cosine</span><span class="chip">He / Xavier init</span><span class="chip">Vanishing gradients</span><span class="chip">Gradient clipping</span><span class="chip">BatchNorm vs LayerNorm</span><span class="chip">Dropout</span><span class="chip">Weight decay</span><span class="chip">Early stopping</span><span class="chip">Data augmentation</span><span class="chip">zero_grad → backward → step</span><span class="chip">train() / eval()</span><span class="chip">state_dict</span><span class="chip">Overfit one batch</span><span class="chip">Mixed precision</span><span class="chip">Conv output size</span><span class="chip">Receptive field</span><span class="chip">ResNet skip</span><span class="chip">Transfer learning</span><span class="chip">LSTM gates</span><span class="chip">Embeddings</span><span class="chip">Self-attention</span><span class="chip">√d_k scaling</span><span class="chip">Multi-head</span><span class="chip">Positional encoding</span><span class="chip">VAE &amp; KL</span><span class="chip">GAN minimax</span><span class="chip">Diffusion denoising</span></div>
+</div>
+</main>
+</body>
+</html>

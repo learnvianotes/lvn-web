@@ -20,6 +20,12 @@
     "content:python": "python3 content-src/authoring/python/build.py && npm run content:extract",
     "content:seed:check": "node scripts/content/seed/run.mjs --dry-run",
     "content:seed:live": "node scripts/content/seed/run.mjs --live",
+    "content:c": "python3 content-src/authoring/c/build.py && npm run content:extract",
+    "content:cpp": "python3 content-src/authoring/cpp/build.py && npm run content:extract",
+    "content:java": "python3 content-src/authoring/java/build.py && npm run content:extract",
+    "content:javascript": "python3 content-src/authoring/javascript/build.py && npm run content:extract",
+    "content:sql": "python3 content-src/authoring/sql/build.py && npm run content:extract",
+    "content:deep-learning": "content-src/authoring/deep-learning/.venv/bin/python content-src/authoring/deep-learning/build.py && npm run content:extract",
     "content:data-science": "content-src/authoring/data-science/.venv/bin/python content-src/authoring/data-science/build.py && npm run content:extract"
   },
   "dependencies": {
