@@ -47,6 +47,8 @@ export interface Prefs {
   interests: string[]
   /** daily study goal in minutes */
   dailyGoal: number
+  /** subject ids tracked in the progress wheel; absent → the essentials (see progress/myCourses.ts) */
+  myCourses?: string[]
   updatedAt: number
 }
 
@@ -93,7 +95,8 @@ export interface NoteDoc {
 export const EVENT_TYPES = [
   'session_start',
   'page_view',
-  'topic_view',
+  'topic_open',   // page opened (not yet studied)
+  'topic_view',   // page studied: read to the end or spent a minute on it
   'topic_time',
   'topic_complete',
   'topic_revisit',
@@ -106,6 +109,7 @@ export const EVENT_TYPES = [
   'subject_filter',
   'subject_sort',
   'course_interest',
+  'my_courses',
 ] as const
 
 export type EventType = (typeof EVENT_TYPES)[number]

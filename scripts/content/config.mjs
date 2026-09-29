@@ -46,7 +46,7 @@ export const SUBJECTS = [
     description: 'Version control fundamentals, branching, merging, rebasing and remote workflows.' },
   { id: 'api-design', category: 'engineering', title: 'API Design', icon: 'plug', kind: 'notes', source: 'api_design/index.html',
     description: 'REST, GraphQL, gRPC, versioning, pagination, auth and API best practices.' },
-  { id: 'genai-fluency', category: 'ai', title: 'GenAI Fluency', icon: 'sparkles', kind: 'notes', source: 'genai_fluency/index.html',
+  { id: 'genai-fluency', category: 'ai', title: 'Generative AI', icon: 'sparkles', kind: 'notes', source: 'genai_fluency/index.html',
     description: 'LLMs, prompting, embeddings, RAG, agents and interview-ready GenAI concepts.' },
   { id: 'ml-ai', category: 'ai', title: 'Machine Learning', icon: 'brain', kind: 'notes', source: 'machine_learning_ai/index.html',
     description: 'Data modeling, training, evaluation, classic algorithms and neural networks.' },

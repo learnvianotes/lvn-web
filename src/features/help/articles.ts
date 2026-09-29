@@ -15,7 +15,7 @@ export const ARTICLES: HelpArticle[] = [
 
 Signing in adds the extras:
 - Your study streak and calendar
-- History: which topics you visited, when, and for how long
+- History: which topics you studied, when, and for how long
 - Read-aloud, the smart study kit, focus timer and personal notes
 - Solved / revisit marks, a review queue, and your own subject order
 - Everything synced across your devices`,
@@ -38,9 +38,16 @@ Click any day in the calendar to see what you studied then.`,
     keywords: 'calendar days fire',
   },
   {
+    id: 'my-courses', topic: 'Streak & progress', title: 'Choosing the courses in your progress wheel',
+    body: `The progress wheel starts with the essentials — DSA, OOPs, DBMS, Operating Systems and Computer Networks — plus any subject you've already made progress in.
+
+Click “Edit” on the progress panel to pick your own list. It's saved to your account, so it follows you across devices. “Essentials” switches back to the default.`,
+    keywords: 'pie chart wheel courses choose edit customize my courses',
+  },
+  {
     id: 'tracked', topic: 'Streak & progress', title: 'What exactly is tracked?',
     body: `While you're signed in:
-- Topics you open, with the date and time
+- Topics you study, with the date and time. Just opening a page doesn't count — it enters your history once you read it to the end (with at least 20 seconds of reading) or spend a minute on it
 - Active study time per topic (only while the tab is visible and you're reading, scrolling or listening — idle time doesn't count)
 - Revisits: a topic you studied on an earlier day
 - Completed topics, solved / revisit problems, focus sessions

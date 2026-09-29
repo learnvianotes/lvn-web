@@ -7,11 +7,13 @@
      }
 
    Written by useStudyTime (time actually spent on a page, only
-   while visible and active) and the focus timer. A topic that
+   while visible and active) and the focus timer. A page is only
+   logged once the reader engaged with it (read to the end, or a
+   minute of reading) — opening it isn't studying it. A topic that
    also appears on an earlier day counts as a revisit.
    ============================================================ */
 
-import { useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import type { DayDoc, TopicVisit } from '@schema/firestore'
 import { get, set } from '@/services/storage'
 import { useUser } from '@/features/auth/auth'
@@ -45,14 +47,31 @@ window.addEventListener('storage', (e) => {
 
 const GUEST: Activity = {}
 
-/** The learner's study log — empty for guests. */
+/** Seconds of reading below which a logged page doesn't count as studied (entries from before
+    engagement tracking, when merely opening a page logged it). Matches ENGAGED_AT_END_SECONDS. */
+const MIN_STUDIED_SECONDS = 20
+
+export const isStudied = (v: TopicVisit) => v.sec >= MIN_STUDIED_SECONDS
+
+/** The log with only studied pages (drops days left with nothing). */
+function studiedOnly(all: Activity): Activity {
+  const out: Activity = {}
+  for (const [day, log] of Object.entries(all)) {
+    const topics = Object.fromEntries(Object.entries(log.topics).filter(([, v]) => isStudied(v)))
+    if (Object.keys(topics).length || log.focus) out[day] = { ...log, topics }
+  }
+  return out
+}
+
+/** The learner's study log (studied pages only) — empty for guests. */
 export function useActivity(): Activity {
   const user = useUser()
   const s = useSyncExternalStore(
     (l) => { listeners.add(l); return () => { listeners.delete(l) } },
     () => state,
   )
-  return user ? s : GUEST
+  const studied = useMemo(() => studiedOnly(s), [s])
+  return user ? studied : GUEST
 }
 
 export const getActivity = () => state

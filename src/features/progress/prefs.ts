@@ -1,7 +1,8 @@
 /* ============================================================
    PREFS — how the learner likes the app arranged: their own
-   subject order, the chosen sort, and upcoming courses they
-   asked to be notified about. Synced by progress/sync.ts.
+   subject order, the chosen sort, the courses they track in the
+   progress wheel, and upcoming courses they asked to be notified
+   about. Synced by progress/sync.ts.
    ============================================================ */
 
 import { useSyncExternalStore } from 'react'
@@ -55,4 +56,17 @@ export function setDailyGoal(dailyGoal: number) {
 
 export function resetSubjectOrder() {
   update({ ...state, subjectOrder: [], sort: 'default', updatedAt: Date.now() })
+}
+
+/** The courses tracked in the progress wheel (at least one). */
+export function setMyCourses(ids: string[]) {
+  if (!ids.length) return
+  update({ ...state, myCourses: [...new Set(ids)], updatedAt: Date.now() })
+}
+
+/** Back to the default selection (the essentials + whatever the learner has started). */
+export function resetMyCourses() {
+  const next: Prefs = { ...state, updatedAt: Date.now() }
+  delete next.myCourses
+  update(next)
 }

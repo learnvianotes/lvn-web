@@ -66,7 +66,7 @@ function History() {
       <div className="page-head">
         <Link to="/" className="back-link"><ArrowLeft size={14} aria-hidden /> All subjects</Link>
         <h1 className="page-title">Study history</h1>
-        <p className="page-desc">Every topic you opened, how long you spent, and what’s worth revisiting.</p>
+        <p className="page-desc">Every topic you actually studied — read to the end or spent a minute on — how long you spent, and what’s worth revisiting.</p>
       </div>
 
       <div className="stat-row">

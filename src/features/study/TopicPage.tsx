@@ -68,7 +68,7 @@ function NotesView({ subject, topic }: { subject: Subject; topic: TopicOutline }
   )
   // Tracking (completion, time, history) is for signed-in learners only.
   useReadCompletion({ subjectId: subject.id, topicId: topic.id, text, done: done || !user, endRef })
-  useStudyTime({ subjectId: subject.id, topicId: topic.id, title: topic.title, subjectTitle: subject.title, enabled: Boolean(user) })
+  useStudyTime({ subjectId: subject.id, topicId: topic.id, title: topic.title, subjectTitle: subject.title, enabled: Boolean(user), endRef })
   const articleRef = useRef<HTMLElement>(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [topic.id])

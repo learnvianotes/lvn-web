@@ -45,11 +45,12 @@ service cloud.firestore {
       }
       function validPrefs(p) {
         return p is map
-          && p.keys().hasOnly(['subjectOrder', 'sort', 'interests', 'dailyGoal', 'updatedAt'])
+          && p.keys().hasOnly(['subjectOrder', 'sort', 'interests', 'dailyGoal', 'myCourses', 'updatedAt'])
           && p.subjectOrder is list && p.subjectOrder.size() <= 200
           && p.interests is list && p.interests.size() <= 200
           && p.sort in ['default', 'custom', 'az', 'progress', 'recent']
           && (!('dailyGoal' in p) || (p.dailyGoal is int && p.dailyGoal >= 5 && p.dailyGoal <= 600))
+          && (!('myCourses' in p) || (p.myCourses is list && p.myCourses.size() <= 200))
           && p.updatedAt is int;
       }
 

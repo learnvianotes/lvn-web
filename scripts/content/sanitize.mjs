@@ -72,6 +72,7 @@ const LANG_ALIASES = {
 }
 
 export function normalizeLang(raw = '') {
+  if (/^\s*c\s*$/i.test(raw)) return 'c'
   const key = raw.toLowerCase().replace(/implementation|code|solution/g, '').trim()
   return LANG_ALIASES[key] ?? (Object.entries(LANG_ALIASES).find(([k]) => key.startsWith(k))?.[1] ?? '')
 }
@@ -168,7 +169,8 @@ function convertCode(root, doc) {
     const caption = box.querySelector('.code-lang')?.textContent.trim() ?? ''
     const pre = box.querySelector('pre')
     if (!pre) { box.remove(); continue }
-    box.replaceWith(make(codeText(pre), normalizeLang(caption), caption.replace(/\s*implementation$/i, '')))
+    const lang = box.getAttribute('data-lang') || normalizeLang(caption)
+    box.replaceWith(make(codeText(pre), lang, caption.replace(/\s*implementation$/i, '')))
   }
   for (const box of root.querySelectorAll('.code, .code-block')) {
     if (box.closest('figure.code')) continue

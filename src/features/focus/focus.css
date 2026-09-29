@@ -58,6 +58,3 @@
 .focus-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .focus-done { display: grid; gap: 8px; text-align: center; }
 .focus-done-title { font-weight: 700; font-size: 16px; }
-@media (max-width: 520px) {
-  .focus-menu, .account-menu { position: fixed; left: 8px; right: 8px; top: calc(var(--header-h) + env(safe-area-inset-top) + 6px); width: auto; }
-}

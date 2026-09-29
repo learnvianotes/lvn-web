@@ -44,3 +44,19 @@ button.calendar-day:not(:disabled):hover { transform: scale(1.1); }
   text-align: center;
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 55%, transparent), color-mix(in srgb, var(--surface) 88%, transparent) 45%);
 }
+
+/* Progress panel header + "My courses" picker */
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.panel-head .panel-title { margin-bottom: 8px; }
+.panel-action { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--accent); }
+.panel-action:hover { background: var(--accent-soft); }
+.course-picker { display: grid; gap: 10px; }
+.course-picker-hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+.course-picker-group { display: grid; gap: 1px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.course-picker-group legend { padding: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.course-picker-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.course-picker-row:hover { background: var(--surface-2); }
+.course-picker-row input { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+.course-picker-actions { position: sticky; bottom: 0; display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); background: var(--surface); }
+.course-picker-actions .spacer { flex: 1; }
+.course-picker-actions .btn { padding: 6px 10px; font-size: 12.5px; }

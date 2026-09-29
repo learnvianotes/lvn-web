@@ -144,6 +144,23 @@
   animation: pop-in 0.16s ease both;
 }
 @keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+/* Phones: the header popovers become a sheet pinned under the header, full width minus a gutter, and
+   scroll inside themselves — they never widen the page. (`.header` prefix: must beat `.focus-menu`'s width,
+   whichever stylesheet loads last.) */
+@media (max-width: 640px) {
+  .header .account-menu, .header .focus-menu {
+    position: fixed;
+    top: calc(var(--header-h) + env(safe-area-inset-top) + 6px);
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    width: auto;
+    max-width: 420px;
+    margin-left: auto;
+    max-height: calc(100dvh - var(--header-h) - env(safe-area-inset-top) - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
 .account-id { display: flex; align-items: center; gap: 10px; padding: 6px 6px 10px; }
 .account-id div { display: grid; min-width: 0; line-height: 1.35; }
 .account-id strong, .account-id span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

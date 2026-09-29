@@ -43,3 +43,6 @@ __pycache__/
 
 # Authoring environments (see content-src/authoring/*/build.py)
 .venv/
+
+# Snippet-run cache for the authoring kit
+content-src/authoring/.cache/

@@ -65,7 +65,7 @@ export interface ContentNode {
   variant?: string
   /** list: ordered? */
   ordered?: boolean
-  /** codeBlock language: py | cpp | java | js | sql | bash | json | … */
+  /** codeBlock language: py | c | cpp | java | js | sql | bash | json | text (program output) | … */
   lang?: string
   /** codeBlock caption, tabPanel label */
   label?: string
