@@ -3,6 +3,8 @@
    from its content (study/extract.ts):
      Quick notes · Side headings · Remember · My notes
    The quick notes can be listened to or copied.
+   Starts collapsed on every topic — the notes come first; the
+   kit opens only when the learner asks for it.
    ============================================================ */
 
 import './kit.css'
@@ -37,15 +39,18 @@ interface Props {
 
 export function StudyKit({ content, title, noteKey, subjectId, topicId }: Props) {
   const kit = useMemo(() => buildStudyKit(content), [content])
-  const [open, setOpen] = useState(() => get<boolean>('kit-open') ?? true)
+  const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<Tab>(() => get<Tab>('kit-tab') ?? 'notes')
   const minutes = Math.max(1, Math.round(kit.words / 230))
 
-  const toggle = () => { set('kit-open', !open); setOpen(!open) }
+  const toggle = () => {
+    if (!open) track('kit_open', { s: subjectId, k: topicId, l: tab })
+    setOpen(!open)
+  }
   const choose = (t: Tab) => {
     set('kit-tab', t)
     setTab(t)
-    if (!open) { set('kit-open', true); setOpen(true) }
+    if (!open) setOpen(true)
     track('kit_open', { s: subjectId, k: topicId, l: t })
   }
 
