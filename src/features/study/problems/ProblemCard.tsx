@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import type { Problem, Solution } from '@/features/catalog/types'
 import { setProblemStatus, type ProblemStatus } from '@/features/progress/store'
-import { Prose } from '@/features/study/content/Prose'
+import { ContentView } from '@/features/content/ContentView'
 import { Difficulty } from './Difficulty'
 import { CodeTabs } from '@/features/study/content/CodeTabs'
 import { ListenButton } from '@/features/voice/ListenButton'
@@ -67,7 +67,7 @@ function Complexity({ items }: { items?: string[] }) {
 function SolutionBody({ solution }: { solution: Solution }) {
   return (
     <>
-      {solution.html && <Prose html={solution.html} />}
+      {solution.content.length > 0 && <ContentView content={solution.content} />}
       <CodeTabs code={solution.code} />
     </>
   )
@@ -117,18 +117,18 @@ export const ProblemCard = memo(function ProblemCard({ problem: p, index, status
         </div>
       </header>
 
-      {p.statement && <Section title="Problem statement" icon={FileText} kind="statement"><Prose html={p.statement} /></Section>}
-      {p.io && <Section title="Input & output" icon={ArrowLeftRight}><Prose html={p.io} /></Section>}
-      {p.constraints && <Section title="Constraints" icon={Ruler}><Prose html={p.constraints} /></Section>}
-      {p.understanding && <Section title="Key observations" icon={Lightbulb}><Prose html={p.understanding} /></Section>}
+      {p.statement && <Section title="Problem statement" icon={FileText} kind="statement"><ContentView content={p.statement} /></Section>}
+      {p.io && <Section title="Input & output" icon={ArrowLeftRight}><ContentView content={p.io} /></Section>}
+      {p.constraints && <Section title="Constraints" icon={Ruler}><ContentView content={p.constraints} /></Section>}
+      {p.understanding && <Section title="Key observations" icon={Lightbulb}><ContentView content={p.understanding} /></Section>}
       {p.naive && (
         <Section title={p.naive.title || 'Naive approach'} icon={Turtle}>
           <SolutionBody solution={p.naive} />
           {p.naive.complexity?.length ? <div className="pc-complexity"><span>Complexity</span><Complexity items={p.naive.complexity} /></div> : null}
         </Section>
       )}
-      {p.intuition && <Section title="Intuition" icon={Sparkles} kind="intuition"><Prose html={p.intuition} /></Section>}
-      {p.approach && <Section title="Algorithm" icon={ListOrdered}><Prose html={p.approach} /></Section>}
+      {p.intuition && <Section title="Intuition" icon={Sparkles} kind="intuition"><ContentView content={p.intuition} /></Section>}
+      {p.approach && <Section title="Algorithm" icon={ListOrdered}><ContentView content={p.approach} /></Section>}
       {p.optimal && (
         <Section title={p.optimal.title || 'Optimized code'} icon={Code2} kind="optimal">
           <SolutionBody solution={p.optimal} />
@@ -137,9 +137,9 @@ export const ProblemCard = memo(function ProblemCard({ problem: p, index, status
       {p.optimal?.complexity?.length ? (
         <Section title="Time & space complexity" icon={Timer} kind="complexity"><Complexity items={p.optimal.complexity} /></Section>
       ) : null}
-      {p.variants && <Section title="Variants" icon={Layers}><Prose html={p.variants} /></Section>}
-      {p.takeaway && <Section title="Pattern & takeaway" icon={Bookmark}><Prose html={p.takeaway} /></Section>}
-      {p.extra?.map((x) => <Section key={x.title} title={x.title} icon={Bookmark}><Prose html={x.html} /></Section>)}
+      {p.variants && <Section title="Variants" icon={Layers}><ContentView content={p.variants} /></Section>}
+      {p.takeaway && <Section title="Pattern & takeaway" icon={Bookmark}><ContentView content={p.takeaway} /></Section>}
+      {p.extra?.map((x) => <Section key={x.title} title={x.title} icon={Bookmark}><ContentView content={x.content} /></Section>)}
       {p.similar?.length ? (
         <details className="pc-similar">
           <summary>Similar problems ({p.similar.length})</summary>

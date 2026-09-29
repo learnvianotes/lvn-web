@@ -14,7 +14,8 @@ import { toggleTopicRevisit, topicKey, uncompleteTopic, useProgress } from '@/fe
 import { useStudyTime } from '@/features/progress/useStudyTime'
 import { useReadCompletion } from '@/features/progress/useReadCompletion'
 import { StudyLayout } from '@/features/study/StudyLayout'
-import { Prose } from '@/features/study/content/Prose'
+import { ContentView } from '@/features/content/ContentView'
+import { plainText } from '@/features/content/query'
 import { ProblemCard } from '@/features/study/problems/ProblemCard'
 import { LoadError, Loading, NotFound } from '@/shared/ui/Status'
 import { StudyKit } from '@/features/study/kit/StudyKit'
@@ -62,7 +63,7 @@ function NotesView({ subject, topic }: { subject: Subject; topic: TopicOutline }
 
   const endRef = useRef<HTMLDivElement>(null)
   const text = useMemo(
-    () => (doc.data ? new DOMParser().parseFromString(doc.data.html, 'text/html').body.textContent ?? '' : undefined),
+    () => (doc.data ? plainText(doc.data.content) : undefined),
     [doc.data],
   )
   // Tracking (completion, time, history) is for signed-in learners only.
@@ -132,8 +133,8 @@ function NotesView({ subject, topic }: { subject: Subject; topic: TopicOutline }
         {doc.status === 'error' && <LoadError error={doc.error} retry={doc.retry} />}
         {doc.data && (
           <>
-            {user && <StudyKit html={doc.data.html} title={topic.title} noteKey={key} subjectId={subject.id} topicId={topic.id} />}
-            <Prose html={doc.data.html} headingIds />
+            {user && <StudyKit content={doc.data.content} title={topic.title} noteKey={key} subjectId={subject.id} topicId={topic.id} />}
+            <ContentView content={doc.data.content} anchors />
             <div ref={endRef} aria-hidden />
             <footer className="topic-foot">
               <div className="pager">

@@ -1,18 +1,19 @@
 /* ============================================================
    STUDY KIT EXTRACTION — builds revision aids from a topic's
-   normalized HTML (see scripts/content/sanitize.mjs), instantly
-   and offline:
+   structured content (schema/content.ts), instantly and offline:
 
-     outline   side headings (each `section.block > h3`)
+     outline   side headings (the topic's section anchors)
      notes     quick notes: the key sentence(s) of every section
      terms     key terms (bold phrases, most frequent first)
      remember  definitions, notes and warnings from callouts
 
-   Section ids (`sec-N`) match the ids Prose gives the headings
-   (both use sectionHeadings).
+   Section ids (`sec-N`) match the ids ContentView gives the
+   headings (both use sectionAnchors).
    ============================================================ */
 
+import type { Content, ContentNode } from '@schema/content'
 import { cleanText } from '@/features/voice/speech'
+import { findAll, first, hasAncestor, isType, sectionAnchors, textOf, type Visit } from '@/features/content/query'
 
 export interface KitSection {
   id: string
@@ -34,30 +35,7 @@ export interface StudyKit {
   words: number
 }
 
-/**
- * Section anchors: each `section.block > h3`; otherwise top-level h2/h3;
- * otherwise the panels of a tabbed topic (titled by their tab label).
- */
-export function sectionHeadings(root: ParentNode): HTMLElement[] {
-  const blocks = [...root.querySelectorAll<HTMLElement>('section.block > h3')]
-  if (blocks.length) return blocks
-  const plain = [...root.querySelectorAll<HTMLElement>('h2, h3')].filter((h) => !h.closest('.card, .callout, figure, .tab-panel, details'))
-  if (plain.length) return plain
-  return [...root.querySelectorAll<HTMLElement>('.tab-panel')]
-}
-
-const headingTitle = (h: Element) => h.getAttribute('data-label') || text(h)
-
-/** The content belonging to a heading: its block, or the siblings up to the next heading. */
-function sectionBody(h: Element, all: Element[]): Element {
-  if (h.matches('.tab-panel')) return h
-  if (h.parentElement?.matches('section.block')) return h.parentElement
-  const box = h.ownerDocument.createElement('div')
-  for (let n = h.nextElementSibling; n && !all.includes(n); n = n.nextElementSibling) box.appendChild(n.cloneNode(true))
-  return box
-}
-
-const text = (el: Element | null | undefined) => cleanText(el?.textContent ?? '')
+const text = (n: ContentNode | Content | undefined) => cleanText(textOf(n))
 
 function firstSentence(s: string, max = 200) {
   const m = s.match(/^(.+?[.!?])(\s|$)/)
@@ -65,17 +43,14 @@ function firstSentence(s: string, max = 200) {
   return out.length > max ? `${out.slice(0, max - 1).trimEnd()}…` : out
 }
 
-const inCode = (el: Element) => Boolean(el.closest('figure.code, pre'))
+const inCode = (v: Visit) => v.node.type === 'codeBlock' || hasAncestor(v, ['codeBlock'])
+const within = (node: ContentNode) => node.children ?? []
 
-export function buildStudyKit(html: string): StudyKit {
-  const doc = new DOMParser().parseFromString(`<!doctype html><html><body>${html}</body></html>`, 'text/html')
-  const body = doc.body
+export function buildStudyKit(content: Content): StudyKit {
+  const lead = firstSentence(text(first(content, (v) => v.node.type === 'paragraph' && v.node.variant === 'lead')?.node), 260)
 
-  const lead = firstSentence(text(body.querySelector('.lead')), 260)
-
-  const headings = sectionHeadings(body)
-  const sections: KitSection[] = headings.map((h, i) => {
-    const block = sectionBody(h, headings)
+  const sections: KitSection[] = sectionAnchors(content).map((a) => {
+    const block = [a.body]
     const points: string[] = []
     const add = (s: string, prefix = '') => {
       const sentence = firstSentence(s)
@@ -88,27 +63,34 @@ export function buildStudyKit(html: string): StudyKit {
       points.push(p)
     }
     // Definitions first, then the opening paragraph, then cards / list items / table rows.
-    block.querySelectorAll('.callout--def').forEach((c) => add(text(c.querySelector('p') ?? c)))
-    const para = [...block.querySelectorAll('p')].find((p) => !inCode(p) && !p.closest('.callout, .card') && text(p).length > 30)
-    if (para) add(text(para))
-    for (const el of [...block.querySelectorAll('.card, li, .step-desc, tbody tr')].filter((e) => !inCode(e)).slice(0, 8)) {
-      if (points.length >= 4) break
-      if (el.classList.contains('card')) {
-        const head = text(el.querySelector('h3, h4, strong, .callout-label')).replace(/[:.]$/, '')
-        add(text(el.querySelector('p') ?? el), head)
-      } else if (el.tagName === 'TR') {
-        const cells = [...el.children].map((c) => text(c))
-        if (cells.length >= 2) add(cells.slice(1).join(' — '), cells[0])
-      } else if (!el.closest('.card')) add(text(el))
+    for (const c of findAll(block, (v) => v.node.type === 'callout' && v.node.variant === 'def')) {
+      add(text(first(within(c.node), isType('paragraph'))?.node ?? c.node))
     }
-    return { id: `sec-${i}`, title: headingTitle(h).replace(/\.$/, ''), points: points.slice(0, 4) }
+    const para = findAll(block, isType('paragraph'))
+      .find((v) => !inCode(v) && !hasAncestor(v, ['callout', 'card']) && text(v.node).length > 30)
+    if (para) add(text(para.node))
+    const items = findAll(block, (v) =>
+      !inCode(v) && (v.node.type === 'card' || v.node.type === 'listItem' || v.node.type === 'stepDesc' ||
+        (v.node.type === 'tableRow' && v.path[v.path.length - 1]?.type === 'tableBody')),
+    ).slice(0, 8)
+    for (const v of items) {
+      if (points.length >= 4) break
+      if (v.node.type === 'card') {
+        const head = text(first(within(v.node), (x) => (x.node.type === 'heading' && (x.node.level === 3 || x.node.level === 4)) || x.node.type === 'strong' || x.node.type === 'calloutLabel')?.node).replace(/[:.]$/, '')
+        add(text(first(within(v.node), isType('paragraph'))?.node ?? v.node), head)
+      } else if (v.node.type === 'tableRow') {
+        const cells = within(v.node).filter((c) => c.type === 'tableCell').map((c) => text(c))
+        if (cells.length >= 2) add(cells.slice(1).join(' — '), cells[0])
+      } else if (!hasAncestor(v, ['card'])) add(text(v.node))
+    }
+    return { id: a.id, title: cleanText(a.title).replace(/\.$/, ''), points: points.slice(0, 4) }
   })
 
   // Key terms: bold phrases, ranked by how often they appear.
   const counts = new Map<string, { term: string; n: number; first: number }>()
-  ;[...body.querySelectorAll('strong, b')].forEach((el, i) => {
-    if (inCode(el)) return
-    const term = text(el).replace(/[:.,;]+$/, '')
+  findAll(content, isType('strong')).forEach((v, i) => {
+    if (inCode(v)) return
+    const term = text(v.node).replace(/[:.,;]+$/, '')
     if (term.length < 2 || term.length > 48 || /^\d+$/.test(term)) return
     const k = term.toLowerCase()
     const e = counts.get(k)
@@ -117,18 +99,18 @@ export function buildStudyKit(html: string): StudyKit {
   const terms = [...counts.values()].sort((a, b) => b.n - a.n || a.first - b.first).slice(0, 18).map((t) => t.term)
 
   const remember: KitCallout[] = []
-  body.querySelectorAll('.callout').forEach((c) => {
-    if (remember.length >= 10) return
-    const kind = (['def', 'note', 'warn', 'good', 'bad', 'example'] as const).find((k) => c.classList.contains(`callout--${k}`))
-    if (!kind || kind === 'example') return
-    const label = text(c.querySelector('.callout-label')).replace(/[:.]$/, '')
-    const clone = c.cloneNode(true) as Element
-    clone.querySelector('.callout-label')?.remove()
-    const t = firstSentence(text(clone), 240)
+  for (const v of findAll(content, isType('callout'))) {
+    if (remember.length >= 10) break
+    const kind = (['def', 'note', 'warn', 'good', 'bad', 'example'] as const).find((k) => v.node.variant === k)
+    if (!kind || kind === 'example') continue
+    const labelNode = first(within(v.node), isType('calloutLabel'))?.node
+    const label = text(labelNode).replace(/[:.]$/, '')
+    const rest = { ...v.node, children: within(v.node).filter((c) => c !== labelNode) }
+    const t = firstSentence(text(rest), 240)
     if (t.length > 30) remember.push({ kind, label, text: t })
-  })
+  }
 
-  return { lead, sections, terms, remember, words: (body.textContent ?? '').trim().split(/\s+/).length }
+  return { lead, sections, terms, remember, words: textOf(content).trim().split(/\s+/).length }
 }
 
 /** Plain-text recap (for read-aloud and "copy notes"). */

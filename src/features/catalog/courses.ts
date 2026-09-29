@@ -56,7 +56,7 @@ export const AREAS: Area[] = [
   {
     id: 'programming', title: 'Programming', emoji: '💻',
     courses: [
-      { id: 'python', title: 'Python', badge: 'Py', color: '#3776ab', description: 'Syntax, data structures, OOP, iterators, generators and interview idioms.' },
+      { id: 'python', title: 'Python', badge: 'Py', color: '#3776ab', subjectId: 'python', description: 'Syntax, data structures, OOP, iterators, generators and interview idioms.' },
       { id: 'cpp', title: 'C++', badge: 'C++', color: '#00599c', description: 'STL, pointers, references, memory, templates and competitive-coding tricks.' },
       { id: 'java', title: 'Java', badge: 'Jv', color: '#e76f00', description: 'Collections, OOP, JVM, exceptions, generics and multithreading.' },
       { id: 'javascript', title: 'JavaScript', badge: 'JS', color: '#c9a400', description: 'Closures, prototypes, event loop, promises, async/await and ES features.' },

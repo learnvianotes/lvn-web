@@ -23,8 +23,8 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cnote-java-'))
 const files = []
 const owner = new Map()
 let n = 0
-for (const f of fs.readdirSync('public/content/problems')) {
-  for (const p of JSON.parse(fs.readFileSync(`public/content/problems/${f}`, 'utf8')).problems) {
+for (const f of fs.readdirSync('content-build/problems')) {
+  for (const p of JSON.parse(fs.readFileSync(`content-build/problems/${f}`, 'utf8')).problems) {
     for (const kind of ['naive', 'optimal']) {
       const code = p[kind]?.code?.java
       if (!code) continue

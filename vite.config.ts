@@ -10,8 +10,8 @@ export default defineConfig({
   define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version) },
   plugins: [
     react(),
-    // Installable app + offline support. App shell and the catalog are precached;
-    // topic / problem content is cached the first time it's opened.
+    // Installable app + offline support for the app shell. Study content comes from
+    // Firestore and is cached on the device by the app itself (features/catalog/source.ts).
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
@@ -30,15 +30,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html}', 'icons/*.png', 'content/catalog.json'],
+        globPatterns: ['**/*.{js,css,html}', 'icons/*.png'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/content\//],
         runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/content/'),
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'content', expiration: { maxEntries: 600 } },
-          },
           {
             urlPattern: ({ url }) => ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'].includes(url.hostname),
             handler: 'CacheFirst',

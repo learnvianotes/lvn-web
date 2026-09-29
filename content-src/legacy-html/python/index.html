@@ -1,0 +1,1386 @@
+<!doctype html>
+<!--
+  Python — study notes source for the content pipeline (scripts/content/extract.mjs).
+  Vocabulary: see scripts/content/sanitize.mjs. Every code sample here was executed and its
+  printed output checked when this file was generated.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Python</title></head>
+<body>
+<nav class="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <div class="nav-item" id="nav-intro"><i class="ti ti-brand-python"></i>Introduction to Python</div>
+  <div class="nav-item" id="nav-variables-types"><i class="ti ti-variable"></i>Variables, Types &amp; Operators</div>
+  <div class="nav-item" id="nav-strings"><i class="ti ti-letter-case"></i>Strings</div>
+  <div class="nav-item" id="nav-control-flow"><i class="ti ti-arrows-split"></i>Control Flow</div>
+  <div class="nav-section">Data Structures</div>
+  <div class="nav-item" id="nav-lists-tuples"><i class="ti ti-list"></i>Lists &amp; Tuples</div>
+  <div class="nav-item" id="nav-dictionaries"><i class="ti ti-book-2"></i>Dictionaries</div>
+  <div class="nav-item" id="nav-sets"><i class="ti ti-circles-relation"></i>Sets</div>
+  <div class="nav-item" id="nav-comprehensions"><i class="ti ti-filter"></i>Comprehensions</div>
+  <div class="nav-item" id="nav-stdlib-ds"><i class="ti ti-stack-3"></i>collections, heapq &amp; bisect</div>
+  <div class="nav-section">Functions</div>
+  <div class="nav-item" id="nav-functions"><i class="ti ti-function"></i>Functions &amp; Arguments</div>
+  <div class="nav-item" id="nav-scope-closures"><i class="ti ti-brackets-contain"></i>Scope &amp; Closures</div>
+  <div class="nav-item" id="nav-functional"><i class="ti ti-lambda"></i>Lambdas &amp; Functional Tools</div>
+  <div class="nav-item" id="nav-decorators"><i class="ti ti-sparkles"></i>Decorators</div>
+  <div class="nav-section">Object-Oriented Python</div>
+  <div class="nav-item" id="nav-classes"><i class="ti ti-box"></i>Classes &amp; Objects</div>
+  <div class="nav-item" id="nav-inheritance"><i class="ti ti-hierarchy"></i>Inheritance, MRO &amp; super()</div>
+  <div class="nav-item" id="nav-dunder-methods"><i class="ti ti-wand"></i>Magic (Dunder) Methods</div>
+  <div class="nav-item" id="nav-dataclasses-typing"><i class="ti ti-file-certificate"></i>Dataclasses, Enums &amp; Type Hints</div>
+  <div class="nav-section">Advanced Python</div>
+  <div class="nav-item" id="nav-iterators-generators"><i class="ti ti-repeat"></i>Iterators &amp; Generators</div>
+  <div class="nav-item" id="nav-exceptions"><i class="ti ti-alert-octagon"></i>Exceptions &amp; Context Managers</div>
+  <div class="nav-item" id="nav-memory-model"><i class="ti ti-cpu-2"></i>Memory, Mutability &amp; Garbage Collection</div>
+  <div class="nav-item" id="nav-concurrency"><i class="ti ti-arrows-split-2"></i>Concurrency: Threads, Processes &amp; asyncio</div>
+  <div class="nav-item" id="nav-modules-packages"><i class="ti ti-package"></i>Modules, Packages &amp; Environments</div>
+  <div class="nav-item" id="nav-files-io"><i class="ti ti-file-text"></i>Files, JSON &amp; pathlib</div>
+  <div class="nav-section">Interview Prep</div>
+  <div class="nav-item" id="nav-python-for-dsa"><i class="ti ti-code-dots"></i>Python for DSA &amp; Coding Rounds</div>
+  <div class="nav-item" id="nav-pythonic"><i class="ti ti-sparkles"></i>Pythonic Code &amp; Idioms</div>
+  <div class="nav-item" id="nav-interview-questions"><i class="ti ti-message-question"></i>Interview Questions</div>
+</nav>
+<main>
+<div class="topic" id="topic-intro">
+<div class="page-tag">Getting Started</div>
+<h1 class="page-title">Introduction to Python</h1>
+<p class="page-subtitle">A high-level, interpreted, dynamically typed language that favours readability — the most common language for interviews, scripting, data and AI.</p>
+<div class="def-card"><p><strong>Python</strong> — a general-purpose language where <em>code is compiled to bytecode and run by a virtual machine</em> (CPython). You write less code per idea than in C++ or Java, at the cost of raw speed.</p></div>
+<div class="section-title"><i class="ti ti-bulb"></i>Why Python?</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-eye"></i>Readable</h3><p>Indentation is syntax, so code looks like pseudocode. Ideal for interviews — the interviewer reads your logic, not boilerplate.</p></div><div class="card"><h3><i class="ti ti-package"></i>Batteries included</h3><p>A huge standard library: <code>collections</code>, <code>itertools</code>, <code>heapq</code>, <code>bisect</code>, <code>functools</code>, <code>json</code>, <code>re</code>, <code>pathlib</code>…</p></div><div class="card"><h3><i class="ti ti-arrows-shuffle"></i>Dynamic typing</h3><p>Types belong to <em>values</em>, not variables. A name can point to an <code>int</code> now and a <code>str</code> later.</p></div><div class="card"><h3><i class="ti ti-world"></i>Everywhere</h3><p>Web back ends (Django, FastAPI), automation, data science (pandas, NumPy), ML (PyTorch), scripting.</p></div></div>
+<div class="section-title"><i class="ti ti-cpu"></i>How Python runs your code</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Source</div><div class="step-desc">You write <code>app.py</code> — plain text.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Compile to bytecode</div><div class="step-desc">CPython parses it and compiles it to bytecode (cached as <code>__pycache__/*.pyc</code>).</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Run on the PVM</div><div class="step-desc">The Python Virtual Machine executes the bytecode instruction by instruction — that is the “interpreted” part.</div></div></div>
+<table><thead><tr><th>Implementation</th><th>What it is</th></tr></thead><tbody><tr><td><strong>CPython</strong></td><td>The reference implementation, written in C. What you get from python.org. Has the GIL.</td></tr><tr><td><strong>PyPy</strong></td><td>JIT-compiled — often several times faster for long-running pure-Python code.</td></tr><tr><td><strong>Jython / IronPython</strong></td><td>Python on the JVM / .NET (rarely used today).</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-code"></i>Your first program</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>name = "Python"
+version = 3
+print(f"Hello, {name} {version}!")   # Hello, Python 3!
+print(type(name), type(version))    # &lt;class 'str'&gt; &lt;class 'int'&gt;</pre></div>
+<div class="code-block-container"><div class="code-lang">Terminal</div><pre>$ python3 --version          # check the installed version
+$ python3 app.py             # run a file
+$ python3                    # interactive REPL (exit with Ctrl-D)
+$ python3 -m venv .venv      # create an isolated environment</pre></div>
+<div class="section-title"><i class="ti ti-writing"></i>Style: PEP 8 and the Zen</div>
+<ul><li>4 spaces per indent level, never tabs.</li><li><code>snake_case</code> for variables and functions, <code>PascalCase</code> for classes, <code>UPPER_CASE</code> for constants.</li><li>Lines around 79–99 characters; one statement per line.</li><li>Run <code>import this</code> to read <em>The Zen of Python</em> — “Readability counts.”, “Explicit is better than implicit.”</li></ul>
+<div class="highlight-box"><div class="label">Version</div><p>Python 2 reached end-of-life in 2020. Everything in these notes is Python 3 (3.10+ for <code>match</code>).</p></div>
+</div>
+<div class="topic" id="topic-variables-types">
+<div class="page-tag">Getting Started</div>
+<h1 class="page-title">Variables, Types &amp; Operators</h1>
+<p class="page-subtitle">A variable is a <em>name bound to an object</em>. Every object has an identity, a type and a value.</p>
+<div class="def-card"><p><strong>Name binding</strong> — <code>x = 10</code> creates an <code>int</code> object and binds the name <code>x</code> to it. Assignment never copies — it only attaches another name to the same object.</p></div>
+<div class="section-title"><i class="ti ti-box"></i>Built-in types</div>
+<table><thead><tr><th>Type</th><th>Example</th><th>Mutable?</th></tr></thead><tbody><tr><td><code>int</code></td><td><code>42</code>, <code>-7</code>, <code>10**100</code> (unlimited size)</td><td>No</td></tr><tr><td><code>float</code></td><td><code>3.14</code>, <code>1e-9</code> (64-bit IEEE 754)</td><td>No</td></tr><tr><td><code>complex</code></td><td><code>2 + 3j</code></td><td>No</td></tr><tr><td><code>bool</code></td><td><code>True</code>, <code>False</code> (a subclass of <code>int</code>)</td><td>No</td></tr><tr><td><code>str</code></td><td><code>'hi'</code>, <code>"hi"</code>, <code>'''multi'''</code></td><td>No</td></tr><tr><td><code>NoneType</code></td><td><code>None</code> — the single “no value” object</td><td>No</td></tr><tr><td><code>list</code> / <code>dict</code> / <code>set</code></td><td><code>[1, 2]</code>, <code>{'a': 1}</code>, <code>{1, 2}</code></td><td><strong>Yes</strong></td></tr><tr><td><code>tuple</code> / <code>frozenset</code></td><td><code>(1, 2)</code>, <code>frozenset({1})</code></td><td>No</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>x = 10
+print(type(x))                    # &lt;class 'int'&gt;
+x = "now a string"                # same name, different object and type
+print(isinstance(x, str))         # True
+print(True + True)                # 2</pre></div>
+<div class="section-title"><i class="ti ti-math-symbols"></i>Operators</div>
+<table><thead><tr><th>Kind</th><th>Operators</th><th>Notes</th></tr></thead><tbody><tr><td>Arithmetic</td><td><code>+ - * / // % **</code></td><td><code>/</code> always returns a float; <code>//</code> floors; <code>**</code> is power</td></tr><tr><td>Comparison</td><td><code>== != &lt; &lt;= &gt; &gt;=</code></td><td>Chainable: <code>0 &lt; x &lt; 10</code></td></tr><tr><td>Logical</td><td><code>and or not</code></td><td>Short-circuit and return an <em>operand</em>, not just <code>True</code>/<code>False</code></td></tr><tr><td>Identity</td><td><code>is</code>, <code>is not</code></td><td>Same object? Use for <code>None</code>: <code>x is None</code></td></tr><tr><td>Membership</td><td><code>in</code>, <code>not in</code></td><td>O(1) for <code>set</code>/<code>dict</code>, O(n) for <code>list</code></td></tr><tr><td>Bitwise</td><td><code>&amp; | ^ ~ &lt;&lt; &gt;&gt;</code></td><td>Also set union / intersection on <code>set</code>s</td></tr><tr><td>Assignment expression</td><td><code>:=</code> (walrus)</td><td>Assign inside an expression (3.8+)</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>print(7 / 2, 7 // 2, 7 % 2, -7 // 2)   # 3.5 3 1 -4
+print(2 ** 10, divmod(17, 5))          # 1024 (3, 2)
+print(0 &lt; 5 &lt; 10)                      # True
+print("" or "default", 0 and 99)       # default 0
+if (n := len("hello")) &gt; 3:
+    print(n)                           # 5</pre></div>
+<div class="section-title"><i class="ti ti-equal"></i><code>==</code> vs <code>is</code></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-equal"></i><code>==</code> — equality</h3><p>Calls <code>__eq__</code>: do the two objects have the <em>same value</em>?</p></div><div class="card"><h3><i class="ti ti-fingerprint"></i><code>is</code> — identity</h3><p>Are they the <em>same object</em> in memory (same <code>id</code>)? Use only for singletons: <code>None</code>, <code>True</code>, <code>False</code>.</p></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>a = [1, 2, 3]
+b = [1, 2, 3]
+c = a
+print(a == b, a is b, a is c)   # True False True</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>CPython caches small integers (−5…256) and some strings, so <code>a is b</code> may be <code>True</code> for them by accident. Never rely on it — compare values with <code>==</code>.</p></div>
+<div class="section-title"><i class="ti ti-toggle-left"></i>Truthiness</div>
+<p>In a condition, every object is truthy except these <strong>falsy</strong> values:</p>
+<div class="chips"><span class="chip"><code>False</code></span><span class="chip"><code>None</code></span><span class="chip"><code>0</code>, <code>0.0</code>, <code>0j</code></span><span class="chip"><code>''</code></span><span class="chip"><code>[]</code></span><span class="chip"><code>()</code></span><span class="chip"><code>{}</code></span><span class="chip"><code>set()</code></span><span class="chip"><code>range(0)</code></span></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>items = []
+if not items:              # idiomatic emptiness check
+    print("empty")         # empty
+print(bool("0"), bool(0))  # True False</pre></div>
+<div class="section-title"><i class="ti ti-transform"></i>Type conversion</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>print(int("42") + 1, float("2.5"), str(99) + "!")   # 43 2.5 99!
+print(int(3.99), round(2.5), round(3.5))            # 3 2 4
+print(int("ff", 16), bin(10), hex(255))             # 255 0b1010 0xff</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>round()</code> uses <em>banker's rounding</em>: halves go to the nearest even number, so <code>round(2.5) == 2</code>.</p></div>
+</div>
+<div class="topic" id="topic-strings">
+<div class="page-tag">Getting Started</div>
+<h1 class="page-title">Strings</h1>
+<p class="page-subtitle"><code>str</code> is an immutable sequence of Unicode characters — indexing, slicing and methods all return <em>new</em> strings.</p>
+<div class="section-title"><i class="ti ti-cut"></i>Indexing &amp; slicing</div>
+<p><code>s[start:stop:step]</code> — <code>start</code> is included, <code>stop</code> is excluded, negative indices count from the end.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>s = "interview"
+print(s[0], s[-1], len(s))      # i w 9
+print(s[0:5], s[5:], s[-4:])    # inter view view
+print(s[::-1], s[::2])          # weivretni itriw</pre></div>
+<div class="section-title"><i class="ti ti-lock"></i>Immutability</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>s = "cat"
+try:
+    s[0] = "b"
+except TypeError as e:
+    print("TypeError:", e)       # TypeError: 'str' object does not support item assignment
+s = "b" + s[1:]                  # build a new string instead
+print(s)                         # bat</pre></div>
+<div class="warning-box"><div class="label">Performance</div><p>Building a string with <code>+=</code> in a loop can be O(n²). Collect pieces in a list and call <code>''.join(parts)</code> once — O(n).</p></div>
+<div class="section-title"><i class="ti ti-list"></i>Essential methods</div>
+<table><thead><tr><th>Method</th><th>Does</th><th>Example → result</th></tr></thead><tbody><tr><td><code>split(sep)</code> / <code>join(it)</code></td><td>String ↔ list</td><td><code>'a,b'.split(',')</code> → <code>['a', 'b']</code></td></tr><tr><td><code>strip()</code> / <code>lstrip()</code> / <code>rstrip()</code></td><td>Trim whitespace (or given chars)</td><td><code>'  hi '.strip()</code> → <code>'hi'</code></td></tr><tr><td><code>lower()</code> / <code>upper()</code> / <code>title()</code></td><td>Change case</td><td><code>'Py'.lower()</code> → <code>'py'</code></td></tr><tr><td><code>find(x)</code> / <code>index(x)</code></td><td>Position or −1 / raises</td><td><code>'abc'.find('z')</code> → <code>-1</code></td></tr><tr><td><code>replace(a, b)</code></td><td>Replace all occurrences</td><td><code>'aa'.replace('a','b')</code> → <code>'bb'</code></td></tr><tr><td><code>startswith</code> / <code>endswith</code></td><td>Prefix / suffix test</td><td><code>'file.py'.endswith('.py')</code> → <code>True</code></td></tr><tr><td><code>isdigit</code> / <code>isalpha</code> / <code>isalnum</code></td><td>Character classes</td><td><code>'123'.isdigit()</code> → <code>True</code></td></tr><tr><td><code>count(x)</code></td><td>Non-overlapping occurrences</td><td><code>'banana'.count('a')</code> → <code>3</code></td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>words = "  the quick  brown fox ".split()   # split() with no args handles runs of spaces
+print(words)                                 # ['the', 'quick', 'brown', 'fox']
+print("-".join(words))                       # the-quick-brown-fox
+print(" ".join(w.capitalize() for w in words))   # The Quick Brown Fox</pre></div>
+<div class="section-title"><i class="ti ti-braces"></i>f-strings &amp; formatting</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>name, score, ratio = "Asha", 93, 0.8567
+print(f"{name} scored {score}")          # Asha scored 93
+print(f"{ratio:.2%} | {score:05d}")      # 85.67% | 00093
+print(f"{name!r:&gt;8}|{score:&lt;5}|")        #   'Asha'|93   |
+print(f"{score=}")                       # score=93
+print(f"{1_000_000:,}")                  # 1,000,000</pre></div>
+<div class="section-title"><i class="ti ti-language"></i>Characters, Unicode &amp; bytes</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>print(ord("A"), chr(97))                 # 65 a
+print(len("naïve"), len("naïve".encode("utf-8")))   # 5 6
+print("é".encode(), b"\xc3\xa9".decode())          # b'\xc3\xa9' é</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-letter-case"></i><code>str</code></h3><p>Text — a sequence of Unicode code points.</p></div><div class="card"><h3><i class="ti ti-binary"></i><code>bytes</code></h3><p>Raw 8-bit data — files, network, hashing. Convert with <code>encode()</code> / <code>decode()</code>.</p></div></div>
+<div class="section-title"><i class="ti ti-star"></i>Interview favourites</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def is_palindrome(s: str) -&gt; bool:
+    cleaned = [c.lower() for c in s if c.isalnum()]
+    return cleaned == cleaned[::-1]
+
+def is_anagram(a: str, b: str) -&gt; bool:
+    from collections import Counter
+    return Counter(a) == Counter(b)
+
+print(is_palindrome("A man, a plan, a canal: Panama"))   # True
+print(is_anagram("listen", "silent"))                    # True</pre></div>
+</div>
+<div class="topic" id="topic-control-flow">
+<div class="page-tag">Getting Started</div>
+<h1 class="page-title">Control Flow</h1>
+<p class="page-subtitle"><code>if</code>/<code>elif</code>/<code>else</code>, <code>for</code>, <code>while</code>, <code>match</code> — plus a few Python-only twists like <code>for … else</code>.</p>
+<div class="section-title"><i class="ti ti-git-branch"></i>Conditionals</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def grade(score):
+    if score &gt;= 90:
+        return "A"
+    elif score &gt;= 75:
+        return "B"
+    else:
+        return "C"
+
+print(grade(95), grade(80), grade(40))       # A B C
+status = "adult" if 20 &gt;= 18 else "minor"     # conditional expression
+print(status)                                  # adult</pre></div>
+<div class="section-title"><i class="ti ti-repeat"></i>Loops</div>
+<p><code>for</code> iterates over <em>any iterable</em> (lists, strings, dicts, files, generators). <code>while</code> repeats while a condition is truthy.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>for i in range(2, 10, 3):          # start, stop (exclusive), step
+    print(i, end=" ")               # 2 5 8
+print()
+for i, ch in enumerate("abc", start=1):
+    print(i, ch, end=" | ")         # 1 a | 2 b | 3 c |
+print()
+for name, age in zip(["a", "b"], [20, 30]):
+    print(name, age, end="; ")      # a 20; b 30;</pre></div>
+<table><thead><tr><th>Helper</th><th>Gives you</th><th>Instead of</th></tr></thead><tbody><tr><td><code>enumerate(it)</code></td><td><code>(index, item)</code> pairs</td><td><code>for i in range(len(xs))</code></td></tr><tr><td><code>zip(a, b)</code></td><td>Items side by side (stops at the shortest)</td><td>Manual index juggling</td></tr><tr><td><code>reversed(seq)</code></td><td>Items back to front, lazily</td><td><code>seq[::-1]</code> (copies)</td></tr><tr><td><code>sorted(it, key=…)</code></td><td>A new sorted list</td><td>Sorting then copying</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-player-skip-forward"></i><code>break</code>, <code>continue</code> and loop <code>else</code></div>
+<p>A loop's <code>else</code> block runs only if the loop finished <strong>without</strong> <code>break</code> — perfect for search loops.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def find_first_negative(nums):
+    for i, n in enumerate(nums):
+        if n &lt; 0:
+            break
+    else:
+        return None          # no break → nothing found
+    return i
+
+print(find_first_negative([3, 1, -2, 5]))   # 2
+print(find_first_negative([1, 2]))          # None</pre></div>
+<div class="section-title"><i class="ti ti-binary-tree"></i><code>match</code> — structural pattern matching (3.10+)</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def describe(cmd):
+    match cmd:
+        case ["go", direction]:
+            return f"moving {direction}"
+        case ["pick", *items] if items:
+            return f"picking {len(items)} items"
+        case {"action": "quit"}:
+            return "bye"
+        case int() | float() as n:
+            return f"number {n}"
+        case _:
+            return "unknown"
+
+print(describe(["go", "north"]))       # moving north
+print(describe(["pick", "a", "b"]))    # picking 2 items
+print(describe({"action": "quit"}))    # bye
+print(describe(3.5))                   # number 3.5</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>match</code> is not a C <code>switch</code>: it destructures sequences, mappings and objects, binds names, and supports guards (<code>if</code>).</p></div>
+<div class="section-title"><i class="ti ti-alert-triangle"></i>No <code>do … while</code>, no <code>++</code></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Use <code>while True:</code> with a <code>break</code> at the end for do-while logic, and <code>i += 1</code> to increment.</p></div><div class="cons"><div class="label">Avoid</div><p>Writing <code>i++</code> (a syntax error) or <code>++i</code> (parsed as <code>+(+i)</code> — silently does nothing).</p></div></div>
+</div>
+<div class="topic" id="topic-lists-tuples">
+<div class="page-tag">Data Structures</div>
+<h1 class="page-title">Lists &amp; Tuples</h1>
+<p class="page-subtitle"><code>list</code> is a mutable, ordered, dynamic array. <code>tuple</code> is its immutable sibling — lighter, hashable, and used for fixed records.</p>
+<div class="def-card"><p><strong>list</strong> — a dynamic array of <em>references</em> to objects. Indexing is O(1); appending is amortised O(1) because Python over-allocates capacity.</p></div>
+<div class="section-title"><i class="ti ti-clock"></i>Core operations &amp; complexity</div>
+<table><thead><tr><th>Operation</th><th>Example</th><th>Time</th></tr></thead><tbody><tr><td>Index / assign</td><td><code>xs[i]</code>, <code>xs[i] = v</code></td><td>O(1)</td></tr><tr><td>Append / pop from end</td><td><code>xs.append(v)</code>, <code>xs.pop()</code></td><td>O(1) amortised</td></tr><tr><td>Insert / pop at front</td><td><code>xs.insert(0, v)</code>, <code>xs.pop(0)</code></td><td><strong>O(n)</strong> — use <code>deque</code></td></tr><tr><td>Search</td><td><code>v in xs</code>, <code>xs.index(v)</code></td><td>O(n)</td></tr><tr><td>Slice</td><td><code>xs[a:b]</code></td><td>O(b − a)</td></tr><tr><td>Sort</td><td><code>xs.sort()</code>, <code>sorted(xs)</code></td><td>O(n log n) — Timsort, stable</td></tr><tr><td>Extend</td><td><code>xs.extend(ys)</code>, <code>xs + ys</code></td><td>O(len(ys))</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>xs = [5, 2, 9]
+xs.append(1)
+xs.extend([7, 3])
+xs.insert(1, 4)
+print(xs)                       # [5, 4, 2, 9, 1, 7, 3]
+print(xs.pop(), xs.pop(0))      # 3 5
+xs.remove(9)                    # removes the first 9 (ValueError if absent)
+print(sorted(xs), xs[::-1])     # [1, 2, 4, 7] [7, 1, 2, 4]</pre></div>
+<div class="section-title"><i class="ti ti-sort-ascending"></i><code>sort()</code> vs <code>sorted()</code></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-arrows-sort"></i><code>xs.sort()</code></h3><p>Sorts <strong>in place</strong> and returns <code>None</code>. Only for lists.</p></div><div class="card"><h3><i class="ti ti-copy"></i><code>sorted(it)</code></h3><p>Returns a <strong>new</strong> list from any iterable. The original is untouched.</p></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>people = [("Ravi", 30), ("Asha", 25), ("Kiran", 30)]
+print(sorted(people, key=lambda p: p[1]))
+# [('Asha', 25), ('Ravi', 30), ('Kiran', 30)]   ← stable: Ravi stays before Kiran
+print(sorted(people, key=lambda p: (-p[1], p[0])))
+# [('Kiran', 30), ('Ravi', 30), ('Asha', 25)]   ← age desc, then name asc</pre></div>
+<div class="section-title"><i class="ti ti-copy"></i>Copies: aliasing, shallow, deep</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import copy
+grid = [[0, 0], [0, 0]]
+alias = grid                 # same list
+shallow = grid[:]            # new outer list, same inner lists
+deep = copy.deepcopy(grid)   # everything copied
+grid[0][0] = 9
+print(alias[0][0], shallow[0][0], deep[0][0])   # 9 9 0</pre></div>
+<div class="warning-box"><div class="label">Classic bug</div><p><code>[[0] * 3] * 3</code> creates <strong>three references to the same inner list</strong> — changing one row changes all. Build 2-D lists with a comprehension: <code>[[0] * 3 for _ in range(3)]</code>.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>bad = [[0] * 3] * 3
+bad[0][0] = 1
+print(bad)                              # [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
+good = [[0] * 3 for _ in range(3)]
+good[0][0] = 1
+print(good)                             # [[1, 0, 0], [0, 0, 0], [0, 0, 0]]</pre></div>
+<div class="section-title"><i class="ti ti-brackets"></i>Tuples, packing &amp; unpacking</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>point = (3, 4)
+x, y = point                    # unpacking
+a, b = 1, 2
+a, b = b, a                     # swap without a temp variable
+first, *middle, last = [1, 2, 3, 4, 5]
+print(x, y, a, b)               # 3 4 2 1
+print(first, middle, last)      # 1 [2, 3, 4] 5
+single = (42,)                  # the comma makes the tuple, not the parentheses
+print(type(single).__name__)    # tuple</pre></div>
+<table><thead><tr><th></th><th><code>list</code></th><th><code>tuple</code></th></tr></thead><tbody><tr><td>Mutable</td><td>Yes</td><td>No</td></tr><tr><td>Hashable (dict key / set item)</td><td>No</td><td>Yes, if its items are hashable</td></tr><tr><td>Memory / speed</td><td>Slightly larger</td><td>Smaller, slightly faster to create</td></tr><tr><td>Use for</td><td>Collections that grow and change</td><td>Fixed records: coordinates, DB rows, dict keys</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-tag"></i>Named tuples</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from collections import namedtuple
+Point = namedtuple("Point", ["x", "y"])
+p = Point(3, 4)
+print(p.x + p.y, p)          # 7 Point(x=3, y=4)</pre></div>
+</div>
+<div class="topic" id="topic-dictionaries">
+<div class="page-tag">Data Structures</div>
+<h1 class="page-title">Dictionaries</h1>
+<p class="page-subtitle"><code>dict</code> maps hashable keys to values with average O(1) lookup, insert and delete — the workhorse of Python.</p>
+<div class="def-card"><p><strong>Hash table</strong> — each key's <code>hash()</code> picks a slot; collisions are resolved by open addressing. Since Python 3.7, dicts <strong>preserve insertion order</strong>.</p></div>
+<div class="section-title"><i class="ti ti-pencil"></i>Create, read, update</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>ages = {"asha": 25, "ravi": 30}
+ages["kiran"] = 28                    # insert / update
+print(ages["asha"])                   # 25
+print(ages.get("zoe"), ages.get("zoe", 0))   # None 0
+print("ravi" in ages, len(ages))      # True 3
+del ages["ravi"]
+print(ages.pop("kiran"), ages)        # 28 {'asha': 25}</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p><code>d[key]</code> raises <code>KeyError</code> for a missing key. Use <code>d.get(key, default)</code>, <code>key in d</code>, <code>setdefault</code>, or a <code>defaultdict</code>.</p></div>
+<div class="section-title"><i class="ti ti-repeat"></i>Iterating</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>scores = {"math": 90, "cs": 95}
+for subject, score in scores.items():
+    print(subject, score, end="; ")   # math 90; cs 95;
+print()
+print(list(scores), list(scores.values()))   # ['math', 'cs'] [90, 95]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Don't add or remove keys while iterating over a dict (<code>RuntimeError</code>). Iterate over <code>list(d)</code> if you must modify it.</p></div>
+<div class="section-title"><i class="ti ti-tools"></i>Useful methods</div>
+<table><thead><tr><th>Method</th><th>Does</th></tr></thead><tbody><tr><td><code>d.get(k, default)</code></td><td>Value or default — never raises</td></tr><tr><td><code>d.setdefault(k, v)</code></td><td>Insert <code>v</code> if <code>k</code> is missing, then return <code>d[k]</code></td></tr><tr><td><code>d.update(other)</code> / <code>d | other</code></td><td>Merge (the right-hand side wins); <code>|</code> returns a new dict (3.9+)</td></tr><tr><td><code>d.pop(k, default)</code></td><td>Remove and return</td></tr><tr><td><code>d.items()</code> / <code>keys()</code> / <code>values()</code></td><td>Live <em>views</em> that reflect later changes</td></tr><tr><td><code>dict.fromkeys(keys, v)</code></td><td>New dict with every key set to <code>v</code></td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>base = {"theme": "light", "font": 14}
+user = {"theme": "dark"}
+print(base | user)                        # {'theme': 'dark', 'font': 14}
+counts = {}
+for ch in "banana":
+    counts[ch] = counts.get(ch, 0) + 1
+print(counts)                             # {'b': 1, 'a': 3, 'n': 2}
+print(max(counts, key=counts.get))        # a</pre></div>
+<div class="section-title"><i class="ti ti-key"></i>What can be a key?</div>
+<p>Keys must be <strong>hashable</strong>: their hash never changes during their lifetime. Immutable built-ins (<code>int</code>, <code>str</code>, <code>tuple</code> of hashables, <code>frozenset</code>) are hashable; <code>list</code>, <code>dict</code> and <code>set</code> are not.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>grid = {(0, 0): "start", (2, 3): "goal"}     # tuples make great coordinate keys
+print(grid[(2, 3)])                          # goal
+try:
+    {[1, 2]: "x"}                            # lists are unhashable
+except TypeError as e:
+    print(type(e).__name__)                  # TypeError</pre></div>
+<div class="section-title"><i class="ti ti-puzzle"></i>Dictionary patterns</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-chart-bar"></i>Frequency count</h3><p><code>Counter(items)</code> or <code>d[x] = d.get(x, 0) + 1</code>.</p></div><div class="card"><h3><i class="ti ti-folders"></i>Grouping</h3><p><code>defaultdict(list)</code> then <code>groups[key].append(item)</code>.</p></div><div class="card"><h3><i class="ti ti-search"></i>Two-sum lookup</h3><p>Store <code>value → index</code> while scanning; check <code>target - x in seen</code>.</p></div><div class="card"><h3><i class="ti ti-database"></i>Memoization</h3><p>Cache results: <code>memo[args] = result</code> — or use <code>functools.cache</code>.</p></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def two_sum(nums, target):
+    seen = {}                      # value → index
+    for i, x in enumerate(nums):
+        if target - x in seen:
+            return [seen[target - x], i]
+        seen[x] = i
+    return []
+
+print(two_sum([2, 7, 11, 15], 9))   # [0, 1]</pre></div>
+</div>
+<div class="topic" id="topic-sets">
+<div class="page-tag">Data Structures</div>
+<h1 class="page-title">Sets</h1>
+<p class="page-subtitle">A <code>set</code> is an unordered collection of unique, hashable items with O(1) membership tests — and real set algebra.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>a = {1, 2, 3, 4}
+b = {3, 4, 5}
+print(a | b)          # {1, 2, 3, 4, 5}
+print(a &amp; b)          # {3, 4}
+print(a - b)          # {1, 2}
+print(a ^ b)          # {1, 2, 5}
+print({1, 2} &lt;= a)    # True</pre></div>
+<table><thead><tr><th>Operator</th><th>Method</th><th>Meaning</th></tr></thead><tbody><tr><td><code>a | b</code></td><td><code>a.union(b)</code></td><td>In either</td></tr><tr><td><code>a &amp; b</code></td><td><code>a.intersection(b)</code></td><td>In both</td></tr><tr><td><code>a - b</code></td><td><code>a.difference(b)</code></td><td>In <code>a</code> but not <code>b</code></td></tr><tr><td><code>a ^ b</code></td><td><code>a.symmetric_difference(b)</code></td><td>In exactly one</td></tr><tr><td><code>a &lt;= b</code></td><td><code>a.issubset(b)</code></td><td>Every item of <code>a</code> is in <code>b</code></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-plus"></i>Adding &amp; removing</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>s = set()                  # {} would be an empty *dict*
+s.add(3); s.add(3); s.add(1)
+s.discard(99)              # no error if missing
+print(sorted(s), len(s))   # [1, 3] 2</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p><code>remove(x)</code> raises <code>KeyError</code> if <code>x</code> is missing; <code>discard(x)</code> doesn't. And <code>{}</code> is an empty <strong>dict</strong> — write <code>set()</code>.</p></div>
+<div class="section-title"><i class="ti ti-bulb"></i>When to reach for a set</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-filter"></i>De-duplicate</h3><p><code>list(set(xs))</code> — order is lost; use <code>list(dict.fromkeys(xs))</code> to keep first-seen order.</p></div><div class="card"><h3><i class="ti ti-bolt"></i>Fast membership</h3><p><code>x in big_set</code> is O(1) vs O(n) for a list — the difference between TLE and AC.</p></div><div class="card"><h3><i class="ti ti-route"></i>Visited nodes</h3><p>BFS / DFS keep a <code>visited</code> set of states or coordinates.</p></div><div class="card"><h3><i class="ti ti-snowflake"></i>frozenset</h3><p>An immutable, hashable set — usable as a dict key or inside another set.</p></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>xs = [3, 1, 3, 2, 1]
+print(list(dict.fromkeys(xs)))                   # [3, 1, 2]
+def has_duplicate(nums):
+    return len(set(nums)) != len(nums)
+print(has_duplicate(xs), has_duplicate([1, 2]))  # True False</pre></div>
+</div>
+<div class="topic" id="topic-comprehensions">
+<div class="page-tag">Data Structures</div>
+<h1 class="page-title">Comprehensions</h1>
+<p class="page-subtitle">Comprehensions build lists, dicts and sets in one readable expression: <em>what</em> to produce, <em>from where</em>, and <em>which</em> items.</p>
+<div class="section-title"><i class="ti ti-template"></i>The shape</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>squares = [x * x for x in range(6)]
+evens = [x for x in range(10) if x % 2 == 0]
+labels = ["even" if x % 2 == 0 else "odd" for x in range(4)]
+print(squares)    # [0, 1, 4, 9, 16, 25]
+print(evens)      # [0, 2, 4, 6, 8]
+print(labels)     # ['even', 'odd', 'even', 'odd']</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>A filter <code>if</code> goes <strong>after</strong> the <code>for</code>. A conditional <em>value</em> (<code>a if c else b</code>) goes <strong>before</strong> it.</p></div>
+<div class="section-title"><i class="ti ti-braces"></i>Dict &amp; set comprehensions</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>words = ["apple", "bat", "cherry"]
+lengths = {w: len(w) for w in words}
+inverted = {v: k for k, v in lengths.items()}
+first_letters = {w[0] for w in words}
+print(lengths)            # {'apple': 5, 'bat': 3, 'cherry': 6}
+print(inverted[3])        # bat
+print(sorted(first_letters))   # ['a', 'b', 'c']</pre></div>
+<div class="section-title"><i class="ti ti-stack-2"></i>Nested loops &amp; flattening</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>matrix = [[1, 2, 3], [4, 5, 6]]
+flat = [x for row in matrix for x in row]          # outer loop first
+transposed = [list(col) for col in zip(*matrix)]
+pairs = [(i, j) for i in range(3) for j in range(i + 1, 3)]
+print(flat)          # [1, 2, 3, 4, 5, 6]
+print(transposed)    # [[1, 4], [2, 5], [3, 6]]
+print(pairs)         # [(0, 1), (0, 2), (1, 2)]</pre></div>
+<div class="section-title"><i class="ti ti-bolt"></i>Generator expressions</div>
+<p>Swap <code>[]</code> for <code>()</code> and nothing is built up front — values are produced lazily, one at a time. Ideal when you only aggregate.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>total = sum(x * x for x in range(1_000_000))   # no million-item list in memory
+print(total)                                    # 333332833333500000
+print(any(n &gt; 10 for n in [3, 12, 5]))          # True</pre></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Use comprehensions for simple map/filter transformations that fit on one or two lines.</p></div><div class="cons"><div class="label">Avoid</div><p>Nesting three levels deep or adding side effects (<code>[print(x) for x in xs]</code>) — write a normal loop instead.</p></div></div>
+</div>
+<div class="topic" id="topic-stdlib-ds">
+<div class="page-tag">Data Structures</div>
+<h1 class="page-title">collections, heapq &amp; bisect</h1>
+<p class="page-subtitle">The standard-library data structures that turn O(n) interview solutions into O(1) or O(log n) ones.</p>
+<div class="section-title"><i class="ti ti-arrows-horizontal"></i>deque — double-ended queue</div>
+<p>O(1) appends and pops at <strong>both</strong> ends. Use it for queues (BFS) and sliding windows; a list's <code>pop(0)</code> is O(n).</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from collections import deque
+q = deque([1, 2, 3])
+q.appendleft(0); q.append(4)
+print(q.popleft(), q.pop(), list(q))    # 0 4 [1, 2, 3]
+window = deque(maxlen=3)                # keeps only the last 3 items
+for x in range(6):
+    window.append(x)
+print(list(window))                     # [3, 4, 5]</pre></div>
+<div class="section-title"><i class="ti ti-chart-bar"></i>Counter &amp; defaultdict</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from collections import Counter, defaultdict
+c = Counter("mississippi")
+print(c.most_common(2))                  # [('i', 4), ('s', 4)]
+# Missing keys count as zero instead of raising KeyError:
+print(c["z"])                            # 0
+
+graph = defaultdict(list)                # missing key → new empty list
+for u, v in [("a", "b"), ("a", "c"), ("b", "c")]:
+    graph[u].append(v)
+print(dict(graph))                       # {'a': ['b', 'c'], 'b': ['c']}
+
+groups = defaultdict(list)
+for w in ["eat", "tea", "tan", "ate"]:
+    groups["".join(sorted(w))].append(w)
+print(list(groups.values()))             # [['eat', 'tea', 'ate'], ['tan']]</pre></div>
+<div class="section-title"><i class="ti ti-stack-pop"></i>heapq — priority queue</div>
+<p>A <strong>min-heap</strong> stored in a plain list: <code>heappush</code> / <code>heappop</code> are O(log n), <code>heap[0]</code> is the minimum in O(1).</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import heapq
+nums = [5, 1, 8, 3, 2]
+heapq.heapify(nums)                       # O(n)
+heapq.heappush(nums, 0)
+print(heapq.heappop(nums), nums[0])       # 0 1
+print(heapq.nlargest(2, [5, 1, 8, 3]))    # [8, 5]
+
+max_heap = []                             # no max-heap: store negatives
+for x in [5, 1, 8]:
+    heapq.heappush(max_heap, -x)
+print(-heapq.heappop(max_heap))           # 8
+
+tasks = [(2, "write"), (1, "plan"), (3, "ship")]
+heapq.heapify(tasks)                      # tuples compare by first item
+print(heapq.heappop(tasks))               # (1, 'plan')</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>If priorities tie, tuples fall back to comparing the next item — which may not be comparable. Add a counter: <code>(priority, count, item)</code>.</p></div>
+<div class="section-title"><i class="ti ti-binary"></i>bisect — binary search on sorted lists</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import bisect
+xs = [1, 3, 3, 5, 8]
+print(bisect.bisect_left(xs, 3), bisect.bisect_right(xs, 3))   # 1 3
+bisect.insort(xs, 4)                                          # insert, keep sorted
+print(xs)                                                     # [1, 3, 3, 4, 5, 8]</pre></div>
+<table><thead><tr><th>Need</th><th>Use</th><th>Key operations</th></tr></thead><tbody><tr><td>FIFO queue / BFS</td><td><code>deque</code></td><td><code>append</code>, <code>popleft</code> — O(1)</td></tr><tr><td>Counting</td><td><code>Counter</code></td><td><code>most_common(k)</code>, arithmetic between counters</td></tr><tr><td>Grouping / adjacency list</td><td><code>defaultdict(list)</code></td><td>auto-creates missing keys</td></tr><tr><td>k smallest / Dijkstra / scheduling</td><td><code>heapq</code></td><td><code>heappush</code>, <code>heappop</code> — O(log n)</td></tr><tr><td>Search in sorted data</td><td><code>bisect</code></td><td><code>bisect_left</code> — O(log n)</td></tr><tr><td>LRU-style ordering</td><td><code>OrderedDict</code></td><td><code>move_to_end</code>, <code>popitem(last=False)</code></td></tr></tbody></table>
+</div>
+<div class="topic" id="topic-functions">
+<div class="page-tag">Functions</div>
+<h1 class="page-title">Functions &amp; Arguments</h1>
+<p class="page-subtitle">Functions are first-class objects: you can pass them around, return them, and store them — and Python's argument system is unusually flexible.</p>
+<div class="section-title"><i class="ti ti-code"></i>Defining &amp; returning</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def area(w: float, h: float = 1.0) -&gt; float:
+    """Return the area of a w × h rectangle."""
+    return w * h
+
+def min_max(xs):
+    return min(xs), max(xs)          # "multiple" return = one tuple
+
+lo, hi = min_max([4, 1, 9])
+print(area(3, 2), area(5), lo, hi)   # 6 5.0 1 9
+print(area.__doc__)                  # Return the area of a w × h rectangle.</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>A function with no <code>return</code> (or a bare <code>return</code>) returns <code>None</code>. Type hints are documentation — Python does not enforce them at runtime.</p></div>
+<div class="section-title"><i class="ti ti-adjustments"></i>Kinds of parameters</div>
+<table><thead><tr><th>Kind</th><th>Syntax</th><th>Call as</th></tr></thead><tbody><tr><td>Positional or keyword</td><td><code>def f(a, b)</code></td><td><code>f(1, 2)</code> or <code>f(b=2, a=1)</code></td></tr><tr><td>Default value</td><td><code>def f(a, b=10)</code></td><td><code>f(1)</code></td></tr><tr><td>Variadic positional</td><td><code>def f(*args)</code></td><td><code>f(1, 2, 3)</code> → <code>args == (1, 2, 3)</code></td></tr><tr><td>Variadic keyword</td><td><code>def f(**kwargs)</code></td><td><code>f(x=1)</code> → <code>kwargs == {'x': 1}</code></td></tr><tr><td>Keyword-only</td><td><code>def f(a, *, key)</code></td><td><code>f(1, key=2)</code> — <code>key</code> must be named</td></tr><tr><td>Positional-only</td><td><code>def f(a, /, b)</code></td><td><code>f(1, 2)</code> — <code>a</code> can't be named</td></tr></tbody></table>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def report(title, *items, sep=", ", **meta):
+    line = f"{title}: {sep.join(items)}"
+    if meta:
+        line += f" {meta}"
+    return line
+
+print(report("fruits", "apple", "kiwi"))             # fruits: apple, kiwi
+print(report("ids", "1", "2", sep="|", source="db"))  # ids: 1|2 {'source': 'db'}
+
+opts = {"sep": "-"}
+print(report("unpacked", *["a", "b"], **opts))       # unpacked: a-b</pre></div>
+<div class="section-title"><i class="ti ti-alert-triangle"></i>The mutable default trap</div>
+<p>Default values are evaluated <strong>once</strong>, when <code>def</code> runs — not on each call. A mutable default is shared by every call.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def add_bad(item, bucket=[]):
+    bucket.append(item)
+    return bucket
+
+print(add_bad(1), add_bad(2))     # [1, 2] [1, 2]
+
+def add_good(item, bucket=None):
+    if bucket is None:
+        bucket = []
+    bucket.append(item)
+    return bucket
+
+print(add_good(1), add_good(2))   # [1] [2]</pre></div>
+<div class="warning-box"><div class="label">Rule</div><p>Use <code>None</code> as the default for lists, dicts and sets, and create the object inside the function.</p></div>
+<div class="section-title"><i class="ti ti-arrow-right"></i>How arguments are passed</div>
+<div class="def-card"><p><strong>Pass by object reference</strong> — the function receives a reference to the <em>same object</em>. Mutating it is visible to the caller; rebinding the parameter name is not.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def mutate(xs):
+    xs.append(99)      # changes the caller's list
+
+def rebind(xs):
+    xs = [0]           # only changes the local name
+
+data = [1]
+mutate(data); rebind(data)
+print(data)            # [1, 99]</pre></div>
+<div class="section-title"><i class="ti ti-refresh"></i>Recursion</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import sys
+
+def fact(n: int) -&gt; int:
+    return 1 if n &lt;= 1 else n * fact(n - 1)
+
+print(fact(10), sys.getrecursionlimit())   # 3628800 1000</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>CPython has no tail-call optimisation and a default recursion limit of ~1000 frames. For deep recursion (DFS on 10⁵ nodes) use an explicit stack, or raise the limit with <code>sys.setrecursionlimit</code>.</p></div>
+</div>
+<div class="topic" id="topic-scope-closures">
+<div class="page-tag">Functions</div>
+<h1 class="page-title">Scope &amp; Closures</h1>
+<p class="page-subtitle">Python resolves names with the LEGB rule, and inner functions can <em>close over</em> variables from the function that created them.</p>
+<div class="section-title"><i class="ti ti-search"></i>LEGB: where a name is looked up</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Local</div><div class="step-desc">Names assigned inside the current function.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Enclosing</div><div class="step-desc">Locals of any enclosing (outer) functions.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Global</div><div class="step-desc">Names at the top level of the module.</div></div></div><div class="step-row"><div class="step-num">4</div><div class="step-body"><div class="step-title">Built-in</div><div class="step-desc"><code>len</code>, <code>print</code>, <code>range</code>, … from the <code>builtins</code> module.</div></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>x = "global"
+
+def outer():
+    x = "enclosing"
+    def inner():
+        return x              # found in the enclosing scope
+    return inner()
+
+print(outer(), x)             # enclosing global</pre></div>
+<div class="section-title"><i class="ti ti-world"></i><code>global</code> and <code>nonlocal</code></div>
+<p>Assigning to a name makes it local to that function. To rebind an outer name, declare it first.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>count = 0
+
+def bump():
+    global count
+    count += 1
+
+def make_counter():
+    n = 0
+    def inc():
+        nonlocal n            # rebinding the enclosing variable
+        n += 1
+        return n
+    return inc
+
+bump(); bump()
+c = make_counter()
+c(); c()
+print(count, c())             # 2 3</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Without <code>nonlocal</code>, <code>n += 1</code> inside <code>inc</code> raises <code>UnboundLocalError</code>: the assignment makes <code>n</code> local, so reading it before assigning fails.</p></div>
+<div class="section-title"><i class="ti ti-lock-access"></i>Closures</div>
+<div class="def-card"><p><strong>Closure</strong> — a function object that remembers variables from the scope where it was defined, even after that scope has finished running.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def multiplier(k):
+    def times(x):
+        return x * k          # k is captured
+    return times
+
+double, triple = multiplier(2), multiplier(3)
+print(double(5), triple(5))                       # 10 15
+print(double.__closure__[0].cell_contents)        # 2</pre></div>
+<div class="section-title"><i class="ti ti-clock"></i>Late binding in loops</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre># Every lambda sees the final value of i:
+fns = [lambda: i for i in range(3)]
+print([f() for f in fns])          # [2, 2, 2]
+
+# A default argument captures each value at definition time:
+fns = [lambda i=i: i for i in range(3)]
+print([f() for f in fns])          # [0, 1, 2]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Closures capture <em>variables</em>, not values. The value is read when the function is <strong>called</strong>.</p></div>
+</div>
+<div class="topic" id="topic-functional">
+<div class="page-tag">Functions</div>
+<h1 class="page-title">Lambdas &amp; Functional Tools</h1>
+<p class="page-subtitle">Small anonymous functions plus <code>map</code>, <code>filter</code>, <code>sorted(key=…)</code> and <code>functools</code> — Python's functional toolkit.</p>
+<div class="section-title"><i class="ti ti-lambda"></i>lambda</div>
+<p><code>lambda args: expression</code> — a one-expression function with no name, no statements and no annotations. Best as a short <code>key=</code> or callback.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>add = lambda a, b: a + b
+print(add(2, 3))                                            # 5
+words = ["banana", "Apple", "cherry"]
+print(sorted(words, key=str.lower))                         # ['Apple', 'banana', 'cherry']
+print(sorted(words, key=lambda w: (len(w), w)))             # ['Apple', 'banana', 'cherry']
+print(max(["aa", "b", "cccc"], key=len))                    # cccc</pre></div>
+<div class="section-title"><i class="ti ti-arrows-right-left"></i>map, filter, zip</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>nums = [1, 2, 3, 4]
+print(list(map(lambda x: x * 10, nums)))        # [10, 20, 30, 40]
+print(list(filter(lambda x: x % 2, nums)))      # [1, 3]
+print(list(map(int, "123")))                    # [1, 2, 3]
+print(list(map(pow, [2, 3], [3, 2])))           # [8, 9]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>map</code>, <code>filter</code> and <code>zip</code> return <strong>lazy iterators</strong>. Wrap them in <code>list()</code> to see the values — and remember they can be consumed only once.</p></div>
+<div class="section-title"><i class="ti ti-tools"></i>functools</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from functools import reduce, partial, cache, lru_cache
+
+print(reduce(lambda acc, x: acc * x, [1, 2, 3, 4], 1))   # 24
+
+base2 = partial(int, base=2)
+print(base2("1011"))                                      # 11
+
+@cache
+def fib(n):
+    return n if n &lt; 2 else fib(n - 1) + fib(n - 2)
+print(fib(80))                                            # 23416728348467685
+
+@lru_cache(maxsize=128)
+def slow_square(x):
+    return x * x
+slow_square(4); slow_square(4)
+print(slow_square.cache_info().hits)                      # 1</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-database"></i><code>@cache</code> / <code>@lru_cache</code></h3><p>Memoize pure functions — the fastest way to turn a recursive solution into top-down DP.</p></div><div class="card"><h3><i class="ti ti-puzzle"></i><code>partial</code></h3><p>Pre-fill some arguments to create a simpler function.</p></div><div class="card"><h3><i class="ti ti-arrows-minimize"></i><code>reduce</code></h3><p>Fold a sequence into one value. Often <code>sum</code>, <code>max</code>, <code>math.prod</code> or a loop is clearer.</p></div><div class="card"><h3><i class="ti ti-settings"></i><code>operator</code> module</h3><p><code>itemgetter(1)</code>, <code>attrgetter('age')</code> — faster, named alternatives to small lambdas.</p></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from operator import itemgetter
+rows = [("b", 2), ("a", 3), ("c", 1)]
+print(sorted(rows, key=itemgetter(1)))    # [('c', 1), ('b', 2), ('a', 3)]</pre></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Prefer a comprehension over <code>map</code>/<code>filter</code> with a lambda — <code>[x * 2 for x in xs]</code> reads better than <code>list(map(lambda x: x * 2, xs))</code>.</p></div><div class="cons"><div class="label">Avoid</div><p>Assigning lambdas to names (<code>f = lambda x: …</code>) in real code — use <code>def</code> so the function has a name in tracebacks.</p></div></div>
+</div>
+<div class="topic" id="topic-decorators">
+<div class="page-tag">Functions</div>
+<h1 class="page-title">Decorators</h1>
+<p class="page-subtitle">A decorator takes a function and returns a new function that wraps it — adding behaviour like timing, logging, caching or access checks without touching the original code.</p>
+<div class="def-card"><p><strong>`@decorator`</strong> — syntax sugar: <code>@timer</code> above <code>def f</code> means <code>f = timer(f)</code>.</p></div>
+<div class="section-title"><i class="ti ti-code"></i>Writing one</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import functools
+
+def shout(func):
+    @functools.wraps(func)            # keep func's name and docstring
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        return result.upper()
+    return wrapper
+
+@shout
+def greet(name):
+    """Say hello."""
+    return f"hello, {name}"
+
+print(greet("asha"))                     # HELLO, ASHA
+print(greet.__name__, greet.__doc__)     # greet Say hello.</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Without <code>functools.wraps</code>, the decorated function reports the name <code>wrapper</code> and loses its docstring — confusing in debugging and documentation.</p></div>
+<div class="section-title"><i class="ti ti-adjustments"></i>Decorators with arguments</div>
+<p>Add one more level: a function that takes the arguments and <em>returns</em> the decorator.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import functools
+
+def retry(times):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(1, times + 1):
+                try:
+                    return func(*args, **kwargs)
+                except ValueError:
+                    if attempt == times:
+                        raise
+        return wrapper
+    return decorator
+
+calls = {"n": 0}
+
+@retry(times=3)
+def flaky():
+    calls["n"] += 1
+    if calls["n"] &lt; 3:
+        raise ValueError("not yet")
+    return "ok"
+
+print(flaky(), calls["n"])   # ok 3</pre></div>
+<div class="section-title"><i class="ti ti-clock"></i>A timing decorator</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import functools, time
+
+def timed(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            elapsed = time.perf_counter() - start
+            wrapper.last_ms = round(elapsed * 1000, 3)
+    return wrapper
+
+@timed
+def work():
+    return sum(range(100_000))
+
+print(work())                            # 4999950000
+print(isinstance(work.last_ms, float))   # True</pre></div>
+<div class="section-title"><i class="ti ti-stack"></i>Stacking &amp; built-in decorators</div>
+<p>Stacked decorators apply bottom-up: <code>@a</code> over <code>@b</code> over <code>def f</code> means <code>f = a(b(f))</code>.</p>
+<table><thead><tr><th>Decorator</th><th>Purpose</th></tr></thead><tbody><tr><td><code>@property</code></td><td>Expose a method as a read-only (or validated) attribute</td></tr><tr><td><code>@classmethod</code> / <code>@staticmethod</code></td><td>Methods that receive the class / nothing instead of <code>self</code></td></tr><tr><td><code>@functools.cache</code> / <code>lru_cache</code></td><td>Memoization</td></tr><tr><td><code>@dataclasses.dataclass</code></td><td>Generate <code>__init__</code>, <code>__repr__</code>, <code>__eq__</code> for a class</td></tr><tr><td><code>@contextlib.contextmanager</code></td><td>Turn a generator into a <code>with</code>-statement context manager</td></tr></tbody></table>
+</div>
+<div class="topic" id="topic-classes">
+<div class="page-tag">Object-Oriented Python</div>
+<h1 class="page-title">Classes &amp; Objects</h1>
+<p class="page-subtitle">A class bundles data (attributes) and behaviour (methods). In Python everything — even functions and classes themselves — is an object.</p>
+<div class="section-title"><i class="ti ti-code"></i>Anatomy of a class</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Account:
+    bank = "LVN Bank"                   # class attribute: shared by all instances
+
+    def __init__(self, owner, balance=0):
+        self.owner = owner              # instance attributes: one per object
+        self.balance = balance
+
+    def deposit(self, amount):
+        if amount &lt;= 0:
+            raise ValueError("amount must be positive")
+        self.balance += amount
+        return self.balance
+
+a = Account("Asha")
+b = Account("Ravi", 100)
+a.deposit(50)
+print(a.balance, b.balance, a.bank)     # 50 100 LVN Bank</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-player-play"></i><code>__init__</code></h3><p>The <em>initializer</em>: runs after the object is created (<code>__new__</code> creates it) to set up its state.</p></div><div class="card"><h3><i class="ti ti-user"></i><code>self</code></h3><p>The instance the method was called on. <code>a.deposit(50)</code> is really <code>Account.deposit(a, 50)</code>.</p></div><div class="card"><h3><i class="ti ti-users"></i>Class attribute</h3><p>Defined in the class body, shared by every instance. Great for constants and counters.</p></div><div class="card"><h3><i class="ti ti-user-circle"></i>Instance attribute</h3><p>Set on <code>self</code>, stored in the object's own <code>__dict__</code>.</p></div></div>
+<div class="warning-box"><div class="label">Watch out</div><p>A mutable <strong>class</strong> attribute (e.g. <code>items = []</code> in the class body) is shared by all instances. Create per-object lists in <code>__init__</code>.</p></div>
+<div class="section-title"><i class="ti ti-category"></i>Three kinds of methods</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Temperature:
+    def __init__(self, celsius):
+        self.celsius = celsius
+
+    def to_f(self):                      # instance method: gets self
+        return self.celsius * 9 / 5 + 32
+
+    @classmethod
+    def from_f(cls, f):                  # class method: gets the class → alternative constructors
+        return cls((f - 32) * 5 / 9)
+
+    @staticmethod
+    def is_freezing(c):                  # static method: a plain function in the class namespace
+        return c &lt;= 0
+
+t = Temperature.from_f(212)
+print(t.celsius, t.to_f(), Temperature.is_freezing(-3))   # 100.0 212.0 True</pre></div>
+<div class="section-title"><i class="ti ti-shield-check"></i>Properties: attributes with logic</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Circle:
+    def __init__(self, radius):
+        self.radius = radius             # goes through the setter below
+
+    @property
+    def radius(self):
+        return self._radius
+
+    @radius.setter
+    def radius(self, value):
+        if value &lt; 0:
+            raise ValueError("radius must be &gt;= 0")
+        self._radius = value
+
+    @property
+    def area(self):                      # computed, read-only
+        return round(3.14159 * self._radius ** 2, 2)
+
+c = Circle(2)
+print(c.area)                            # 12.57
+try:
+    c.radius = -1
+except ValueError as e:
+    print(e)                             # radius must be &gt;= 0</pre></div>
+<div class="section-title"><i class="ti ti-lock"></i>Encapsulation by convention</div>
+<table><thead><tr><th>Name</th><th>Meaning</th></tr></thead><tbody><tr><td><code>name</code></td><td>Public API</td></tr><tr><td><code>_name</code></td><td>Internal — “please don't touch” (not enforced)</td></tr><tr><td><code>__name</code></td><td>Name-mangled to <code>_ClassName__name</code> to avoid clashes in subclasses</td></tr><tr><td><code>__name__</code></td><td>Special (dunder) names reserved for Python</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>Python has no <code>private</code> keyword. The culture is “we're all consenting adults”: mark internals with <code>_</code> and use properties when you need validation.</p></div>
+</div>
+<div class="topic" id="topic-inheritance">
+<div class="page-tag">Object-Oriented Python</div>
+<h1 class="page-title">Inheritance, MRO &amp; super()</h1>
+<p class="page-subtitle">A subclass reuses and specialises its parent. Python supports multiple inheritance and resolves methods with a predictable order — the MRO.</p>
+<div class="section-title"><i class="ti ti-hierarchy-2"></i>Inheritance &amp; overriding</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Animal:
+    def __init__(self, name):
+        self.name = name
+    def speak(self):
+        return "..."
+    def describe(self):
+        return f"{self.name} says {self.speak()}"
+
+class Dog(Animal):
+    def __init__(self, name, breed):
+        super().__init__(name)           # let the parent set up its part
+        self.breed = breed
+    def speak(self):                     # override
+        return "Woof"
+
+d = Dog("Rex", "lab")
+print(d.describe())                              # Rex says Woof
+print(isinstance(d, Animal), issubclass(Dog, Animal))   # True True</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>describe</code> lives in <code>Animal</code> but calls <code>self.speak()</code> — Python looks it up on the actual object, so the <code>Dog</code> version runs. That's polymorphism.</p></div>
+<div class="section-title"><i class="ti ti-git-merge"></i>Multiple inheritance &amp; the MRO</div>
+<div class="def-card"><p><strong>MRO (Method Resolution Order)</strong> — the order in which classes are searched for an attribute, computed with <em>C3 linearization</em>. See it with <code>Class.__mro__</code> or <code>Class.mro()</code>.</p></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class A:
+    def hello(self): return "A"
+class B(A):
+    def hello(self): return "B→" + super().hello()
+class C(A):
+    def hello(self): return "C→" + super().hello()
+class D(B, C):
+    def hello(self): return "D→" + super().hello()
+
+print(D().hello())                          # D→B→C→A
+print([k.__name__ for k in D.__mro__])      # ['D', 'B', 'C', 'A', 'object']</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p><code>super()</code> means “the <strong>next class in the MRO</strong>”, not “my parent”. In <code>D(B, C)</code>, <code>B</code>'s <code>super()</code> goes to <code>C</code>, not <code>A</code> — that's what makes cooperative multiple inheritance work.</p></div>
+<div class="section-title"><i class="ti ti-template"></i>Abstract base classes</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from abc import ABC, abstractmethod
+
+class Shape(ABC):
+    @abstractmethod
+    def area(self) -&gt; float: ...
+
+class Square(Shape):
+    def __init__(self, side):
+        self.side = side
+    def area(self):
+        return self.side ** 2
+
+print(Square(3).area())          # 9
+try:
+    Shape()
+except TypeError:
+    print("can't instantiate")   # can't instantiate</pre></div>
+<div class="section-title"><i class="ti ti-puzzle"></i>Duck typing &amp; composition</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-feather"></i>Duck typing</h3><p>“If it walks like a duck…” — code relies on <em>what an object can do</em> (has <code>read()</code>, is iterable) rather than its class.</p></div><div class="card"><h3><i class="ti ti-components"></i>Composition over inheritance</h3><p>Hold other objects as attributes (<code>self.engine = Engine()</code>) instead of building deep class trees.</p></div><div class="card"><h3><i class="ti ti-blend-mode"></i>Mixins</h3><p>Small classes adding one capability (e.g. <code>JsonMixin.to_json</code>) combined through multiple inheritance.</p></div><div class="card"><h3><i class="ti ti-file-certificate"></i>Protocols</h3><p><code>typing.Protocol</code> describes the methods a type needs — static duck typing for type checkers.</p></div></div>
+</div>
+<div class="topic" id="topic-dunder-methods">
+<div class="page-tag">Object-Oriented Python</div>
+<h1 class="page-title">Magic (Dunder) Methods</h1>
+<p class="page-subtitle">Double-underscore methods let your objects plug into Python's syntax: printing, <code>==</code>, <code>len()</code>, <code>[]</code>, <code>for</code>, <code>+</code>, <code>with</code> and more.</p>
+<div class="section-title"><i class="ti ti-eye"></i>Representation</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Money:
+    def __init__(self, amount, cur="INR"):
+        self.amount, self.cur = amount, cur
+    def __repr__(self):                  # unambiguous, for developers
+        return f"Money({self.amount!r}, {self.cur!r})"
+    def __str__(self):                   # readable, for users
+        return f"{self.amount:.2f} {self.cur}"
+
+m = Money(250)
+print(repr(m))        # Money(250, 'INR')
+print(m)              # 250.00 INR
+print([m])            # [Money(250, 'INR')]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Containers show their items with <code>repr()</code>. Always define <code>__repr__</code>; add <code>__str__</code> when a friendlier form helps.</p></div>
+<div class="section-title"><i class="ti ti-equal"></i>Equality, hashing &amp; ordering</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from functools import total_ordering
+
+@total_ordering
+class Version:
+    def __init__(self, major, minor):
+        self.key = (major, minor)
+    def __eq__(self, other):
+        return isinstance(other, Version) and self.key == other.key
+    def __hash__(self):                   # equal objects must hash equally
+        return hash(self.key)
+    def __lt__(self, other):
+        return self.key &lt; other.key
+
+v1, v2 = Version(1, 2), Version(1, 10)
+print(v1 &lt; v2, v1 &gt;= v2, v1 == Version(1, 2))   # True False True
+print(len({v1, Version(1, 2)}))                  # 1</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Defining <code>__eq__</code> without <code>__hash__</code> makes instances <strong>unhashable</strong> (Python sets <code>__hash__ = None</code>). If objects can change, don't make them hashable.</p></div>
+<div class="section-title"><i class="ti ti-list"></i>Container &amp; iteration protocols</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Playlist:
+    def __init__(self, *songs):
+        self._songs = list(songs)
+    def __len__(self):
+        return len(self._songs)
+    def __getitem__(self, i):             # enables p[i], slicing and iteration
+        return self._songs[i]
+    def __contains__(self, song):
+        return song in self._songs
+
+p = Playlist("a", "b", "c")
+print(len(p), p[0], p[-1], "b" in p)      # 3 a c True
+print(list(p), p[1:])                     # ['a', 'b', 'c'] ['b', 'c']</pre></div>
+<div class="section-title"><i class="ti ti-math"></i>Operators &amp; callables</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Vec:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+    def __add__(self, o):
+        return Vec(self.x + o.x, self.y + o.y)
+    def __mul__(self, k):
+        return Vec(self.x * k, self.y * k)
+    def __abs__(self):
+        return (self.x ** 2 + self.y ** 2) ** 0.5
+    def __repr__(self):
+        return f"Vec({self.x}, {self.y})"
+
+class Adder:
+    def __init__(self, n):
+        self.n = n
+    def __call__(self, x):                # instances become callable
+        return x + self.n
+
+print(Vec(1, 2) + Vec(3, 4), Vec(3, 4) * 2, abs(Vec(3, 4)))   # Vec(4, 6) Vec(6, 8) 5.0
+print(Adder(10)(5))                                            # 15</pre></div>
+<table><thead><tr><th>Syntax</th><th>Calls</th></tr></thead><tbody><tr><td><code>str(x)</code>, <code>repr(x)</code></td><td><code>__str__</code>, <code>__repr__</code></td></tr><tr><td><code>x == y</code>, <code>x &lt; y</code></td><td><code>__eq__</code>, <code>__lt__</code> (+ <code>__le__</code>, <code>__gt__</code>, <code>__ge__</code>)</td></tr><tr><td><code>len(x)</code>, <code>x[i]</code>, <code>v in x</code></td><td><code>__len__</code>, <code>__getitem__</code>, <code>__contains__</code></td></tr><tr><td><code>for v in x</code></td><td><code>__iter__</code> (then <code>__next__</code> on the iterator)</td></tr><tr><td><code>x + y</code>, <code>x * y</code></td><td><code>__add__</code>, <code>__mul__</code> (<code>__radd__</code> for <code>y + x</code>)</td></tr><tr><td><code>x()</code></td><td><code>__call__</code></td></tr><tr><td><code>with x:</code></td><td><code>__enter__</code>, <code>__exit__</code></td></tr><tr><td><code>bool(x)</code></td><td><code>__bool__</code>, falling back to <code>__len__</code></td></tr></tbody></table>
+</div>
+<div class="topic" id="topic-dataclasses-typing">
+<div class="page-tag">Object-Oriented Python</div>
+<h1 class="page-title">Dataclasses, Enums &amp; Type Hints</h1>
+<p class="page-subtitle">Less boilerplate, clearer intent: <code>@dataclass</code> writes the dull methods for you, <code>Enum</code> names your constants, and type hints document everything.</p>
+<div class="section-title"><i class="ti ti-wand"></i>@dataclass</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from dataclasses import dataclass, field
+
+@dataclass(order=True)
+class Student:
+    name: str
+    marks: int = 0
+    tags: list[str] = field(default_factory=list)   # never a bare [] default
+
+s = Student("Asha", 91)
+print(s)                                    # Student(name='Asha', marks=91, tags=[])
+print(s == Student("Asha", 91))             # True
+print(sorted([Student("b", 2), Student("a", 5)])[0].name)   # a</pre></div>
+<table><thead><tr><th>Option</th><th>Effect</th></tr></thead><tbody><tr><td><code>@dataclass</code></td><td>Generates <code>__init__</code>, <code>__repr__</code>, <code>__eq__</code></td></tr><tr><td><code>order=True</code></td><td>Adds <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code> comparing fields in order</td></tr><tr><td><code>frozen=True</code></td><td>Immutable instances (and hashable)</td></tr><tr><td><code>slots=True</code></td><td>Uses <code>__slots__</code> — less memory, faster attribute access (3.10+)</td></tr><tr><td><code>field(default_factory=…)</code></td><td>A fresh mutable default per instance</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-list-numbers"></i>Enum</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from enum import Enum, auto
+
+class Status(Enum):
+    TODO = auto()
+    DONE = auto()
+
+s = Status.DONE
+print(s, s.name, s.value)              # Status.DONE DONE 2
+print(Status["TODO"] is Status.TODO)   # True
+print([m.name for m in Status])        # ['TODO', 'DONE']</pre></div>
+<div class="section-title"><i class="ti ti-tag"></i>Type hints</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from typing import Optional, TypedDict, Callable
+
+def find(names: list[str], target: str) -&gt; Optional[int]:
+    return names.index(target) if target in names else None
+
+def apply(f: Callable[[int], int], x: int) -&gt; int:
+    return f(x)
+
+class User(TypedDict):
+    id: int
+    email: str
+
+u: User = {"id": 1, "email": "a@b.co"}
+print(find(["a", "b"], "b"), apply(lambda n: n * 2, 4), u["email"])   # 1 8 a@b.co</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-brackets"></i>Built-in generics</h3><p><code>list[int]</code>, <code>dict[str, float]</code>, <code>tuple[int, ...]</code> (3.9+).</p></div><div class="card"><h3><i class="ti ti-arrows-join"></i>Unions</h3><p><code>int | None</code> (3.10+) is the same as <code>Optional[int]</code>.</p></div><div class="card"><h3><i class="ti ti-shield-check"></i>Checked by tools</h3><p>Hints are not enforced at runtime — run <code>mypy</code> or <code>pyright</code> to catch type errors.</p></div><div class="card"><h3><i class="ti ti-bulb"></i>Why bother</h3><p>Better autocomplete, self-documenting signatures, fewer bugs in large code.</p></div></div>
+<div class="section-title"><i class="ti ti-database"></i>__slots__</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class Point:
+    __slots__ = ("x", "y")      # no per-instance __dict__
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+
+p = Point(1, 2)
+try:
+    p.z = 3
+except AttributeError:
+    print("no new attributes")  # no new attributes</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>__slots__</code> saves memory when you create millions of small objects, at the cost of not being able to add attributes dynamically.</p></div>
+</div>
+<div class="topic" id="topic-iterators-generators">
+<div class="page-tag">Advanced Python</div>
+<h1 class="page-title">Iterators &amp; Generators</h1>
+<p class="page-subtitle">Iteration is a protocol: an <em>iterable</em> gives you an <em>iterator</em>, and an iterator hands out items with <code>next()</code> until it raises <code>StopIteration</code>. Generators make writing iterators trivial.</p>
+<div class="section-title"><i class="ti ti-arrows-right"></i>The iterator protocol</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>nums = [10, 20]
+it = iter(nums)               # calls nums.__iter__()
+print(next(it), next(it))     # 10 20
+try:
+    next(it)
+except StopIteration:
+    print("exhausted")        # exhausted</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-list"></i>Iterable</h3><p>Anything with <code>__iter__</code> (lists, strings, dicts, files). Can be looped over many times.</p></div><div class="card"><h3><i class="ti ti-arrow-right"></i>Iterator</h3><p>Has <code>__next__</code> and remembers its position. Single-use: once exhausted, it stays empty.</p></div></div>
+<div class="section-title"><i class="ti ti-bolt"></i>Generators with <code>yield</code></div>
+<p>A function containing <code>yield</code> returns a <strong>generator</strong>. Each <code>next()</code> runs the body until the next <code>yield</code>, then pauses with all local state intact.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def countdown(n):
+    while n &gt; 0:
+        yield n
+        n -= 1
+
+gen = countdown(3)
+print(next(gen), list(gen))          # 3 [2, 1]
+
+def fib():
+    a, b = 0, 1
+    while True:                      # infinite, but lazy
+        yield a
+        a, b = b, a + b
+
+from itertools import islice
+print(list(islice(fib(), 10)))       # [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>Generators use O(1) memory regardless of how many items they produce — the key to processing huge files or infinite streams.</p></div>
+<div class="section-title"><i class="ti ti-git-commit"></i>Pipelines &amp; <code>yield from</code></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def read_lines(text):
+    yield from text.splitlines()        # delegate to another iterable
+
+def non_empty(lines):
+    return (l.strip() for l in lines if l.strip())
+
+def numbers(lines):
+    for l in lines:
+        if l.isdigit():
+            yield int(l)
+
+data = "10\n\n  7 \nabc\n3"
+print(sum(numbers(non_empty(read_lines(data)))))   # 20</pre></div>
+<div class="section-title"><i class="ti ti-tools"></i>itertools essentials</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from itertools import accumulate, chain, combinations, groupby, permutations, product, count
+
+print(list(accumulate([1, 2, 3, 4])))                 # [1, 3, 6, 10]
+print(list(chain([1, 2], (3,), "ab")))                # [1, 2, 3, 'a', 'b']
+print(list(combinations("abc", 2)))                   # [('a', 'b'), ('a', 'c'), ('b', 'c')]
+print(len(list(permutations(range(4)))))              # 24
+print(list(product([0, 1], repeat=2)))                # [(0, 0), (0, 1), (1, 0), (1, 1)]
+print([(k, len(list(g))) for k, g in groupby("aaabcc")])   # [('a', 3), ('b', 1), ('c', 2)]
+print(next(x for x in count(1) if x * x &gt; 50))        # 8</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p><code>groupby</code> only groups <strong>consecutive</strong> equal keys — sort by the same key first if the data isn't already grouped.</p></div>
+</div>
+<div class="topic" id="topic-exceptions">
+<div class="page-tag">Advanced Python</div>
+<h1 class="page-title">Exceptions &amp; Context Managers</h1>
+<p class="page-subtitle">Errors are objects that propagate up the call stack until something handles them. <code>with</code> guarantees cleanup no matter how a block exits.</p>
+<div class="section-title"><i class="ti ti-shield"></i>try / except / else / finally</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>def parse(value):
+    try:
+        n = int(value)
+    except ValueError as e:
+        return f"bad input: {e}"
+    else:
+        return n * 2            # runs only if no exception
+    finally:
+        pass                    # always runs: close files, release locks
+
+print(parse("21"))              # 42
+print(parse("x"))               # bad input: invalid literal for int() with base 10: 'x'</pre></div>
+<table><thead><tr><th>Block</th><th>Runs when</th></tr></thead><tbody><tr><td><code>try</code></td><td>Always — the code that might fail</td></tr><tr><td><code>except E</code></td><td>An exception of type <code>E</code> (or a subclass) was raised</td></tr><tr><td><code>else</code></td><td>The <code>try</code> block finished <strong>without</strong> an exception</td></tr><tr><td><code>finally</code></td><td>Always, even after <code>return</code>, <code>break</code> or an unhandled error</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-flame"></i>Raising &amp; custom exceptions</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>class InsufficientFunds(Exception):
+    def __init__(self, needed):
+        super().__init__(f"need {needed} more")
+        self.needed = needed
+
+def withdraw(balance, amount):
+    if amount &gt; balance:
+        raise InsufficientFunds(amount - balance)
+    return balance - amount
+
+try:
+    withdraw(100, 150)
+except InsufficientFunds as e:
+    print(e, e.needed)          # need 50 more 50
+
+try:
+    try:
+        {}["k"]
+    except KeyError as e:
+        raise LookupError("config missing") from e    # keep the original cause
+except LookupError as e:
+    print(repr(e.__cause__))    # KeyError('k')</pre></div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Catch the most specific exception you can handle, keep <code>try</code> blocks small, and re-raise with <code>raise</code> (no argument) to preserve the traceback.</p></div><div class="cons"><div class="label">Avoid</div><p>Bare <code>except:</code> or <code>except Exception: pass</code> — it hides bugs, and a bare <code>except</code> even swallows <code>KeyboardInterrupt</code>.</p></div></div>
+<div class="section-title"><i class="ti ti-hierarchy-3"></i>Exception hierarchy (the useful part)</div>
+<table><thead><tr><th>Exception</th><th>Typical cause</th></tr></thead><tbody><tr><td><code>ValueError</code></td><td>Right type, wrong value: <code>int('x')</code></td></tr><tr><td><code>TypeError</code></td><td>Wrong type: <code>'a' + 1</code></td></tr><tr><td><code>KeyError</code> / <code>IndexError</code></td><td>Missing dict key / list index out of range (both are <code>LookupError</code>s)</td></tr><tr><td><code>AttributeError</code></td><td>Object has no such attribute</td></tr><tr><td><code>ZeroDivisionError</code></td><td>Division by zero (an <code>ArithmeticError</code>)</td></tr><tr><td><code>FileNotFoundError</code></td><td>Missing file (an <code>OSError</code>)</td></tr><tr><td><code>StopIteration</code></td><td>Iterator is exhausted</td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-door-exit"></i>Context managers: <code>with</code></div>
+<p><code>with</code> calls <code>__enter__</code> at the start and <code>__exit__</code> at the end — even if the block raises. Files, locks, DB transactions and timers all use it.</p>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from contextlib import contextmanager, suppress
+
+@contextmanager
+def tag(name):
+    print(f"&lt;{name}&gt;")           # setup
+    try:
+        yield name               # the with-block runs here
+    finally:
+        print(f"&lt;/{name}&gt;")      # teardown, always
+
+with tag("b") as t:
+    print(t.upper())
+
+with suppress(FileNotFoundError):     # ignore one specific error
+    open("definitely-missing.txt")
+print("still running")</pre></div>
+<div class="code-block-container"><div class="code-lang">Output</div><pre>&lt;b&gt;
+B
+&lt;/b&gt;
+still running</pre></div>
+</div>
+<div class="topic" id="topic-memory-model">
+<div class="page-tag">Advanced Python</div>
+<h1 class="page-title">Memory, Mutability &amp; Garbage Collection</h1>
+<p class="page-subtitle">Variables are references, objects live on the heap, and CPython frees them with reference counting plus a cycle collector. Mutability explains most “weird” Python bugs.</p>
+<div class="section-title"><i class="ti ti-link"></i>Names point to objects</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>a = [1, 2]
+b = a                    # b refers to the SAME list
+b.append(3)
+print(a, a is b)         # [1, 2, 3] True
+
+x = 5
+y = x
+y += 1                   # ints are immutable: y now points to a new object
+print(x, y)              # 5 6</pre></div>
+<table><thead><tr><th>Immutable (can't change in place)</th><th>Mutable (can change in place)</th></tr></thead><tbody><tr><td><code>int</code>, <code>float</code>, <code>bool</code>, <code>str</code>, <code>bytes</code></td><td><code>list</code>, <code>dict</code>, <code>set</code>, <code>bytearray</code></td></tr><tr><td><code>tuple</code>, <code>frozenset</code>, <code>None</code></td><td>Most user-defined objects</td></tr></tbody></table>
+<div class="highlight-box"><div class="label">Key point</div><p>A tuple is immutable, but if it <em>contains</em> a list, that list can still change: <code>t = ([1],); t[0].append(2)</code> works.</p></div>
+<div class="section-title"><i class="ti ti-plus"></i><code>+=</code> differs for mutable and immutable types</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>nums = [1]
+alias = nums
+nums += [2]              # list: extends in place
+print(alias)             # [1, 2]
+
+s = "a"
+alias_s = s
+s += "b"                 # str: builds a new object
+print(alias_s, s)        # a ab</pre></div>
+<div class="section-title"><i class="ti ti-recycle"></i>Reference counting &amp; the cycle collector</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Reference counting</div><div class="step-desc">Every object tracks how many references point to it. When the count hits 0, it is freed immediately.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Cycle detection</div><div class="step-desc">Objects that reference each other (a ↔ b) never reach 0. The <code>gc</code> module periodically finds and frees such unreachable cycles.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Generations</div><div class="step-desc">New objects are checked often; objects that survive are promoted and checked less — most objects die young.</div></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import sys, gc
+
+data = []
+# getrefcount's own argument adds a temporary reference:
+print(sys.getrefcount(data) &gt;= 2)   # True
+
+class Node:
+    def __init__(self):
+        self.other = None
+a, b = Node(), Node()
+a.other, b.other = b, a             # a reference cycle
+del a, b
+print(gc.collect() &gt;= 2)            # True</pre></div>
+<div class="section-title"><i class="ti ti-bulb"></i>Memory tips</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-bolt"></i>Generators over lists</h3><p>Stream data instead of materialising it: <code>sum(x for x in …)</code>.</p></div><div class="card"><h3><i class="ti ti-database"></i><code>__slots__</code></h3><p>Drop per-instance <code>__dict__</code>s when creating millions of objects.</p></div><div class="card"><h3><i class="ti ti-ruler"></i><code>sys.getsizeof</code></h3><p>Shallow size of one object in bytes — it doesn't include what it references.</p></div><div class="card"><h3><i class="ti ti-fingerprint"></i>Interning</h3><p>Short identifier-like strings and small ints are reused. Never depend on it; compare with <code>==</code>.</p></div></div>
+</div>
+<div class="topic" id="topic-concurrency">
+<div class="page-tag">Advanced Python</div>
+<h1 class="page-title">Concurrency: Threads, Processes &amp; asyncio</h1>
+<p class="page-subtitle">Three tools for doing many things at once. Which one to pick depends on whether your program waits on I/O or burns CPU — because of the GIL.</p>
+<div class="def-card"><p><strong>GIL (Global Interpreter Lock)</strong> — a mutex in CPython that lets only <strong>one thread execute Python bytecode at a time</strong>. Threads still help while waiting on I/O (the GIL is released), but they don't speed up CPU-bound Python code.</p></div>
+<table><thead><tr><th></th><th><code>threading</code></th><th><code>multiprocessing</code></th><th><code>asyncio</code></th></tr></thead><tbody><tr><td>Model</td><td>OS threads, shared memory</td><td>Separate processes, separate memory</td><td>One thread, cooperative tasks</td></tr><tr><td>Best for</td><td>I/O-bound (network, disk)</td><td><strong>CPU-bound</strong> (math, image processing)</td><td>Many concurrent I/O waits (thousands of sockets)</td></tr><tr><td>GIL</td><td>Limits CPU parallelism</td><td>Bypassed — each process has its own</td><td>Not relevant — single thread</td></tr><tr><td>Cost</td><td>Light; needs locks for shared data</td><td>Heavy start-up; data must be pickled</td><td>Very light; code must be <code>async</code></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-arrows-shuffle"></i>Threads for I/O</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from concurrent.futures import ThreadPoolExecutor
+import time
+
+def fetch(i):
+    time.sleep(0.2)              # stands in for a network call (releases the GIL)
+    return i * i
+
+start = time.perf_counter()
+with ThreadPoolExecutor(max_workers=5) as pool:
+    results = list(pool.map(fetch, range(5)))
+elapsed = time.perf_counter() - start
+print(results, elapsed &lt; 0.5)    # [0, 1, 4, 9, 16] True</pre></div>
+<div class="section-title"><i class="ti ti-cpu"></i>Processes for CPU</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from concurrent.futures import ProcessPoolExecutor
+
+def heavy(n):
+    return sum(i * i for i in range(n))
+
+if __name__ == "__main__":       # required: child processes re-import this module
+    with ProcessPoolExecutor() as pool:
+        print(list(pool.map(heavy, [10**6] * 4)))</pre></div>
+<div class="section-title"><i class="ti ti-bolt"></i>asyncio for massive I/O concurrency</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import asyncio
+
+async def download(name, delay):
+    await asyncio.sleep(delay)   # yields control while "waiting"
+    return f"{name} done"
+
+async def main():
+    results = await asyncio.gather(download("a", 0.1), download("b", 0.1))
+    print(results)               # ['a done', 'b done']
+
+asyncio.run(main())</pre></div>
+<div class="section-title"><i class="ti ti-lock"></i>Shared state needs a lock</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import threading
+
+counter = 0
+lock = threading.Lock()
+
+def work():
+    global counter
+    for _ in range(100_000):
+        with lock:               # without the lock, updates can be lost
+            counter += 1
+
+threads = [threading.Thread(target=work) for _ in range(4)]
+for t in threads: t.start()
+for t in threads: t.join()
+print(counter)                   # 400000</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>counter += 1</code> is several bytecode steps (load, add, store), so a thread switch in between loses updates. Protect shared mutable state with a <code>Lock</code> or use a <code>queue.Queue</code>.</p></div>
+<div class="highlight-box"><div class="label">Recent change</div><p>Python 3.13+ ships an optional <em>free-threaded</em> build (no GIL). It's still experimental — for interviews, explain the GIL as above.</p></div>
+</div>
+<div class="topic" id="topic-modules-packages">
+<div class="page-tag">Advanced Python</div>
+<h1 class="page-title">Modules, Packages &amp; Environments</h1>
+<p class="page-subtitle">A module is a <code>.py</code> file; a package is a folder of modules. <code>import</code> finds, runs and caches them — and virtual environments keep each project's dependencies separate.</p>
+<div class="section-title"><i class="ti ti-download"></i>Importing</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import math                          # whole module
+from collections import Counter      # one name
+import datetime as dt                # alias
+print(math.sqrt(16), Counter("aab")["a"], dt.date(2026, 1, 1).year)   # 4.0 2 2026</pre></div>
+<div class="step-row"><div class="step-num">1</div><div class="step-body"><div class="step-title">Find</div><div class="step-desc">Python searches <code>sys.path</code>: the script's folder, <code>PYTHONPATH</code>, the standard library, then <code>site-packages</code>.</div></div></div><div class="step-row"><div class="step-num">2</div><div class="step-body"><div class="step-title">Execute once</div><div class="step-desc">The module's top-level code runs the first time it is imported.</div></div></div><div class="step-row"><div class="step-num">3</div><div class="step-body"><div class="step-title">Cache</div><div class="step-desc">The module object is stored in <code>sys.modules</code>; later imports reuse it.</div></div></div>
+<div class="section-title"><i class="ti ti-player-play"></i><code>if __name__ == "__main__":</code></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre># utils.py
+def add(a, b):
+    return a + b
+
+if __name__ == "__main__":    # True only when run directly: python utils.py
+    print(add(2, 3))          # 5</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p>When the file is imported, <code>__name__</code> is <code>"utils"</code>, so the demo code doesn't run. Use this guard for scripts, tests and anything with side effects.</p></div>
+<div class="section-title"><i class="ti ti-folders"></i>Packages</div>
+<div class="code-block-container"><div class="code-lang">Layout</div><pre>shop/
+├── __init__.py        # marks a regular package; runs on "import shop"
+├── cart.py
+└── payments/
+    ├── __init__.py
+    └── upi.py
+
+from shop.cart import Cart            # absolute import
+from .cart import Cart                # relative import (inside the package)</pre></div>
+<div class="section-title"><i class="ti ti-box-multiple"></i>Virtual environments &amp; pip</div>
+<div class="code-block-container"><div class="code-lang">Terminal</div><pre>$ python3 -m venv .venv               # create
+$ source .venv/bin/activate           # activate (Windows: .venv\Scripts\activate)
+(.venv) $ pip install requests        # install into this project only
+(.venv) $ pip freeze &gt; requirements.txt
+(.venv) $ pip install -r requirements.txt
+(.venv) $ deactivate</pre></div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-shield"></i>Why venvs</h3><p>Each project gets its own package versions — no conflicts, reproducible installs.</p></div><div class="card"><h3><i class="ti ti-file-settings"></i><code>pyproject.toml</code></h3><p>The modern single file for project metadata and dependencies (used by pip, uv, Poetry).</p></div></div>
+</div>
+<div class="topic" id="topic-files-io">
+<div class="page-tag">Advanced Python</div>
+<h1 class="page-title">Files, JSON &amp; pathlib</h1>
+<p class="page-subtitle">Reading and writing files safely with <code>with</code>, the common formats (text, CSV, JSON), and <code>pathlib</code> for paths.</p>
+<div class="section-title"><i class="ti ti-file"></i>Text files</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import os, tempfile
+path = os.path.join(tempfile.mkdtemp(), "notes.txt")
+
+with open(path, "w", encoding="utf-8") as f:     # "w" truncates, "a" appends
+    f.write("line one\nline two\n")
+
+with open(path, encoding="utf-8") as f:           # default mode "r"
+    for line in f:                                # streams line by line
+        print(line.rstrip())</pre></div>
+<table><thead><tr><th>Mode</th><th>Meaning</th></tr></thead><tbody><tr><td><code>'r'</code></td><td>Read (default) — error if missing</td></tr><tr><td><code>'w'</code></td><td>Write — creates or <strong>truncates</strong></td></tr><tr><td><code>'a'</code></td><td>Append to the end</td></tr><tr><td><code>'x'</code></td><td>Create — error if it exists</td></tr><tr><td><code>'b'</code></td><td>Binary, e.g. <code>'rb'</code> for images</td></tr><tr><td><code>'+'</code></td><td>Read and write</td></tr></tbody></table>
+<div class="warning-box"><div class="label">Watch out</div><p>Always pass <code>encoding="utf-8"</code> for text — the platform default differs between Windows and macOS/Linux.</p></div>
+<div class="section-title"><i class="ti ti-braces"></i>JSON</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import json
+user = {"name": "Asha", "skills": ["python", "sql"], "active": True, "manager": None}
+text = json.dumps(user)
+print(text)                            # {"name": "Asha", "skills": ["python", "sql"], "active": true, "manager": null}
+print(json.loads(text)["skills"][0])   # python</pre></div>
+<div class="highlight-box"><div class="label">Key point</div><p><code>dumps</code>/<code>loads</code> work with strings; <code>dump</code>/<code>load</code> with open files. JSON has no tuples, sets or dates — convert them first.</p></div>
+<div class="section-title"><i class="ti ti-table"></i>CSV</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>import csv, io
+raw = "name,score\nasha,91\nravi,84\n"
+rows = list(csv.DictReader(io.StringIO(raw)))
+print(rows[0])                                       # {'name': 'asha', 'score': '91'}
+print(sum(int(r["score"]) for r in rows) / len(rows))   # 87.5</pre></div>
+<div class="section-title"><i class="ti ti-folder"></i>pathlib</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from pathlib import Path
+import tempfile
+
+root = Path(tempfile.mkdtemp())
+report = root / "reports" / "2026.txt"      # "/" joins paths
+report.parent.mkdir(parents=True, exist_ok=True)
+report.write_text("ok", encoding="utf-8")
+
+print(report.name, report.stem, report.suffix)   # 2026.txt 2026 .txt
+print(report.read_text(encoding="utf-8"))         # ok
+print([p.name for p in root.rglob("*.txt")])      # ['2026.txt']</pre></div>
+</div>
+<div class="topic" id="topic-python-for-dsa">
+<div class="page-tag">Interview Prep</div>
+<h1 class="page-title">Python for DSA &amp; Coding Rounds</h1>
+<p class="page-subtitle">The complexities, templates and tricks that make Python the fastest language to <em>write</em> correct interview solutions in.</p>
+<div class="section-title"><i class="ti ti-clock"></i>Complexity cheat sheet</div>
+<table><thead><tr><th>Operation</th><th>list</th><th>dict / set</th><th>deque</th><th>heapq</th></tr></thead><tbody><tr><td>Access by index / key</td><td>O(1)</td><td>O(1) avg</td><td>O(n) in the middle</td><td>—</td></tr><tr><td>Search <code>x in …</code></td><td>O(n)</td><td><strong>O(1)</strong> avg</td><td>O(n)</td><td>O(n)</td></tr><tr><td>Append / add at end</td><td>O(1)*</td><td>O(1) avg</td><td>O(1)</td><td>push O(log n)</td></tr><tr><td>Remove at front</td><td><strong>O(n)</strong></td><td>—</td><td><strong>O(1)</strong></td><td>pop min O(log n)</td></tr><tr><td>Insert / delete in middle</td><td>O(n)</td><td>O(1) avg (by key)</td><td>O(n)</td><td>—</td></tr><tr><td>Min / max</td><td>O(n)</td><td>O(n)</td><td>O(n)</td><td><strong>O(1)</strong> peek</td></tr><tr><td>Sort</td><td>O(n log n)</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+<p>* amortised. Strings are immutable: slicing and <code>+</code> copy — O(k).</p>
+<div class="section-title"><i class="ti ti-template"></i>Templates</div>
+<div class="code-block-container"><div class="code-lang">Python — BFS</div><pre>from collections import deque
+
+def bfs(graph, start):
+    """Shortest path (edges) from start in an unweighted graph."""
+    dist = {start: 0}
+    q = deque([start])
+    while q:
+        node = q.popleft()
+        for nxt in graph[node]:
+            if nxt not in dist:
+                dist[nxt] = dist[node] + 1
+                q.append(nxt)
+    return dist
+
+graph = {"a": ["b", "c"], "b": ["d"], "c": ["d"], "d": []}
+print(bfs(graph, "a"))          # {'a': 0, 'b': 1, 'c': 1, 'd': 2}</pre></div>
+<div class="code-block-container"><div class="code-lang">Python — binary search</div><pre>def lower_bound(nums, target):
+    """First index with nums[i] &gt;= target (len(nums) if none)."""
+    lo, hi = 0, len(nums)
+    while lo &lt; hi:
+        mid = (lo + hi) // 2
+        if nums[mid] &lt; target:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+print(lower_bound([1, 3, 5, 7], 5), lower_bound([1, 3], 9))   # 2 2</pre></div>
+<div class="code-block-container"><div class="code-lang">Python — sliding window</div><pre>def longest_unique_substring(s):
+    seen, left, best = {}, 0, 0
+    for right, ch in enumerate(s):
+        if seen.get(ch, -1) &gt;= left:
+            left = seen[ch] + 1          # shrink past the duplicate
+        seen[ch] = right
+        best = max(best, right - left + 1)
+    return best
+
+print(longest_unique_substring("abcabcbb"))   # 3</pre></div>
+<div class="code-block-container"><div class="code-lang">Python — Dijkstra</div><pre>import heapq
+
+def dijkstra(adj, src):
+    dist = {src: 0}
+    heap = [(0, src)]
+    while heap:
+        d, u = heapq.heappop(heap)
+        if d &gt; dist.get(u, float("inf")):
+            continue                      # stale entry
+        for v, w in adj.get(u, []):
+            nd = d + w
+            if nd &lt; dist.get(v, float("inf")):
+                dist[v] = nd
+                heapq.heappush(heap, (nd, v))
+    return dist
+
+adj = {"a": [("b", 4), ("c", 1)], "c": [("b", 2)]}
+print(dijkstra(adj, "a"))                 # {'a': 0, 'b': 3, 'c': 1}</pre></div>
+<div class="section-title"><i class="ti ti-bolt"></i>Tricks that save time</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-infinity"></i>Infinity</h3><p><code>float('inf')</code> and <code>-float('inf')</code> for initial min/max; <code>math.inf</code> works too.</p></div><div class="card"><h3><i class="ti ti-number"></i>Big integers</h3><p><code>int</code> never overflows — factorials and large sums need no special handling.</p></div><div class="card"><h3><i class="ti ti-keyboard"></i>Fast input</h3><p><code>import sys; input = sys.stdin.readline</code> for large competitive-programming inputs.</p></div><div class="card"><h3><i class="ti ti-stack-2"></i>Deep recursion</h3><p><code>sys.setrecursionlimit(10**6)</code> — or better, rewrite DFS with an explicit stack.</p></div><div class="card"><h3><i class="ti ti-database"></i>Memoize</h3><p><code>@functools.cache</code> on a recursive function = instant top-down DP.</p></div><div class="card"><h3><i class="ti ti-grid-dots"></i>Grids</h3><p>Direction list <code>[(0,1),(1,0),(0,-1),(-1,0)]</code> and a bounds check <code>0 &lt;= r &lt; R</code>.</p></div></div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>from functools import cache
+
+@cache
+def climb(n):                 # ways to climb n stairs taking 1 or 2 steps
+    return 1 if n &lt;= 1 else climb(n - 1) + climb(n - 2)
+
+print(climb(50))              # 20365011074</pre></div>
+<div class="warning-box"><div class="label">Watch out</div><p>Plain Python is roughly 10–100× slower than C++ for tight loops. Pick the right algorithm first; then lean on built-ins (<code>sum</code>, <code>sorted</code>, <code>set</code>), which run in C.</p></div>
+</div>
+<div class="topic" id="topic-pythonic">
+<div class="page-tag">Interview Prep</div>
+<h1 class="page-title">Pythonic Code &amp; Idioms</h1>
+<p class="page-subtitle">“Pythonic” code uses the language's features the way they were intended — shorter, clearer and usually faster. Interviewers notice.</p>
+<div class="section-title"><i class="ti ti-arrows-exchange"></i>Before → after</div>
+<table><thead><tr><th>Instead of</th><th>Write</th></tr></thead><tbody><tr><td><code>for i in range(len(xs)): print(xs[i])</code></td><td><code>for x in xs: print(x)</code></td></tr><tr><td><code>i = 0</code> … <code>i += 1</code> inside a loop</td><td><code>for i, x in enumerate(xs)</code></td></tr><tr><td><code>if len(xs) == 0:</code></td><td><code>if not xs:</code></td></tr><tr><td><code>if x == True:</code> / <code>if x == None:</code></td><td><code>if x:</code> / <code>if x is None:</code></td></tr><tr><td><code>tmp = a; a = b; b = tmp</code></td><td><code>a, b = b, a</code></td></tr><tr><td><code>result = []</code> + loop + <code>append</code></td><td>a list comprehension</td></tr><tr><td><code>d[k] = d[k] + 1 if k in d else 1</code></td><td><code>d[k] = d.get(k, 0) + 1</code> or <code>Counter</code></td></tr><tr><td><code>s = ''</code> + <code>s += piece</code> in a loop</td><td><code>''.join(pieces)</code></td></tr><tr><td><code>open</code> … <code>close()</code></td><td><code>with open(…) as f:</code></td></tr><tr><td><code>x &gt; 0 and x &lt; 10</code></td><td><code>0 &lt; x &lt; 10</code></td></tr></tbody></table>
+<div class="section-title"><i class="ti ti-scale"></i>EAFP vs LBYL</div>
+<div class="card-grid"><div class="card"><h3><i class="ti ti-eye"></i>LBYL — Look Before You Leap</h3><p>Check first: <code>if key in d: value = d[key]</code>. Common in C/Java.</p></div><div class="card"><h3><i class="ti ti-shield-check"></i>EAFP — Easier to Ask Forgiveness than Permission</h3><p>Just try it and handle the failure: <code>try: value = d[key] except KeyError: …</code>. Idiomatic Python, and avoids race conditions.</p></div></div>
+<div class="section-title"><i class="ti ti-star"></i>Idioms worth knowing</div>
+<div class="code-block-container"><div class="code-lang">Python</div><pre>nums = [4, 8, 15, 16, 23, 42]
+
+print(sum(1 for n in nums if n % 2 == 0))         # 4
+print(all(n &gt; 0 for n in nums), any(n &gt; 40 for n in nums))   # True True
+print(max(enumerate(nums), key=lambda p: p[1]))    # (5, 42)
+
+first, *rest = nums
+print(first, len(rest))                            # 4 5
+
+pairs = list(zip(nums, nums[1:]))                  # neighbouring pairs
+print(pairs[:2])                                   # [(4, 8), (8, 15)]
+
+counts = {}
+for word in "to be or not to be".split():
+    counts[word] = counts.get(word, 0) + 1
+print(sorted(counts.items(), key=lambda kv: -kv[1])[:2])   # [('to', 2), ('be', 2)]</pre></div>
+<div class="section-title"><i class="ti ti-writing"></i>Readable over clever</div>
+<div class="card-grid"><div class="pros"><div class="label">Do</div><p>Name things well, keep functions short, return early, and add type hints on public functions.</p></div><div class="cons"><div class="label">Avoid</div><p>One-liners that need a comment to explain — clever is the enemy of correct in an interview.</p></div></div>
+</div>
+<div class="topic" id="topic-interview-questions">
+<div class="page-tag">Interview Prep</div>
+<h1 class="page-title">Interview Questions</h1>
+<p class="page-subtitle">The Python questions that come up again and again — with short, precise answers you can say out loud.</p>
+<div class="section-title"><i class="ti ti-brand-python"></i>Core language</div>
+<div class="qa-card"><div class="qa-question">What is the difference between a list and a tuple?</div><div class="qa-answer"><p>A list is <strong>mutable</strong> (append, remove, assign by index); a tuple is <strong>immutable</strong>. Tuples are hashable (if their items are), so they can be dict keys or set items, and they're slightly smaller and faster. Use tuples for fixed records and lists for collections that change.</p></div></div>
+<div class="qa-card"><div class="qa-question">How is a Python dict implemented, and why are lookups O(1)?</div><div class="qa-answer"><p>It's a hash table. The key's <code>hash()</code> picks a slot; collisions are resolved with open addressing (probing). Average lookup, insert and delete are O(1); the worst case is O(n) with many collisions. Since 3.7 dicts preserve insertion order.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is the GIL?</div><div class="qa-answer"><p>The Global Interpreter Lock in CPython lets only one thread run Python bytecode at a time. Threads still help for <strong>I/O-bound</strong> work (the lock is released while waiting), but for <strong>CPU-bound</strong> work you use <code>multiprocessing</code> (separate processes, each with its own GIL) or native extensions.</p></div></div>
+<div class="qa-card"><div class="qa-question">is vs ==?</div><div class="qa-answer"><p><code>==</code> compares <strong>values</strong> (calls <code>__eq__</code>); <code>is</code> compares <strong>identity</strong> (same object in memory). Use <code>is</code> only for singletons such as <code>None</code>.</p></div></div>
+<div class="qa-card"><div class="qa-question">What happens with a mutable default argument?</div><div class="qa-answer"><p>Defaults are evaluated once, when the function is defined, so <code>def f(x, items=[])</code> shares one list across calls. Use <code>items=None</code> and create the list inside the function.</p></div></div>
+<div class="qa-card"><div class="qa-question">Shallow copy vs deep copy?</div><div class="qa-answer"><p>A shallow copy (<code>xs[:]</code>, <code>copy.copy</code>, <code>list(xs)</code>) creates a new container holding <strong>the same</strong> inner objects. A deep copy (<code>copy.deepcopy</code>) recursively copies the inner objects too, so nested changes don't leak between them.</p></div></div>
+<div class="section-title"><i class="ti ti-function"></i>Functions &amp; objects</div>
+<div class="qa-card"><div class="qa-question">What are *args and **kwargs?</div><div class="qa-answer"><p><code>*args</code> collects extra positional arguments into a tuple; <code>**kwargs</code> collects extra keyword arguments into a dict. At the call site, <code>*</code> and <code>**</code> unpack a sequence or mapping into arguments.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is a decorator?</div><div class="qa-answer"><p>A callable that takes a function and returns a new one wrapping it. <code>@d</code> above <code>def f</code> means <code>f = d(f)</code>. Used for logging, timing, caching (<code>@cache</code>), access checks and registering routes. Use <code>functools.wraps</code> to keep the original name and docstring.</p></div></div>
+<div class="qa-card"><div class="qa-question">Generator vs list — when would you use each?</div><div class="qa-answer"><p>A list stores every item in memory and can be iterated many times. A generator produces items lazily on demand, uses O(1) memory and can be iterated <strong>once</strong>. Use generators for large or infinite streams and pipelines; lists when you need indexing, <code>len</code> or repeated passes.</p></div></div>
+<div class="section-title"><i class="ti ti-cpu"></i>Runtime, memory &amp; concurrency</div>
+<div class="qa-card"><div class="qa-question">How does Python manage memory?</div><div class="qa-answer"><p>Objects live on a private heap. CPython frees an object as soon as its <strong>reference count</strong> drops to zero, and a generational <strong>garbage collector</strong> (<code>gc</code>) cleans up reference cycles that refcounting can't.</p></div></div>
+<div class="qa-card"><div class="qa-question">What are @staticmethod and @classmethod?</div><div class="qa-answer"><p>An instance method receives <code>self</code>. A <code>@classmethod</code> receives the class (<code>cls</code>) — typically used for alternative constructors like <code>from_json</code>. A <code>@staticmethod</code> receives neither; it's a plain function grouped inside the class.</p></div></div>
+<div class="qa-card"><div class="qa-question">Explain the MRO and super().</div><div class="qa-answer"><p>The Method Resolution Order is the sequence Python searches for attributes in a class hierarchy, computed by C3 linearization (<code>Class.__mro__</code>). <code>super()</code> delegates to the <strong>next</strong> class in that order, not necessarily the direct parent — enabling cooperative multiple inheritance.</p></div></div>
+<div class="qa-card"><div class="qa-question">What does if __name__ == "__main__": do?</div><div class="qa-answer"><p><code>__name__</code> is <code>"__main__"</code> only when the file is run directly. Code under the guard runs for <code>python file.py</code> but not when the module is imported — keeping imports free of side effects.</p></div></div>
+<div class="qa-card"><div class="qa-question">How do you handle exceptions properly?</div><div class="qa-answer"><p>Catch specific exceptions, keep <code>try</code> blocks small, use <code>else</code> for code that should run only on success and <code>finally</code> (or <code>with</code>) for cleanup. Chain with <code>raise NewError(...) from e</code> to keep the cause, and never silence errors with a bare <code>except:</code>.</p></div></div>
+<div class="section-title"><i class="ti ti-question-mark"></i>Predict the output</div>
+<div class="qa-card"><div class="qa-question">What is the output? (lists vs tuples with +=)</div><div class="qa-answer"><div class="code-block-container"><div class="code-lang">Python</div><pre>x = [1, 2, 3]
+y = x
+y += [4]
+print(x)          # [1, 2, 3, 4]
+a = (1, 2)
+b = a
+b += (3,)
+print(a, b)       # (1, 2) (1, 2, 3)</pre></div><p>Lists are mutable, so <code>+=</code> extends the shared list in place. Tuples are immutable, so <code>+=</code> builds a new tuple and rebinds only <code>b</code>.</p></div></div>
+<div class="qa-card"><div class="qa-question">What is the output? (lambdas in a loop)</div><div class="qa-answer"><div class="code-block-container"><div class="code-lang">Python</div><pre>funcs = [lambda: i * 10 for i in range(3)]
+print([f() for f in funcs])     # [20, 20, 20]</pre></div><p>Closures look up <code>i</code> when called, after the loop ended with <code>i == 2</code>. Capture the current value with a default argument: <code>lambda i=i: i * 10</code>.</p></div></div>
+<div class="section-title"><i class="ti ti-checklist"></i>Quick-fire checklist</div>
+<div class="chips"><span class="chip">Mutable vs immutable</span><span class="chip">List vs tuple vs set vs dict</span><span class="chip">Hashing &amp; dict keys</span><span class="chip">Comprehensions</span><span class="chip">Generators &amp; <code>yield</code></span><span class="chip">Decorators</span><span class="chip">Closures &amp; LEGB</span><span class="chip"><code>*args</code> / <code>**kwargs</code></span><span class="chip">Shallow vs deep copy</span><span class="chip">GIL &amp; concurrency</span><span class="chip">MRO &amp; <code>super()</code></span><span class="chip">Dunder methods</span><span class="chip">Exceptions &amp; <code>with</code></span><span class="chip"><code>@dataclass</code></span><span class="chip">Big-O of built-ins</span></div>
+</div>
+</main>
+</body>
+</html>

@@ -3,8 +3,8 @@ rules_version = '2';
 // Document shapes: schema/firestore.ts
 //
 // • Study content and aggregates are public and read-only (written only by
-//   scripts/content/seed-firestore.mjs and the Cloud Functions backend with
-//   the admin SDK, which bypasses these rules).
+//   scripts/content/seed (npm run content:seed) and the Cloud Functions
+//   backend with the admin SDK, which bypasses these rules).
 // • Each learner can read and write only their own documents under
 //   users/{uid}; every write is validated for shape and size.
 // • Everything else is denied.
@@ -17,6 +17,9 @@ service cloud.firestore {
     function isTime(v) { return v is int && v > 0; }
     function smallString(v, max) { return v is string && v.size() <= max; }
 
+    match /meta/{docId} {
+      allow read: if true;           // meta/content: the content version clients cache by
+    }
     match /catalog/{docId} {
       allow read: if true;
     }

@@ -12,6 +12,7 @@ import { get, set } from '@/services/storage'
 import { useUser } from '@/features/auth/auth'
 import { NOTE_MAX, saveNote, useNote } from '@/features/progress/notes'
 import { speak, speechSupported, type Segment } from '@/features/voice/speech'
+import type { Content } from '@schema/content'
 import { buildStudyKit, recapText, type StudyKit as Kit } from '@/features/study/kit/extract'
 import { track } from '@/features/telemetry/track'
 
@@ -27,15 +28,15 @@ const TABS: { id: Tab; label: string; icon: typeof Sparkles }[] = [
 const CALLOUT_LABEL = { def: 'Definition', note: 'Key point', warn: 'Watch out', good: 'Do', bad: 'Avoid', example: 'Example' } as const
 
 interface Props {
-  html: string
+  content: Content
   title: string
   noteKey: string
   subjectId: string
   topicId: string
 }
 
-export function StudyKit({ html, title, noteKey, subjectId, topicId }: Props) {
-  const kit = useMemo(() => buildStudyKit(html), [html])
+export function StudyKit({ content, title, noteKey, subjectId, topicId }: Props) {
+  const kit = useMemo(() => buildStudyKit(content), [content])
   const [open, setOpen] = useState(() => get<boolean>('kit-open') ?? true)
   const [tab, setTab] = useState<Tab>(() => get<Tab>('kit-tab') ?? 'notes')
   const minutes = Math.max(1, Math.round(kit.words / 230))

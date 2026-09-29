@@ -1,47 +1,67 @@
 /* ============================================================
-   FIRESTORE CONTENT SOURCE
-   Document layout is defined by scripts/content/seed-firestore.mjs.
+   FIRESTORE CONTENT READS — the only place study content is
+   fetched from. Document layout: schema/content.ts; written by
+   scripts/content/seed (npm run content:seed).
    ============================================================ */
 
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore/lite'
-import { firebaseConfigured } from '@/services/firebase/app'
+import {
+  PROBLEM_RICH_FIELDS, unflatten, type ContentMeta, type FlatContent, type SolutionFlat, type TopicDocFlat,
+} from '@schema/content'
 import { db } from '@/services/firebase/firestore'
-import { NotFoundError, type ContentSource } from '@/features/catalog/source'
-import type { Catalog, Problem, TopicDoc } from '@/features/catalog/types'
+import { firebaseConfigured } from '@/services/firebase/app'
+import type { Catalog, Problem, Solution, TopicDoc } from './types'
+import { NotFoundError } from './errors'
 
 function ensureConfigured() {
   if (!firebaseConfigured) throw new Error('Firebase is not configured — set the VITE_FIREBASE_* variables in .env.local.')
 }
 
-export const firestoreSource: ContentSource = {
-  async catalog() {
-    ensureConfigured()
-    const snap = await getDoc(doc(db(), 'catalog', 'current'))
-    if (!snap.exists()) throw new NotFoundError('catalog/current — has the database been seeded?')
-    return snap.data() as Catalog
-  },
+export async function fetchMeta(): Promise<ContentMeta> {
+  ensureConfigured()
+  const snap = await getDoc(doc(db(), 'meta', 'content'))
+  if (!snap.exists()) throw new NotFoundError('meta/content — has the database been seeded? (npm run content:seed)')
+  return snap.data() as ContentMeta
+}
 
-  async topic(subjectId, topicId) {
-    ensureConfigured()
-    const ref = doc(db(), 'subjects', subjectId, 'topics', topicId)
-    const snap = await getDoc(ref)
-    if (!snap.exists()) throw new NotFoundError(ref.path)
-    const data = snap.data() as TopicDoc & { chunks?: number }
-    // Large topics are split across a `chunks` subcollection (1 MiB doc limit).
-    if ((data.chunks ?? 1) > 1) {
-      const rest = await Promise.all(
-        Array.from({ length: data.chunks! - 1 }, (_, i) => getDoc(doc(ref, 'chunks', String(i + 1)))),
-      )
-      data.html += rest.map((s) => (s.data()?.html as string) ?? '').join('')
-    }
-    return data
-  },
+export async function fetchCatalog(): Promise<Catalog> {
+  ensureConfigured()
+  const snap = await getDoc(doc(db(), 'catalog', 'current'))
+  if (!snap.exists()) throw new NotFoundError('catalog/current — has the database been seeded? (npm run content:seed)')
+  return snap.data() as Catalog
+}
 
-  async problems(subjectId, categoryId) {
-    ensureConfigured()
-    const q = query(collection(db(), 'subjects', subjectId, 'problems'), where('category', '==', categoryId))
-    const snap = await getDocs(q)
-    if (snap.empty) throw new NotFoundError(`${subjectId}/problems?category=${categoryId}`)
-    return snap.docs.map((d) => d.data() as Problem).sort((a, b) => a.order - b.order)
-  },
+export async function fetchTopic(subjectId: string, topicId: string): Promise<TopicDoc> {
+  ensureConfigured()
+  const ref = doc(db(), 'subjects', subjectId, 'topics', topicId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new NotFoundError(ref.path)
+  const d = snap.data() as TopicDocFlat
+  return { subjectId: d.subjectId, id: d.id, title: d.title, group: d.group, order: d.order, content: unflatten(d.content) }
+}
+
+type ProblemDoc = Omit<Problem, (typeof PROBLEM_RICH_FIELDS)[number] | 'naive' | 'optimal' | 'extra'> &
+  Partial<Record<(typeof PROBLEM_RICH_FIELDS)[number], FlatContent>> & {
+    naive?: SolutionFlat
+    optimal?: SolutionFlat
+    extra?: { title: string; content: FlatContent }[]
+  }
+
+const solution = (s: SolutionFlat | undefined): Solution | undefined => s && { ...s, content: unflatten(s.content) }
+
+function toProblem(d: ProblemDoc): Problem {
+  const p = { ...d } as unknown as Problem
+  for (const f of PROBLEM_RICH_FIELDS) if (d[f]) p[f] = unflatten(d[f]!)
+  p.naive = solution(d.naive)
+  p.optimal = solution(d.optimal)
+  if (d.extra) p.extra = d.extra.map((x) => ({ title: x.title, content: unflatten(x.content) }))
+  return p
+}
+
+export async function fetchProblems(subjectId: string, categoryId: string): Promise<Problem[]> {
+  ensureConfigured()
+  const q = query(collection(db(), 'subjects', subjectId, 'problems'), where('category', '==', categoryId))
+  const snap = await getDocs(q)
+  if (snap.empty) throw new NotFoundError(`${subjectId}/problems?category=${categoryId}`)
+  return snap.docs.map((d) => toProblem(d.data() as ProblemDoc)).sort((a, b) => a.order - b.order)
 }

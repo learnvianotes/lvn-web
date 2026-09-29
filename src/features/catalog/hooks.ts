@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { content } from '@/features/catalog/source'
+import { content, useContentEpoch } from '@/features/catalog/source'
 import type { Catalog, Problem, Subject, TopicDoc } from '@/features/catalog/types'
 
 export type AsyncState<T> =
@@ -36,7 +36,8 @@ export function useAsync<T>(key: string, load: () => Promise<T>): AsyncState<T> 
 export const CatalogContext = createContext<(AsyncState<Catalog> & { retry: () => void }) | null>(null)
 
 export function useCatalogState() {
-  return useAsync('catalog', () => content.catalog())
+  const epoch = useContentEpoch()
+  return useAsync(`catalog@${epoch}`, () => content.catalog())
 }
 
 export function useCatalog() {
@@ -51,9 +52,11 @@ export function useSubject(subjectId: string | undefined): Subject | undefined {
 }
 
 export function useTopic(subjectId: string, topicId: string) {
-  return useAsync<TopicDoc>(`topic:${subjectId}/${topicId}`, () => content.topic(subjectId, topicId))
+  const epoch = useContentEpoch()
+  return useAsync<TopicDoc>(`topic:${subjectId}/${topicId}@${epoch}`, () => content.topic(subjectId, topicId))
 }
 
 export function useProblems(subjectId: string, categoryId: string) {
-  return useAsync<Problem[]>(`problems:${subjectId}/${categoryId}`, () => content.problems(subjectId, categoryId))
+  const epoch = useContentEpoch()
+  return useAsync<Problem[]>(`problems:${subjectId}/${categoryId}@${epoch}`, () => content.problems(subjectId, categoryId))
 }

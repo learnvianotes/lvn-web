@@ -3,7 +3,7 @@
    Usage: node scripts/content/check-code.mjs [problemId ...]
    Compiles C++ (clang++), parses Java, syntax-checks JS for every
    file in content-src/code/<problemId>/ and reports what is still
-   missing per problem (compared to the Python in public/content).
+   missing per problem (compared to the Python in content-build).
    ============================================================ */
 
 import fs from 'node:fs'
@@ -14,8 +14,8 @@ const CODE_DIR = 'content-src/code'
 const CHECK = { cpp: cppErrors, java: javaErrors, js: jsErrors }
 const ids = process.argv.slice(2)
 const problems = new Map()
-for (const f of fs.readdirSync('public/content/problems')) {
-  for (const p of JSON.parse(fs.readFileSync(`public/content/problems/${f}`, 'utf8')).problems) problems.set(p.id, p)
+for (const f of fs.readdirSync('content-build/problems')) {
+  for (const p of JSON.parse(fs.readFileSync(`content-build/problems/${f}`, 'utf8')).problems) problems.set(p.id, p)
 }
 
 let failures = 0

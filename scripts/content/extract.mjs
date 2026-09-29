@@ -1,7 +1,7 @@
 /* ============================================================
    CONTENT PIPELINE — extract
    Reads the legacy HTML in content-src/legacy-html and writes
-   structured JSON to public/content:
+   structured JSON to content-build/ (the input for npm run content:seed):
 
      catalog.json                         all subjects + outlines (search, sidebars, progress totals)
      topics/<subjectId>/<topicId>.json    one theory topic { html }

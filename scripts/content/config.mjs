@@ -6,7 +6,7 @@
    ============================================================ */
 
 export const LEGACY_DIR = 'content-src/legacy-html'
-export const OUT_DIR = 'public/content'
+export const OUT_DIR = 'content-build'
 
 /**
  * Landing-page filter groups, in display order. Every subject's
@@ -17,6 +17,7 @@ export const CATEGORIES = [
   { id: 'fundamentals', title: 'CS Fundamentals' },
   { id: 'engineering', title: 'Engineering' },
   { id: 'ai', title: 'AI & Data' },
+  { id: 'programming', title: 'Programming' },
 ]
 
 /** @type {Array<{id:string,title:string,description:string,icon:string,category:string,kind:'notes'|'problems',source:string,order:number}>} */
@@ -27,6 +28,8 @@ export const SUBJECTS = [
     description: 'Recursion, trees, graphs, dynamic programming, tries, segment trees and advanced patterns.' },
   { id: 'sheet-150', category: 'dsa', title: 'Sheet 150', icon: 'list-checks', kind: 'problems', source: 'sheet_150',
     description: '150 curated interview problems with approach, intuition, complexity and optimized code.' },
+  { id: 'python', category: 'programming', title: 'Python', icon: 'terminal', kind: 'notes', source: 'python/index.html',
+    description: 'Types, data structures, functions, OOP, generators, concurrency and interview-ready Python idioms.' },
   { id: 'oops', category: 'fundamentals', title: 'OOPs', icon: 'layers', kind: 'notes', source: 'oops/index.html',
     description: 'Classes, objects, inheritance, polymorphism, encapsulation and abstraction.' },
   { id: 'computer-networks', category: 'fundamentals', title: 'Computer Networks', icon: 'network', kind: 'notes', source: 'computer_networks/index.html',

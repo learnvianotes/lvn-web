@@ -1,13 +1,15 @@
 # LearnViaNotes
 
-A quick, focused interview sheet: 13 subjects of notes plus 150 coding problems with solutions in
+A quick, focused interview sheet: 14 subjects of notes plus 150 coding problems with solutions in
 Python, C++, Java and JavaScript. Nothing is required — sign-in is optional and only adds a synced
 streak, study history and notes. Just learn.
 
-Subjects: DSA Basics · DSA Advanced · Sheet 150 · OOPs · Computer Networks · DBMS · Operating Systems ·
+Subjects: DSA Basics · DSA Advanced · Sheet 150 · Python · OOPs · Computer Networks · DBMS · Operating Systems ·
 Cryptography · System Design · Git & GitHub · API Design · GenAI Fluency · Machine Learning & AI
 
-- **Static site.** All content is JSON in `public/content`, served with the app.
+- **Content from the database.** All 14 subjects live in Firestore as structured content (headings,
+  paragraphs, code blocks, callouts, tables, …) and are rendered by reusable components. The site ships no
+  content files; what's fetched is cached on the device. See [docs/content-database.md](docs/content-database.md).
 - **Progress stays on the device** (`localStorage`) — unless the learner signs in (email, Google,
   GitHub or LinkedIn via Firebase Auth); then progress, the streak, study history (topic, date, time
   spent, revisits) and personal notes sync to their own Firestore documents. Setup and security
@@ -62,9 +64,14 @@ content-src/legacy-html/       original notes and Sheet 150 modules (source)
 content-src/code/<problem>/    naive|optimal .py/.cpp/.java/.js: fills in or replaces solution code
         │  npm run content:extract
         ▼
-public/content/                generated JSON (don't edit by hand)
+content-build/                 scanned content as JSON (don't edit by hand; not served)
+        │  npm run content:seed
+        ▼
+Firestore                      structured content the app reads
 ```
 
+- **Python** is authored as code in `content-src/authoring/python/` (`npm run content:python`): every
+  example is executed and its `# expected output` comments are checked before the HTML is generated.
 - Topic HTML is normalized into one small style vocabulary (`scripts/content/sanitize.mjs` →
   `src/styles/prose.css`), so every subject looks the same in light and dark mode.
 - Code is validated on every extract. C++ is compiled with `clang++`, and Java and JavaScript are
@@ -72,8 +79,12 @@ public/content/                generated JSON (don't edit by hand)
 - `node scripts/content/check-code.mjs <lc-id …>` checks the solution files for specific problems.
 - `JAVAC=/path/to/javac node scripts/content/compile-java.mjs` fully compiles every Java snippet (needs a JDK).
 
-## Optional: Firestore
+## Local development with the database
 
-The content can also be served from Firestore instead of static JSON. This is only worth doing if you
-need it; see `scripts/content/seed-firestore.mjs`, `firestore.rules`, and `VITE_CONTENT_SOURCE` in
-`.env.example`.
+```bash
+npm run emulators        # Firebase Auth + Firestore + Functions locally (needs Java 21)
+npm run content:seed     # put all subjects into the local Firestore (verified)
+npm run dev:local        # app on :9091 using the emulators
+```
+
+Release steps (live project): [docs/content-database.md](docs/content-database.md#release-checklist-live-project).

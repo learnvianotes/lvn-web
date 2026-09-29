@@ -1,13 +1,23 @@
 /* ============================================================
-   CONTENT SOURCE
-   One interface, two implementations with identical data:
-     firestore — reads the seeded Firestore database
-     static    — reads the JSON in /public/content (offline / pre-seed)
-   Chosen by VITE_CONTENT_SOURCE (default: static).
-   Results are memoized per session.
+   CONTENT SOURCE — all study content comes from the database
+   (Firestore, see firestoreSource.ts), and is cached on the
+   device so it opens instantly and keeps working offline.
+
+   Caching (IndexedDB, services/cache/idb.ts):
+     • Anything fetched is stored on the device.
+     • Once per session the app reads the tiny `meta/content`
+       document. If its version differs from the cached one, the
+       device cache is cleared and content is fetched fresh — so
+       the database always stays the source of truth.
+     • Offline, cached content is used as-is.
    ============================================================ */
 
-import type { Catalog, Problem, TopicDoc } from '@/features/catalog/types'
+import { useSyncExternalStore } from 'react'
+import { idbClear, idbGet, idbSet } from '@/services/cache/idb'
+import type { Catalog, Problem, TopicDoc } from './types'
+import { NotFoundError } from './errors'
+
+export { NotFoundError }
 
 export interface ContentSource {
   catalog(): Promise<Catalog>
@@ -15,52 +25,66 @@ export interface ContentSource {
   problems(subjectId: string, categoryId: string): Promise<Problem[]>
 }
 
-export class NotFoundError extends Error {}
+/** Firestore reads are code-split: the SDK loads with the first request. */
+const remote = () => import('./firestoreSource')
 
-const staticSource: ContentSource = {
-  async catalog() {
-    return getJson<Catalog>('/content/catalog.json')
-  },
-  async topic(subjectId, topicId) {
-    return getJson<TopicDoc>(`/content/topics/${subjectId}/${topicId}.json`)
-  },
-  async problems(_subjectId, categoryId) {
-    return (await getJson<{ problems: Problem[] }>(`/content/problems/${categoryId}.json`)).problems
-  },
+const VERSION_KEY = 'content:version'
+
+/* ── cache validity (once per session) ───────────────────── */
+
+let epoch = 0
+const epochListeners = new Set<() => void>()
+/** Bumps when the database has newer content than this device had — views then reload. */
+export function useContentEpoch() {
+  return useSyncExternalStore((l) => { epochListeners.add(l); return () => { epochListeners.delete(l) } }, () => epoch)
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  // Vite's dev server answers unknown paths with index.html, so check the type too.
-  if (res.status === 404 || !res.headers.get('content-type')?.includes('json')) throw new NotFoundError(url)
-  if (!res.ok) throw new Error(`${res.status} loading ${url}`)
-  return res.json() as Promise<T>
+let check: Promise<void> | null = null
+
+function validate(): Promise<void> {
+  check ??= (async () => {
+    const [meta, cached] = await Promise.all([
+      remote().then((r) => r.fetchMeta()).catch(() => null), // offline → keep what we have
+      idbGet<string>(VERSION_KEY),
+    ])
+    if (!meta || meta.version === cached) return
+    await idbClear()
+    await idbSet(VERSION_KEY, meta.version)
+    memo.clear()
+    if (cached) {
+      // The device was showing an older version: reload what's on screen.
+      epoch++
+      epochListeners.forEach((l) => l())
+    }
+  })()
+  return check
 }
 
-/** Firestore implementation is code-split so the static build never loads the SDK. */
-const firestoreSource: ContentSource = {
-  catalog: async () => (await import('@/features/catalog/firestoreSource')).firestoreSource.catalog(),
-  topic: async (s, t) => (await import('@/features/catalog/firestoreSource')).firestoreSource.topic(s, t),
-  problems: async (s, c) => (await import('@/features/catalog/firestoreSource')).firestoreSource.problems(s, c),
-}
-
-export const contentSourceName: 'firestore' | 'static' =
-  import.meta.env.VITE_CONTENT_SOURCE === 'firestore' ? 'firestore' : 'static'
-
-const base = contentSourceName === 'firestore' ? firestoreSource : staticSource
+/* ── cached reads ────────────────────────────────────────── */
 
 const memo = new Map<string, Promise<unknown>>()
+
 function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
-  if (!memo.has(key)) {
-    const p = load()
-    p.catch(() => memo.delete(key)) // allow retry after failures
-    memo.set(key, p)
-  }
-  return memo.get(key) as Promise<T>
+  const hit = memo.get(key)
+  if (hit) return hit as Promise<T>
+  const p = (async () => {
+    const stored = await idbGet<T>(key)
+    if (stored !== undefined) {
+      void validate() // show cached content now; check the version in the background
+      return stored
+    }
+    await validate() // nothing cached: make sure the cache belongs to the current version first
+    const fresh = await load()
+    void idbSet(key, fresh)
+    return fresh
+  })()
+  p.catch(() => memo.delete(key)) // allow retry after failures
+  memo.set(key, p)
+  return p
 }
 
 export const content: ContentSource = {
-  catalog: () => cached('catalog', () => base.catalog()),
-  topic: (s, t) => cached(`topic:${s}/${t}`, () => base.topic(s, t)),
-  problems: (s, c) => cached(`problems:${s}/${c}`, () => base.problems(s, c)),
+  catalog: () => cached('catalog', () => remote().then((r) => r.fetchCatalog())),
+  topic: (s, t) => cached(`topic:${s}/${t}`, () => remote().then((r) => r.fetchTopic(s, t))),
+  problems: (s, c) => cached(`problems:${s}/${c}`, () => remote().then((r) => r.fetchProblems(s, c))),
 }

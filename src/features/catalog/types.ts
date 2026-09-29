@@ -1,8 +1,10 @@
 /* ============================================================
    CONTENT TYPES
-   Shape of the documents produced by scripts/content/extract.mjs
-   and stored in Firestore (or served from /content as JSON).
+   The app-side shape of study content, as read from Firestore
+   (flat content is rebuilt into trees — see schema/content.ts).
    ============================================================ */
+
+import type { Content } from '@schema/content'
 
 export type SubjectKind = 'notes' | 'problems'
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
@@ -60,12 +62,12 @@ export interface TopicDoc {
   title: string
   group: string
   order: number
-  html: string
+  content: Content
 }
 
 export interface Solution {
   title: string
-  html: string
+  content: Content
   code: Partial<Record<CodeLang, string>>
   complexity?: string[]
 }
@@ -83,16 +85,16 @@ export interface Problem extends ProblemSummary {
   order: number
   leetcodeUrl: string
   youtubeUrl: string
-  statement?: string
-  io?: string
-  constraints?: string
-  understanding?: string
+  statement?: Content
+  io?: Content
+  constraints?: Content
+  understanding?: Content
   naive?: Solution
-  intuition?: string
-  approach?: string
+  intuition?: Content
+  approach?: Content
   optimal?: Solution
-  variants?: string
-  takeaway?: string
+  variants?: Content
+  takeaway?: Content
   similar?: SimilarProblem[]
-  extra?: { title: string; html: string }[]
+  extra?: { title: string; content: Content }[]
 }

@@ -1,7 +1,8 @@
 # Architecture
 
-LearnViaNotes is a **static React app + Firebase**. Content is plain JSON on a CDN; everything
-personal (streak, history, notes, preferences, activity events) belongs to a signed-in learner and
+LearnViaNotes is a **React app + Firebase**. Study content is structured data in Firestore
+(see [content-database.md](content-database.md)), rendered by reusable components and cached on the
+device; everything personal (streak, history, notes, preferences, activity events) belongs to a signed-in learner and
 lives in Firestore behind strict per-user rules. A small Cloud Functions backend does server-side
 work (cleanup, aggregates) that doesn't belong in the browser.
 
@@ -13,9 +14,9 @@ work (cleanup, aggregates) that doesn't belong in the browser.
                 │  services/   firebase app · storage · analytics · userdata repository (interface)     │
                 │  shared/     ui, lib (theme, dates, highlight), global styles                         │
                 └──────────────┬──────────────────────────────┬─────────────────────────────────────────┘
-                               │ static JSON (CDN)            │ Firebase SDKs (lazy)
-                     public/content/*.json          ┌─────────┴──────────┬────────────────────┐
-                     (built by scripts/content)     │ Firebase Auth      │ Firestore          │
+                               │ Firestore reads (cached)     │ Firebase SDKs (lazy)
+                     content (seeded by           ┌─────────┴──────────┬────────────────────┐
+                     scripts/content/seed)          │ Firebase Auth      │ Firestore          │
                                                     │ email, Google,     │ users/{uid}/…      │
                                                     │ GitHub, LinkedIn   │ topicStats, trending│
                                                     └────────────────────┴─────────┬──────────┘
@@ -34,7 +35,8 @@ work (cleanup, aggregates) that doesn't belong in the browser.
 | `src/shared/` | Reusable UI (`Status`), helpers (`theme`, `date`, `highlight`, `install`) and global styles |
 | `schema/firestore.ts` | **Single source of truth** for every stored document — used by the app (`@schema/…`) and copied into the backend at build time |
 | `functions/` | Cloud Functions (TypeScript, Node 22) |
-| `scripts/content/` | Content pipeline: legacy HTML → `public/content/*.json` |
+| `scripts/content/` | Content pipeline: sources → `content-build/` → Firestore (`seed/`) |
+| `src/features/content/` | Reusable renderers for structured content (one component per block type) |
 
 Rules of thumb as the app grows:
 - A feature imports from `services/`, `shared/` and other features' public modules — never the other way round.
@@ -66,7 +68,8 @@ Rules of thumb as the app grows:
 - Vendor code is split into long-cached chunks (`vendor-react`, `vendor-firebase`).
 - Firebase Auth loads after first paint; Firestore (~120 KB) only after someone signs in.
 - Feature CSS ships with its feature's chunk.
-- Content is static JSON, cached by the service worker (stale-while-revalidate).
+- Content comes from Firestore and is cached on the device (IndexedDB); a repeat visit costs one tiny read
+  (`meta/content`) to check the content version.
 
 ## Logs & metrics → recommendations
 
