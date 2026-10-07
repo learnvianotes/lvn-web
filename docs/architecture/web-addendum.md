@@ -1,6 +1,6 @@
 # lvn-web addendum
 
-How the web app implements [section 12](lvn-architecture-v2.md#12-web-agent). Where this file and the spec disagree,
+How the web app implements section 12 of the spec (lvn-backend `docs/architecture/lvn-architecture-v2.md`). Where this file and the spec disagree,
 the spec wins unless an accepted ADR says otherwise.
 
 ## Route map
@@ -8,7 +8,7 @@ the spec wins unless an accepted ADR says otherwise.
 | Route | Group | Rendering | Phase | Status |
 | --- | --- | --- | --- | --- |
 | `/` | `(public)` | Static | 0 | Live — landing, links into `/core` |
-| `/core`, `/core/[subjectId]`, `/core/[subjectId]/[itemId]` | `(public)` | SSG from `content-build/` | 0 | Live — existing study content (ADR-0002) |
+| `/core`, `/core/[subjectId]`, `/core/[subjectId]/[itemId]` | `(public)` | SSG from `content-build/` | 0 | Live — existing study content (lvn-backend ADR-0002) |
 | `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest` | — | Static | 0 | Live; robots blocks everything outside production |
 | `/n/[slug]-[id]` | `(public)` | ISR, revalidated by the API on publish | 2 | Not started |
 | `/u/[handle]`, `/explore` | `(public)` | SSR/ISR | 2–3 | Not started |
