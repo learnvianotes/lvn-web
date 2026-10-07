@@ -1,0 +1,46 @@
+{
+  "site": {
+    "name": "LearnViaNotes",
+    "tagline": "A student-first learning community",
+    "description": "Clear, verified notes for computer science — DSA, CS fundamentals, AI and programming languages. Free to read, no account needed.",
+    "skip": "Skip to content",
+    "nav": { "notes": "Notes", "home": "Home" },
+    "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
+    "footer": "Notes are free to read. Accounts, your own notes, groups and classrooms are on the way."
+  },
+  "home": {
+    "eyebrow": "Free CS notes",
+    "title": "Learn computer science one clear note at a time",
+    "lead": "{subjects} subjects, {topics} topics and {problems} interview problems — written to be read on a phone, with code in Python, C++, Java and JavaScript.",
+    "cta": "Browse notes",
+    "categories": "Browse by area"
+  },
+  "core": {
+    "title": "Notes",
+    "lead": "Every subject in LearnViaNotes. Pick one and start reading — nothing to sign up for.",
+    "topics": "{count, plural, one {# topic} other {# topics}}",
+    "problems": "{count, plural, one {# problem} other {# problems}}",
+    "allSubjects": "All subjects",
+    "start": "Start reading",
+    "onThisPage": "On this page",
+    "contents": "Contents",
+    "previous": "Previous",
+    "next": "Next",
+    "problem": {
+      "statement": "Problem",
+      "understanding": "Understanding the problem",
+      "intuition": "Intuition",
+      "approach": "Approach",
+      "takeaway": "Takeaway",
+      "similar": "Similar problems",
+      "leetcode": "Open on LeetCode",
+      "video": "Watch explanation",
+      "difficulty": { "Easy": "Easy", "Medium": "Medium", "Hard": "Hard" }
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "lead": "This page doesn't exist or is no longer public.",
+    "home": "Go home"
+  }
+}

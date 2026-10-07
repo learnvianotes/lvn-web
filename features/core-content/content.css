@@ -1,0 +1,152 @@
+/* ============================================================
+   Styles for pipeline content (content-build/*.html) rendered
+   inside .lvn-prose. Class names are the pipeline's contract
+   (scripts/content/sanitize.mjs); colours come from app tokens.
+   ============================================================ */
+
+.lvn-prose {
+  --code-bg: var(--surface-2);
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.lvn-prose > * + *, .lvn-prose section > * + *, .lvn-prose .card > * + * { margin-top: 0.9rem; }
+.lvn-prose p.lead { font-size: 1.125rem; color: var(--fg); }
+.lvn-prose em { font-style: italic; }
+.lvn-prose strong { font-weight: 600; }
+.lvn-prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.lvn-prose sup, .lvn-prose sub { font-size: 0.75em; }
+
+.lvn-prose section.block { margin-top: 2.5rem; }
+.lvn-prose h3, .lvn-prose h4, .lvn-prose h5 { font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; scroll-margin-top: 5rem; }
+.lvn-prose section.block > h3 { font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem; }
+.lvn-prose h3 > .ti { color: var(--accent); font-size: 1.1em; }
+.lvn-prose .card h3 { font-size: 1rem; display: flex; align-items: center; gap: 0.4rem; }
+.lvn-prose h4 { font-size: 1.05rem; }
+
+.lvn-prose ul, .lvn-prose ol { padding-left: 1.4rem; }
+.lvn-prose ul { list-style: disc; }
+.lvn-prose ol { list-style: decimal; }
+.lvn-prose li + li { margin-top: 0.3rem; }
+.lvn-prose li::marker { color: var(--muted); }
+
+/* Inline code and code figures */
+.lvn-prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.05em 0.35em;
+}
+.lvn-prose figure.code { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--code-bg); }
+.lvn-prose figure.code figcaption {
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; color: var(--muted);
+  padding: 0.45rem 0.9rem; border-bottom: 1px solid var(--border);
+}
+.lvn-prose .tabs figure.code figcaption { display: none; }
+.lvn-prose pre { overflow-x: auto; padding: 0.9rem; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; tab-size: 4; }
+.lvn-prose figure.code[data-lang='text'] pre { color: var(--muted); }
+
+/* Tabs (server-rendered tab bar, wired by TabsEnhancer) */
+.lvn-prose .tabs { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--code-bg); }
+.lvn-prose .tab-bar { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.35rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+.lvn-prose .tab-bar [role='tab'] {
+  flex: none; font-size: 0.8rem; font-weight: 600; color: var(--muted); padding: 0.35rem 0.75rem; border-radius: 8px; cursor: pointer;
+}
+.lvn-prose .tab-bar [role='tab']:hover { color: var(--fg); background: var(--surface-2); }
+.lvn-prose .tab-bar [role='tab'][aria-selected='true'] { color: var(--accent); background: var(--accent-soft); }
+.lvn-prose .tabs > .tab-panel > figure.code { border: 0; border-radius: 0; }
+.lvn-prose .tabs > .tab-panel:not(:has(> figure.code)) { padding: 0.9rem; background: var(--surface); }
+.lvn-prose .tabs > .tab-panel > * + * { margin-top: 0.9rem; }
+
+/* Callouts */
+.lvn-prose .callout {
+  --tone: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, var(--border));
+  border-left: 4px solid var(--tone);
+  background: color-mix(in srgb, var(--tone) 7%, var(--surface));
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+}
+.lvn-prose .callout > * + * { margin-top: 0.6rem; }
+.lvn-prose .callout--def { --tone: var(--def); }
+.lvn-prose .callout--example { --tone: var(--accent); }
+.lvn-prose .callout--note { --tone: var(--muted); }
+.lvn-prose .callout--warn { --tone: var(--warn); }
+.lvn-prose .callout--good { --tone: var(--good); }
+.lvn-prose .callout--bad { --tone: var(--bad); }
+.lvn-prose .callout-label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tone); }
+.lvn-prose footer.callout { font-size: 0.85rem; color: var(--muted); }
+
+/* Cards and grids */
+.lvn-prose .grid { display: grid; gap: 0.75rem; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .lvn-prose .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .lvn-prose .grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lvn-prose .card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 0.9rem 1rem; }
+.lvn-prose .grid > * + * { margin-top: 0; }
+
+/* Tables */
+.lvn-prose .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+.lvn-prose table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.lvn-prose th, .lvn-prose td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.lvn-prose th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+.lvn-prose tr:last-child td { border-bottom: 0; }
+
+/* Steps */
+.lvn-prose .step { display: flex; gap: 0.8rem; align-items: flex-start; }
+.lvn-prose .step + .step { margin-top: 0.7rem; }
+.lvn-prose .step-num {
+  flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); font-size: 0.8rem; font-weight: 700;
+}
+.lvn-prose .step-title { font-weight: 600; }
+.lvn-prose .step-desc { color: var(--muted); }
+
+/* Flow diagrams */
+.lvn-prose .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.lvn-prose .flow > * { margin-top: 0; }
+.lvn-prose .flow-node { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 0.4rem 0.7rem; font-size: 0.875rem; }
+.lvn-prose .flow-arrow { color: var(--muted); }
+
+/* Chips, key/value rows, formulas, bits, gantt */
+.lvn-prose .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.lvn-prose .chips > * { margin-top: 0; }
+.lvn-prose .chip { display: inline-block; border: 1px solid var(--border); background: var(--surface-2); border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.82rem; }
+.lvn-prose .kv { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px dashed var(--border); padding: 0.35rem 0; margin-top: 0; }
+.lvn-prose .kv-key { color: var(--muted); }
+.lvn-prose .kv-value { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.lvn-prose .formula { text-align: center; padding: 0.7rem; border-radius: 10px; background: var(--surface-2); overflow-x: auto; }
+.lvn-prose .bits { display: flex; flex-wrap: wrap; gap: 3px; }
+.lvn-prose .bit { width: 1.9rem; height: 1.9rem; display: grid; place-items: center; font-family: var(--font-mono); border: 1px solid var(--border); border-radius: 6px; background: var(--surface); margin-top: 0; }
+.lvn-prose .gantt { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.lvn-prose .gantt > * { margin-top: 0; }
+.lvn-prose .gantt-block { padding: 0.45rem 0; text-align: center; font-size: 0.8rem; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+.lvn-prose .gantt-block + .gantt-block { border-left: 1px solid var(--surface); }
+.lvn-prose .gantt-scale { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+/* Interview Q&A */
+.lvn-prose details.qa { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.lvn-prose details.qa + details.qa { margin-top: 0.5rem; }
+.lvn-prose details.qa > summary { cursor: pointer; padding: 0.75rem 1rem; font-weight: 600; list-style: none; display: flex; gap: 0.5rem; }
+.lvn-prose details.qa > summary::-webkit-details-marker { display: none; }
+.lvn-prose details.qa > summary::before { content: '+'; color: var(--accent); font-weight: 700; width: 1ch; }
+.lvn-prose details.qa[open] > summary::before { content: '−'; }
+.lvn-prose details.qa > div { padding: 0 1rem 0.9rem 2.25rem; }
+.lvn-prose details.qa > div > * + * { margin-top: 0.6rem; }
+
+.lvn-prose svg { max-width: 100%; height: auto; }
+
+/* highlight.js tokens on app colours */
+.lvn-prose .hljs-keyword, .lvn-prose .hljs-built_in, .lvn-prose .hljs-literal, .lvn-prose .hljs-type { color: #7c3aed; }
+.lvn-prose .hljs-string, .lvn-prose .hljs-regexp, .lvn-prose .hljs-char { color: #166534; }
+.lvn-prose .hljs-number { color: #9a3412; }
+.lvn-prose .hljs-comment, .lvn-prose .hljs-meta { color: var(--muted); font-style: italic; }
+.lvn-prose .hljs-title, .lvn-prose .hljs-function .hljs-title { color: #1d4ed8; }
+.lvn-prose .hljs-attr, .lvn-prose .hljs-variable, .lvn-prose .hljs-params { color: #be185d; }
+[data-theme='dark'] .lvn-prose .hljs-keyword, [data-theme='dark'] .lvn-prose .hljs-built_in,
+[data-theme='dark'] .lvn-prose .hljs-literal, [data-theme='dark'] .lvn-prose .hljs-type { color: #c4b5fd; }
+[data-theme='dark'] .lvn-prose .hljs-string, [data-theme='dark'] .lvn-prose .hljs-regexp, [data-theme='dark'] .lvn-prose .hljs-char { color: #86efac; }
+[data-theme='dark'] .lvn-prose .hljs-number { color: #fdba74; }
+[data-theme='dark'] .lvn-prose .hljs-title, [data-theme='dark'] .lvn-prose .hljs-function .hljs-title { color: #93c5fd; }
+[data-theme='dark'] .lvn-prose .hljs-attr, [data-theme='dark'] .lvn-prose .hljs-variable, [data-theme='dark'] .lvn-prose .hljs-params { color: #f9a8d4; }

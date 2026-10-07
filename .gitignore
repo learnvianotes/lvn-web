@@ -1,48 +1,31 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
 
-# Vite
-.vite/
+# Tests
+test-results/
+playwright-report/
 
-# Environment
+# Environment (see .env.example)
 .env
 .env.local
 .env.*.local
 
-# Editor
+# Editor / OS
 .vscode/settings.json
 .idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS
 .DS_Store
 Thumbs.db
 
-# TypeScript
-*.tsbuildinfo
-
-# Content pipeline
+# Content pipeline (content-src/authoring/*/build.py)
 content-src/.code-check-cache.json
-service-account*.json
-firebase-debug.log
-.firebase/
+content-src/authoring/.cache/
 content-build.next/
 content-build.old/
-
-# Firebase emulators (local data + logs)
-.emulator-data/
-*-debug.log
 __pycache__/
-
-# Authoring environments (see content-src/authoring/*/build.py)
 .venv/
-
-# Snippet-run cache for the authoring kit
-content-src/authoring/.cache/

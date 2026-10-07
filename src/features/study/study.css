@@ -1,7 +1,0 @@
-/* Styles for this feature — tokens come from shared/styles/base.css. */
-
-/* ── Topic tools ────────────────────────────────────────── */
-.topic-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
-.topic-tools .done-badge { height: 30px; }
-.listen-btn.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.revisit-btn.is-on { border-color: var(--revisit); color: var(--revisit); background: var(--medium-soft); }
