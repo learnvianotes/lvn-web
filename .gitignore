@@ -29,3 +29,6 @@ content-build.next/
 content-build.old/
 __pycache__/
 .venv/
+
+# temporary render input (branding/render-icons.mjs)
+branding/.logo-square.svg

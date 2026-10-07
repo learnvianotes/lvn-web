@@ -4,9 +4,19 @@
     "tagline": "A student-first learning community",
     "description": "Clear, verified notes for computer science — DSA, CS fundamentals, AI and programming languages. Free to read, no account needed.",
     "skip": "Skip to content",
-    "nav": { "notes": "Notes", "home": "Home" },
-    "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
-    "footer": "Notes are free to read. Accounts, your own notes, groups and classrooms are on the way."
+    "nav": {
+      "notes": "Notes",
+      "home": "Home"
+    },
+    "theme": {
+      "toLight": "Switch to light theme",
+      "toDark": "Switch to dark theme"
+    },
+    "footer": "Notes are free to read. Accounts, your own notes, groups and classrooms are on the way.",
+    "wordmark": {
+      "lead": "LearnVia",
+      "accent": "Notes"
+    }
   },
   "home": {
     "eyebrow": "Free CS notes",
@@ -35,7 +45,11 @@
       "similar": "Similar problems",
       "leetcode": "Open on LeetCode",
       "video": "Watch explanation",
-      "difficulty": { "Easy": "Easy", "Medium": "Medium", "Hard": "Hard" }
+      "difficulty": {
+        "Easy": "Easy",
+        "Medium": "Medium",
+        "Hard": "Hard"
+      }
     }
   },
   "notFound": {

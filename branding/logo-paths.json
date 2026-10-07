@@ -1,0 +1,25 @@
+{
+  "comment": "LearnViaNotes mark (1024 box). Copy of lvn-mobile assets/brand/logo-paths.json \u2014 keep them identical until the shapes move into @lvn/contracts. branding/render-icons.mjs renders public/icons; components/brand/Logo.tsx draws it.",
+  "leftPage": "M500 372 C 436 331 344 314 256 327 C 245 329 238 338 238 350 L 238 701 C 238 715 250 725 264 723 C 352 711 436 725 500 764 Z",
+  "rightPage": "M524 372 C 588 331 680 314 768 327 C 779 329 786 338 786 350 L 786 701 C 786 715 774 725 760 723 C 672 711 588 725 524 764 Z",
+  "lines": [
+    "M298 446 C 356 432 414 436 458 454",
+    "M298 520 C 356 506 414 510 458 528",
+    "M298 594 C 346 582 394 584 436 598"
+  ],
+  "check": "M580 556 L 626 602 L 720 494",
+  "spark": "M660 222 C 665 252 672 258 700 262 C 672 266 665 272 660 302 C 655 272 648 266 620 262 C 648 258 655 252 660 222 Z",
+  "colors": {
+    "gradient": [
+      "#6D5DF6",
+      "#4F46E5",
+      "#3730A3"
+    ],
+    "page": "#FFFFFF",
+    "pageShade": "#E0E7FF",
+    "line": "#C7D2FE",
+    "check": "#4F46E5",
+    "spark": "#FDE68A"
+  },
+  "tileRadius": 236
+}

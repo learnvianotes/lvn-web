@@ -46,6 +46,14 @@ code is not written early").
 - **Search engines:** `NEXT_PUBLIC_APP_ENV` ≠ `production` sets `noindex` and a disallow-all robots.txt, so sandbox
   never competes with production.
 
+## Brand
+
+The LearnViaNotes logo is one set of shapes in `branding/logo-paths.json` — a copy of lvn-mobile's
+`assets/brand/logo-paths.json`, kept identical until the shapes move into `@lvn/contracts`. `node branding/render-icons.mjs`
+(needs `rsvg-convert`) renders `public/icons/` (SVG favicon, PNG favicons, Apple touch icon, PWA and maskable icons);
+`components/brand/Logo.tsx` draws it inline in the header next to the name from `messages/en.json`. The previous app's
+artwork is kept in `branding/legacy/`.
+
 ## Budgets (section 12.2) — current numbers
 
 | Budget | Target | Now |

@@ -19,9 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: t('name'),
     openGraph: { siteName: t('name'), type: 'website' },
     icons: {
+      // The SVG is crisp at every size; PNGs cover browsers without SVG favicons. Rendered by branding/render-icons.mjs.
       icon: [
-        { url: '/icons/icon-32.png', sizes: '32x32' },
-        { url: '/icons/icon-192.png', sizes: '192x192' },
+        { url: '/icons/logo.svg', type: 'image/svg+xml' },
+        { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+        { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
       ],
       apple: '/icons/apple-touch-icon.png',
     },
