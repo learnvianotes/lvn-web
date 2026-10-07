@@ -4,15 +4,16 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  --bg: #f7f7f8;
+  /* Brand palette from the LearnViaNotes UI reference (lvn-backend docs/design/ui-reference.md). */
+  --bg: #f7f7fb;
   --surface: #ffffff;
-  --surface-2: #f1f1f4;
-  --fg: #18181b;
-  --muted: #5f5f6b;
-  --border: #e4e4e9;
-  --accent: #1d4ed8;
+  --surface-2: #f1f1f7;
+  --fg: #1e1b2e;
+  --muted: #5f5f73;
+  --border: #e6e6ef;
+  --accent: #4f46e5;
   --accent-fg: #ffffff;
-  --accent-soft: #e8efff;
+  --accent-soft: #eef2ff;
   --good: #166534;
   --warn: #92400e;
   --bad: #991b1b;
@@ -21,15 +22,15 @@
 }
 
 [data-theme='dark'] {
-  --bg: #0e0e10;
-  --surface: #17171a;
-  --surface-2: #1f1f24;
+  --bg: #0e0e12;
+  --surface: #17171c;
+  --surface-2: #1f1f26;
   --fg: #f4f4f5;
   --muted: #a1a1aa;
-  --border: #2c2c33;
-  --accent: #6c9cff;
-  --accent-fg: #0e0e10;
-  --accent-soft: #1b2540;
+  --border: #2c2c35;
+  --accent: #818cf8;
+  --accent-fg: #0e0e12;
+  --accent-soft: #1e1b4b;
   --good: #4ade80;
   --warn: #fbbf24;
   --bad: #f87171;

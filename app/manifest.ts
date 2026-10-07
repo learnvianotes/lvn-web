@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'LearnViaNotes',
     start_url: '/',
     display: 'standalone',
-    background_color: '#f7f7f8',
+    background_color: '#f7f7fb',
     theme_color: '#ffffff',
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
