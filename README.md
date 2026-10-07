@@ -61,7 +61,8 @@ Apps Script URL into `FEEDBACK_URL` in `src/config.ts`.
 ## Editing content
 
 ```
-content-src/legacy-html/       original notes and Sheet 150 modules (source)
+content-src/legacy-html/       original notes and Sheet 150 modules (source; generated for authored subjects)
+content-src/authoring/<subj>/  subjects written as verified code (npm run content:<subject>)
 content-src/code/<problem>/    naive|optimal .py/.cpp/.java/.js: fills in or replaces solution code
         │  npm run content:extract
         ▼
@@ -71,10 +72,12 @@ content-build/                 scanned content as JSON (don't edit by hand; not 
 Firestore                      structured content the app reads
 ```
 
-- **Python, C, C++, Java, JavaScript, SQL, Artificial Intelligence, Machine Learning, Data Science and Deep Learning** are authored as code in
+- **DSA Basics, DSA Advanced, Python, C, C++, Java, JavaScript, SQL, Artificial Intelligence, Machine Learning, Data Science and Deep Learning** are authored as code in
   `content-src/authoring/<subject>/` (`npm run content:<subject>`): every example is executed — Python in
   process, C/C++ with clang + sanitizers, Java on JDK 21, JavaScript on Node, SQL on SQLite — and its output
   is checked before the HTML is generated. See [content-src/authoring/README.md](content-src/authoring/README.md).
+  The two DSA subjects show every algorithm in Python, C++, Java and JavaScript tabs; all four versions run at
+  build time and must print the same output ([content-src/authoring/DSA_GUIDE.md](content-src/authoring/DSA_GUIDE.md)).
 - Topic HTML is normalized into one small style vocabulary (`scripts/content/sanitize.mjs` →
   `src/styles/prose.css`), so every subject looks the same in light and dark mode.
 - Code is validated on every extract. C++ is compiled with `clang++`, and Java and JavaScript are

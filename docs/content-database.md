@@ -1,6 +1,6 @@
 # Study content in Firestore
 
-All study content — 14 subjects, 258 topics, 150 problems — lives in **Firestore**. The website
+All study content — 22 subjects, 757 topics, 150 problems — lives in **Firestore**. The website
 ships no content files; it reads everything from the database and caches it on the device.
 
 ## Pipeline
@@ -15,7 +15,7 @@ content-build/                scanned content as JSON (the seed input — not se
 Firestore                     structured content, read by the app
 ```
 
-`npm run content:seed` converts every HTML fragment (1,132 of them) into **structured content**
+`npm run content:seed` converts every HTML fragment (about 1,600 of them) into **structured content**
 (`schema/content.ts`) and refuses to write unless every fragment, rendered with the app's own
 components, reproduces its source exactly — elements, classes, attributes, text and code. After
 writing it reads everything back from Firestore and checks again.

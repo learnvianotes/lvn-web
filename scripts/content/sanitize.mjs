@@ -71,6 +71,26 @@ const LANG_ALIASES = {
   javascript: 'js', js: 'js', sql: 'sql', bash: 'bash', shell: 'bash', json: 'json', go: 'go',
 }
 
+/**
+ * Guess the language of a code block that has no caption, from its text — only when the evidence
+ * is unambiguous (shell prompts / git commands, SQL statements, C++ headers or classes, Node/JS,
+ * JSON). Diagrams, HTTP exchanges and formulas stay plain text.
+ */
+export function inferLang(code) {
+  const text = code.trim()
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  if (!lines.length) return ''
+  if (lines.every((l) => /^(\$ |git |#|npm |cd |ls |curl |ping |dig |man |tcpdump |traceroute |nslookup |ssh |mkdir |echo |export )/.test(l))) return 'bash'
+  if (/^(--.*\n)*\s*(SELECT|CREATE|WITH|INSERT|UPDATE|DELETE|ALTER|DROP)\b/i.test(text)) return 'sql'
+  if (/^#include\s*</m.test(text) || /\bclass\s+\w+\s*:\s*(public|private|protected)\s+\w+/.test(text) || /\bnew\s+(int|char|double|float|long)\b|\bcout\s*<<|\bstd::/.test(text)
+    || (/\b(class|struct)\s+\w+\s*\{/.test(text) && /\b(public|private|protected):|\bvirtual\b|\bfriend\b/.test(text))) return 'cpp'
+  if (/\b(const|let|var)\s+\w+\s*=.*\b(require\(|=>|await|io\(|crypto\.)|\bsocket\.(emit|on)\(|\bres\.status\(/.test(text)) return 'js'
+  if (/^\{\s*\n\s*"[^"]+"\s*:/.test(text) && /\}\s*$/.test(text)) return 'json'
+  return ''
+}
+
+const LANG_LABEL = { bash: 'Shell', sql: 'SQL', cpp: 'C++', js: 'JavaScript', json: 'JSON', py: 'Python', java: 'Java', c: 'C' }
+
 export function normalizeLang(raw = '') {
   if (/^\s*c\s*$/i.test(raw)) return 'c'
   const key = raw.toLowerCase().replace(/implementation|code|solution/g, '').trim()
@@ -172,14 +192,18 @@ function convertCode(root, doc) {
     const lang = box.getAttribute('data-lang') || normalizeLang(caption)
     box.replaceWith(make(codeText(pre), lang, caption.replace(/\s*implementation$/i, '')))
   }
+  const guess = (text) => {
+    const lang = inferLang(text)
+    return make(text, lang, lang ? LANG_LABEL[lang] : '')
+  }
   for (const box of root.querySelectorAll('.code, .code-block')) {
     if (box.closest('figure.code')) continue
     const inner = box.querySelector('pre') ?? box
-    box.replaceWith(make(codeText(inner), '', ''))
+    box.replaceWith(guess(codeText(inner)))
   }
   for (const pre of root.querySelectorAll('pre')) {
     if (pre.closest('figure.code')) continue
-    pre.replaceWith(make(codeText(pre), '', ''))
+    pre.replaceWith(guess(codeText(pre)))
   }
 }
 
@@ -316,9 +340,26 @@ export function sectionize(html, parseHTML) {
       div.replaceWith(section)
     }
   }
-  // Topics without top-level <h3> sections use <h4> as their section headings.
+  // Topics without top-level <h3> sections use <h4> as their section headings — promote those to
+  // <h3> so every topic has the same outline level (study kit, search, section anchors).
   const top = [...root.children]
-  const level = top.some((n) => n.tagName === 'H3' || n.getAttribute?.('class') === 'block') ? 'H3' : 'H4'
+  const hasH3 = top.some((n) => n.tagName === 'H3' || n.getAttribute?.('class') === 'block')
+  if (!hasH3) {
+    for (const h4 of top.filter((n) => n.tagName === 'H4')) {
+      const h3 = doc.createElement('h3')
+      h3.innerHTML = h4.innerHTML
+      h4.replaceWith(h3)
+    }
+    for (const sec of root.querySelectorAll('section.block')) {
+      const h4 = sec.firstElementChild
+      if (h4?.tagName === 'H4') {
+        const h3 = doc.createElement('h3')
+        h3.innerHTML = h4.innerHTML
+        h4.replaceWith(h3)
+      }
+    }
+  }
+  const level = 'H3'
   let current = null
   for (const node of [...root.childNodes]) {
     const isHeading = node.tagName === level

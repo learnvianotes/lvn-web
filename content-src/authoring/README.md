@@ -1,6 +1,7 @@
 # Authoring kit — writing verified study notes
 
-Subjects written with this kit live in `content-src/authoring/<subject>/`:
+Subjects written with this kit live in `content-src/authoring/<subject>/` (Python, C, C++, Java, JavaScript, SQL,
+Artificial Intelligence, Machine Learning, Deep Learning, Data Science, DSA Basics, DSA Advanced):
 
 ```
 content-src/authoring/<subject>/
@@ -61,7 +62,8 @@ Topic ids are permanent once published — renaming one resets learners' progres
 | `chips(*items)` | tag chips |
 | `qa(question, *answer_parts)` | collapsible interview Q&A |
 | `code(src)` | **Python**, executed; `print(x)  # expected` comments are checked |
-| `snippet(lang, src, out=…)` | **C / C++ / Java / JavaScript / SQL**, executed; `out` is checked and shown as an Output block |
+| `snippet(lang, src, out=…)` | **C / C++ / Java / JavaScript / SQL / Python** (as a separate process), executed; `out` is checked and shown as an Output block |
+| `multi(out, py=…, cpp=…, java=…, js=…)` | *(dsakit)* the same program in four language **tabs** with one shared Output block; every version is executed and must print `out` — see [DSA_GUIDE.md](DSA_GUIDE.md) |
 | `output(text, caption)` | a plain console block (e.g. a compiler error message) — not executed |
 | `shell(src)` | terminal commands — not executed |
 
@@ -77,6 +79,7 @@ Text is HTML-escaped for you.
 | `cpp` | `clang++ -std=c++20 …` same flags |
 | `java` | `java -ea File.java` (JDK 21 single-file launch; the first top-level class must hold `main`) |
 | `js` | `node main.mjs` (Node 24, ES module — top-level `await` works) |
+| `py` | `python3 -I main.py` in a separate process (use `code()` instead when `print(x)  # expected` comments are enough) |
 | `sql` | SQLite 3.53 in memory; every result set is printed as an aligned table (below) |
 
 - `out` — the exact stdout (trailing spaces/newlines ignored). Leave `None` only when the output is

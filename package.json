@@ -22,6 +22,8 @@
     "content:seed:live": "node scripts/content/seed/run.mjs --live",
     "content:machine-learning": "content-src/authoring/data-science/.venv/bin/python content-src/authoring/machine-learning/build.py && npm run content:extract",
     "content:ai": "python3 content-src/authoring/artificial-intelligence/build.py && npm run content:extract",
+    "content:dsa-basics": "python3 content-src/authoring/dsa-basics/build.py && npm run content:extract",
+    "content:dsa-advanced": "python3 content-src/authoring/dsa-advanced/build.py && npm run content:extract",
     "content:c": "python3 content-src/authoring/c/build.py && npm run content:extract",
     "content:cpp": "python3 content-src/authoring/cpp/build.py && npm run content:extract",
     "content:java": "python3 content-src/authoring/java/build.py && npm run content:extract",

@@ -159,7 +159,7 @@ def code(src, caption="Python", run=True, check=True):
     return f'<div class="code-block-container"><div class="code-lang">{esc(caption)}</div><pre>{esc(src)}</pre></div>'
 
 
-LANG_CAPTION = {"c": "C", "cpp": "C++", "java": "Java", "js": "JavaScript", "sql": "SQL"}
+LANG_CAPTION = {"py": "Python", "c": "C", "cpp": "C++", "java": "Java", "js": "JavaScript", "sql": "SQL"}
 
 
 def _block(src, caption, lang=""):
@@ -168,7 +168,7 @@ def _block(src, caption, lang=""):
 
 
 def snippet(lang, src, out=None, caption=None, *, run=True, setup="", stdin="", args=(), fails=False, flags=()):
-    """A C / C++ / Java / JavaScript / SQL example, executed at build time.
+    """A C / C++ / Java / JavaScript / SQL (or Python, run as a separate process) example, executed at build time.
 
     out    exact expected stdout (shown to the reader as an Output block). None → only has to run cleanly.
     setup  SQL run before `src` (sample tables) — not shown.   stdin / args  fed to the program.
@@ -270,7 +270,7 @@ def _sql(src, setup):
 
 def _execute(lang, src, o):
     """→ (returncode, stdout, stderr). Cached by everything that affects the result."""
-    key = hashlib.sha256(json.dumps([lang, src, o["setup"], o["stdin"], o["args"], o["flags"], 4]).encode()).hexdigest()
+    key = hashlib.sha256(json.dumps([lang, src, o["setup"], o["stdin"], o["args"], o["flags"], 5]).encode()).hexdigest()
     hit = CACHE / f"{key}.json"
     if hit.exists():
         return tuple(json.loads(hit.read_text()))
@@ -295,6 +295,11 @@ def _execute(lang, src, o):
                     res = _proc([JAVA, "-ea", *o["flags"], str(f.name), *o["args"]], d, o["stdin"], timeout=60)
                 else:
                     res = _proc([JAVAC, "-Xlint:all", "-Werror", "-d", d, str(f.name)], d, timeout=60)
+            elif lang == "py":
+                import sys
+                f = Path(d) / "main.py"
+                f.write_text(src + "\n")
+                res = _proc([sys.executable, "-I", *o["flags"], str(f.name), *o["args"]], d, o["stdin"])
             else:  # js
                 f = Path(d) / "main.mjs"
                 f.write_text(src + "\n")
