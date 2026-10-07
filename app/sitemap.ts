@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${base}/`, lastModified },
     { url: `${base}/core`, lastModified },
+    { url: `${base}/core/about`, lastModified },
     ...catalog.subjects.flatMap((s) => [
       { url: `${base}/core/${s.id}`, lastModified },
       ...s.topics.map((t) => ({ url: `${base}/core/${s.id}/${t.id}`, lastModified })),

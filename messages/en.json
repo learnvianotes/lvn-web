@@ -26,31 +26,8 @@
     "categories": "Browse by area"
   },
   "core": {
-    "title": "Notes",
-    "lead": "Every subject in LearnViaNotes. Pick one and start reading — nothing to sign up for.",
     "topics": "{count, plural, one {# topic} other {# topics}}",
-    "problems": "{count, plural, one {# problem} other {# problems}}",
-    "allSubjects": "All subjects",
-    "start": "Start reading",
-    "onThisPage": "On this page",
-    "contents": "Contents",
-    "previous": "Previous",
-    "next": "Next",
-    "problem": {
-      "statement": "Problem",
-      "understanding": "Understanding the problem",
-      "intuition": "Intuition",
-      "approach": "Approach",
-      "takeaway": "Takeaway",
-      "similar": "Similar problems",
-      "leetcode": "Open on LeetCode",
-      "video": "Watch explanation",
-      "difficulty": {
-        "Easy": "Easy",
-        "Medium": "Medium",
-        "Hard": "Hard"
-      }
-    }
+    "problems": "{count, plural, one {# problem} other {# problems}}"
   },
   "notFound": {
     "title": "Page not found",

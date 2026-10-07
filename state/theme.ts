@@ -19,7 +19,7 @@ export const useTheme = create<ThemeState>((set) => ({
   theme: current(),
   setTheme: (theme) => {
     document.documentElement.dataset.theme = theme
-    try { localStorage.setItem(THEME_KEY, theme) } catch { /* private mode: theme lasts for this tab */ }
+    try { localStorage.setItem(THEME_KEY, JSON.stringify(theme)) } catch { /* private mode: theme lasts for this tab */ }
     set({ theme })
   },
 }))

@@ -1,0 +1,39 @@
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import Link from 'next/link'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { Button } from '@/components/ui/button'
+import { THEME_KEY } from '@/lib/theme'
+import './globals.css'
+
+/** 404 for URLs outside every route: / and /core have separate root layouts, so neither can render it. */
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('notFound')
+  return { title: t('title'), robots: { index: false } }
+}
+
+const themeScript = `try{var t=JSON.parse(localStorage.getItem('${THEME_KEY}'));if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}`
+
+export default async function GlobalNotFound() {
+  const [locale, t] = await Promise.all([getLocale(), getTranslations('notFound')])
+  return (
+    <html lang={locale} className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="antialiased">
+        <NextIntlClientProvider>
+          <main className="mx-auto flex min-h-dvh max-w-xl flex-col items-start justify-center gap-4 px-4">
+            <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="text-muted">{t('lead')}</p>
+            <Button asChild><Link href="/">{t('home')}</Link></Button>
+          </main>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  )
+}

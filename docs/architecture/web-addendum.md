@@ -7,8 +7,9 @@ the spec wins unless an accepted ADR says otherwise.
 
 | Route | Group | Rendering | Phase | Status |
 | --- | --- | --- | --- | --- |
-| `/` | `(public)` | Static | 0 | Live — landing, links into `/core` |
-| `/core`, `/core/[subjectId]`, `/core/[subjectId]/[itemId]` | `(public)` | SSG from `content-build/` | 0 | Live — existing study content (lvn-backend ADR-0002) |
+| `/` | `(site)/(public)` | Static | 0 | Live — landing, links into `/core` |
+| `/core`, `/core/about`, `/core/[subjectId]`, `/core/[subjectId]/[itemId]` | `(core)` — own root layout | SSG shell + the old app routing client-side | 0 | Live — the old site's app in guest mode (lvn-backend ADR-0002 amendment) |
+| `/core/data/*.json` | `(core)` | Static route handler | 0 | Live — content documents for the old app |
 | `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest` | — | Static | 0 | Live; robots blocks everything outside production |
 | `/n/[slug]-[id]` | `(public)` | ISR, revalidated by the API on publish | 2 | Not started |
 | `/u/[handle]`, `/explore` | `(public)` | SSR/ISR | 2–3 | Not started |
@@ -16,19 +17,24 @@ the spec wins unless an accepted ADR says otherwise.
 | `/home`, `/notes`, `/groups`, `/classrooms`, `/quizzes`, `/search`, `/ai`, `/profile` | `(app)` | Client behind auth | 2–6 | Not started |
 | `/teacher/*`, `/group-admin/*` | `(app)` | Client, role-gated | 3 | Not started |
 
-Old URLs from learnvianotes.in: `/<subject>` and `/<subject>/<topic>` → 301 to `/core/...`; `/about`, `/login`,
-`/signup`, `/forgot-password`, `/history`, `/settings` → 307 to `/` (no equivalent until Phase 1).
+Old URLs from learnvianotes.in: `/<subject>`, `/<subject>/<topic>` and `/about` → 308 to `/core/...`; `/login`,
+`/signup`, `/forgot-password`, `/history`, `/settings` → 307 to `/` (no equivalent until Phase 1). Unknown URLs get
+`app/global-not-found.tsx`; unknown `/core` paths get the old app's own "Page not found" with a 404 status.
 
 ## Folder map
 
 ```text
-app/                     routes only; (public)/ today, (auth)/ and (app)/ from Phase 1
-features/core-content/   /core: Zod schema for content-build/, loader, build-time HTML renderer, components, CSS
+app/                     routes only. (site)/ = the new site's root layout: (public)/ today, (auth)/ and (app)/ from
+                         Phase 1. (core)/ = /core's root layout and routes. global-not-found.tsx for unmatched URLs
+core-app/                the old learnvianotes.in app, guest mode (src/, schema/), and server/ = build-time
+                         conversion of content-build/ into the documents it reads
+features/core-content/   the landing page's catalog loader (Zod schema for content-build/catalog.json) and subject cards
 components/              site header/footer, theme toggle; components/ui/ = shadcn-style primitives only
 lib/                     env (Zod-validated), cn(), theme key
 state/                   Zustand: theme (session, command palette, notifications, workspace arrive with their features)
 i18n/, messages/         next-intl request config; English messages
-e2e/                     Playwright (desktop + Pixel 7), axe checks
+tests/unit/              Vitest (core/ and site/); tests/support/ = shared helpers
+tests/e2e/               Playwright (desktop + Pixel 7), axe checks
 ```
 
 `graphql/`, Apollo Client, React Hook Form and Tiptap are added in the phase that first needs them (§18: "Later-phase
@@ -36,13 +42,13 @@ code is not written early").
 
 ## Decisions specific to this app
 
-- **Content HTML is trusted and rendered at build time.** `/core` pages render pipeline HTML that was sanitised by
-  `scripts/content/sanitize.mjs`; code is highlighted with highlight.js during the build, so readers download no
-  highlighter. User-written notes (Phase 2) are Tiptap JSON rendered through components — never raw HTML.
-- **Tabs are progressive enhancement.** The server renders an accessible tablist; `TabsEnhancer` (client) only toggles
-  `hidden`, supports arrow keys and remembers the reader's language across pages.
-- **Theme** is applied before first paint by an inline script and stored under `lvn:theme` (per-device preference,
-  not auth data — §7.1 storage rules are respected).
+- **`/core` is the old app, kept as it was** (ADR-0002 amendment). Its content is pipeline HTML sanitised by
+  `scripts/content/sanitize.mjs`, converted at build time into the old structured format by the strict
+  `core-app/server/fromHtml.ts` (an unknown element or attribute fails the build) and rendered by the old
+  components — never as raw HTML. User-written notes (Phase 2) are Tiptap JSON rendered through components.
+- **Theme** is applied before first paint by an inline script in each root layout and stored under `cnote:theme`
+  (the old site's key, JSON-encoded) so the choice carries between `/` and `/core` (per-device preference, not auth
+  data — §7.1 storage rules are respected).
 - **Search engines:** `NEXT_PUBLIC_APP_ENV` ≠ `production` sets `noindex` and a disallow-all robots.txt, so sandbox
   never competes with production.
 
@@ -58,6 +64,6 @@ artwork is kept in `branding/legacy/`.
 
 | Budget | Target | Now |
 | --- | --- | --- |
-| Route JS (first load) | < 200 kB gz | 106 kB on every route |
-| Accessibility | WCAG 2.1 AA, axe in Playwright | 0 serious/critical violations on a topic page |
+| Route JS (first load) | < 200 kB gz | Landing 124 kB transferred. `/core` 200 kB — the old app with its router and highlighter, as on the old site; at the limit, so new `/core` code needs a matching cut |
+| Accessibility | WCAG 2.1 AA, axe in Playwright | Landing: 0 serious/critical. `/core` topic: only the old design's known findings (ADR-0002 amendment) |
 | LCP on public pages | < 2.5 s | Measure with Lighthouse CI once sandbox exists |

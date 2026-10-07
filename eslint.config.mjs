@@ -5,8 +5,13 @@ import { FlatCompat } from '@eslint/eslintrc'
 const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta.url)) })
 
 const config = [
-  { ignores: ['next-env.d.ts', '.next/**', 'node_modules/**', 'content-src/**', 'content-build/**', 'scripts/**', 'public/**'] },
+  { ignores: ['next-env.d.ts', '.next/**', '.next-e2e/**', 'node_modules/**', 'content-src/**', 'content-build/**', 'scripts/**', 'public/**'] },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  {
+    // The old site's app, kept as it was (lvn-backend ADR-0002): its few small images are plain <img>.
+    files: ['core-app/**'],
+    rules: { '@next/next/no-img-element': 'off' },
+  },
 ]
 
 export default config

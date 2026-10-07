@@ -1,0 +1,62 @@
+/* ============================================================
+   CONTENT HOOKS
+   ============================================================ */
+
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { content, useContentEpoch } from '@core/features/catalog/source'
+import type { Catalog, Problem, Subject, TopicDoc } from '@core/features/catalog/types'
+
+export type AsyncState<T> =
+  | { status: 'loading'; data?: undefined; error?: undefined }
+  | { status: 'ready'; data: T; error?: undefined }
+  | { status: 'error'; data?: undefined; error: Error }
+
+/** Run `load` whenever `key` changes; ignores stale responses. */
+export function useAsync<T>(key: string, load: () => Promise<T>): AsyncState<T> & { retry: () => void } {
+  const [attempt, setAttempt] = useState(0)
+  const [state, setState] = useState<{ key: string; value: AsyncState<T> }>({ key: '', value: { status: 'loading' } })
+
+  useEffect(() => {
+    let alive = true
+    load().then(
+      (data) => alive && setState({ key, value: { status: 'ready', data } }),
+      (error: Error) => alive && setState({ key, value: { status: 'error', error } }),
+    )
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` identifies the request
+  }, [key, attempt])
+
+  const value: AsyncState<T> = state.key === key ? state.value : { status: 'loading' }
+  return { ...value, retry: () => setAttempt((n) => n + 1) }
+}
+
+/* ── Catalog (loaded once, shared app-wide) ──────────────── */
+
+/** Provided by <CatalogProvider> (CatalogProvider.tsx). */
+export const CatalogContext = createContext<(AsyncState<Catalog> & { retry: () => void }) | null>(null)
+
+export function useCatalogState() {
+  const epoch = useContentEpoch()
+  return useAsync(`catalog@${epoch}`, () => content.catalog())
+}
+
+export function useCatalog() {
+  const ctx = useContext(CatalogContext)
+  if (!ctx) throw new Error('useCatalog must be used inside <CatalogProvider>')
+  return ctx
+}
+
+export function useSubject(subjectId: string | undefined): Subject | undefined {
+  const { data } = useCatalog()
+  return useMemo(() => data?.subjects.find((s) => s.id === subjectId), [data, subjectId])
+}
+
+export function useTopic(subjectId: string, topicId: string) {
+  const epoch = useContentEpoch()
+  return useAsync<TopicDoc>(`topic:${subjectId}/${topicId}@${epoch}`, () => content.topic(subjectId, topicId))
+}
+
+export function useProblems(subjectId: string, categoryId: string) {
+  const epoch = useContentEpoch()
+  return useAsync<Problem[]>(`problems:${subjectId}/${categoryId}@${epoch}`, () => content.problems(subjectId, categoryId))
+}

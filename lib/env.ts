@@ -10,11 +10,14 @@ import { z } from 'zod'
 const schema = z.object({
   NEXT_PUBLIC_APP_ENV: z.enum(['development', 'sandbox', 'production']).default('development'),
   NEXT_PUBLIC_SITE_URL: z.url(),
+  /** /core feedback reports (core-app/src/config.ts reads it directly); empty disables sending. */
+  NEXT_PUBLIC_FEEDBACK_URL: z.union([z.url(), z.literal('')]).optional(),
 })
 
 const parsed = schema.safeParse({
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_FEEDBACK_URL: process.env.NEXT_PUBLIC_FEEDBACK_URL,
 })
 
 if (!parsed.success) {

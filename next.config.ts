@@ -7,7 +7,9 @@ const legacySubjects = (JSON.parse(readFileSync('content-build/catalog.json', 'u
   .subjects.map((s) => s.id)
 
 /** Pages of the retired app with no equivalent yet; accounts arrive with the Phase 1 backend. */
-const retiredPages = ['about', 'login', 'signup', 'forgot-password', 'history', 'settings']
+const retiredPages = ['login', 'signup', 'forgot-password', 'history', 'settings']
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -18,8 +20,14 @@ const securityHeaders = [
 ]
 
 const config: NextConfig = {
+  // E2E builds go to their own folder so they never clobber a running `next dev` (playwright.config.ts).
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   reactStrictMode: true,
   poweredByHeader: false,
+  // Shown in the /core help centre and attached to feedback reports.
+  env: { NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION ?? version },
+  // / and /core have separate root layouts, so an unmatched URL needs a 404 page of its own.
+  experimental: { globalNotFound: true },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
@@ -33,6 +41,7 @@ const config: NextConfig = {
         { source: `/${id}`, destination: `/core/${id}`, permanent: true },
         { source: `/${id}/:item`, destination: `/core/${id}/:item`, permanent: true },
       ]),
+      { source: '/about', destination: '/core/about', permanent: true },
       ...retiredPages.map((page) => ({ source: `/${page}`, destination: '/', permanent: false })),
     ]
   },
