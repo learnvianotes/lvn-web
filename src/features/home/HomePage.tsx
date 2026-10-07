@@ -1,9 +1,11 @@
 /* ============================================================
    Landing page
-     • Hero                 signed-in only (streak, goal, continue)
+     • Hero                 signed in: streak, goal, continue
+                            guests: what the site is + start / sign in
      • Subjects             the 13 catalog subjects — filter for all,
                             sort + rearrange when signed in
-     • Problem of the day (one slim bar)
+     • Problem of the day (one slim bar; on phones it sits right
+                            under the hero — a quick win before the list)
      • Explore more courses (upcoming only, behind a button)
    ============================================================ */
 
@@ -15,7 +17,7 @@ import { LoadError, Loading } from '@/shared/ui/Status'
 import { SiteFooter } from '@/app/shell/SiteFooter'
 import { useLayout } from '@/app/shell/LayoutState'
 import { APP_NAME } from '@/config'
-import { HomeHero } from './HomeHero'
+import { GuestHero, HomeHero } from './HomeHero'
 import { SubjectsSection } from './SubjectsSection'
 import { ProblemOfTheDay } from './ProblemOfTheDay'
 import { ExploreCourses } from './ExploreCourses'
@@ -40,7 +42,7 @@ export function HomePage() {
 
   return (
     <div className="page home">
-      {user ? <HomeHero user={user} /> : <h1 className="sr-only">{APP_NAME} — subjects</h1>}
+      {user ? <HomeHero user={user} /> : catalog.data ? <GuestHero catalog={catalog.data} /> : <h1 className="sr-only">{APP_NAME} — subjects</h1>}
       {catalog.status === 'loading' && <Loading />}
       {catalog.status === 'error' && <LoadError error={catalog.error} retry={catalog.retry} />}
       {catalog.data && (

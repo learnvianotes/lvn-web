@@ -14,15 +14,17 @@ interface Props {
   highlighted?: boolean
   /** small label next to the count, e.g. "Live" */
   badge?: string
+  /** landing-page category id — tints the icon (see home.css) */
+  category?: string
 }
 
 /** Card used for subjects (landing page) and Sheet 150 categories. */
 export const SubjectCard = forwardRef<HTMLAnchorElement, Props>(function SubjectCard(
-  { to, icon, title, description, countLabel, progress, highlighted, badge },
+  { to, icon, title, description, countLabel, progress, highlighted, badge, category },
   ref,
 ) {
   return (
-    <Link ref={ref} to={to} className={`subject-card ${highlighted ? 'is-highlighted' : ''}`}>
+    <Link ref={ref} to={to} className={`subject-card ${highlighted ? 'is-highlighted' : ''}`} data-cat={category}>
       <div className="subject-card-top">
         {icon && <span className="subject-card-icon"><SubjectIcon name={icon} size={20} /></span>}
         <span className="subject-card-count">

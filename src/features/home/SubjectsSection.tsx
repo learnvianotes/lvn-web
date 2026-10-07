@@ -95,6 +95,7 @@ export function SubjectsSection({ catalog, highlighted, cardRef }: Props) {
       countLabel={`${s.itemCount} ${s.kind === 'problems' ? 'problems' : 'topics'}`}
       progress={user ? subjectProgress(s, progress) : undefined}
       highlighted={highlighted === s.id}
+      category={s.category}
     />
   )
 
@@ -134,23 +135,38 @@ export function SubjectsSection({ catalog, highlighted, cardRef }: Props) {
           </div>
           {filter === 'all' && categories.length > 0 ? (
             categories.filter((c) => counts.get(c.id)).map((c) => (
-              <section key={c.id} className="subject-group" aria-labelledby={`group-${c.id}`}>
+              <section key={c.id} className="subject-group" data-cat={c.id} aria-labelledby={`group-${c.id}`}>
                 <div className="subject-group-head">
-                  <div>
-                    <h2 id={`group-${c.id}`}>{c.title} <span className="subject-group-count">{counts.get(c.id)}</span></h2>
-                    {CATEGORY_BLURB[c.id] && <p>{CATEGORY_BLURB[c.id]}</p>}
-                  </div>
+                  <h2 id={`group-${c.id}`}>
+                    <span className="cat-dot" aria-hidden />
+                    {c.title}
+                    <span className="subject-group-count">{counts.get(c.id)}</span>
+                  </h2>
                   <button className="subject-group-more" onClick={() => chooseFilter(c.id)}>
-                    View <ArrowRight size={13} aria-hidden />
+                    See all <ArrowRight size={13} aria-hidden />
                   </button>
                 </div>
+                {CATEGORY_BLURB[c.id] && <p className="subject-group-blurb">{CATEGORY_BLURB[c.id]}</p>}
                 <div className="card-grid subject-group-grid">
                   {ordered.filter((s) => s.category === c.id).map(renderCard)}
                 </div>
               </section>
             ))
           ) : (
-            <div className="card-grid">{visible.map(renderCard)}</div>
+            <section className="subject-group is-filtered" data-cat={filter} aria-labelledby="group-filtered">
+              <div className="subject-group-head">
+                <h2 id="group-filtered">
+                  <span className="cat-dot" aria-hidden />
+                  {categories.find((c) => c.id === filter)?.title ?? 'Subjects'}
+                  <span className="subject-group-count">{visible.length}</span>
+                </h2>
+                <button className="subject-group-more" onClick={() => chooseFilter('all')}>
+                  <ArrowLeft size={13} aria-hidden /> All subjects
+                </button>
+              </div>
+              {CATEGORY_BLURB[filter] && <p className="subject-group-blurb">{CATEGORY_BLURB[filter]}</p>}
+              <div className="card-grid">{visible.map(renderCard)}</div>
+            </section>
           )}
         </>
       )}
