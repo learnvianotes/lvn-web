@@ -11,7 +11,7 @@ Accounts and user notes arrive with the backend in Phase 1–2.
 
 ```bash
 pnpm install
-cp .env.example .env.local
+cp .env.example .env          # every URL comes from here; personal overrides go in .env.local
 pnpm dev            # http://localhost:3000 (bound to 0.0.0.0)
 pnpm lint && pnpm typecheck && pnpm test
 pnpm build && pnpm test:e2e     # Playwright starts `next start` on :3100
