@@ -26,6 +26,8 @@ const schema = z.object({
   NEXT_PUBLIC_GITHUB_AUTHORIZE_URL: z.url().optional(),
   NEXT_PUBLIC_LINKEDIN_CLIENT_ID: optional,
   NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL: z.url().optional(),
+  /** Sentry for unexpected errors (§16.5); off without it. Read directly by instrumentation*.ts, validated here. */
+  NEXT_PUBLIC_SENTRY_DSN: z.url().refine((u) => /^https?:\/\//.test(u), 'must be an http(s) URL').optional(),
 })
 
 // Each NEXT_PUBLIC_* is read by its full name so Next can inline it into client bundles.
@@ -42,6 +44,7 @@ const parsed = schema.safeParse({
   NEXT_PUBLIC_GITHUB_AUTHORIZE_URL: process.env.NEXT_PUBLIC_GITHUB_AUTHORIZE_URL,
   NEXT_PUBLIC_LINKEDIN_CLIENT_ID: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
   NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL: process.env.NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL,
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
 })
 
 if (!parsed.success) {

@@ -35,6 +35,7 @@
   "dependencies": {
     "@apollo/client": "^4.3.2",
     "@hookform/resolvers": "^5.9.1",
+    "@sentry/nextjs": "10.75.3",
     "@tabler/icons-webfont": "^3.49.0",
     "clsx": "^2.1.1",
     "firebase": "^13.0.0",

@@ -24,6 +24,10 @@ pnpm graphql:sync && pnpm codegen   # after the API schema changes (needs lvn-ba
 
 Sign-in needs lvn-backend running (`NEXT_PUBLIC_API_URL`, its `CORS_ORIGINS` must include this site's origin).
 
+Error reporting: set `NEXT_PUBLIC_SENTRY_DSN` to send unexpected browser and server errors to Sentry
+(`instrumentation*.ts`, `lib/observability.ts`). Without it nothing loads; with it the SDK is fetched after start-up,
+and events leave without query strings (emailed links carry tokens), cookies, headers, user details or console output.
+
 ## Tests
 
 | Folder | Runner | What |
