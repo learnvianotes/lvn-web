@@ -30,8 +30,10 @@ const schema = z.object({
   NEXT_PUBLIC_SENTRY_DSN: z.url().refine((u) => /^https?:\/\//.test(u), 'must be an http(s) URL').optional(),
 })
 
-// Each NEXT_PUBLIC_* is read by its full name so Next can inline it into client bundles.
-const parsed = schema.safeParse({
+// Each NEXT_PUBLIC_* is read by its full name so Next can inline it into client bundles. An empty value (as hosts and
+// Docker build arguments often pass) means "not set".
+const unsetIfEmpty = (raw: Record<string, string | undefined>) => Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v]))
+const parsed = schema.safeParse(unsetIfEmpty({
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
@@ -45,7 +47,7 @@ const parsed = schema.safeParse({
   NEXT_PUBLIC_LINKEDIN_CLIENT_ID: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
   NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL: process.env.NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-})
+}))
 
 if (!parsed.success) {
   throw new Error(`Invalid environment:\n${z.prettifyError(parsed.error)}`)
