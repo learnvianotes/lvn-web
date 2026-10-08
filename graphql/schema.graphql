@@ -683,6 +683,15 @@ type NotePermissions {
   share: Boolean!
 }
 
+type NoteSearchHit {
+  note: Note!
+
+  """
+  Words around the match from the published version; each match is wrapped in U+E000 … U+E001
+  """
+  snippet: String!
+}
+
 """
 A person a note is shared with; EDITORs work on the draft, VIEWERs read the published version
 """
@@ -810,6 +819,11 @@ type Query {
   """
   publicNotes(after: String, first: Int): NoteConnection!
 
+  """
+  At most 100 characters; `first` per group, 1 to 20 (default 5). Works signed out too: public notes only.
+  """
+  search(first: Int, query: String!, scopes: [SearchScope!]): SearchResults!
+
   """Notes other people shared with the viewer, most recently changed first"""
   sharedWithMe(after: String, first: Int): NoteConnection!
   signInOptions: SignInOptions!
@@ -906,6 +920,21 @@ input ReviewVerificationRequestInput {
   """Required when rejecting"""
   reason: String
   requestId: UUID!
+}
+
+type SearchResults {
+  """Only notes the viewer may read, best match first"""
+  notes: [NoteSearchHit!]!
+
+  """People past the digital-consent age, by handle or name"""
+  people: [User!]!
+  topics: [Topic!]!
+}
+
+enum SearchScope {
+  NOTES
+  PEOPLE
+  TOPICS
 }
 
 type Session {

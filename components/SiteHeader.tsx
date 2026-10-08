@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { Logo } from './brand/Logo'
+import { SearchButton } from '@/features/search/SearchButton'
 import { AccountLink } from './auth/AccountLink'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -21,6 +22,7 @@ export async function SiteHeader() {
           <Link href="/core" className="rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg sm:px-3">
             {t('nav.notes')}
           </Link>
+          <SearchButton label={t('nav.search')} />
           <AccountLink labels={{ signIn: ta('signIn'), account: ta('account'), notes: ta('myNotes') }} />
           <ThemeToggle labels={{ toLight: t('theme.toLight'), toDark: t('theme.toDark') }} />
         </nav>
