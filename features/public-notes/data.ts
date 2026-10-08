@@ -28,6 +28,8 @@ async function query<T>(source: string, variables: Record<string, unknown>, tags
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ query: source, variables }),
     next: { revalidate: PAGE_REVALIDATE_SECONDS, tags },
+    // A slow API fails the render instead of holding it; Next serves the last good page meanwhile.
+    signal: AbortSignal.timeout(5_000),
   })
   if (!res.ok) throw new Error(`API answered HTTP ${res.status}`)
   const body = (await res.json()) as { data?: T; errors?: { message: string }[] }
