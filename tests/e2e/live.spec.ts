@@ -107,3 +107,32 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByRole('link', { name: 'All notes' }).click()
   await expect(page.getByRole('link', { name: /^Stacks and queues edited/ })).toBeVisible()
 })
+
+test('a learner adds a picture to a note: it goes to storage, and is there after a reload', async ({ page }, info) => {
+  const png = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360f8cfc0f01f0005000201a1d0f3a50000000049454e44ae426082', 'hex')
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Picture')
+  await page.getByLabel('Email', { exact: true }).fill(`live-media-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.goto('/notes')
+  await page.getByRole('button', { name: 'New note' }).first().click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  await page.getByLabel('Title').fill('With a picture')
+  await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: /^Image/ }).click()
+  await (await chooser).setFiles({ name: 'dot.png', mimeType: 'image/png', buffer: png })
+  await page.getByLabel('Describe the picture for people who cannot see it').fill('A dot')
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 15_000 })
+
+  // After a reload the picture comes from storage through a pre-signed read URL, and loads.
+  await page.reload()
+  const picture = page.getByRole('img', { name: 'A dot' })
+  await expect(picture).toHaveAttribute('src', /^https?:\/\/.+X-Amz-Signature=/)
+  await expect.poll(() => picture.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1)
+})

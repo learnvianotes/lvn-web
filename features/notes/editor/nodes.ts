@@ -1,8 +1,11 @@
 import { Extension, Node, mergeAttributes, type Editor, type JSONContent } from '@tiptap/core'
 import { Plugin, PluginKey, TextSelection, type EditorState, type Transaction } from '@tiptap/pm/state'
 import type { Node as PMNode } from '@tiptap/pm/model'
+import type { EditorView } from '@tiptap/pm/view'
 import { ReactNodeViewRenderer } from '@tiptap/react'
+import { cardTypeFor, isMediaType, pendingFiles } from '../media'
 import { cardToNode, newCardId, type CardType } from '../model/doc'
+import { MediaView } from './MediaView'
 import { CalloutView, CheckItemView, CodeLikeView, FlashcardView, HeadingView, OpaqueView, QuestionView, QuizView, QuoteView, TableView } from './views'
 
 /**
@@ -119,8 +122,40 @@ export const TableCard = atom('tableCard', 'table', TableView)
 export const QuestionCard = atom('questionCard', 'question', QuestionView)
 export const QuizCard = atom('quizCard', 'quiz', QuizView)
 export const FlashcardCard = atom('flashcardCard', 'flashcard', FlashcardView)
-/** A card type this editor does not edit (media until uploads reach notes, or a type from a newer app): kept as it is. */
+/** A card type this editor does not edit (a type from a newer app): kept as it is. */
 export const OpaqueCard = atom('opaqueCard', 'opaque', OpaqueView)
+
+/** Picture, video, audio and file cards; `upload` is a file waiting to be uploaded into it (never saved). */
+export const MediaCard = Node.create({
+  name: 'mediaCard',
+  group: 'card',
+  atom: true,
+  selectable: true,
+  draggable: false,
+  addAttributes: () => ({ ...cardAttributes(), data: { default: null, rendered: false }, cardType: { default: 'image', rendered: false }, upload: hidden() }),
+  renderHTML: ({ node }) => ['div', { 'data-card': node.attrs.cardType as string, class: 'lvn-card lvn-card-media' }],
+  addNodeView: () => ReactNodeViewRenderer(MediaView),
+})
+
+/**
+ * Files dropped or pasted into the note become media cards after the card at `at` (or the selection), each uploading
+ * its file. Returns false when none of the files is one notes take.
+ */
+export function insertMediaCards(view: EditorView, files: File[], at?: number): boolean {
+  const usable = files.map((file) => ({ file, type: cardTypeFor(file) })).filter((f) => f.type)
+  if (!usable.length || !view.editable) return false
+  const { state } = view
+  const $pos = state.doc.resolve(at ?? state.selection.from)
+  const after = $pos.depth >= 1 ? $pos.after(1) : $pos.pos
+  const nodes = usable.map(({ file, type }) => {
+    const key = newCardId()
+    pendingFiles.set(key, file)
+    const node = cardToNode({ id: newCardId(), type: type!, content: null })
+    return state.schema.nodeFromJSON({ ...node, attrs: { ...node.attrs, upload: key } })
+  })
+  view.dispatch(state.tr.insert(after, nodes).scrollIntoView())
+  return true
+}
 
 // ── Card ids ─────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -195,7 +230,9 @@ export function emptyCard(type: CardType): JSONContent {
     audio: null,
     file: null,
   }
-  return cardToNode({ id: newCardId(), type, content: empty[type] })
+  const node = cardToNode({ id: newCardId(), type, content: empty[type] })
+  // A media card made from a menu opens the file picker at once.
+  return isMediaType(type) ? { ...node, attrs: { ...node.attrs, upload: 'pick' } } : node
 }
 
 /** Inserts an empty card after the current one and puts the cursor in it. */
@@ -325,4 +362,4 @@ export const CardKeys = Extension.create({
   },
 })
 
-export const CARD_NODES = [NoteDocument, TextCard, HeadingCard, QuoteCard, CalloutCard, ChecklistCard, CheckItem, CodeCard, MarkdownCard, DiagramCard, TableCard, QuestionCard, QuizCard, FlashcardCard, OpaqueCard, CardIds, CardKeys]
+export const CARD_NODES = [NoteDocument, TextCard, HeadingCard, QuoteCard, CalloutCard, ChecklistCard, CheckItem, CodeCard, MarkdownCard, DiagramCard, TableCard, QuestionCard, QuizCard, FlashcardCard, OpaqueCard, MediaCard, CardIds, CardKeys]

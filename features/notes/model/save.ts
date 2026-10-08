@@ -2,6 +2,8 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import { cardToNode, contentKey, nodeToCard, normalise, type DraftCard } from './doc'
 import { assignPositions } from './positions'
 
+const MEDIA = new Set<CardType>(['image', 'video', 'audio', 'file'])
+
 /** What the server last stored, as far as this editor knows. */
 export interface SavedState {
   title: string
@@ -36,6 +38,12 @@ export function planSave(saved: SavedState, title: string, cards: DraftCard[]): 
   const invalid: SavePlan['invalid'] = []
   const next: SavedState = { title, cards: new Map() }
   for (const card of cards) {
+    // A media card waiting for its file is not a card yet: it is saved once the upload is done.
+    if (MEDIA.has(card.type) && !(card.content as { fileId?: string } | null)?.fileId) {
+      const old = saved.cards.get(card.id)
+      if (old) next.cards.set(card.id, old)
+      continue
+    }
     const normal = normalise(card)
     if (!normal.ok) {
       invalid.push({ id: card.id, message: normal.message })

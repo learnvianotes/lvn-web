@@ -182,7 +182,7 @@ test('publishing names the version, and history previews and restores one', asyn
   await expect(history).toBeHidden()
   expect(calls.find((c) => c.op === 'RestoreNoteVersion')!.variables).toEqual({ noteId: NOTE_ID, versionId: version.id })
   // The page reloads the note after a restore.
-  expect(calls.filter((c) => c.op === 'NoteToEdit').length).toBeGreaterThanOrEqual(2)
+  await expect.poll(() => calls.filter((c) => c.op === 'NoteToEdit').length).toBeGreaterThanOrEqual(2)
 })
 
 const FRIEND = '01920000-0000-7000-8000-00000000bbbb'
@@ -287,4 +287,80 @@ test('Shared with me lists notes from other people with what you can do', async 
   await expect(tile).toContainText('From Ravi Kumar')
   await expect(tile).toContainText('Can edit')
   await expect(page.getByText('Start from')).toHaveCount(0)
+})
+
+const FILE_ID = '01920000-0000-7000-8000-00000000f001'
+const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360f8cfc0f01f0005000201a1d0f3a50000000049454e44ae426082', 'hex')
+const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'PUT, GET', 'access-control-allow-headers': '*' }
+
+/** Pre-signed storage URLs: PUTs are recorded, GETs serve a tiny PNG. */
+async function mockStorage(page: Page) {
+  const puts: { url: string; type: string | undefined; size: number }[] = []
+  await page.route('http://storage.test/**', async (route) => {
+    const req = route.request()
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS })
+    if (req.method() === 'PUT') {
+      puts.push({ url: req.url(), type: req.headers()['content-type'], size: req.postDataBuffer()?.length ?? 0 })
+      return route.fulfill({ status: 200, headers: CORS })
+    }
+    return route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'image/png' }, body: PNG })
+  })
+  return puts
+}
+
+test('a picture chosen from Add a card uploads, shows at once and saves as an image card', async ({ page }) => {
+  const puts = await mockStorage(page)
+  const calls = await mockApi(page, {
+    NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
+    CreateNoteUpload: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: FILE_ID, uploadUrl: 'http://storage.test/put/original', uploadHeaders: [{ __typename: 'UploadHeader', name: 'content-type', value: 'image/png' }] }, ...noProblems } }),
+    CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...noProblems } }),
+    UpdateNoteDraft: (v) => saveAnswer(((v.input as { ops: { id: string }[] }).ops ?? []).map((o) => ({ __typename: 'CardOpResult', id: o.id, status: 'APPLIED', revision: 1, message: null }))),
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  await expect(page.getByText('Halve the range each step.')).toBeVisible()
+  await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: /^Image/ }).click()
+  await (await chooser).setFiles({ name: 'graph.png', mimeType: 'image/png', buffer: PNG })
+
+  await expect(page.locator('img[src^="blob:"]')).toBeVisible()
+  await page.getByLabel('Describe the picture for people who cannot see it').fill('A one-pixel graph')
+  await expect.poll(() => calls.filter((c) => c.op === 'UpdateNoteDraft').flatMap((c) => (c.variables.input as { ops: { type: string; content: unknown }[] }).ops).filter((o) => o.type === 'image').at(-1)?.content, { timeout: 10_000 }).toEqual({ fileId: FILE_ID, alt: 'A one-pixel graph' })
+  expect(calls.find((c) => c.op === 'CreateNoteUpload')?.variables).toEqual({ input: { fileName: 'graph.png', mimeType: 'image/png', sizeBytes: PNG.length, purpose: 'ATTACHMENT', parentId: NOTE_ID } })
+  expect(puts).toEqual([{ url: 'http://storage.test/put/original', type: 'image/png', size: PNG.length }])
+  expect(calls.find((c) => c.op === 'CompleteNoteUpload')?.variables).toEqual({ fileId: FILE_ID })
+})
+
+test('an upload the API refuses says why, in its words', async ({ page }) => {
+  await mockApi(page, {
+    NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
+    CreateNoteUpload: () => ({ createUploadIntent: { intent: null, userErrors: [{ __typename: 'UserError', field: ['input', 'sizeBytes'], message: 'Files like this can be at most 20 MB.', code: 'VALIDATION' }] } }),
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: /^Image/ }).click()
+  await (await chooser).setFiles({ name: 'huge.png', mimeType: 'image/png', buffer: PNG })
+  await expect(page.getByText('Files like this can be at most 20 MB.')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Choose a picture/ })).toBeVisible()
+})
+
+test('a reader sees the pictures and files of a note', async ({ page }) => {
+  await mockStorage(page)
+  const media = (id: string, fileName: string, mimeType: string) => ({ __typename: 'MediaFile', id, url: `http://storage.test/get/${fileName}`, expiresAt: new Date(Date.now() + 900_000).toISOString(), mimeType, fileName, sizeBytes: 2_400_000, width: null, height: null, durationMs: null })
+  const PDF_ID = FILE_ID.replace('f001', 'f002')
+  const withMedia = [
+    ...cards.map((c) => ({ ...c, media: null })),
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c010', type: 'image', position: 'a2', revision: 1, content: { fileId: FILE_ID, alt: 'A search tree', caption: [{ type: 'text', text: 'Each step halves the range' }] }, media: media(FILE_ID, 'tree.png', 'image/png') },
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c011', type: 'file', position: 'a3', revision: 1, content: { fileId: PDF_ID }, media: media(PDF_ID, 'lecture-4.pdf', 'application/pdf') },
+  ]
+  await mockApi(page, { NoteToEdit: () => ({ note: { ...meta({ viewerAccess: 'READER', owner: friend }), cards: page1(withMedia) } }) })
+  await page.goto(`/notes/${NOTE_ID}`)
+  const picture = page.getByRole('img', { name: 'A search tree' })
+  await expect(picture).toBeVisible()
+  await expect(picture).toHaveAttribute('src', 'http://storage.test/get/tree.png')
+  await expect(page.getByText('Each step halves the range')).toBeVisible()
+  const file = page.getByRole('link', { name: /lecture-4\.pdf/ })
+  await expect(file).toHaveAttribute('href', 'http://storage.test/get/lecture-4.pdf')
+  await expect(file).toContainText('2.3 MB')
 })

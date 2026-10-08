@@ -11,6 +11,11 @@ type Card {
   """Shape depends on `type` (@lvn/contracts/validation CARD_CONTENT)"""
   content: JSON!
   id: UUID!
+
+  """
+  The file of an image, video, audio or file card; null for other cards, or when the file is gone
+  """
+  media: MediaFile
   position: String!
 
   """
@@ -202,7 +207,7 @@ enum ErrorCode {
 }
 
 """
-What an upload is for. Phase 1 accepts AVATAR and VERIFICATION_DOCUMENT; note media arrives with notes (Phase 2).
+What an upload is for: AVATAR, VERIFICATION_DOCUMENT, and ATTACHMENT (a picture, video, audio or PDF for a note you can edit, given as parentId). Other purposes arrive with their features.
 """
 enum FilePurpose {
   ATTACHMENT
@@ -313,6 +318,21 @@ enum LimitKey {
   PDF_PAGES_MONTHLY
   PROJECT_WORKSPACES
   STORAGE_BYTES
+}
+
+"""
+A file a media card shows. The url works for 15 minutes (until expiresAt); load the card again for a new one.
+"""
+type MediaFile {
+  durationMs: Int
+  expiresAt: DateTime!
+  fileName: String!
+  height: Int
+  id: UUID!
+  mimeType: String!
+  sizeBytes: Int!
+  url: String!
+  width: Int
 }
 
 type Mutation {

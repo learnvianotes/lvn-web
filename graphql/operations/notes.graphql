@@ -1,11 +1,26 @@
 # Notes, cards, versions and how notes are organised (lvn-backend notes subgraph, Phase 2).
 
+fragment MediaFields on MediaFile {
+  id
+  url
+  expiresAt
+  mimeType
+  fileName
+  sizeBytes
+  width
+  height
+  durationMs
+}
+
 fragment CardFields on Card {
   id
   type
   position
   content
   revision
+  media {
+    ...MediaFields
+  }
 }
 
 fragment NoteListFields on Note {
@@ -429,6 +444,33 @@ mutation SetNoteForking($noteId: UUID!, $enabled: Boolean!) {
     note {
       ...NoteMeta
     }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+# Uploads to a note (P2c-2): a picture, video, audio or PDF for its media cards.
+
+mutation CreateNoteUpload($input: CreateUploadIntentInput!) {
+  createUploadIntent(input: $input) {
+    intent {
+      fileId
+      uploadUrl
+      uploadHeaders {
+        name
+        value
+      }
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation CompleteNoteUpload($fileId: UUID!) {
+  completeUpload(fileId: $fileId) {
+    ok
     userErrors {
       ...Problems
     }

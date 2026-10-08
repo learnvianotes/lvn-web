@@ -19,7 +19,10 @@ export interface StoredCard extends DraftCard {
   revision: number
 }
 
-/** Card node names in the editor, by card type. Types without an editor node of their own are kept as `opaqueCard`. */
+/**
+ * Card node names in the editor, by card type. Media cards (image, video, audio, file) share `mediaCard`, which keeps
+ * the type in an attribute; types without an editor node of their own are kept as `opaqueCard`.
+ */
 export const NODE_OF: Partial<Record<CardType, string>> = {
   text: 'textCard',
   heading: 'headingCard',
@@ -73,6 +76,11 @@ export function cardToNode(card: StoredCard | (DraftCard & { position?: string |
     case 'quiz':
     case 'flashcard':
       return { type: NODE_OF[card.type]!, attrs: { ...attrs, data: card.content } }
+    case 'image':
+    case 'video':
+    case 'audio':
+    case 'file':
+      return { type: 'mediaCard', attrs: { ...attrs, cardType: card.type, data: card.content ?? null } }
     default:
       return { type: 'opaqueCard', attrs: { ...attrs, cardType: card.type, data: card.content } }
   }
@@ -110,6 +118,7 @@ export function nodeToCard(node: JSONContent): DraftCard | null {
     case 'diagramCard':
       return { id, type: 'diagram', content: { syntax: 'mermaid', source: textOf(node), ...(a.caption ? { caption: a.caption } : {}) } }
     case 'opaqueCard':
+    case 'mediaCard':
       return { id, type: a.cardType as CardType, content: a.data }
     default: {
       const type = node.type ? TYPE_OF[node.type] : undefined

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { NoteVersionPreviewDocument, NoteVersionsDocument, RestoreNoteVersionDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { MediaProvider } from './media'
 import { CardView } from './render/CardView'
 
 /** Version history (lvn-backend §4.3): every version, a preview of any, and restore — the draft is kept as a version first. */
@@ -63,11 +64,13 @@ export function VersionsDialog({ noteId, open, initialVersionId, onClose, onRest
                 </Button>
               </div>
               <p className="text-xs text-muted">{t('restoreHint')}</p>
-              <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-                {version.cards.edges.map(({ node: c }) => (
-                  <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
-                ))}
-              </div>
+              <MediaProvider noteId={null} cards={version.cards.edges.map((e) => e.node)}>
+                <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+                  {version.cards.edges.map(({ node: c }) => (
+                    <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
+                  ))}
+                </div>
+              </MediaProvider>
             </div>
           )}
         </section>
