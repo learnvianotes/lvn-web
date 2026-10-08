@@ -22,6 +22,8 @@ const securityHeaders = [
 const config: NextConfig = {
   // E2E builds go to their own folder so they never clobber a running `next dev` (playwright.config.ts).
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
+  // The container image (Dockerfile) runs the self-contained server Next traces into .next/standalone.
+  output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
   reactStrictMode: true,
   poweredByHeader: false,
   // Shown in the /core help centre and attached to feedback reports.

@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1.7
+# The web image (lvn-backend spec §16.2): Next's standalone server on :3000. NEXT_PUBLIC_* values are compiled into the
+# browser code, so they are build arguments and the image is built per environment (lvn-backend
+# infra/terraform/README.md). Nothing is read from a .env file.
+#   docker build -t lvn-web --build-arg NEXT_PUBLIC_APP_ENV=sandbox \
+#     --build-arg NEXT_PUBLIC_SITE_URL=https://sandbox.learnvianotes.in \
+#     --build-arg NEXT_PUBLIC_API_URL=https://api.sandbox.learnvianotes.in/graphql .
+
+ARG NODE_IMAGE=node:22-bookworm-slim
+
+FROM ${NODE_IMAGE} AS build
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
+RUN corepack enable
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+COPY . .
+ARG NEXT_PUBLIC_APP_ENV=development
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_FEEDBACK_URL=
+ARG NEXT_PUBLIC_SENTRY_DSN=
+ARG NEXT_PUBLIC_FIREBASE_API_KEY=
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+ARG NEXT_PUBLIC_FIREBASE_APP_ID=
+ARG NEXT_PUBLIC_GITHUB_CLIENT_ID=
+ARG NEXT_PUBLIC_GITHUB_AUTHORIZE_URL=https://github.com/login/oauth/authorize
+ARG NEXT_PUBLIC_LINKEDIN_CLIENT_ID=
+ARG NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL=https://www.linkedin.com/oauth/v2/authorization
+RUN pnpm build
+
+FROM ${NODE_IMAGE}
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+WORKDIR /app
+# The traced server and its node_modules, the static assets it does not trace, and the /core content it reads at run
+# time (core-app/server/content.ts).
+COPY --from=build --chown=node:node /app/.next/standalone ./
+COPY --from=build --chown=node:node /app/.next/static ./.next/static
+COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build --chown=node:node /app/content-build ./content-build
+USER node
+EXPOSE 3000
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "server.js"]
