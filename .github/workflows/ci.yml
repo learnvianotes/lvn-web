@@ -50,6 +50,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm graphql:sync && pnpm codegen
         env: { LVN_SCHEMA: .lvn-backend/contracts/graphql/schema.graphql }
+      - name: The copied contracts code matches lvn-backend
+        run: node scripts/contracts-sync.mjs --check
+        env: { LVN_CONTRACTS: .lvn-backend/contracts }
       - run: pnpm typecheck
 
   image:

@@ -5,6 +5,108 @@ type AuthPayload {
 }
 
 """
+One block of a note (§4.1). `position` orders cards (a fractional index: compare as plain strings, then by id).
+"""
+type Card {
+  """Shape depends on `type` (@lvn/contracts/validation CARD_CONTENT)"""
+  content: JSON!
+  id: UUID!
+  position: String!
+
+  """
+  Send it back as baseRevision when changing or deleting the card (§13.2)
+  """
+  revision: Int!
+  type: CardType!
+}
+
+type CardConnection {
+  edges: [CardEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CardEdge {
+  cursor: String!
+  node: Card!
+}
+
+"""
+A card as the client has it. Ids are UUIDs the client makes, so cards created offline keep their id.
+"""
+input CardInput {
+  content: JSON!
+  id: UUID!
+  position: String!
+  type: CardType!
+}
+
+input CardOpInput {
+  """The card's revision the client last saw; omitted for new cards"""
+  baseRevision: Int
+  content: JSON
+  id: UUID!
+  kind: CardOpKind!
+  position: String
+  type: CardType
+}
+
+enum CardOpKind {
+  """Remove the card; send `baseRevision`"""
+  DELETE
+
+  """Change only `position`"""
+  MOVE
+
+  """Create the card, or change it; send `baseRevision` when changing"""
+  UPSERT
+}
+
+type CardOpResult {
+  id: UUID!
+  message: String
+
+  """The card's revision after the save"""
+  revision: Int
+  status: CardOpStatus!
+}
+
+enum CardOpStatus {
+  APPLIED
+
+  """
+  Applied, but the card had changed on another device since baseRevision: that version is kept in `conflictVersion`
+  """
+  APPLIED_WITH_CONFLICT
+
+  """
+  Not applied: the card was deleted, or changed elsewhere before this delete
+  """
+  REJECTED
+}
+
+"""
+The sixteen card types (§4.1); content is validated per type (@lvn/contracts/validation)
+"""
+enum CardType {
+  audio
+  callout
+  checklist
+  code
+  diagram
+  file
+  flashcard
+  heading
+  image
+  markdown
+  question
+  quiz
+  quote
+  table
+  text
+  video
+}
+
+"""
 After a provider sign-in (no signUp call): the same details, collected once
 """
 input CompleteRegistrationInput {
@@ -35,6 +137,20 @@ type CoreTopicProgress {
   revisit: Boolean!
   secondsStudied: Int!
   topicKey: String!
+}
+
+input CreateFolderInput {
+  name: String!
+  parentId: UUID
+}
+
+input CreateNoteInput {
+  cards: [CardInput!]
+  folderId: UUID
+  kind: NoteKind
+  tagNames: [String!]
+  title: String
+  topicIds: [UUID!]
 }
 
 input CreateUploadIntentInput {
@@ -93,10 +209,29 @@ enum FilePurpose {
   VOICE_NOTE
 }
 
+"""The viewer's folder; nested up to 5 levels"""
+type Folder {
+  id: UUID!
+  name: String!
+
+  """Live notes directly in this folder"""
+  noteCount: Int!
+  parentId: UUID
+}
+
+type FolderPayload {
+  folder: Folder
+  userErrors: [UserError!]!
+}
+
 enum GlobalRole {
   PLATFORM_ADMIN
   STUDENT
   TEACHER
+}
+
+input IdInput {
+  id: UUID!
 }
 
 type Institution {
@@ -119,6 +254,8 @@ enum InstitutionalEmailStatus {
   """
   PENDING_REVIEW
 }
+
+scalar JSON
 
 type LegacyCounts {
   completedTopics: Int!
@@ -171,6 +308,8 @@ type Mutation {
 
   """Checks the uploaded bytes (size, magic bytes) and makes the file READY"""
   completeUpload(fileId: UUID!): OkPayload!
+  createFolder(input: CreateFolderInput!): FolderPayload!
+  createNote(input: CreateNoteInput!): NotePayload!
   createUploadIntent(input: CreateUploadIntentInput!): UploadIntentPayload!
 
   """Platform admins"""
@@ -178,8 +317,27 @@ type Mutation {
 
   """Decline the old site's data, or remove it after it was attached"""
   declineLegacyData: OkPayload!
+
+  """Its notes and subfolders move up one level"""
+  deleteFolder(input: IdInput!): OkPayload!
+
+  """Move to the trash, restorable for 30 days (§4.5)"""
+  deleteNote(input: NoteIdInput!): NotePayload!
+
+  """Delete a note in the trash now, for good"""
+  deleteNoteForever(input: NoteIdInput!): OkPayload!
+
+  """Removes the tag from every note"""
+  deleteTag(input: IdInput!): OkPayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
+  proposeTopic(input: ProposeTopicInput!): TopicPayload!
+
+  """
+  Snapshot the draft as the version readers see (owner; a verified account)
+  """
+  publishNote(input: NoteIdInput!): NotePayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
+  renameTag(input: RenameTagInput!): TagPayload!
   requestDocumentVerification(input: RequestDocumentVerificationInput!): VerificationRequestPayload!
 
   """Always ok, whether or not an account exists"""
@@ -189,6 +347,12 @@ type Mutation {
 
   """Sets the password and signs out every device"""
   resetPassword(input: ResetPasswordInput!): OkPayload!
+  restoreNote(input: NoteIdInput!): NotePayload!
+
+  """
+  Make an old version the draft again; the current draft is kept as a DRAFT version
+  """
+  restoreNoteVersion(input: RestoreNoteVersionInput!): NotePayload!
 
   """
   Teachers: requests addressed to them. Platform admins: all, including documents.
@@ -210,10 +374,164 @@ type Mutation {
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+  updateFolder(input: UpdateFolderInput!): FolderPayload!
+  updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
   withdrawVerificationRequest(requestId: UUID!): OkPayload!
+}
+
+"""
+A note (§4.1). Load it in two steps (§6.3): these fields and the outline first, then `cards` page by page. Editors get
+the draft; readers get the published version. Notes the viewer cannot read are null, exactly as if they did not exist.
+"""
+type Note {
+  cardCount: Int!
+
+  """In order; at most 100 per page"""
+  cards(after: String, first: Int): CardConnection!
+  createdAt: DateTime!
+
+  """Set while the note is in the trash (owner only)"""
+  deletedAt: DateTime
+
+  """Editors only: bumped by every change to the draft"""
+  draftRevision: Int
+
+  """Editors only"""
+  draftUpdatedAt: DateTime
+
+  """
+  The first words of the note (at most 180 characters), for lists and previews
+  """
+  excerpt: String!
+
+  """The owner's folder; null for anyone else"""
+  folder: Folder
+  forkingEnabled: Boolean!
+  id: UUID!
+  kind: NoteKind!
+
+  """The headings, for navigation"""
+  outline: [OutlineItem!]!
+  owner: User!
+  publishedAt: DateTime
+  publishedVersion: NoteVersion
+
+  """URL part of the title, set when published"""
+  slug: String!
+
+  """The owner's tags; empty for anyone else"""
+  tags: [Tag!]!
+
+  """Empty when untitled"""
+  title: String!
+  topics: [Topic!]!
+  updatedAt: DateTime!
+
+  """Editors only: one version of this note, to preview or restore"""
+  version(id: UUID!): NoteVersion
+
+  """Editors only: newest first"""
+  versions(after: String, first: Int): NoteVersionConnection
+  viewerAccess: NoteAccess!
+  viewerCan: NotePermissions!
+  visibility: Visibility!
+}
+
+"""
+OWNER and EDITOR work on the draft; READER sees the published version (§4.3)
+"""
+enum NoteAccess {
+  EDITOR
+  OWNER
+  READER
+}
+
+type NoteConnection {
+  edges: [NoteEdge!]!
+  pageInfo: PageInfo!
+}
+
+type NoteEdge {
+  cursor: String!
+  node: Note!
+}
+
+input NoteFilter {
+  """Notes in this folder (not its subfolders)"""
+  folderId: UUID
+  kind: NoteKind
+  tagId: UUID
+  topicId: UUID
+
+  """The trash instead of the live notes"""
+  trashed: Boolean
+
+  """Notes in no folder"""
+  unfiled: Boolean
+}
+
+input NoteIdInput {
+  noteId: UUID!
+}
+
+"""
+What a note is presented as (ADR-0014, ADR-0015). Phase 2 creates NOTE only.
+"""
+enum NoteKind {
+  BLOG
+  NOTE
+  POST
+  PROJECT
+}
+
+type NotePayload {
+  note: Note
+  userErrors: [UserError!]!
+}
+
+"""
+What the viewer may do with a note, to show or hide controls; the API checks again on every mutation.
+"""
+type NotePermissions {
+  changeVisibility: Boolean!
+  delete: Boolean!
+  edit: Boolean!
+  fork: Boolean!
+  publish: Boolean!
+  share: Boolean!
+}
+
+"""An immutable snapshot of a note's cards (§4.3)"""
+type NoteVersion {
+  cards(after: String, first: Int): CardConnection!
+  createdAt: DateTime!
+  createdBy: User!
+  id: UUID!
+  kind: NoteVersionKind!
+  number: Int!
+  title: String!
+}
+
+type NoteVersionConnection {
+  edges: [NoteVersionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type NoteVersionEdge {
+  cursor: String!
+  node: NoteVersion!
+}
+
+"""
+PUBLISHED: what readers see. CONFLICT: the losing side of a card edited on two devices. DRAFT: the draft before a restore.
+"""
+enum NoteVersionKind {
+  CONFLICT
+  DRAFT
+  PUBLISHED
 }
 
 """
@@ -239,6 +557,17 @@ type OkPayload {
   userErrors: [UserError!]!
 }
 
+type OutlineItem {
+  cardId: UUID!
+  level: Int!
+  text: String!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
 enum ProblemMark {
   REVISIT
   SOLVED
@@ -247,6 +576,12 @@ enum ProblemMark {
 type ProfilePayload {
   profile: StudentProfile
   userErrors: [UserError!]!
+}
+
+input ProposeTopicInput {
+  parentId: UUID
+  subjectId: UUID!
+  title: String!
 }
 
 type Query {
@@ -259,8 +594,23 @@ type Query {
   Platform admins: institutional email domains waiting for review (ADR-0017)
   """
   domainReviews(status: DomainReviewStatus): [DomainReview!]!
+
+  """Topics whose title contains the words, curated first (at most 50)"""
+  findTopics(query: String!, subjectId: UUID): [Topic!]!
+  myFolders: [Folder!]!
+
+  """The viewer's own notes, most recently edited first"""
+  myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
+  myTags: [Tag!]!
   myVerificationRequests: [VerificationRequest!]!
+
+  """
+  A note the viewer can read; null otherwise (anonymous visitors: PUBLIC notes)
+  """
+  note(id: UUID!): Note
   signInOptions: SignInOptions!
+  subject(slug: String!): Subject
+  subjects: [Subject!]!
 
   """
   Verified teachers whose name or handle matches, to ask one of them for verification
@@ -291,6 +641,11 @@ input RefreshSessionInput {
   refreshToken: String
 }
 
+input RenameTagInput {
+  id: UUID!
+  name: String!
+}
+
 """
 fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by platform admins only, deleted 30 days after the decision
 """
@@ -311,6 +666,11 @@ input RequestTeacherVerificationInput {
 input ResetPasswordInput {
   password: String!
   token: String!
+}
+
+input RestoreNoteVersionInput {
+  noteId: UUID!
+  versionId: UUID!
 }
 
 input ReviewVerificationRequestInput {
@@ -396,7 +756,83 @@ type StudentProfile {
   yearOfStudy: YearOfStudy
 }
 
+type Subject {
+  id: UUID!
+  slug: String!
+  title: String!
+
+  """Top-level topics: curated ones and the viewer's proposals"""
+  topics: [Topic!]!
+}
+
+"""The viewer's tag; names are unique ignoring case"""
+type Tag {
+  id: UUID!
+  name: String!
+  noteCount: Int!
+}
+
+type TagPayload {
+  tag: Tag
+  userErrors: [UserError!]!
+}
+
+"""
+A topic within a subject; curated by LVN or proposed by a user (usable by its proposer until curated)
+"""
+type Topic {
+  children: [Topic!]!
+  id: UUID!
+  origin: TopicOrigin!
+  parentId: UUID
+  slug: String!
+  subject: Subject!
+  title: String!
+}
+
+enum TopicOrigin {
+  CURATED
+  PROPOSED
+}
+
+type TopicPayload {
+  topic: Topic
+  userErrors: [UserError!]!
+}
+
 scalar UUID
+
+"""
+Omitted fields stay as they are; `parentId: null` moves the folder to the top level
+"""
+input UpdateFolderInput {
+  id: UUID!
+  name: String
+  parentId: UUID
+}
+
+"""
+One save of the draft (autosave). Title, folder, tags and topics are last-writer-wins; card operations are checked per
+card (§13.2) and reported in `results`. Omitted fields stay as they are; `folderId: null` moves the note out of folders.
+"""
+input UpdateNoteDraftInput {
+  folderId: UUID
+  noteId: UUID!
+  ops: [CardOpInput!]
+  tagNames: [String!]
+  title: String
+  topicIds: [UUID!]
+}
+
+type UpdateNoteDraftPayload {
+  """
+  The other device's version of conflicting cards, restorable from version history
+  """
+  conflictVersion: NoteVersion
+  note: Note
+  results: [CardOpResult!]!
+  userErrors: [UserError!]!
+}
 
 """Omitted fields stay as they are; null clears a field"""
 input UpdateProfileInput {
@@ -426,9 +862,7 @@ type UploadIntentPayload {
   userErrors: [UserError!]!
 }
 
-"""
-A person on LVN (§4.1). Fields marked viewer-only are null for anyone else.
-"""
+"""A person, owned by the users subgraph; notes refer to people by id."""
 type User {
   createdAt: DateTime!
   displayName: String!
@@ -537,6 +971,13 @@ input VerifyEmailInput {
 
 input VerifyInstitutionalEmailInput {
   code: String!
+}
+
+"""Who can read a note (§4.2)"""
+enum Visibility {
+  PRIVATE
+  PUBLIC
+  SHARED
 }
 
 enum YearOfStudy {

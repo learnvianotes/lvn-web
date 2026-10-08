@@ -1,0 +1,323 @@
+# Notes, cards, versions and how notes are organised (lvn-backend notes subgraph, Phase 2).
+
+fragment CardFields on Card {
+  id
+  type
+  position
+  content
+  revision
+}
+
+fragment NoteListFields on Note {
+  id
+  title
+  excerpt
+  kind
+  visibility
+  draftUpdatedAt
+  publishedAt
+  deletedAt
+  cardCount
+  folder {
+    id
+    name
+  }
+  tags {
+    id
+    name
+  }
+}
+
+fragment NoteMeta on Note {
+  id
+  title
+  slug
+  kind
+  visibility
+  viewerAccess
+  viewerCan {
+    edit
+    publish
+    changeVisibility
+    delete
+    share
+    fork
+  }
+  owner {
+    id
+    displayName
+    handle
+  }
+  folder {
+    id
+    name
+  }
+  tags {
+    id
+    name
+  }
+  topics {
+    id
+    title
+    subject {
+      id
+      title
+    }
+  }
+  draftRevision
+  draftUpdatedAt
+  publishedAt
+  publishedVersion {
+    id
+    number
+    createdAt
+  }
+  forkingEnabled
+  cardCount
+  deletedAt
+}
+
+fragment VersionFields on NoteVersion {
+  id
+  number
+  kind
+  title
+  createdAt
+  createdBy {
+    id
+    displayName
+  }
+}
+
+query NoteToEdit($id: UUID!, $after: String) {
+  note(id: $id) {
+    ...NoteMeta
+    cards(first: 100, after: $after) {
+      edges {
+        node {
+          ...CardFields
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query MyNotes($filter: NoteFilter, $first: Int, $after: String) {
+  myNotes(filter: $filter, first: $first, after: $after) {
+    edges {
+      node {
+        ...NoteListFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query NoteVersions($id: UUID!, $after: String) {
+  note(id: $id) {
+    id
+    versions(first: 30, after: $after) {
+      edges {
+        node {
+          ...VersionFields
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query NoteVersionPreview($id: UUID!, $versionId: UUID!) {
+  note(id: $id) {
+    id
+    version(id: $versionId) {
+      ...VersionFields
+      cards(first: 100) {
+        edges {
+          node {
+            ...CardFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query Organise {
+  myFolders {
+    id
+    name
+    parentId
+    noteCount
+  }
+  myTags {
+    id
+    name
+    noteCount
+  }
+}
+
+query FindTopics($query: String!) {
+  findTopics(query: $query) {
+    id
+    title
+    origin
+    subject {
+      id
+      title
+    }
+  }
+}
+
+mutation CreateNote($input: CreateNoteInput!) {
+  createNote(input: $input) {
+    note {
+      id
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation UpdateNoteDraft($input: UpdateNoteDraftInput!) {
+  updateNoteDraft(input: $input) {
+    note {
+      ...NoteMeta
+    }
+    results {
+      id
+      status
+      revision
+      message
+    }
+    conflictVersion {
+      ...VersionFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation PublishNote($noteId: UUID!) {
+  publishNote(input: { noteId: $noteId }) {
+    note {
+      ...NoteMeta
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation RestoreNoteVersion($noteId: UUID!, $versionId: UUID!) {
+  restoreNoteVersion(input: { noteId: $noteId, versionId: $versionId }) {
+    note {
+      id
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation DeleteNote($noteId: UUID!) {
+  deleteNote(input: { noteId: $noteId }) {
+    note {
+      ...NoteListFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation RestoreNote($noteId: UUID!) {
+  restoreNote(input: { noteId: $noteId }) {
+    note {
+      ...NoteListFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation DeleteNoteForever($noteId: UUID!) {
+  deleteNoteForever(input: { noteId: $noteId }) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation CreateFolder($name: String!, $parentId: UUID) {
+  createFolder(input: { name: $name, parentId: $parentId }) {
+    folder {
+      id
+      name
+      parentId
+      noteCount
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation UpdateFolder($input: UpdateFolderInput!) {
+  updateFolder(input: $input) {
+    folder {
+      id
+      name
+      parentId
+      noteCount
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation DeleteFolder($id: UUID!) {
+  deleteFolder(input: { id: $id }) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation RenameTag($id: UUID!, $name: String!) {
+  renameTag(input: { id: $id, name: $name }) {
+    tag {
+      id
+      name
+      noteCount
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation DeleteTag($id: UUID!) {
+  deleteTag(input: { id: $id }) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
