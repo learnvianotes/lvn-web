@@ -1,5 +1,4 @@
-# lvn-web CI (architecture v2, section 16.4). Contract checks against @lvn/contracts are added in
-# Phase 1, when lvn-backend starts publishing the package.
+# lvn-web CI (lvn-backend spec §16.4): checks, unit and Playwright tests, the API contract, and the container image.
 name: ci
 
 on:
@@ -32,6 +31,44 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+
+  contract:
+    # Spec §17 contract tests: the client's operations still validate and compile against the API's current schema.
+    # Reads lvn-backend's exported schema until @lvn/contracts is published (lvn-backend ADR-0031); a private
+    # lvn-backend needs a read-only token in the LVN_BACKEND_READ_TOKEN secret.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: learnvianotes/lvn-backend
+          path: .lvn-backend
+          token: ${{ secrets.LVN_BACKEND_READ_TOKEN || github.token }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm graphql:sync && pnpm codegen
+        env: { LVN_SCHEMA: .lvn-backend/contracts/graphql/schema.graphql }
+      - run: pnpm typecheck
+
+  image:
+    # The image the sandbox runs (Dockerfile); pushed to ECR by the deploy workflow once the AWS account exists.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: lvn-web:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_APP_ENV=sandbox
+            NEXT_PUBLIC_SITE_URL=https://sandbox.learnvianotes.in
+            NEXT_PUBLIC_API_URL=https://api.sandbox.learnvianotes.in/graphql
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   secrets:
     runs-on: ubuntu-latest
