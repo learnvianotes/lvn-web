@@ -21,6 +21,7 @@ import {
 } from '@/graphql/generated/graphql'
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
+import { YourData } from '@/features/data/YourData'
 
 type Viewer = NonNullable<ViewerQuery['viewer']>
 const YEARS: YearOfStudy[] = ['YEAR_1', 'YEAR_2', 'YEAR_3', 'YEAR_4', 'YEAR_5', 'POSTGRADUATE', 'GRADUATED', 'SCHOOL', 'NOT_STUDYING']
@@ -54,6 +55,7 @@ export function AccountPage() {
       <InstitutionalEmail viewer={viewer} />
       <StudyDetails viewer={viewer} />
       <LegacyData viewer={viewer} />
+      <YourData />
     </div>
   )
 }

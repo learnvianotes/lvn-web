@@ -50,12 +50,9 @@ export interface MediaInfo {
 
 export class UploadError extends Error {}
 
-/** Uploads a file to a note and returns its id once the API has checked it. Progress is 0–1. */
-export async function uploadToNote(client: ApolloClient, noteId: string, file: File, onProgress: (p: number) => void): Promise<string> {
-  const res = await client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: file.name || 'file', mimeType: mimeOf(file), sizeBytes: file.size, purpose: 'ATTACHMENT', parentId: noteId } } })
-  const intent = res.data?.createUploadIntent.intent
-  if (!intent) throw new UploadError(res.data?.createUploadIntent.userErrors[0]?.message ?? 'upload refused')
-  await new Promise<void>((resolve, reject) => {
+/** PUTs a file to a pre-signed URL with exactly the headers the API asked for; progress is 0–1. */
+export function putToStorage(intent: { uploadUrl: string; uploadHeaders: { name: string; value: string }[] }, file: Blob, onProgress: (p: number) => void): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     // XMLHttpRequest, not fetch: it reports upload progress.
     const xhr = new XMLHttpRequest()
     xhr.open('PUT', intent.uploadUrl)
@@ -66,6 +63,14 @@ export async function uploadToNote(client: ApolloClient, noteId: string, file: F
     xhr.onerror = () => reject(new UploadError('network'))
     xhr.send(file)
   })
+}
+
+/** Uploads a file to a note and returns its id once the API has checked it. Progress is 0–1. */
+export async function uploadToNote(client: ApolloClient, noteId: string, file: File, onProgress: (p: number) => void): Promise<string> {
+  const res = await client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: file.name || 'file', mimeType: mimeOf(file), sizeBytes: file.size, purpose: 'ATTACHMENT', parentId: noteId } } })
+  const intent = res.data?.createUploadIntent.intent
+  if (!intent) throw new UploadError(res.data?.createUploadIntent.userErrors[0]?.message ?? 'upload refused')
+  await putToStorage(intent, file, onProgress)
   const done = await client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } })
   if (!done.data?.completeUpload.ok) throw new UploadError(done.data?.completeUpload.userErrors[0]?.message ?? 'upload not accepted')
   return intent.fileId

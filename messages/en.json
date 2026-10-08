@@ -661,5 +661,31 @@
       "SHARED": "Shared",
       "PUBLIC": "Public"
     }
+  },
+  "data": {
+    "title": "Your data",
+    "export": {
+      "heading": "Download your data",
+      "lead": "An archive of everything about you: your notes as Markdown and JSON with their pictures and files, and your account data. One a day; we email you when it is ready.",
+      "request": "Prepare my archive",
+      "preparing": "Preparing your archive… you can leave this page; we will email you.",
+      "ready": "Your archive is ready ({size}). You can download it until {date}.",
+      "download": "Download",
+      "failed": "The archive could not be prepared. Try again later."
+    },
+    "import": {
+      "heading": "Import notes",
+      "lead": "Bring notes from a LearnViaNotes archive, Markdown files, or a ZIP of Markdown with pictures (Obsidian, Notion, Joplin). Everything arrives private.",
+      "choose": "Choose a file to import",
+      "wrongType": "Choose a .zip, .md or .txt file.",
+      "uploading": "Uploading…",
+      "importing": "Importing {file}…",
+      "duplicate": "You imported {file} before. Import it again?",
+      "importAgain": "Import again",
+      "done": "{n, plural, one {# note} other {# notes}} imported from {file}.",
+      "skipped": "{n, plural, one {# item was} other {# items were}} skipped",
+      "failed": "The import did not work. Try again.",
+      "untitled": "Untitled note"
+    }
   }
 }
