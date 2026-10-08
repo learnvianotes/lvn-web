@@ -92,7 +92,7 @@ export function SignUpForm() {
           <span>{t('terms')}</span>
         </label>
         {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-red-600 dark:text-red-400">{t('termsRequired')}</p> : null}
-        <Button type="submit" disabled={isSubmitting || !options}>{t('submit')}</Button>
+        <Button type="submit" size="lg" disabled={isSubmitting || !options}>{t('submit')}</Button>
       </form>
       <p className="text-center text-sm text-muted">
         {t('haveAccount')} <Link href={next ? `/sign-in?next=${encodeURIComponent(next)}` : '/sign-in'} className="font-medium text-accent hover:underline">{t('signIn')}</Link>

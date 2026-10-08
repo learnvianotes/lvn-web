@@ -98,7 +98,7 @@ function InstitutionalCode() {
       <Field label={t('code')} error={problem ?? undefined}>
         <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" className="text-center text-2xl tracking-[0.5em]" />
       </Field>
-      <Button type="submit" disabled={code.length !== 6}>{t('submitCode')}</Button>
+      <Button type="submit" size="lg" disabled={code.length !== 6}>{t('submitCode')}</Button>
       <Button type="button" variant="ghost" onClick={() => void again()}>{t('resend')}</Button>
     </form>
   )

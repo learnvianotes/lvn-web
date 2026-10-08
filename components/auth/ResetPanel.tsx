@@ -51,7 +51,7 @@ function RequestLink() {
       <Field label={t('email')} error={form.formState.errors.email ? te('email') : undefined}>
         <Input type="email" autoComplete="email" inputMode="email" {...form.register('email')} />
       </Field>
-      <Button type="submit" disabled={form.formState.isSubmitting}>{t('submit')}</Button>
+      <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>{t('submit')}</Button>
     </form>
   )
 }
@@ -93,7 +93,7 @@ function NewPassword({ token }: { token: string }) {
       <Field label={t('password')} hint={ts('passwordHint')} error={errors.password ? (errors.password.type === 'server' ? errors.password.message : ts('passwordHint')) : undefined}>
         <Input type="password" autoComplete="new-password" {...form.register('password')} />
       </Field>
-      <Button type="submit" disabled={form.formState.isSubmitting}>{t('save')}</Button>
+      <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>{t('save')}</Button>
     </form>
   )
 }

@@ -14,7 +14,15 @@ export default defineConfig({
     ? undefined
     : {
         command: `pnpm build && pnpm start -p ${port}`,
-        env: { NEXT_DIST_DIR: '.next-e2e' },
+        // A stand-in Firebase web config, so the Google button shows whenever the mocked API offers Google. Firebase is
+        // only loaded on a click, which no test makes.
+        env: {
+          NEXT_DIST_DIR: '.next-e2e',
+          NEXT_PUBLIC_FIREBASE_API_KEY: 'e2e-api-key',
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'lvn-e2e.firebaseapp.com',
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'lvn-e2e',
+          NEXT_PUBLIC_FIREBASE_APP_ID: '1:0:web:e2e',
+        },
         port,
         timeout: 300_000,
         reuseExistingServer: !process.env.CI,

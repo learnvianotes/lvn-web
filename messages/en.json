@@ -35,6 +35,24 @@
     "home": "Go home"
   },
   "auth": {
+    "welcome": {
+      "headline": "Turn your notes into knowledge that sticks.",
+      "lead": "Learn, revise and share with your class — at your own pace.",
+      "features": {
+        "notes": "All your notes in one place",
+        "rhythm": "A weekly Rhythm, not a streak to lose",
+        "together": "Learn together with your class"
+      },
+      "sheetTitle": "Start learning in seconds",
+      "sheetLead": "One tap with Google, or use your email.",
+      "email": "Sign up with email",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "legal": "By continuing, you agree to our Terms and Privacy Policy.",
+      "signedInTitle": "You are signed in",
+      "signedInLead": "Pick up where you left off.",
+      "account": "Go to your account"
+    },
     "signIn": {
       "title": "Sign in",
       "lead": "Welcome back. Pick up where you left off.",
@@ -63,13 +81,15 @@
       "signIn": "Sign in"
     },
     "details": {
-      "title": "A few details",
-      "lead": "We need these once, then you are in.",
-      "submit": "Continue"
+      "title": "Almost there",
+      "lead": "One quick step — we ask once, then you are in.",
+      "submit": "Continue",
+      "titleNamed": "Almost there, {name}"
     },
     "providers": {
       "or": "or",
       "google": "Continue with Google",
+      "googleBusy": "Signing in…",
       "github": "Continue with GitHub",
       "linkedin": "Continue with LinkedIn",
       "failed": "That sign-in did not work. Try again."

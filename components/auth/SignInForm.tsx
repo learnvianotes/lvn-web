@@ -57,7 +57,7 @@ export function SignInForm() {
         <Field label={t('password')} error={errors.password ? (errors.password.type === 'server' ? errors.password.message : te('required')) : undefined}>
           <Input type="password" autoComplete="current-password" {...form.register('password')} />
         </Field>
-        <Button type="submit" disabled={isSubmitting}>{t('submit')}</Button>
+        <Button type="submit" size="lg" disabled={isSubmitting}>{t('submit')}</Button>
         <Link href="/reset" className="text-center text-sm text-accent hover:underline">{t('forgot')}</Link>
       </form>
       <p className="text-center text-sm text-muted">

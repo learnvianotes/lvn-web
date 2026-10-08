@@ -8,7 +8,13 @@ const variants = {
   ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
 }
 
-const sizes = { md: 'h-11 px-5 text-sm', sm: 'h-9 px-3 text-sm', icon: 'size-9' }
+const sizes = {
+  md: 'h-11 px-5 text-sm',
+  sm: 'h-9 px-3 text-sm',
+  icon: 'size-9',
+  /** The pill of the sign-in pages, matching the Google button beside it. */
+  lg: 'h-12 rounded-full px-6 text-[15px] font-semibold',
+}
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: keyof typeof variants

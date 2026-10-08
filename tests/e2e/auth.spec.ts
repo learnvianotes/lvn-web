@@ -34,7 +34,10 @@ const ok = { __typename: 'OkPayload', ok: true, userErrors: [] }
 const problem = (field: string[] | null, message: string, code = 'VALIDATION') => ({ __typename: 'UserError', field, message, code })
 const fail = (...problems: ReturnType<typeof problem>[]) => ({ __typename: 'OkPayload', ok: false, userErrors: problems })
 
-/** Answers GraphQL by operation name; the session restore (an anonymous refreshSession) by `refresh`. */
+/**
+ * Answers GraphQL by operation name; the session restore (an anonymous refreshSession) by `refresh`. A `withGoogle`
+ * entry makes the API offer Google (the e2e build has a stand-in Firebase config, playwright.config.ts).
+ */
 async function mockApi(page: Page, handlers: Record<string, Handler>, refresh: 'signed-in' | 'signed-out' = 'signed-out') {
   const calls: { op: string; variables: Record<string, unknown> }[] = []
   await page.route('**/graphql', async (route: Route) => {
@@ -46,7 +49,7 @@ async function mockApi(page: Page, handlers: Record<string, Handler>, refresh: '
       data = { refreshSession: refresh === 'signed-in' ? { session: session() } : null }
       if (refresh === 'signed-out') return route.fulfill({ json: { data: null, errors: [{ message: 'Session ended', extensions: { code: 'UNAUTHENTICATED' } }] } })
     } else if (op === 'SignInOptions') {
-      data = { signInOptions: { emailPassword: true, google: false, github: false, linkedin: false }, termsVersion: '2026-10-08' }
+      data = { signInOptions: { emailPassword: true, google: !!handlers.withGoogle, github: false, linkedin: false }, termsVersion: '2026-10-08' }
     } else if (handlers[op]) {
       data = handlers[op]!(body.variables ?? {})
     } else {
@@ -126,6 +129,7 @@ test.describe('sign in', () => {
     await page.getByLabel('Password').fill('a long enough passphrase')
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(page).toHaveURL(/\/sign-up\/details\?next=%2Fcore%2Fpython$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Almost there, Asha')
     await expect(page.getByLabel('Your name')).toHaveValue('Asha Rao')
   })
 
@@ -168,6 +172,43 @@ test.describe('links from emails', () => {
     await mockApi(page, {})
     await page.goto('/oauth/callback?code=abc&state=forged')
     await expect(page.getByText(/could not be completed/)).toBeVisible()
+  })
+})
+
+test.describe('Google first', () => {
+  const offered = { withGoogle: () => null }
+
+  test('the landing page puts Continue with Google first, then email sign-up and sign-in', async ({ page }) => {
+    await mockApi(page, offered)
+    await page.goto('/')
+    const main = page.getByRole('main')
+    await expect(main.getByRole('heading', { name: 'Start learning in seconds' })).toBeVisible()
+    await expect(main.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
+    const google = await main.getByRole('button', { name: 'Continue with Google' }).boundingBox()
+    const email = await main.getByRole('link', { name: 'Sign up with email' }).boundingBox()
+    expect(google!.y).toBeLessThan(email!.y)
+    await main.getByRole('link', { name: 'Sign in', exact: true }).click()
+    await expect(page).toHaveURL(/\/sign-in$/)
+    await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
+  })
+
+  test('without Google, email sign-up is the way in', async ({ page }) => {
+    await mockApi(page, {})
+    await page.goto('/')
+    await expect(page.getByRole('link', { name: 'Sign up with email' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Continue with Google' })).toHaveCount(0)
+    await page.getByRole('link', { name: 'Sign up with email' }).click()
+    await expect(page).toHaveURL(/\/sign-up$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Create your account')
+  })
+
+  test('someone signed in is offered their account instead', async ({ page }) => {
+    await mockApi(page, { Viewer: () => ({ viewer: viewer() }) }, 'signed-in')
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'You are signed in' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Sign up with email' })).toHaveCount(0)
+    await page.getByRole('link', { name: 'Go to your account' }).click()
+    await expect(page).toHaveURL(/\/profile$/)
   })
 })
 
