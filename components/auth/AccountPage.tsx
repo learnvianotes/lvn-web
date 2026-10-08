@@ -43,6 +43,12 @@ export function AccountPage() {
         </div>
         <SignOutButton />
       </header>
+      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
+        <Link href="/admin/moderation" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
+          {t('moderationQueue')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
       <Verification viewer={viewer} />
       {viewer.restrictedMinor ? <Alert>{t('minor')}</Alert> : null}
       <InstitutionalEmail viewer={viewer} />

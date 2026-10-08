@@ -190,7 +190,8 @@
       "declined": "Old-site data removed."
     },
     "minor": "Some features stay off until a parent, guardian or your school confirms your account.",
-    "unsavedDrafts": "Some note changes have not reached the server yet. Signing out deletes them from this browser. Sign out anyway?"
+    "unsavedDrafts": "Some note changes have not reached the server yet. Signing out deletes them from this browser. Sign out anyway?",
+    "moderationQueue": "Moderation queue"
   },
   "notes": {
     "pageTitle": "Note",
@@ -529,7 +530,94 @@
       "makeCopyHint": "A private copy for you to change, credited to the author",
       "copyFailed": "Could not make a copy. Try again.",
       "copiedFrom": "Copied from <title></title> by {name}",
-      "copiedFromAuthor": "Copied from a note by {name}"
+      "copiedFromAuthor": "Copied from a note by {name}",
+      "offPublic": "Moderators took this note off the public pages. You can appeal from the note."
+    }
+  },
+  "moderation": {
+    "report": {
+      "button": "Report",
+      "title": "Report this note",
+      "lead": "What is wrong with it? Moderators look at every report; the author is not told who sent it.",
+      "reasons": {
+        "SPAM": "Spam or advertising",
+        "HARASSMENT": "Bullying or harassment",
+        "HATE": "Hate",
+        "SEXUAL": "Sexual content",
+        "SELF_HARM": "Self-harm",
+        "COPYRIGHT": "Copied without permission",
+        "OTHER": "Something else"
+      },
+      "hints": {
+        "SPAM": "Ads, links or the same text again and again",
+        "HARASSMENT": "Aimed at hurting or shaming someone",
+        "HATE": "Attacks people for who they are",
+        "SEXUAL": "Not for a study app",
+        "SELF_HARM": "Encourages hurting oneself",
+        "COPYRIGHT": "Someone else’s work, shared without their permission",
+        "OTHER": "Tell us below"
+      },
+      "details": "Anything moderators should know (optional)",
+      "detailsPlaceholder": "Where in the note, and why",
+      "selfHarmHelp": "If you or someone you know is in danger, please talk to someone you trust or a local helpline now.",
+      "send": "Send report",
+      "cancel": "Cancel",
+      "failed": "The report did not go through. Try again.",
+      "thanks": "Thank you for telling us",
+      "thanksLead": "A moderator will look at it.",
+      "done": "Done"
+    },
+    "banner": {
+      "title": {
+        "PENDING_REVIEW": "Waiting for a moderator",
+        "HIDDEN": "Hidden by moderators",
+        "REMOVED": "Removed by moderators"
+      },
+      "heldLead": "Until then, only you and the people you share it with can read it.",
+      "appeal": "Appeal",
+      "appealTitle": "Appeal this decision",
+      "appealLead": "Tell the moderators why this note should come back. You can appeal once.",
+      "appealMessage": "Your message",
+      "sendAppeal": "Send appeal",
+      "cancel": "Cancel",
+      "appealed": "Your appeal is with the moderators.",
+      "failed": "The appeal did not go through. Try again."
+    },
+    "queue": {
+      "title": "Moderation queue",
+      "lead": "Open reports and appeals, oldest first. Notes held on their way to the public are here too.",
+      "empty": "Nothing to review. Thank you!",
+      "more": "Show more",
+      "untitled": "Untitled note",
+      "by": "by {name} (@{handle})",
+      "entity": {
+        "NOTE": "Note",
+        "USER": "Account"
+      },
+      "state": {
+        "OK": "Public",
+        "PENDING_REVIEW": "Held",
+        "HIDDEN": "Hidden",
+        "REMOVED": "Removed"
+      },
+      "opened": "opened {when}",
+      "reports": "Reports",
+      "scorer": "held automatically",
+      "appeal": "The author’s appeal",
+      "reason": "Reason (the author sees it; needed to hide, remove or warn)",
+      "reasonPlaceholder": "e.g. Copied from a textbook without permission",
+      "reasonNeeded": "Write a reason first: the author is told.",
+      "actions": {
+        "APPROVE": "Approve",
+        "DISMISS": "Dismiss reports",
+        "WARN": "Warn",
+        "HIDE": "Hide",
+        "REMOVE": "Remove",
+        "SUSPEND": "Suspend"
+      },
+      "failed": "That did not work. Try again.",
+      "notAllowed": "Only moderators can see this page",
+      "notAllowedLead": "It is for platform admins."
     }
   }
 }

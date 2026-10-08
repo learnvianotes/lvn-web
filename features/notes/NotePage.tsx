@@ -11,6 +11,7 @@ import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument, type CardField
 import { loadNote, sendSave, type NoteMeta } from './api'
 import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
+import { ModerationBanner } from '@/features/moderation/ModerationBanner'
 import { MediaProvider } from './media'
 import { ForkCredit, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
 import { VersionsDialog } from './VersionsDialog'
@@ -208,6 +209,7 @@ export function NotePage({ id }: { id: string }) {
             {meta.viewerAccess === 'EDITOR' ? ` · ${t('editingFor', { name: meta.owner.displayName })}` : ''}
           </span>
         </nav>
+        {meta.moderation ? <ModerationBanner noteId={id} moderation={meta.moderation} /> : null}
         {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
         {copy.copyError ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -277,6 +279,7 @@ function mirrorMeta(id: string, title: string): NoteMeta {
     publishedAt: null,
     publishedVersion: null,
     forkingEnabled: true,
+    moderation: null,
     forkedFrom: null,
     cardCount: 0,
     deletedAt: null,

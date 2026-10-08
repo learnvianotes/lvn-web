@@ -8,6 +8,7 @@ import { cardPlainText } from '@/lib/contracts/validation'
 import type { NoteMeta } from './api'
 import { accentOf, readingMinutes } from './look'
 import { ReadAloudControls } from './editor/NoteEditor'
+import { ReportButton } from '@/features/moderation/ReportDialog'
 import { ForkCredit, MakeCopyButton, useMakeCopy } from './ShareDialog'
 import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
@@ -69,6 +70,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
           <div className="flex flex-wrap items-center gap-2">
             <ReadAloudControls reader={reader} />
             {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
+            <ReportButton entityType="NOTE" entityId={meta.id} className="ml-auto" />
           </div>
           {copy.copyError ? (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">

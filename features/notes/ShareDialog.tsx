@@ -107,22 +107,24 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
           {VISIBILITIES.map(({ value, icon: Icon }) => {
             const active = meta.visibility === value
             const needsPublish = value === 'PUBLIC' && !meta.publishedVersion
+            // ADR-0037: a note moderators hid or removed stays off the public pages until they approve it.
+            const offPublic = value === 'PUBLIC' && (meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED')
             return (
               <label
                 key={value}
                 className={cn(
                   'flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition',
                   active ? 'border-accent bg-accent-soft ring-1 ring-accent/40' : 'border-border bg-surface hover:border-accent/40',
-                  needsPublish && 'cursor-not-allowed opacity-60',
+                  (needsPublish || offPublic) && 'cursor-not-allowed opacity-60',
                 )}
               >
-                <input type="radio" name="visibility" value={value} checked={active} disabled={needsPublish || !meta.viewerCan.changeVisibility} onChange={() => void pickVisibility(value)} className="sr-only" />
+                <input type="radio" name="visibility" value={value} checked={active} disabled={needsPublish || offPublic || !meta.viewerCan.changeVisibility} onChange={() => void pickVisibility(value)} className="sr-only" />
                 <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl', active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted')}>
                   <Icon className="size-[1.125rem]" aria-hidden />
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="text-sm font-semibold">{t(`visibility.${value}`)}</span>
-                  <span className="text-xs leading-5 text-muted">{needsPublish ? t('publishFirst') : t(`visibilityHint.${value}`)}</span>
+                  <span className="text-xs leading-5 text-muted">{offPublic ? t('offPublic') : needsPublish ? t('publishFirst') : t(`visibilityHint.${value}`)}</span>
                 </span>
                 {active ? <Check className="ml-auto size-4 shrink-0 text-accent" aria-hidden /> : null}
               </label>

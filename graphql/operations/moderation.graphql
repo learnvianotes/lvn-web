@@ -1,0 +1,76 @@
+# Moderation (lvn-backend §15.1, ADR-0037): reports, appeals and the platform queue.
+
+mutation ReportContent($input: ReportContentInput!) {
+  reportContent(input: $input) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation AppealModeration($input: AppealModerationInput!) {
+  appealModeration(input: $input) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+query ModerationQueue($after: String) {
+  moderationQueue(first: 30, after: $after) {
+    edges {
+      node {
+        entityType
+        entityId
+        openedAt
+        note {
+          id
+          title
+          excerpt
+          visibility
+          moderation
+          moderationReason
+          deleted
+          owner {
+            id
+            displayName
+            handle
+          }
+        }
+        user {
+          id
+          displayName
+          handle
+        }
+        reports {
+          reason
+          details
+          createdAt
+          reporter {
+            id
+            displayName
+          }
+        }
+        appeal {
+          message
+          createdAt
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation ModerateContent($input: ModerateContentInput!) {
+  moderateContent(input: $input) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}

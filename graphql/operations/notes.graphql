@@ -88,6 +88,11 @@ fragment NoteMeta on Note {
     createdAt
   }
   forkingEnabled
+  moderation {
+    state
+    reason
+    canAppeal
+  }
   forkedFrom {
     title
     author {

@@ -189,7 +189,12 @@ export const ReportReason = {
 } as const
 export type ReportReason = (typeof ReportReason)[keyof typeof ReportReason]
 
-export const ModerationActionType = { HIDE: 'hide', REMOVE: 'remove', WARN: 'warn', SUSPEND: 'suspend', DISMISS: 'dismiss' } as const
+/** What can be reported (§15.1); comments, groups and resources join when they exist. */
+export const ReportEntityType = { NOTE: 'NOTE', USER: 'USER' } as const
+export type ReportEntityType = (typeof ReportEntityType)[keyof typeof ReportEntityType]
+
+/** §15.1 actions, plus APPROVE: a held note goes (back) to the public (ADR-0037). */
+export const ModerationActionType = { APPROVE: 'APPROVE', HIDE: 'HIDE', REMOVE: 'REMOVE', WARN: 'WARN', SUSPEND: 'SUSPEND', DISMISS: 'DISMISS' } as const
 export type ModerationActionType = (typeof ModerationActionType)[keyof typeof ModerationActionType]
 
 export const enumValues = values
