@@ -9,6 +9,7 @@ export default defineConfig({
   oxc: { jsx: { runtime: 'automatic' } },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],
+    env: { NEXT_PUBLIC_SITE_URL: 'http://localhost:3000', NEXT_PUBLIC_API_URL: 'http://localhost:4000/graphql' },
     environment: 'node',
     testTimeout: 30_000,
   },

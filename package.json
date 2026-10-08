@@ -28,11 +28,17 @@
     "content:sql": "python3 content-src/authoring/sql/build.py && pnpm content:extract",
     "content:machine-learning": "content-src/authoring/data-science/.venv/bin/python content-src/authoring/machine-learning/build.py && pnpm content:extract",
     "content:deep-learning": "content-src/authoring/deep-learning/.venv/bin/python content-src/authoring/deep-learning/build.py && pnpm content:extract",
-    "content:data-science": "content-src/authoring/data-science/.venv/bin/python content-src/authoring/data-science/build.py && pnpm content:extract"
+    "content:data-science": "content-src/authoring/data-science/.venv/bin/python content-src/authoring/data-science/build.py && pnpm content:extract",
+    "graphql:sync": "node scripts/graphql-sync.mjs",
+    "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
+    "@apollo/client": "^4.3.2",
+    "@hookform/resolvers": "^5.9.1",
     "@tabler/icons-webfont": "^3.49.0",
     "clsx": "^2.1.1",
+    "firebase": "^13.0.0",
+    "graphql": "^16.14.2",
     "highlight.js": "^11.12.0",
     "linkedom": "^0.18.13",
     "lucide-react": "^0.474.0",
@@ -41,7 +47,9 @@
     "next-intl": "^4.14.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-hook-form": "^7.89.0",
     "react-router-dom": "^7.18.4",
+    "rxjs": "^7.8.2",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5",
@@ -50,6 +58,9 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3.3.7",
+    "@graphql-codegen/cli": "^7.4.5",
+    "@graphql-codegen/client-preset": "^6.2.2",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.4",

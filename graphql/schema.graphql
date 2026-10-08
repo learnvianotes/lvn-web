@@ -1,0 +1,552 @@
+# LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
+type AuthPayload {
+  session: Session
+  userErrors: [UserError!]!
+}
+
+"""
+After a provider sign-in (no signUp call): the same details, collected once
+"""
+input CompleteRegistrationInput {
+  acceptedTermsVersion: String!
+  dateOfBirth: String!
+  displayName: String!
+  institutionalEmail: String
+}
+
+type CoreProblemMark {
+  mark: ProblemMark!
+  problemId: String!
+}
+
+"""
+Progress on a /core subject — the old site's history plus everything recorded since
+"""
+type CoreSubjectProgress {
+  problems: [CoreProblemMark!]!
+  subjectId: String!
+  topics: [CoreTopicProgress!]!
+}
+
+"""topicKey = subjectId/topicId of the /core content"""
+type CoreTopicProgress {
+  completed: Boolean!
+  lastStudiedAt: DateTime
+  revisit: Boolean!
+  secondsStudied: Int!
+  topicKey: String!
+}
+
+input CreateUploadIntentInput {
+  """Shown to people; never part of the storage key"""
+  fileName: String!
+  mimeType: String!
+  parentId: UUID
+  purpose: FilePurpose!
+  sizeBytes: Int!
+}
+
+scalar DateTime
+
+input DecideDomainReviewInput {
+  approve: Boolean!
+  domain: String!
+}
+
+type DomainReview {
+  domain: String!
+  firstSeenAt: DateTime!
+
+  """How many people asked for it"""
+  requests: Int!
+  status: DomainReviewStatus!
+}
+
+enum DomainReviewStatus {
+  ACADEMIC_QUEUED
+  APPROVED
+  NEEDS_REVIEW
+  REJECTED
+}
+
+"""Fixed error vocabulary (§6.2)"""
+enum ErrorCode {
+  CONFLICT
+  FORBIDDEN
+  INTERNAL
+  NOT_FOUND
+  RATE_LIMITED
+  UNAUTHENTICATED
+  VALIDATION
+}
+
+"""
+What an upload is for. Phase 1 accepts AVATAR and VERIFICATION_DOCUMENT; note media arrives with notes (Phase 2).
+"""
+enum FilePurpose {
+  ATTACHMENT
+  AVATAR
+  COVER
+  EXPORT
+  IMPORT
+  VERIFICATION_DOCUMENT
+  VOICE_NOTE
+}
+
+enum GlobalRole {
+  PLATFORM_ADMIN
+  STUDENT
+  TEACHER
+}
+
+type Institution {
+  name: String!
+  verified: Boolean!
+}
+
+enum InstitutionalEmailStatus {
+  """A code was sent to the address and not yet entered"""
+  CODE_SENT
+
+  """Confirmed; the account is verified by it"""
+  CONFIRMED
+
+  """No college or organisation email yet"""
+  NONE
+
+  """
+  Confirmed, but the domain waits for platform-admin review before it verifies the account
+  """
+  PENDING_REVIEW
+}
+
+type LegacyCounts {
+  completedTopics: Int!
+  markedProblems: Int!
+  notes: Int!
+  studyDays: Int!
+  studyMinutes: Int!
+}
+
+type LegacyImport {
+  claimedAt: DateTime
+  counts: LegacyCounts
+  status: LegacyImportStatus!
+}
+
+enum LegacyImportStatus {
+  AVAILABLE
+  CLAIMED
+  DECLINED
+  NOT_FOUND
+}
+
+"""
+A plan limit and current use, for "3 of 5 groups" and early warnings; limit null = unlimited
+"""
+type Limit {
+  key: LimitKey!
+  limit: Float
+  used: Float!
+}
+
+enum LimitKey {
+  AI_TOKENS_DAILY
+  CLASSROOMS_OWNED
+  CLASSROOM_MEMBERS
+  EXPORTS_DAILY
+  GROUPS_OWNED
+  GROUP_MEMBERS
+  IMPORTS_DAILY
+  ORG_SEATS
+  PDF_PAGES_MONTHLY
+  PROJECT_WORKSPACES
+  STORAGE_BYTES
+}
+
+type Mutation {
+  """Attach the old site's data to this account"""
+  claimLegacyData: OkPayload!
+  completeRegistration(input: CompleteRegistrationInput!): OkPayload!
+
+  """Checks the uploaded bytes (size, magic bytes) and makes the file READY"""
+  completeUpload(fileId: UUID!): OkPayload!
+  createUploadIntent(input: CreateUploadIntentInput!): UploadIntentPayload!
+
+  """Platform admins"""
+  decideDomainReview(input: DecideDomainReviewInput!): OkPayload!
+
+  """Decline the old site's data, or remove it after it was attached"""
+  declineLegacyData: OkPayload!
+  oauthExchange(input: OAuthExchangeInput!): AuthPayload!
+  refreshSession(input: RefreshSessionInput!): AuthPayload!
+  requestDocumentVerification(input: RequestDocumentVerificationInput!): VerificationRequestPayload!
+
+  """Always ok, whether or not an account exists"""
+  requestPasswordReset(input: RequestPasswordResetInput!): OkPayload!
+  requestTeacherVerification(input: RequestTeacherVerificationInput!): VerificationRequestPayload!
+  resendInstitutionalEmailCode: OkPayload!
+
+  """Sets the password and signs out every device"""
+  resetPassword(input: ResetPasswordInput!): OkPayload!
+
+  """
+  Teachers: requests addressed to them. Platform admins: all, including documents.
+  """
+  reviewVerificationRequest(input: ReviewVerificationRequestInput!): VerificationRequestPayload!
+
+  """
+  Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
+  """
+  setGlobalRole(input: SetGlobalRoleInput!): OkPayload!
+
+  """
+  Adds or replaces the college or organisation email; a code is sent to it
+  """
+  setInstitutionalEmail(input: SetInstitutionalEmailInput!): OkPayload!
+  signIn(input: SignInInput!): AuthPayload!
+  signInWithGoogle(input: SignInWithGoogleInput!): AuthPayload!
+
+  """Ends this device's session (its whole refresh-token family)"""
+  signOut: OkPayload!
+  signUp(input: SignUpInput!): AuthPayload!
+  updateProfile(input: UpdateProfileInput!): ProfilePayload!
+  verifyEmail(input: VerifyEmailInput!): OkPayload!
+  verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
+  withdrawVerificationRequest(requestId: UUID!): OkPayload!
+}
+
+"""
+Authorization Code + PKCE: the code from the provider's redirect and the verifier the client generated
+"""
+input OAuthExchangeInput {
+  code: String!
+  codeVerifier: String!
+  provider: OAuthProvider!
+  redirectUri: String!
+}
+
+"""
+Providers exchanged through oauthExchange. Google uses signInWithGoogle (ADR-0007).
+"""
+enum OAuthProvider {
+  GITHUB
+  LINKEDIN
+}
+
+type OkPayload {
+  ok: Boolean!
+  userErrors: [UserError!]!
+}
+
+enum ProblemMark {
+  REVISIT
+  SOLVED
+}
+
+type ProfilePayload {
+  profile: StudentProfile
+  userErrors: [UserError!]!
+}
+
+type Query {
+  """
+  Signed-in users: their progress on a /core subject (web reads it on /core pages)
+  """
+  coreProgress(subjectId: String!): CoreSubjectProgress!
+
+  """
+  Platform admins: institutional email domains waiting for review (ADR-0017)
+  """
+  domainReviews(status: DomainReviewStatus): [DomainReview!]!
+  myVerificationRequests: [VerificationRequest!]!
+  signInOptions: SignInOptions!
+
+  """
+  Verified teachers whose name or handle matches, to ask one of them for verification
+  """
+  teachers(search: String!): [User!]!
+
+  """
+  Version of the Terms, Privacy Policy and public-content licence a new account accepts (§15.2)
+  """
+  termsVersion: String!
+
+  """
+  Platform admins only: a 15-minute link to one document; the view is written to the audit log
+  """
+  verificationDocumentUrl(fileId: UUID!, requestId: UUID!): SignedUrl!
+
+  """
+  Teachers: pending requests addressed to them. Platform admins: every pending request. Oldest first; `after` is the last id seen.
+  """
+  verificationRequestsToReview(after: UUID, first: Int): [VerificationRequest!]!
+
+  """The signed-in user, null for anonymous visitors"""
+  viewer: User
+}
+
+input RefreshSessionInput {
+  """Mobile only; web sends the cookie"""
+  refreshToken: String
+}
+
+"""
+fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by platform admins only, deleted 30 days after the decision
+"""
+input RequestDocumentVerificationInput {
+  fileIds: [UUID!]!
+  message: String
+}
+
+input RequestPasswordResetInput {
+  email: String!
+}
+
+input RequestTeacherVerificationInput {
+  message: String
+  teacherId: UUID!
+}
+
+input ResetPasswordInput {
+  password: String!
+  token: String!
+}
+
+input ReviewVerificationRequestInput {
+  approve: Boolean!
+
+  """Required when rejecting"""
+  reason: String
+  requestId: UUID!
+}
+
+type Session {
+  """
+  15-minute RS256 JWT. Web keeps it in memory; mobile in expo-secure-store.
+  """
+  accessToken: String!
+  accessTokenExpiresAt: DateTime!
+
+  """
+  Mobile only (header X-LVN-Client: mobile). Web receives it as an HttpOnly cookie and this field is null.
+  """
+  refreshToken: String
+  user: User!
+}
+
+input SetGlobalRoleInput {
+  role: GlobalRole!
+  userId: UUID!
+}
+
+input SetInstitutionalEmailInput {
+  email: String!
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+"""Which sign-in methods this deployment offers"""
+type SignInOptions {
+  emailPassword: Boolean!
+  github: Boolean!
+  google: Boolean!
+  linkedin: Boolean!
+}
+
+"""
+Firebase ID token from a Google sign-in; verified by the API and exchanged for an LVN session (ADR-0007)
+"""
+input SignInWithGoogleInput {
+  idToken: String!
+}
+
+"""
+Registration (ADR-0017, ADR-0019): date of birth is required (YYYY-MM-DD). A college or organisation email is
+optional; it receives a 6-digit code. `acceptedTermsVersion` must be Query.termsVersion.
+"""
+input SignUpInput {
+  acceptedTermsVersion: String!
+  dateOfBirth: String!
+  displayName: String!
+  email: String!
+  institutionalEmail: String
+  password: String!
+}
+
+type SignedUrl {
+  expiresAt: DateTime!
+  url: String!
+}
+
+"""
+Department and year are shown to others only if showOnProfile; interests stay private
+"""
+type StudentProfile {
+  department: String
+
+  """
+  Viewer only. Topics arrive with notes (Phase 2), which will add the resolved `interests`.
+  """
+  interestTopicIds: [UUID!]
+  showOnProfile: Boolean!
+  yearOfStudy: YearOfStudy
+}
+
+scalar UUID
+
+"""Omitted fields stay as they are; null clears a field"""
+input UpdateProfileInput {
+  department: String
+  interestTopicIds: [UUID!]
+  showOnProfile: Boolean
+  yearOfStudy: YearOfStudy
+}
+
+type UploadHeader {
+  name: String!
+  value: String!
+}
+
+"""
+Upload the bytes with PUT to uploadUrl and exactly these headers within 10 minutes, then call completeUpload.
+"""
+type UploadIntent {
+  expiresAt: DateTime!
+  fileId: UUID!
+  uploadHeaders: [UploadHeader!]!
+  uploadUrl: String!
+}
+
+type UploadIntentPayload {
+  intent: UploadIntent
+  userErrors: [UserError!]!
+}
+
+"""
+A person on LVN (§4.1). Fields marked viewer-only are null for anyone else.
+"""
+type User {
+  createdAt: DateTime!
+  displayName: String!
+
+  """Viewer only"""
+  email: String
+  emailVerified: Boolean!
+  globalRole: GlobalRole!
+  handle: String!
+  id: UUID!
+
+  """The confirmed college or organisation"""
+  institution: Institution
+
+  """
+  Viewer only (ADR-0017): the confirmed address, or the one waiting for its code
+  """
+  institutionalEmail: String
+
+  """Viewer only"""
+  institutionalEmailStatus: InstitutionalEmailStatus
+
+  """Viewer only: data from the old learnvianotes.in site (ADR-0023)"""
+  legacyImport: LegacyImport
+
+  """Viewer only"""
+  limits: [Limit!]
+
+  """The viewer's own profile; for others only when they show it"""
+  profile: StudentProfile
+
+  """False until the registration details are given (ADR-0017)"""
+  registrationComplete: Boolean!
+
+  """
+  Viewer only: a minor without verified consent (§15.2) — no public publishing, no DMs
+  """
+  restrictedMinor: Boolean
+  verificationMethod: VerificationMethod
+
+  """
+  Verified by institutional email, a teacher, or platform admins (ADR-0019)
+  """
+  verified: Boolean!
+}
+
+"""
+An expected failure of a mutation; `field` is the dotted input path, e.g. ["input", "email"]
+"""
+type UserError {
+  code: ErrorCode!
+  field: [String!]
+  message: String!
+}
+
+type VerificationDocument {
+  fileId: UUID!
+  fileName: String!
+  mimeType: String!
+  sizeBytes: Int!
+}
+
+enum VerificationMethod {
+  DOCUMENTS
+  INSTITUTIONAL_EMAIL
+  TEACHER
+}
+
+"""
+Shown to the requester, the addressed teacher and platform admins. Documents are listed for platform admins only.
+"""
+type VerificationRequest {
+  createdAt: DateTime!
+  decidedAt: DateTime
+
+  """
+  Platform admins only; open one with verificationDocumentUrl (every view is audited)
+  """
+  documents: [VerificationDocument!]!
+  id: UUID!
+  message: String
+  method: VerificationMethod!
+  reason: String
+  requester: User!
+  status: VerificationRequestStatus!
+
+  """TEACHER method: the teacher asked to vouch"""
+  teacher: User
+}
+
+type VerificationRequestPayload {
+  request: VerificationRequest
+  userErrors: [UserError!]!
+}
+
+enum VerificationRequestStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  WITHDRAWN
+}
+
+input VerifyEmailInput {
+  token: String!
+}
+
+input VerifyInstitutionalEmailInput {
+  code: String!
+}
+
+enum YearOfStudy {
+  GRADUATED
+  NOT_STUDYING
+  POSTGRADUATE
+  SCHOOL
+  YEAR_1
+  YEAR_2
+  YEAR_3
+  YEAR_4
+  YEAR_5
+}

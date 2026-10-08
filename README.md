@@ -19,7 +19,10 @@ cp .env.example .env          # every URL comes from here; personal overrides go
 pnpm dev            # http://localhost:3000 (bound to 0.0.0.0)
 pnpm lint && pnpm typecheck && pnpm test
 pnpm test:e2e       # builds to .next-e2e and starts it on :3100 (a running `pnpm dev` is not touched)
+pnpm graphql:sync && pnpm codegen   # after the API schema changes (needs lvn-backend checked out next to this repo)
 ```
+
+Sign-in needs lvn-backend running (`NEXT_PUBLIC_API_URL`, its `CORS_ORIGINS` must include this site's origin).
 
 ## Tests
 
@@ -27,7 +30,8 @@ pnpm test:e2e       # builds to .next-e2e and starts it on :3100 (a running `pnp
 | --- | --- | --- |
 | `tests/unit/core` | Vitest | `/core` data documents, page titles, the HTML converter, and the fidelity check: every content fragment rendered by the old `ContentView` must match its source HTML |
 | `tests/unit/site` | Vitest | the landing page's catalog loader |
-| `tests/e2e` | Playwright (desktop + Pixel 7) | `/core` as a guest (navigation, code tabs, search, theme, 404, redirects, accessibility) and the landing page |
+| `tests/unit/auth` | Vitest | redirects after sign-in (no open redirects), mapping API field errors onto forms |
+| `tests/e2e` | Playwright (desktop + Pixel 7) | `/core` as a guest (navigation, code tabs, search, theme, 404, redirects, accessibility), the landing page, and sign-up / sign-in / verify / reset / OAuth callback against a mocked API |
 | `tests/support` | — | shared helpers (`fidelity.ts`) |
 
 ## Content

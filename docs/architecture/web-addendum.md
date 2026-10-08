@@ -13,7 +13,8 @@ the spec wins unless an accepted ADR says otherwise.
 | `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest` | — | Static | 0 | Live; robots blocks everything outside production |
 | `/n/[slug]-[id]` | `(public)` | ISR, revalidated by the API on publish | 2 | Not started |
 | `/u/[handle]`, `/explore` | `(public)` | SSR/ISR | 2–3 | Not started |
-| `/sign-in`, `/sign-up`, `/verify`, `/reset`, `/oauth/callback` | `(auth)` | Client | 1 | Not started |
+| `/sign-in`, `/sign-up`, `/sign-up/details`, `/verify`, `/reset`, `/oauth/callback` | `(site)/(auth)` | Client | 1 | Live — email + password, Google (Firebase, ADR-0007), GitHub and LinkedIn (PKCE); registration details, institutional code, reset |
+| `/profile` | `(site)/(app)` | Client behind auth | 1 | Live (Phase 1 account page: verification, college email, study details, old-site data, sign-out); the full profile follows in Phases 2–3 |
 | `/home`, `/notes`, `/groups`, `/classrooms`, `/quizzes`, `/search`, `/ai`, `/profile` | `(app)` | Client behind auth | 2–6 | Not started |
 | `/teacher/*`, `/group-admin/*` | `(app)` | Client, role-gated | 3 | Not started |
 
@@ -29,12 +30,13 @@ app/                     routes only. (site)/ = the new site's root layout: (pub
 core-app/                the old learnvianotes.in app, guest mode (src/, schema/), and server/ = build-time
                          conversion of content-build/ into the documents it reads
 features/core-content/   the landing page's catalog loader (Zod schema for content-build/catalog.json) and subject cards
-components/              site header/footer, theme toggle; components/ui/ = shadcn-style primitives only
-lib/                     env (Zod-validated), cn(), theme key
-state/                   Zustand: theme (session, command palette, notifications, workspace arrive with their features)
+components/              site header/footer, theme toggle, auth/ (forms and session); components/ui/ = shadcn-style primitives only
+graphql/                 operations, the API schema copy, generated typed documents
+lib/                     env (Zod-validated), cn(), theme key, apollo client, auth/ (session refresh, PKCE, Google, redirects)
+state/                   Zustand: theme, session (command palette, notifications, workspace arrive with their features)
 i18n/, messages/         next-intl request config; English messages
-tests/unit/              Vitest (core/ and site/); tests/support/ = shared helpers
-tests/e2e/               Playwright (desktop + Pixel 7), axe checks
+tests/unit/              Vitest (core/, site/, auth/); tests/support/ = shared helpers
+tests/e2e/               Playwright (desktop + Pixel 7), axe checks; auth flows run against a mocked GraphQL API
 ```
 
 `graphql/`, Apollo Client, React Hook Form and Tiptap are added in the phase that first needs them (§18: "Later-phase
@@ -46,6 +48,15 @@ code is not written early").
   `scripts/content/sanitize.mjs`, converted at build time into the old structured format by the strict
   `core-app/server/fromHtml.ts` (an unknown element or attribute fails the build) and rendered by the old
   components — never as raw HTML. User-written notes (Phase 2) are Tiptap JSON rendered through components.
+- **Sessions (§7.1).** The access token lives only in memory (`state/session.ts`); the refresh token is an HttpOnly
+  cookie scoped to the API's `/graphql`. On load, `AuthProvider` restores the session with `refreshSession`; refreshes
+  are single-flight in a tab and serialised across tabs with the Web Locks API, because the API treats a reused
+  refresh token as theft and revokes the family. `lib/apollo.ts` retries a request once after an UNAUTHENTICATED.
+- **GraphQL.** Operations live in `graphql/operations/*.graphql`; `pnpm graphql:sync` copies the API schema from
+  lvn-backend (`contracts/graphql/schema.graphql`) and `pnpm codegen` writes typed documents to `graphql/generated/`.
+- **Providers.** Google uses Firebase Authentication, loaded only when the button is pressed and signed out of
+  straight after; GitHub and LinkedIn use Authorization Code + PKCE with the verifier kept in this tab. A button shows
+  only when both the API (`signInOptions`) and this deployment's env offer the provider.
 - **Theme** is applied before first paint by an inline script in each root layout and stored under `cnote:theme`
   (the old site's key, JSON-encoded) so the choice carries between `/` and `/core` (per-device preference, not auth
   data — §7.1 storage rules are respected).

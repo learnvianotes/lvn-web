@@ -12,7 +12,7 @@
       "toLight": "Switch to light theme",
       "toDark": "Switch to dark theme"
     },
-    "footer": "Notes are free to read. Accounts, your own notes, groups and classrooms are on the way.",
+    "footer": "Notes are free to read. Your own notes, groups and classrooms are on the way.",
     "wordmark": {
       "lead": "LearnVia",
       "accent": "Notes"
@@ -33,5 +33,141 @@
     "title": "Page not found",
     "lead": "This page doesn't exist or is no longer public.",
     "home": "Go home"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign in",
+      "lead": "Welcome back. Pick up where you left off.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "New to LearnViaNotes?",
+      "signUp": "Create an account"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "lead": "Free, and built for students. Your notes stay private until you choose otherwise.",
+      "name": "Your name",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least 10 characters. Avoid passwords you use elsewhere.",
+      "dob": "Date of birth",
+      "dobHint": "Only used for age rules; never shown to anyone.",
+      "institutionalEmail": "College or organisation email (optional)",
+      "institutionalHint": "We send it a code to verify you. Without one, a teacher or our team can verify you later.",
+      "terms": "I accept the Terms, the Privacy Policy and the licence for content I make public.",
+      "termsRequired": "Accept the terms to continue.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "details": {
+      "title": "A few details",
+      "lead": "We need these once, then you are in.",
+      "submit": "Continue"
+    },
+    "providers": {
+      "or": "or",
+      "google": "Continue with Google",
+      "github": "Continue with GitHub",
+      "linkedin": "Continue with LinkedIn",
+      "failed": "That sign-in did not work. Try again."
+    },
+    "verify": {
+      "checking": "Checking your link…",
+      "emailDone": "Your email is confirmed.",
+      "continue": "Continue",
+      "codeTitle": "Enter your code",
+      "codeLead": "We sent a 6-digit code to {email}.",
+      "code": "Code",
+      "submitCode": "Verify",
+      "resend": "Send a new code",
+      "resent": "A new code is on its way.",
+      "codeDone": "You are verified.",
+      "pendingReview": "Your address is confirmed. Our team reviews new organisations; you will be verified once it is approved.",
+      "signInFirst": "Sign in to enter the code we sent to your college email."
+    },
+    "reset": {
+      "title": "Reset your password",
+      "lead": "Enter your email and we will send you a link.",
+      "email": "Email",
+      "submit": "Send link",
+      "sent": "If an account uses that email, a reset link is on its way. It works for 60 minutes.",
+      "newTitle": "Choose a new password",
+      "password": "New password",
+      "save": "Save password",
+      "done": "Your password is changed and every device was signed out. Sign in with the new one.",
+      "signIn": "Sign in"
+    },
+    "callback": {
+      "working": "Signing you in…",
+      "failed": "That sign-in could not be completed. Start again from the sign-in page.",
+      "back": "Back to sign in"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "required": "Required",
+      "email": "Enter a valid email address."
+    },
+    "nav": {
+      "signIn": "Sign in",
+      "account": "Account",
+      "signInAction": "Sign in"
+    }
+  },
+  "profile": {
+    "title": "Your account",
+    "signOut": "Sign out",
+    "loading": "Loading…",
+    "verified": "Verified",
+    "notVerified": "Not verified yet",
+    "verifiedBy": {
+      "INSTITUTIONAL_EMAIL": "by your college email",
+      "TEACHER": "by a teacher",
+      "DOCUMENTS": "by our team"
+    },
+    "verifyLead": "Verify your account to share, comment and join groups. Until then LearnViaNotes works for you alone.",
+    "emailUnverified": "Confirm your sign-in email: we sent you a link.",
+    "institution": {
+      "title": "College or organisation email",
+      "add": "Add",
+      "replace": "Change",
+      "email": "Email",
+      "enterCode": "Enter the code",
+      "statusCODE_SENT": "Code sent to {email}",
+      "statusCONFIRMED": "Confirmed: {email}",
+      "statusPENDING_REVIEW": "Confirmed, waiting for our review: {email}"
+    },
+    "details": {
+      "title": "Study details",
+      "department": "Department",
+      "departmentHint": "For example CSE, ECE, AI & DS",
+      "year": "Year of study",
+      "show": "Show department and year on my profile",
+      "save": "Save",
+      "saved": "Saved"
+    },
+    "years": {
+      "YEAR_1": "1st year",
+      "YEAR_2": "2nd year",
+      "YEAR_3": "3rd year",
+      "YEAR_4": "4th year",
+      "YEAR_5": "5th year",
+      "POSTGRADUATE": "Postgraduate",
+      "GRADUATED": "Graduated",
+      "SCHOOL": "School",
+      "NOT_STUDYING": "Not studying"
+    },
+    "legacy": {
+      "title": "Your progress from the old site",
+      "available": "We found your learnvianotes.in history: {topics} topics read, {problems} problems marked, {days} study days.",
+      "claim": "Bring it over",
+      "decline": "No thanks",
+      "claimed": "Your old progress is here.",
+      "remove": "Remove it",
+      "declined": "Old-site data removed."
+    },
+    "minor": "Some features stay off until a parent, guardian or your school confirms your account."
   }
 }
