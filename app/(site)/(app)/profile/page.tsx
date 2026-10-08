@@ -7,5 +7,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ProfilePage() {
-  return <AccountPage />
+  return (
+    <div className="mx-auto w-full max-w-2xl">
+      <AccountPage />
+    </div>
+  )
 }

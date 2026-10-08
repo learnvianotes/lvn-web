@@ -6,6 +6,8 @@ import { expect, test } from '@playwright/test'
  *
  *   E2E_LIVE=1 E2E_BASE_URL=http://127.0.0.1:8080 pnpm test:e2e tests/e2e/live.spec.ts
  *
+ * Against the development servers, where the API has its own origin, also set E2E_API_URL (…:4000/graphql).
+ *
  * Each run makes one account per browser, live-<time>-<project>@example.com, and leaves it in place.
  */
 test.skip(!process.env.E2E_LIVE || !process.env.E2E_BASE_URL, 'needs a deployed environment: E2E_LIVE=1 E2E_BASE_URL=<public url>')
@@ -46,9 +48,62 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 })
 
 test('offers Google when the environment has it', async ({ page, request }) => {
-  const res = await request.post('/graphql', { data: { query: '{ signInOptions { google } }' } })
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ signInOptions { google } }' } })
   const google = ((await res.json()) as { data: { signInOptions: { google: boolean } } }).data.signInOptions.google
   test.skip(!google, 'Google sign-in is off in this environment')
   await page.goto('/sign-in')
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
+})
+
+test('a learner writes a note: cards from the slash menu, autosave, back after a reload, trash and restore', async ({ page }, info) => {
+  const email = `live-notes-${Date.now()}-${info.project.name}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Writer')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.getByRole('link', { name: 'My notes' }).click()
+  await page.getByRole('button', { name: 'New note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  await page.getByLabel('Title').fill('Stacks and queues')
+  const editor = page.getByRole('textbox', { name: 'Note content' })
+  await editor.click()
+  await page.keyboard.type('A queue is first in, first out.')
+  if (info.project.name === 'phone') {
+    // Phones have no shortcut keys (and Chrome on Android hands Enter to the editor as input, not as a key): tap.
+    await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+    await page.getByRole('button', { name: /^Heading/ }).click()
+  } else {
+    await page.keyboard.press('Control+Shift+Enter')
+    await page.keyboard.type('/heading')
+    await page.keyboard.press('Enter')
+  }
+  await page.keyboard.type('Practice')
+  await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+  await page.getByRole('button', { name: /^Flashcard/ }).click()
+  await page.getByLabel('Front').fill('LIFO')
+  await page.getByLabel('Back').fill('Last in, first out: a stack')
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 15_000 })
+
+  await page.reload()
+  await expect(editor.getByText('A queue is first in, first out.')).toBeVisible()
+  await expect(page.getByLabel('Back')).toHaveValue('Last in, first out: a stack')
+  // The outline: beside the note on wide screens, in the Contents sheet on phones.
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Contents' }).click()
+  await expect(page.getByRole(info.project.name === 'phone' ? 'dialog' : 'navigation', { name: info.project.name === 'phone' ? 'Contents' : 'Outline' }).getByRole('button', { name: 'Practice' })).toBeVisible()
+  if (info.project.name === 'phone') await page.keyboard.press('Escape')
+
+  page.once('dialog', (d) => void d.accept())
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'More' }).click()
+  await page.getByRole('button', { name: 'Move to trash' }).click()
+  await expect(page).toHaveURL(/\/notes$/)
+  await expect(page.getByText('Stacks and queues')).toHaveCount(0)
+  await page.getByRole('link', { name: 'Trash' }).click()
+  await page.getByRole('button', { name: 'Restore' }).click()
+  await page.getByRole('link', { name: 'All notes' }).click()
+  await expect(page.getByRole('link', { name: /^Stacks and queues edited/ })).toBeVisible()
 })

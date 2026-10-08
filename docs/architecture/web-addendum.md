@@ -15,7 +15,8 @@ the spec wins unless an accepted ADR says otherwise.
 | `/u/[handle]`, `/explore` | `(public)` | SSR/ISR | 2–3 | Not started |
 | `/sign-in`, `/sign-up`, `/sign-up/details`, `/verify`, `/reset`, `/oauth/callback` | `(site)/(auth)` | Client | 1 | Live — email + password, Google (Firebase, ADR-0007), GitHub and LinkedIn (PKCE); registration details, institutional code, reset |
 | `/profile` | `(site)/(app)` | Client behind auth | 1 | Live (Phase 1 account page: verification, college email, study details, old-site data, sign-out); the full profile follows in Phases 2–3 |
-| `/home`, `/notes`, `/groups`, `/classrooms`, `/quizzes`, `/search`, `/ai`, `/profile` | `(app)` | Client behind auth | 2–6 | Not started |
+| `/notes`, `/notes/[id]` | `(site)/(app)` | Client behind auth | 2 | Live (P2b): notes home (welcome, templates, notes as cards, folders, tags, trash), the editor (cards as one Tiptap document, autosave with an IndexedDB mirror, history, publish, read aloud), the reader for shared notes |
+| `/home`, `/groups`, `/classrooms`, `/quizzes`, `/search`, `/ai` | `(app)` | Client behind auth | 2–6 | Not started |
 | `/teacher/*`, `/group-admin/*` | `(app)` | Client, role-gated | 3 | Not started |
 
 Old URLs from learnvianotes.in: `/<subject>`, `/<subject>/<topic>` and `/about` → 308 to `/core/...`; `/login`,
@@ -30,6 +31,10 @@ app/                     routes only. (site)/ = the new site's root layout: (pub
 core-app/                the old learnvianotes.in app, guest mode (src/, schema/), and server/ = build-time
                          conversion of content-build/ into the documents it reads
 features/core-content/   the landing page's catalog loader (Zod schema for content-build/catalog.json) and subject cards
+features/notes/          the notes app: model/ (editor document ⇄ cards, save planning, positions — pure, unit-tested),
+                         editor/ (Tiptap nodes per card type, node views, slash menu, autosave, IndexedDB mirror),
+                         render/ (read-only cards, server-safe), NotesHome, NotePage, NoteReader, dialogs
+lib/contracts/           copies of @lvn/contracts code the web runs (validation, positions, enums) — pnpm contracts:sync
 components/              site header/footer, theme toggle, auth/ (forms and session); components/ui/ = shadcn-style primitives only
 graphql/                 operations, the API schema copy, generated typed documents
 lib/                     env (Zod-validated), cn(), theme key, apollo client, auth/ (session refresh, PKCE, Google, redirects)
@@ -60,6 +65,22 @@ code is not written early").
 - **Theme** is applied before first paint by an inline script in each root layout and stored under `cnote:theme`
   (the old site's key, JSON-encoded) so the choice carries between `/` and `/core` (per-device preference, not auth
   data — §7.1 storage rules are respected).
+- **The note editor (P2b).** A note is one Tiptap document whose top-level nodes are cards, one node type per card
+  type (§12.2); rich-text cards hold paragraphs and lists, structured cards (table, question, quiz, flashcard) are atoms
+  edited through forms. Every card node carries its id, position and revision, so a save sends only what changed:
+  `features/notes/model/save.ts` turns the document into UPSERT / MOVE / DELETE operations with the revision the editor
+  saw (§13.2) and keeps unmoved cards' fractional positions. Card content is validated before sending with the same
+  `@lvn/contracts/validation` the API uses. Card ids are UUIDv7 made with `crypto.getRandomValues` (`randomUUID` is
+  missing on plain-HTTP origins such as the dev machine's address).
+- **Drafts are never lost.** Each change is written to IndexedDB (`lvn-notes` / `drafts`, keyed by user and note) before
+  the 2 s autosave sends it; the entry is removed when the server has acknowledged everything. Offline, saves retry with
+  backoff and on `online`; reopening a note sends what the mirror holds first. Signing out deletes the mirror (shared
+  computers), asking first if anything is unsent.
+- **Look and feel.** The brand's night-sky surface for welcomes, accents per note (a stable colour from its id), templates
+  to start from, a formatting bubble on selection, a card handle (add below, move, duplicate, turn into, delete), focus
+  mode, read aloud with the current card highlighted, and confetti on a first publish — never with reduced motion.
+- **Contracts code.** Until @lvn/contracts is published (lvn-backend ADR-0031), `pnpm contracts:sync` copies the parts the
+  web runs into `lib/contracts/`; CI checks the copies match lvn-backend.
 - **Search engines:** `NEXT_PUBLIC_APP_ENV` ≠ `production` sets `noindex` and a disallow-all robots.txt, so sandbox
   never competes with production.
 
