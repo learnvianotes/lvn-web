@@ -1,4 +1,9 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
+input AcceptTermsInput {
+  """Query.termsVersion, as shown to the person"""
+  version: String!
+}
+
 input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
@@ -420,6 +425,9 @@ enum ModerationState {
 }
 
 type Mutation {
+  """Accept the current Terms, Privacy Policy and content licence"""
+  acceptTerms(input: AcceptTermsInput!): OkPayload!
+
   """The author's one appeal against hiding or removing their note"""
   appealModeration(input: AppealModerationInput!): OkPayload!
 
@@ -797,6 +805,11 @@ type Query {
   """
   note(id: UUID!): Note
 
+  """
+  Notes anyone may read, newest published first (at most 100 a page): sitemaps and public pages
+  """
+  publicNotes(after: String, first: Int): NoteConnection!
+
   """Notes other people shared with the viewer, most recently changed first"""
   sharedWithMe(after: String, first: Int): NoteConnection!
   signInOptions: SignInOptions!
@@ -1133,6 +1146,11 @@ type User {
   Viewer only: a minor without verified consent (§15.2) — no public publishing, no DMs
   """
   restrictedMinor: Boolean
+
+  """
+  The viewer's own: whether they accepted the current version (Query.termsVersion); false means ask again. null for others.
+  """
+  termsAccepted: Boolean
   verificationMethod: VerificationMethod
 
   """

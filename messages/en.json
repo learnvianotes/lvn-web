@@ -16,7 +16,8 @@
     "wordmark": {
       "lead": "LearnVia",
       "accent": "Notes"
-    }
+    },
+    "legalNav": "Legal"
   },
   "home": {
     "eyebrow": "Free CS notes",
@@ -48,7 +49,7 @@
       "email": "Sign up with email",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
-      "legal": "By continuing, you agree to our Terms and Privacy Policy.",
+      "legal": "By continuing, you agree to our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
       "signedInTitle": "You are signed in",
       "signedInLead": "Pick up where you left off.",
       "account": "Go to your account"
@@ -74,7 +75,7 @@
       "dobHint": "Only used for age rules; never shown to anyone.",
       "institutionalEmail": "College or organisation email (optional)",
       "institutionalHint": "We send it a code to verify you. Without one, a teacher or our team can verify you later.",
-      "terms": "I accept the Terms, the Privacy Policy and the licence for content I make public.",
+      "terms": "I accept the <terms>Terms</terms>, the <privacy>Privacy Policy</privacy> and the <licence>licence</licence> for content I make public.",
       "termsRequired": "Accept the terms to continue.",
       "submit": "Create account",
       "haveAccount": "Already have an account?",
@@ -634,5 +635,12 @@
     "ctaOpen": "Open in LearnViaNotes",
     "reportLead": "Something wrong with this note?",
     "reportLink": "Open it to report"
+  },
+  "legalGate": {
+    "title": "We have updated our terms",
+    "lead": "Please read what changed and accept to keep using LearnViaNotes.",
+    "accept": "Accept and continue",
+    "failed": "That did not work. Try again.",
+    "signOut": "Not now — sign out"
   }
 }
