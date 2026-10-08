@@ -1,0 +1,91 @@
+# Settings → Data (lvn-backend ADR-0018): export everything, import notes.
+
+fragment DataExportFields on DataExport {
+  id
+  status
+  requestedAt
+  readyAt
+  expiresAt
+  sizeBytes
+  downloadUrl
+}
+
+query MyDataExports {
+  myDataExports {
+    ...DataExportFields
+  }
+}
+
+mutation RequestDataExport {
+  requestDataExport {
+    export {
+      ...DataExportFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+fragment NoteImportFields on NoteImport {
+  id
+  fileName
+  status
+  progress
+  created
+  notes {
+    id
+    title
+  }
+  skipped {
+    path
+    reason
+  }
+  error
+  createdAt
+  finishedAt
+}
+
+query NoteImports {
+  noteImports {
+    ...NoteImportFields
+  }
+}
+
+mutation CreateImportUpload($input: CreateUploadIntentInput!) {
+  createUploadIntent(input: $input) {
+    intent {
+      fileId
+      uploadUrl
+      uploadHeaders {
+        name
+        value
+      }
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation ImportNotes($fileId: UUID!) {
+  importNotes(input: { fileId: $fileId }) {
+    noteImport {
+      ...NoteImportFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation ConfirmNoteImport($id: UUID!) {
+  confirmNoteImport(input: { noteId: $id }) {
+    noteImport {
+      ...NoteImportFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

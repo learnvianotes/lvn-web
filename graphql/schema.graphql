@@ -168,6 +168,11 @@ input CreateFolderInput {
 input CreateNoteInput {
   cards: [CardInput!]
   folderId: UUID
+
+  """
+  Made on the device for a note written offline (a UUIDv7, §13.2); leave out to let the server choose
+  """
+  id: UUID
   kind: NoteKind
   tagNames: [String!]
   title: String
@@ -181,6 +186,33 @@ input CreateUploadIntentInput {
   parentId: UUID
   purpose: FilePurpose!
   sizeBytes: Int!
+}
+
+type DataExport {
+  """
+  While READY: a download link that works for 15 minutes; ask again for a new one
+  """
+  downloadUrl: String
+
+  """Kept until then (7 days)"""
+  expiresAt: DateTime
+  id: UUID!
+  readyAt: DateTime
+  requestedAt: DateTime!
+  sizeBytes: Float
+  status: DataExportStatus!
+}
+
+type DataExportPayload {
+  export: DataExport
+  userErrors: [UserError!]!
+}
+
+enum DataExportStatus {
+  EXPIRED
+  FAILED
+  PENDING
+  READY
 }
 
 scalar DateTime
@@ -262,6 +294,24 @@ enum GlobalRole {
 
 input IdInput {
   id: UUID!
+}
+
+input ImportNotesInput {
+  """
+  A READY upload with purpose IMPORT: an LVN export, a ZIP of Markdown with pictures, or a Markdown or text file
+  """
+  fileId: UUID!
+}
+
+type ImportSkip {
+  """The file (or card) in the upload"""
+  path: String!
+  reason: String!
+}
+
+type ImportedNote {
+  id: UUID!
+  title: String!
 }
 
 type Institution {
@@ -442,6 +492,7 @@ type Mutation {
 
   """Checks the uploaded bytes (size, magic bytes) and makes the file READY"""
   completeUpload(fileId: UUID!): OkPayload!
+  confirmNoteImport(input: NoteIdInput!): NoteImportPayload!
   createFolder(input: CreateFolderInput!): FolderPayload!
   createNote(input: CreateNoteInput!): NotePayload!
   createUploadIntent(input: CreateUploadIntentInput!): UploadIntentPayload!
@@ -469,6 +520,9 @@ type Mutation {
   """
   forkNote(input: NoteIdInput!): NotePayload!
 
+  """Import notes; everything arrives PRIVATE. Five imports a day"""
+  importNotes(input: ImportNotesInput!): NoteImportPayload!
+
   """A moderator's decision on a case (PLATFORM_ADMIN)"""
   moderateContent(input: ModerateContentInput!): OkPayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
@@ -485,6 +539,11 @@ type Mutation {
   Report a note or a person you can see; reporting again updates your report
   """
   reportContent(input: ReportContentInput!): OkPayload!
+
+  """
+  Ask for an archive of everything about you: notes as Markdown and JSON with their files, and your account data. One a day; you are emailed when it is ready
+  """
+  requestDataExport: DataExportPayload!
   requestDocumentVerification(input: RequestDocumentVerificationInput!): VerificationRequestPayload!
 
   """Always ok, whether or not an account exists"""
@@ -529,6 +588,9 @@ type Mutation {
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+
+  """Apply a device's outbox in order (at most 100 operations)"""
+  syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
@@ -640,6 +702,40 @@ input NoteFilter {
 
 input NoteIdInput {
   noteId: UUID!
+}
+
+type NoteImport {
+  created: Int!
+  createdAt: DateTime!
+  error: String
+  fileName: String!
+  finishedAt: DateTime
+  id: UUID!
+
+  """The first 100 notes made"""
+  notes: [ImportedNote!]!
+
+  """0 to 100"""
+  progress: Int!
+  skipped: [ImportSkip!]!
+
+  """
+  NEEDS_CONFIRMATION: this file was imported before; confirmNoteImport imports it again
+  """
+  status: NoteImportStatus!
+}
+
+type NoteImportPayload {
+  noteImport: NoteImport
+  userErrors: [UserError!]!
+}
+
+enum NoteImportStatus {
+  DONE
+  FAILED
+  NEEDS_CONFIRMATION
+  PENDING
+  RUNNING
 }
 
 """
@@ -802,6 +898,9 @@ type Query {
 
   """Open cases, oldest first (PLATFORM_ADMIN)"""
   moderationQueue(after: String, first: Int): ModerationCaseConnection!
+
+  """Your latest data exports, newest first"""
+  myDataExports: [DataExport!]!
   myFolders: [Folder!]!
 
   """The viewer's own notes, most recently edited first"""
@@ -813,6 +912,9 @@ type Query {
   A note the viewer can read; null otherwise (anonymous visitors: PUBLIC notes)
   """
   note(id: UUID!): Note
+
+  """Your latest imports, newest first"""
+  noteImports: [NoteImport!]!
 
   """
   Notes anyone may read, newest published first (at most 100 a page): sitemaps and public pages
@@ -829,6 +931,11 @@ type Query {
   signInOptions: SignInOptions!
   subject(slug: String!): Subject
   subjects: [Subject!]!
+
+  """
+  What changed since `since` (the cursor of the last completed sync) or `after` (the previous page); 1 to 50 notes (default 20)
+  """
+  syncPull(after: String, first: Int, since: String): SyncPullResult!
 
   """
   Verified teachers whose name or handle matches, to ask one of them for verification
@@ -1032,6 +1139,84 @@ type Subject {
 
   """Top-level topics: curated ones and the viewer's proposals"""
   topics: [Topic!]!
+}
+
+input SyncOpInput {
+  """CREATE_NOTE: the note's first cards"""
+  cards: [CardInput!]
+
+  """
+  A UUID made on the device; sending the same operation again returns the first answer
+  """
+  clientOpId: UUID!
+  kind: SyncOpKind!
+
+  """For CREATE_NOTE, the id the device gave the note"""
+  noteId: UUID!
+
+  """UPDATE_NOTE: card changes, as in updateNoteDraft"""
+  ops: [CardOpInput!]
+
+  """CREATE_NOTE and UPDATE_NOTE"""
+  title: String
+}
+
+enum SyncOpKind {
+  CREATE_NOTE
+  RESTORE_NOTE
+  TRASH_NOTE
+  UPDATE_NOTE
+}
+
+type SyncOpResult {
+  """UPDATE_NOTE: per card, as in updateNoteDraft"""
+  cardResults: [CardOpResult!]!
+  clientOpId: UUID!
+  code: ErrorCode
+
+  """
+  Set when a card changed elsewhere too: the other side is kept in this CONFLICT version
+  """
+  conflictVersionId: UUID
+  message: String
+  noteId: UUID!
+  status: SyncOpStatus!
+}
+
+"""
+APPLIED; REJECTED — it will never apply (show it as needing attention); RETRY — send it again later
+"""
+enum SyncOpStatus {
+  APPLIED
+  REJECTED
+  RETRY
+}
+
+type SyncPullResult {
+  """
+  Keep it for the next sync (`since`), or ask for the next page (`after`)
+  """
+  cursor: String
+  hasMore: Boolean!
+
+  """Every note this account may keep on its devices; remove the others"""
+  liveNoteIds: [UUID!]!
+
+  """Notes changed since the cursor, oldest change first"""
+  notes: [SyncedNote!]!
+}
+
+type SyncPushPayload {
+  """In the order sent; after a RETRY, the rest are RETRY too"""
+  results: [SyncOpResult!]!
+}
+
+type SyncedNote {
+  """
+  All live cards: the draft for owners and editors, the published version for readers
+  """
+  cards: [Card!]!
+  note: Note!
 }
 
 """The viewer's tag; names are unique ignoring case"""
