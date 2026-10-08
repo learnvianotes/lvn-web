@@ -42,6 +42,7 @@ const meta = (over: Record<string, unknown> = {}) => ({
   publishedAt: null,
   publishedVersion: null,
   forkingEnabled: true,
+  forkedFrom: null,
   cardCount: 2,
   deletedAt: null,
   ...over,
@@ -182,4 +183,108 @@ test('publishing names the version, and history previews and restores one', asyn
   expect(calls.find((c) => c.op === 'RestoreNoteVersion')!.variables).toEqual({ noteId: NOTE_ID, versionId: version.id })
   // The page reloads the note after a restore.
   expect(calls.filter((c) => c.op === 'NoteToEdit').length).toBeGreaterThanOrEqual(2)
+})
+
+const FRIEND = '01920000-0000-7000-8000-00000000bbbb'
+const friend = { __typename: 'User', id: FRIEND, displayName: 'Ravi Kumar', handle: 'ravi' }
+const noProblems = { userErrors: [] }
+
+test('the owner shares with a person, changes their role and removes them', async ({ page }) => {
+  let shares: { __typename: string; role: string; createdAt: string; user: typeof friend }[] = []
+  let visibility = 'PRIVATE'
+  const sharesAnswer = () => ({ note: { __typename: 'Note', id: NOTE_ID, visibility, shares } })
+  const calls = await mockApi(page, {
+    NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
+    NoteShares: sharesAnswer,
+    ShareNote: (v) => {
+      visibility = 'SHARED'
+      shares = [{ __typename: 'NoteShare', role: v.role as string, createdAt: new Date().toISOString(), user: friend }]
+      return { shareNote: { note: { ...meta({ visibility }), shares }, ...noProblems } }
+    },
+    UnshareNote: () => {
+      shares = []
+      return { unshareNote: { note: { __typename: 'Note', id: NOTE_ID, shares }, ...noProblems } }
+    },
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Share this note' })
+  await expect(dialog.getByRole('radio', { name: /Private/ })).toBeChecked()
+  // Readers see the published version, so a note that was never published cannot go public.
+  await expect(dialog.getByRole('radio', { name: /Public/ })).toBeDisabled()
+  await expect(dialog.getByText('Not shared with anyone yet.')).toBeVisible()
+
+  await dialog.getByLabel('Handle or email').fill('@ravi')
+  await dialog.getByLabel('What they can do').selectOption('EDITOR')
+  await dialog.getByRole('button', { name: 'Add' }).click()
+  await expect(dialog.getByText('Ravi Kumar', { exact: true })).toBeVisible()
+  await expect(dialog.getByRole('radio', { name: /Shared/ })).toBeChecked()
+  expect(calls.find((c) => c.op === 'ShareNote')?.variables).toEqual({ noteId: NOTE_ID, person: '@ravi', role: 'EDITOR' })
+
+  await dialog.getByLabel('What Ravi Kumar can do').selectOption('VIEWER')
+  await expect.poll(() => calls.filter((c) => c.op === 'ShareNote').at(-1)?.variables).toEqual({ noteId: NOTE_ID, person: '@ravi', role: 'VIEWER' })
+  await dialog.getByRole('button', { name: 'Remove Ravi Kumar' }).click()
+  await expect(dialog.getByText('Not shared with anyone yet.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'UnshareNote')?.variables).toEqual({ noteId: NOTE_ID, userId: FRIEND })
+  await dialog.getByRole('button', { name: 'Done' }).click()
+  await expect(page.getByTitle('Share this note')).toContainText('Shared')
+})
+
+test('a refusal from the server is shown in its own words', async ({ page }) => {
+  await mockApi(page, {
+    NoteToEdit: () => ({ note: { ...meta({ publishedAt: new Date().toISOString(), publishedVersion: { __typename: 'NoteVersion', id: NOTE_ID, number: 1, createdAt: new Date().toISOString() } }), cards: page1(cards) } }),
+    NoteShares: () => ({ note: { __typename: 'Note', id: NOTE_ID, visibility: 'PRIVATE', shares: [] } }),
+  })
+  await page.route('**/graphql', async (route) => {
+    const op = (route.request().postDataJSON() as { operationName?: string }).operationName
+    if (op !== 'ChangeNoteVisibility') return route.fallback()
+    return route.fulfill({ json: { data: null, errors: [{ message: 'Your account cannot make notes public.', extensions: { code: 'FORBIDDEN' } }] } })
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Share this note' })
+  await dialog.getByText('Public', { exact: true }).click()
+  await expect(dialog.getByRole('alert')).toHaveText('Your account cannot make notes public.')
+  await expect(dialog.getByRole('radio', { name: /Private/ })).toBeChecked()
+})
+
+test('a reader makes a copy, which opens with a credit to the author', async ({ page }) => {
+  const COPY = '01920000-0000-7000-8000-00000000a002'
+  const calls = await mockApi(page, {
+    NoteToEdit: (v) =>
+      v.id === COPY
+        ? { note: { ...meta({ id: COPY, forkedFrom: { __typename: 'ForkCredit', title: 'Searching', author: friend, note: { __typename: 'Note', id: NOTE_ID } } }), cards: page1([]) } }
+        : { note: { ...meta({ viewerAccess: 'READER', owner: friend, visibility: 'PUBLIC' }), cards: page1(cards) } },
+    ForkNote: () => ({ forkNote: { note: { __typename: 'Note', id: COPY }, ...noProblems } }),
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  await expect(page.getByText('By Ravi Kumar')).toBeVisible()
+  await page.getByRole('button', { name: 'Make a copy' }).click()
+  await expect(page).toHaveURL(new RegExp(`/notes/${COPY}$`))
+  await expect(page.getByText('Copied from Searching by Ravi Kumar')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Searching' })).toHaveAttribute('href', `/notes/${NOTE_ID}`)
+  expect(calls.find((c) => c.op === 'ForkNote')?.variables).toEqual({ noteId: NOTE_ID })
+})
+
+test('Shared with me lists notes from other people with what you can do', async ({ page }) => {
+  await mockApi(page, {
+    Organise: () => ({ myFolders: [], myTags: [] }),
+    SharedWithMe: () => ({
+      sharedWithMe: {
+        edges: [
+          {
+            __typename: 'NoteEdge',
+            node: { __typename: 'Note', id: NOTE_ID, title: 'Graphs, explained', excerpt: 'Vertices and edges.', kind: 'NOTE', visibility: 'SHARED', draftUpdatedAt: null, publishedAt: new Date().toISOString(), deletedAt: null, cardCount: 4, folder: null, tags: [], viewerAccess: 'EDITOR', owner: { __typename: 'User', id: FRIEND, displayName: 'Ravi Kumar' } },
+          },
+        ],
+        pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null },
+      },
+    }),
+  })
+  await page.goto('/notes?view=shared')
+  await expect(page.getByRole('heading', { name: 'Shared with me', level: 1 })).toBeVisible()
+  const tile = page.getByRole('link', { name: /Graphs, explained/ })
+  await expect(tile).toContainText('From Ravi Kumar')
+  await expect(tile).toContainText('Can edit')
+  await expect(page.getByText('Start from')).toHaveCount(0)
 })

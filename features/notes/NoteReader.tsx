@@ -8,6 +8,7 @@ import { cardPlainText } from '@/lib/contracts/validation'
 import type { NoteMeta } from './api'
 import { accentOf, readingMinutes } from './look'
 import { ReadAloudControls } from './editor/NoteEditor'
+import { ForkCredit, MakeCopyButton, useMakeCopy } from './ShareDialog'
 import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
@@ -17,6 +18,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
   const t = useTranslations('notes')
   const spoken = useCallback(() => cards.map((c) => ({ id: c.id, text: cardPlainText(c.type, c.content) })), [cards])
   const reader = useReadAloud(spoken)
+  const copy = useMakeCopy(meta.id)
   const headings = cards.filter((c) => c.type === 'heading')
   const minutes = readingMinutes(cards.map((c) => cardPlainText(c.type, c.content)).join(' '))
   const accent = accentOf(meta.id)
@@ -63,7 +65,16 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
               </span>
             ) : null}
           </div>
-          <ReadAloudControls reader={reader} />
+          {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <ReadAloudControls reader={reader} />
+            {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
+          </div>
+          {copy.copyError ? (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              {copy.copyError}
+            </p>
+          ) : null}
         </header>
         <div className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
           {cards.map((c) => (

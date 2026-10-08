@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox } from 'lucide-react'
+import { BookOpen, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -16,17 +16,20 @@ import {
   MyNotesDocument,
   OrganiseDocument,
   RestoreNoteDocument,
+  SharedWithMeDocument,
   UpdateFolderDocument,
   ViewerDocument,
   type NoteFilter,
   type NoteListFieldsFragment,
+  type SharedWithMeQuery,
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { NotebookArt } from './art'
+import { VisibilityBadge } from './ShareDialog'
 import { accentOf, ago, daypart } from './look'
 import { TEMPLATE_KEYS, templateCards, type TemplateKey } from './templates'
 
-type View = { kind: 'all' } | { kind: 'unfiled' } | { kind: 'trash' } | { kind: 'folder'; id: string } | { kind: 'tag'; id: string }
+type View = { kind: 'all' } | { kind: 'unfiled' } | { kind: 'shared' } | { kind: 'trash' } | { kind: 'folder'; id: string } | { kind: 'tag'; id: string }
 
 function viewFrom(params: URLSearchParams): View {
   const folder = params.get('folder')
@@ -34,12 +37,14 @@ function viewFrom(params: URLSearchParams): View {
   const view = params.get('view')
   if (folder) return { kind: 'folder', id: folder }
   if (tag) return { kind: 'tag', id: tag }
-  if (view === 'trash' || view === 'unfiled') return { kind: view }
+  if (view === 'trash' || view === 'unfiled' || view === 'shared') return { kind: view }
   return { kind: 'all' }
 }
 
 const hrefOf = (v: View) => (v.kind === 'folder' ? `/notes?folder=${v.id}` : v.kind === 'tag' ? `/notes?tag=${v.id}` : v.kind === 'all' ? '/notes' : `/notes?view=${v.kind}`)
 const filterOf = (v: View): NoteFilter => (v.kind === 'folder' ? { folderId: v.id } : v.kind === 'tag' ? { tagId: v.id } : v.kind === 'unfiled' ? { unfiled: true } : v.kind === 'trash' ? { trashed: true } : {})
+
+type SharedNote = SharedWithMeQuery['sharedWithMe']['edges'][number]['node']
 
 const TEMPLATE_ICONS: Record<TemplateKey, typeof NotebookPen> = { lecture: NotebookPen, revision: ListChecks, flashcards: Layers, quiz: Sparkles }
 
@@ -50,7 +55,11 @@ export function NotesHome() {
   const view = viewFrom(useSearchParams())
   const viewer = useQuery(ViewerDocument)
   const organise = useQuery(OrganiseDocument)
-  const notes = useQuery(MyNotesDocument, { variables: { filter: filterOf(view), first: 30 }, fetchPolicy: 'cache-and-network' })
+  const shared = view.kind === 'shared'
+  const mine = useQuery(MyNotesDocument, { variables: { filter: filterOf(view), first: 30 }, fetchPolicy: 'cache-and-network', skip: shared })
+  const others = useQuery(SharedWithMeDocument, { variables: { first: 30 }, fetchPolicy: 'cache-and-network', skip: !shared })
+  const notes = shared ? others : mine
+  const connection = shared ? others.data?.sharedWithMe : mine.data?.myNotes
   const [create, creating] = useMutation(CreateNoteDocument)
   const [createFolder] = useMutation(CreateFolderDocument)
   const [updateFolder] = useMutation(UpdateFolderDocument)
@@ -61,10 +70,10 @@ export function NotesHome() {
   const [query, setQuery] = useState('')
   const folders = organise.data?.myFolders ?? []
   const tags = organise.data?.myTags ?? []
-  const all = useMemo(() => notes.data?.myNotes.edges.map((e) => e.node) ?? [], [notes.data])
+  const all = useMemo<(NoteListFieldsFragment | SharedNote)[]>(() => connection?.edges.map((e) => e.node) ?? [], [connection])
   const q = query.trim().toLowerCase()
   const shown = q ? all.filter((n) => `${n.title} ${n.excerpt} ${n.tags.map((x) => x.name).join(' ')}`.toLowerCase().includes(q)) : all
-  const refresh = () => Promise.all([organise.refetch(), notes.refetch()])
+  const refresh = () => Promise.all([organise.refetch(), mine.refetch()])
   const firstName = viewer.data?.viewer?.displayName.split(' ')[0] ?? ''
 
   const newNote = async (template?: TemplateKey) => {
@@ -121,6 +130,7 @@ export function NotesHome() {
         <nav aria-label={t('views.label')} className="flex flex-col gap-0.5">
           {navItem({ kind: 'all' }, t('views.all'), BookOpen)}
           {navItem({ kind: 'unfiled' }, t('views.unfiled'), Inbox)}
+          {navItem({ kind: 'shared' }, t('views.shared'), Users)}
           {navItem({ kind: 'trash' }, t('views.trash'), Trash2)}
         </nav>
         <section aria-labelledby="folders-heading" className="flex flex-col gap-0.5">
@@ -211,6 +221,7 @@ export function NotesHome() {
           {[
             { v: { kind: 'all' } as View, label: t('views.all'), icon: BookOpen },
             { v: { kind: 'unfiled' } as View, label: t('views.unfiled'), icon: Inbox },
+            { v: { kind: 'shared' } as View, label: t('views.shared'), icon: Users },
             ...folders.map((f) => ({ v: { kind: 'folder', id: f.id } as View, label: f.name, icon: Folder })),
             ...tags.map((x) => ({ v: { kind: 'tag', id: x.id } as View, label: `#${x.name}`, icon: Hash })),
             { v: { kind: 'trash' } as View, label: t('views.trash'), icon: Trash2 },
@@ -229,7 +240,7 @@ export function NotesHome() {
           </button>
         </nav>
 
-        {view.kind !== 'trash' ? (
+        {view.kind !== 'trash' && !shared ? (
           <section aria-labelledby="templates-heading" className="flex flex-col gap-3">
             <h2 id="templates-heading" className="text-sm font-semibold text-muted">
               {t('startFrom')}
@@ -260,7 +271,7 @@ export function NotesHome() {
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-muted">{view.kind === 'all' ? t('recent') : view.kind === 'trash' ? t('trashHint') : t('inHere', { n: all.length })}</h2>
+            <h2 className="text-sm font-semibold text-muted">{view.kind === 'all' ? t('recent') : view.kind === 'trash' ? t('trashHint') : shared ? t('sharedHint') : t('inHere', { n: all.length })}</h2>
             {all.length > 3 ? (
               <label className="relative w-full sm:w-64">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
@@ -284,8 +295,8 @@ export function NotesHome() {
           {notes.data && !all.length ? (
             <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border bg-surface/60 px-6 py-12 text-center">
               <NotebookArt className="w-40" />
-              <p className="text-lg font-semibold">{t(view.kind === 'trash' ? 'emptyTrash' : 'empty')}</p>
-              <p className="max-w-sm text-sm text-muted">{t(view.kind === 'trash' ? 'emptyTrashLead' : 'emptyLead')}</p>
+              <p className="text-lg font-semibold">{t(view.kind === 'trash' ? 'emptyTrash' : shared ? 'emptyShared' : 'empty')}</p>
+              <p className="max-w-sm text-sm text-muted">{t(view.kind === 'trash' ? 'emptyTrashLead' : shared ? 'emptySharedLead' : 'emptyLead')}</p>
             </div>
           ) : null}
           {q && !shown.length && all.length ? <p className="text-sm text-muted">{t('noMatch', { query })}</p> : null}
@@ -308,15 +319,20 @@ export function NotesHome() {
               </li>
             ))}
           </ul>
-          {notes.data?.myNotes.pageInfo.hasNextPage ? (
+          {connection?.pageInfo.hasNextPage ? (
             <Button
               variant="secondary"
               className="self-center"
               onClick={() =>
-                void notes.fetchMore({
-                  variables: { after: notes.data!.myNotes.pageInfo.endCursor },
-                  updateQuery: (prev, { fetchMoreResult }) => ({ myNotes: { ...fetchMoreResult.myNotes, edges: [...prev.myNotes.edges, ...fetchMoreResult.myNotes.edges] } }),
-                })
+                void (shared
+                  ? others.fetchMore({
+                      variables: { after: connection.pageInfo.endCursor },
+                      updateQuery: (prev, { fetchMoreResult }) => ({ sharedWithMe: { ...fetchMoreResult.sharedWithMe, edges: [...prev.sharedWithMe.edges, ...fetchMoreResult.sharedWithMe.edges] } }),
+                    })
+                  : mine.fetchMore({
+                      variables: { after: connection.pageInfo.endCursor },
+                      updateQuery: (prev, { fetchMoreResult }) => ({ myNotes: { ...fetchMoreResult.myNotes, edges: [...prev.myNotes.edges, ...fetchMoreResult.myNotes.edges] } }),
+                    }))
               }
             >
               {t('more')}
@@ -329,7 +345,7 @@ export function NotesHome() {
 }
 
 /** One note as a card: its accent, title, first words, and where it lives. */
-function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFieldsFragment; trash: boolean; onRestore: () => void; onDestroy: () => void }) {
+function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFieldsFragment | SharedNote; trash: boolean; onRestore: () => void; onDestroy: () => void }) {
   const t = useTranslations('notes.home')
   const accent = accentOf(n.id)
   const body = (
@@ -342,7 +358,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
         </span>
         <span className="min-w-0 flex-1">
           <span className="line-clamp-2 font-semibold leading-snug">{n.title || t('untitled')}</span>
-          <span className="mt-0.5 block text-xs text-muted">{t('edited', { when: ago(trash ? n.deletedAt : n.draftUpdatedAt) })}</span>
+          <span className="mt-0.5 block text-xs text-muted">{'owner' in n ? t('sharedBy', { name: n.owner.displayName }) : t('edited', { when: ago(trash ? n.deletedAt : n.draftUpdatedAt) })}</span>
         </span>
       </span>
       <span className="relative line-clamp-3 min-h-[3.75rem] text-sm leading-5 text-muted">{n.excerpt || t('noWordsYet')}</span>
@@ -357,7 +373,13 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
             {n.folder.name}
           </span>
         ) : null}
-        {n.publishedAt ? <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">{t('published')}</span> : null}
+        {'owner' in n ? (
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
+        ) : n.visibility !== 'PRIVATE' ? (
+          <VisibilityBadge visibility={n.visibility} />
+        ) : n.publishedAt ? (
+          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">{t('published')}</span>
+        ) : null}
         {n.tags.slice(0, 3).map((x) => (
           <span key={x.id} className="rounded-full px-1.5 py-0.5" style={{ background: accent.tint }}>
             #{x.name}
