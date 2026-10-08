@@ -1,0 +1,28 @@
+# Search (lvn-backend §10.4): notes the viewer may read, and topics.
+
+query Search($query: String!, $first: Int) {
+  search(query: $query, scopes: [NOTES, TOPICS], first: $first) {
+    notes {
+      snippet
+      note {
+        id
+        title
+        visibility
+        viewerAccess
+        publishedAt
+        owner {
+          id
+          displayName
+        }
+      }
+    }
+    topics {
+      id
+      title
+      subject {
+        id
+        title
+      }
+    }
+  }
+}

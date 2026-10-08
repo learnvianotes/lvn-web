@@ -6,7 +6,8 @@
     "skip": "Skip to content",
     "nav": {
       "notes": "Notes",
-      "home": "Home"
+      "home": "Home",
+      "search": "Search"
     },
     "theme": {
       "toLight": "Switch to light theme",
@@ -642,5 +643,23 @@
     "accept": "Accept and continue",
     "failed": "That did not work. Try again.",
     "signOut": "Not now — sign out"
+  },
+  "search": {
+    "title": "Search",
+    "label": "Search notes and topics",
+    "placeholder": "Search notes and topics…",
+    "results": "Results",
+    "hint": "Type to search your notes, notes shared with you and public notes.",
+    "nothing": "Nothing found for “{query}”.",
+    "all": "All results for “{query}”",
+    "untitled": "Untitled note",
+    "by": "by {name}",
+    "topics": "Topics",
+    "notes": "Notes",
+    "visibility": {
+      "PRIVATE": "Private",
+      "SHARED": "Shared",
+      "PUBLIC": "Public"
+    }
   }
 }
