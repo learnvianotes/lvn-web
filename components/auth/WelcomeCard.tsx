@@ -3,6 +3,7 @@
 import { Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { legalLinks } from '@/features/legal/links'
 import { Alert } from '@/components/ui/alert'
 import { cn } from '@/lib/cn'
 import { useSession } from '@/state/session'
@@ -56,7 +57,7 @@ export function WelcomeCard() {
           {t('signIn')}
         </Link>
       </p>
-      <p className="text-center text-xs leading-5 text-muted">{t('legal')}</p>
+      <p className="text-center text-xs leading-5 text-muted">{t.rich('legal', legalLinks)}</p>
     </div>
   )
 }

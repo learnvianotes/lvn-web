@@ -136,3 +136,9 @@ test('a learner adds a picture to a note: it goes to storage, and is there after
   await expect(picture).toHaveAttribute('src', /^https?:\/\/.+X-Amz-Signature=/)
   await expect.poll(() => picture.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1)
 })
+
+test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {
+  const { TERMS_VERSION } = await import('../../features/legal/documents')
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })
+  expect(((await res.json()) as { data: { termsVersion: string } }).data.termsVersion).toBe(TERMS_VERSION)
+})

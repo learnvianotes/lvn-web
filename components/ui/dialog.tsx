@@ -7,7 +7,8 @@ import { cn } from '@/lib/cn'
  * A modal dialog on the native <dialog> element: focus is trapped and Escape closes it, as the platform does; the
  * title labels it for screen readers (§12.2: focus management in dialogs).
  */
-export function Dialog({ open, onClose, title, children, wide, side }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean; side?: boolean }) {
+/** `persistent`: Escape, clicks outside and the close button are off — for decisions that must be made. */
+export function Dialog({ open, onClose, title, children, wide, side, persistent }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean; side?: boolean; persistent?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   useEffect(() => {
@@ -21,7 +22,8 @@ export function Dialog({ open, onClose, title, children, wide, side }: { open: b
       ref={ref}
       aria-labelledby={titleId}
       onClose={onClose}
-      onClick={(e) => e.target === ref.current && onClose()}
+      onCancel={(e) => persistent && e.preventDefault()}
+      onClick={(e) => !persistent && e.target === ref.current && onClose()}
       className={cn(
         'm-auto max-h-[90dvh] w-[calc(100%-2rem)] rounded-2xl border border-border bg-bg p-0 text-fg shadow-2xl backdrop:bg-black/40',
         wide ? 'max-w-3xl' : 'max-w-md',
@@ -34,9 +36,11 @@ export function Dialog({ open, onClose, title, children, wide, side }: { open: b
             <h2 id={titleId} className="text-lg font-bold tracking-tight">
               {title}
             </h2>
-            <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-muted hover:bg-surface-2 hover:text-fg" aria-label="Close">
-              ✕
-            </button>
+            {persistent ? null : (
+              <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-muted hover:bg-surface-2 hover:text-fg" aria-label="Close">
+                ✕
+              </button>
+            )}
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
         </div>

@@ -1,5 +1,6 @@
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { RequireSession } from '@/components/auth/RequireSession'
+import { TermsGate } from '@/components/auth/TermsGate'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 
@@ -9,7 +10,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <SiteHeader />
       <main id="main" className="mx-auto min-h-[70dvh] w-full max-w-6xl px-4 py-6 sm:py-8">
-        <RequireSession>{children}</RequireSession>
+        <RequireSession>
+          {children}
+          <TermsGate />
+        </RequireSession>
       </main>
       <SiteFooter />
     </AuthProvider>

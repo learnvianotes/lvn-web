@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { legalLinks } from '@/features/legal/links'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -82,7 +83,7 @@ export function DetailsForm() {
         </Field>
         <label className="flex items-start gap-3 text-sm">
           <input type="checkbox" className="mt-1 size-4 accent-[var(--accent)]" {...form.register('terms')} />
-          <span>{ts('terms')}</span>
+          <span>{ts.rich('terms', legalLinks)}</span>
         </label>
         {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-red-600 dark:text-red-400">{ts('termsRequired')}</p> : null}
         <Button type="submit" size="lg" disabled={isSubmitting || !options}>{t('submit')}</Button>

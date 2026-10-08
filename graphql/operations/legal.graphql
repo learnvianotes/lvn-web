@@ -1,0 +1,18 @@
+# Accepting the Terms, Privacy Policy and content licence again when they change (lvn-backend §15.2).
+
+query TermsStatus {
+  termsVersion
+  viewer {
+    id
+    termsAccepted
+  }
+}
+
+mutation AcceptTerms($version: String!) {
+  acceptTerms(input: { version: $version }) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
