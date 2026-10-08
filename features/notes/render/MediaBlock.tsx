@@ -15,12 +15,14 @@ export interface MediaContent {
 /** A picture, video, audio or file card as people see it; the read URL comes from the page's media (../media). */
 export function MediaBlock({ type, content, editing }: { type: MediaCardType; content: MediaContent; editing?: boolean }) {
   const t = useTranslations('notes.editor.media')
-  const file = useMedia().get(content.fileId)
+  const store = useMedia()
+  const file = store.get(content.fileId)
   const caption = !editing && content.caption?.length ? (
     <figcaption className="mt-2 text-center text-sm text-muted">
       <InlineText content={content.caption} />
     </figcaption>
   ) : null
+  if (!file && store.loading) return <div aria-hidden className="h-48 animate-pulse rounded-xl bg-surface-2" />
   if (!file) {
     return (
       <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted">
