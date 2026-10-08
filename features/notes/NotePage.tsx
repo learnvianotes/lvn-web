@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument, type CardFieldsFragment } from '@/graphql/generated/graphql'
 import { loadNote, sendSave, type NoteMeta } from './api'
 import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
+import { MediaProvider } from './media'
 import { ForkCredit, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
 import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
@@ -22,7 +23,7 @@ import { planSave, savedStateOf } from './model/save'
 type Loaded =
   | { state: 'loading' }
   | { state: 'missing' }
-  | { state: 'ready'; meta: NoteMeta; cards: StoredCard[]; mirror: Awaited<ReturnType<typeof readMirror>>; offline: boolean }
+  | { state: 'ready'; meta: NoteMeta; cards: StoredCard[]; media: CardFieldsFragment[]; mirror: Awaited<ReturnType<typeof readMirror>>; offline: boolean }
 
 /**
  * A note: the editor for its owner and editors, the reader for everyone else. Edits a previous visit left in this
@@ -75,11 +76,11 @@ export function NotePage({ id }: { id: string }) {
       if (cancelled) return
       if (!note && mirror && offline) {
         // Offline with a local copy: open the editor on it; the autosave sends it when the connection is back.
-        setLoaded({ state: 'ready', meta: mirrorMeta(id, mirror.title), cards: [], mirror, offline: true })
+        setLoaded({ state: 'ready', meta: mirrorMeta(id, mirror.title), cards: [], media: [], mirror, offline: true })
         return
       }
       if (!note) return setLoaded({ state: 'missing' })
-      setLoaded({ state: 'ready', meta: note.meta, cards: note.cards, mirror: keep ? mirror : null, offline })
+      setLoaded({ state: 'ready', meta: note.meta, cards: note.cards, media: note.media, mirror: keep ? mirror : null, offline })
     })()
     return () => {
       cancelled = true
@@ -102,7 +103,13 @@ export function NotePage({ id }: { id: string }) {
     )
   }
   const { meta } = loaded
-  if (meta.viewerAccess === 'READER') return <NoteReader meta={meta} cards={loaded.cards} />
+  if (meta.viewerAccess === 'READER') {
+    return (
+      <MediaProvider noteId={null} cards={loaded.media}>
+        <NoteReader meta={meta} cards={loaded.cards} />
+      </MediaProvider>
+    )
+  }
 
   const doPublish = async (event: React.MouseEvent) => {
     const first = !meta.publishedVersion
@@ -184,68 +191,70 @@ export function NotePage({ id }: { id: string }) {
     ) : null
 
   return (
-    <div className="flex flex-col gap-3">
-      <nav className="flex items-center justify-between gap-2 text-sm">
-        <Link href="/notes" className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-muted transition hover:bg-surface-2 hover:text-fg">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('backToNotes')}
-        </Link>
-        <span className="flex items-center gap-2 text-xs text-muted">
-          {meta.viewerAccess === 'OWNER' ? (
-            <button type="button" className="rounded-full hover:ring-1 hover:ring-accent/40" title={t('share.title')} onClick={() => setShareOpen(true)}>
-              <VisibilityBadge visibility={meta.visibility} />
-            </button>
-          ) : null}
-          {meta.publishedVersion ? t('publishedVersion', { n: meta.publishedVersion.number }) : t('neverPublished')}
-          {meta.viewerAccess === 'EDITOR' ? ` · ${t('editingFor', { name: meta.owner.displayName })}` : ''}
-        </span>
-      </nav>
-      {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
-      {copy.copyError ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {copy.copyError}
-        </p>
-      ) : null}
-      {loaded.offline ? <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">{t('offlineCopy')}</p> : null}
-      {notice ? (
-        <p role="status" className="animate-rise rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-medium">
-          {notice}
-        </p>
-      ) : null}
-      {!meta.viewerCan.publish && meta.viewerAccess === 'OWNER' ? (
-        <p className="text-xs text-muted">
-          {t('verifyToPublish')}{' '}
-          <Link href="/profile" className="text-accent hover:underline">
-            {t('verifyLink')}
+    <MediaProvider noteId={id} cards={loaded.media}>
+      <div className="flex flex-col gap-3">
+        <nav className="flex items-center justify-between gap-2 text-sm">
+          <Link href="/notes" className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-muted transition hover:bg-surface-2 hover:text-fg">
+            <ArrowLeft className="size-4" aria-hidden />
+            {t('backToNotes')}
           </Link>
-        </p>
-      ) : null}
-      <NoteEditor
-        key={generation}
-        noteId={id}
-        userId={userId}
-        title={loaded.mirror?.title ?? meta.title}
-        doc={loaded.mirror?.doc ?? cardsToDoc(loaded.cards)}
-        saved={loaded.mirror ? savedFromMirror(loaded.mirror) : savedStateOf(meta.title, loaded.cards)}
-        send={send}
-        actions={actions}
-        meta={chips}
-        menuItems={menuItems}
-        onOpenVersion={(versionId) => setVersionsOpen({ open: true, versionId })}
-      />
-      <VersionsDialog
-        noteId={id}
-        open={versionsOpen.open}
-        initialVersionId={versionsOpen.versionId}
-        onClose={() => setVersionsOpen({ open: false })}
-        onRestored={() => {
-          setVersionsOpen({ open: false })
-          reload()
-        }}
-      />
-      {meta.viewerAccess === 'OWNER' ? <ShareDialog meta={meta} open={shareOpen} onClose={() => setShareOpen(false)} onSaved={onNote} /> : null}
-      {meta.viewerAccess === 'OWNER' ? <NoteDetailsDialog meta={meta} open={detailsOpen} onClose={() => setDetailsOpen(false)} onSaved={onNote} /> : null}
-    </div>
+          <span className="flex items-center gap-2 text-xs text-muted">
+            {meta.viewerAccess === 'OWNER' ? (
+              <button type="button" className="rounded-full hover:ring-1 hover:ring-accent/40" title={t('share.title')} onClick={() => setShareOpen(true)}>
+                <VisibilityBadge visibility={meta.visibility} />
+              </button>
+            ) : null}
+            {meta.publishedVersion ? t('publishedVersion', { n: meta.publishedVersion.number }) : t('neverPublished')}
+            {meta.viewerAccess === 'EDITOR' ? ` · ${t('editingFor', { name: meta.owner.displayName })}` : ''}
+          </span>
+        </nav>
+        {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
+        {copy.copyError ? (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {copy.copyError}
+          </p>
+        ) : null}
+        {loaded.offline ? <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">{t('offlineCopy')}</p> : null}
+        {notice ? (
+          <p role="status" className="animate-rise rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-medium">
+            {notice}
+          </p>
+        ) : null}
+        {!meta.viewerCan.publish && meta.viewerAccess === 'OWNER' ? (
+          <p className="text-xs text-muted">
+            {t('verifyToPublish')}{' '}
+            <Link href="/profile" className="text-accent hover:underline">
+              {t('verifyLink')}
+            </Link>
+          </p>
+        ) : null}
+        <NoteEditor
+          key={generation}
+          noteId={id}
+          userId={userId}
+          title={loaded.mirror?.title ?? meta.title}
+          doc={loaded.mirror?.doc ?? cardsToDoc(loaded.cards)}
+          saved={loaded.mirror ? savedFromMirror(loaded.mirror) : savedStateOf(meta.title, loaded.cards)}
+          send={send}
+          actions={actions}
+          meta={chips}
+          menuItems={menuItems}
+          onOpenVersion={(versionId) => setVersionsOpen({ open: true, versionId })}
+        />
+        <VersionsDialog
+          noteId={id}
+          open={versionsOpen.open}
+          initialVersionId={versionsOpen.versionId}
+          onClose={() => setVersionsOpen({ open: false })}
+          onRestored={() => {
+            setVersionsOpen({ open: false })
+            reload()
+          }}
+        />
+        {meta.viewerAccess === 'OWNER' ? <ShareDialog meta={meta} open={shareOpen} onClose={() => setShareOpen(false)} onSaved={onNote} /> : null}
+        {meta.viewerAccess === 'OWNER' ? <NoteDetailsDialog meta={meta} open={detailsOpen} onClose={() => setDetailsOpen(false)} onSaved={onNote} /> : null}
+      </div>
+    </MediaProvider>
   )
 }
 

@@ -335,10 +335,10 @@
         "heading": "A section title for the outline",
         "markdown": "Plain Markdown source",
         "code": "Code with its language",
-        "image": "",
-        "video": "",
-        "audio": "",
-        "file": "",
+        "image": "A picture or screenshot",
+        "video": "A video to watch",
+        "audio": "A recording to listen to",
+        "file": "A PDF or other file",
         "diagram": "A Mermaid diagram",
         "quote": "A quotation and who said it",
         "callout": "A note, tip or warning box",
@@ -410,7 +410,28 @@
       "duplicateCard": "Duplicate card",
       "turnInto": "Turn into",
       "more": "More",
-      "readAloud": "Read aloud"
+      "readAloud": "Read aloud",
+      "media": {
+        "choose": {
+          "image": "Choose a picture",
+          "video": "Choose a video",
+          "audio": "Choose a recording",
+          "file": "Choose a file"
+        },
+        "limits": {
+          "image": "or drop it here · JPEG, PNG, WebP or GIF, up to 20 MB",
+          "video": "or drop it here · MP4, WebM or MOV, up to 500 MB",
+          "audio": "or drop it here · MP3, M4A, OGG, WAV or WebM, up to 100 MB",
+          "file": "or drop it here · PDF, pictures, video or audio"
+        },
+        "uploading": "Uploading {name}…",
+        "failed": "The upload did not work. Check your connection and try again.",
+        "replace": "Replace",
+        "alt": "Describe the picture for people who cannot see it",
+        "caption": "Caption",
+        "unavailable": "This file is not available.",
+        "open": "Open"
+      }
     },
     "reader": {
       "by": "By {name}",

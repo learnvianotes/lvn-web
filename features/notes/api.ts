@@ -13,8 +13,11 @@ import type { StoredCard } from './model/doc'
 
 export type NoteMeta = NoteMetaFragment
 
-/** A note with all its cards (editors load the whole draft; at most 1,000 cards, 100 a page). */
-export async function loadNote(client: ApolloClient, id: string): Promise<{ meta: NoteMeta; cards: StoredCard[] } | null> {
+/**
+ * A note with all its cards (editors load the whole draft; at most 1,000 cards, 100 a page), and what its media cards
+ * show (read URLs, ./media).
+ */
+export async function loadNote(client: ApolloClient, id: string): Promise<{ meta: NoteMeta; cards: StoredCard[]; media: CardFieldsFragment[] } | null> {
   const cards: CardFieldsFragment[] = []
   let after: string | null = null
   let meta: NoteMeta | null = null
@@ -26,7 +29,7 @@ export async function loadNote(client: ApolloClient, id: string): Promise<{ meta
     cards.push(...note.cards.edges.map((e) => e.node))
     after = note.cards.pageInfo.hasNextPage ? note.cards.pageInfo.endCursor : null
   } while (after)
-  return { meta: meta!, cards: cards.map((c) => ({ id: c.id, type: c.type, position: c.position, revision: c.revision, content: c.content })) }
+  return { meta: meta!, cards: cards.map((c) => ({ id: c.id, type: c.type, position: c.position, revision: c.revision, content: c.content })), media: cards.filter((c) => c.media) }
 }
 
 /** The autosave's transport: one updateNoteDraft. Network and server failures throw, so the save is retried. */

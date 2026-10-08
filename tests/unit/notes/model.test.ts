@@ -3,6 +3,7 @@ import { positionsBetween } from '@/lib/contracts/validation'
 import { cardsToDoc, cardToNode, contentKey, docToCards, newCardId, nodeToCard, type StoredCard } from '@/features/notes/model/doc'
 import { assignPositions } from '@/features/notes/model/positions'
 import { afterSave, planSave, savedStateOf } from '@/features/notes/model/save'
+import { acceptFor, cardTypeFor, mimeOf } from '@/features/notes/media'
 
 const p = (text: string) => ({ type: 'paragraph', content: [{ type: 'text', text }] })
 const doc = (...blocks: object[]) => ({ type: 'doc', content: blocks })
@@ -127,5 +128,33 @@ describe('planning a save (§13.2)', () => {
     const after = afterSave(plan, [{ id: id(1), status: 'REJECTED', revision: 3 }])
     expect(after.cards.has(id(1))).toBe(false)
     expect(planSave(after, 'T', asDraft(stored).slice(1)).ops).toEqual([])
+  })
+})
+
+describe('media cards (P2c-2)', () => {
+  it('are one editor node that keeps the card type', () => {
+    expect(cardToNode(CARDS[12]!)).toMatchObject({ type: 'mediaCard', attrs: { cardType: 'image', data: { fileId: id(99) } } })
+    expect(cardToNode({ id: id(20), type: 'file', content: null })).toMatchObject({ type: 'mediaCard', attrs: { cardType: 'file', data: null } })
+  })
+
+  it('wait for their file before they are saved, then go out as new cards', () => {
+    const saved = savedStateOf('T', CARDS.slice(0, 1))
+    const waiting = { id: id(21), type: 'video' as const, content: null }
+    const plan = planSave(saved, 'T', [nodeToCard(cardToNode(CARDS[0]!))!, waiting])
+    expect(plan).toMatchObject({ ops: [], invalid: [] })
+    const ready = planSave(saved, 'T', [nodeToCard(cardToNode(CARDS[0]!))!, { ...waiting, content: { fileId: id(98) } }])
+    expect(ready.ops).toEqual([expect.objectContaining({ kind: 'UPSERT', id: id(21), type: 'video', content: { fileId: id(98) } })])
+  })
+
+  it('know which card a dropped file becomes, and the type the API wants', () => {
+    const file = (name: string, type: string) => new File([new Uint8Array(4)], name, { type })
+    expect(cardTypeFor(file('a.png', 'image/png'))).toBe('image')
+    expect(cardTypeFor(file('clip.mov', ''))).toBe('video')
+    expect(mimeOf(file('clip.mov', ''))).toBe('video/quicktime')
+    expect(cardTypeFor(file('talk.m4a', 'audio/x-m4a'))).toBe('audio')
+    expect(mimeOf(file('talk.m4a', 'audio/x-m4a'))).toBe('audio/mp4')
+    expect(cardTypeFor(file('notes.pdf', 'application/pdf'))).toBe('file')
+    expect(cardTypeFor(file('run.exe', 'application/x-msdownload'))).toBeNull()
+    expect(acceptFor('image')).toBe('image/jpeg,image/png,image/webp,image/gif')
   })
 })

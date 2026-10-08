@@ -51,7 +51,7 @@ import { docToCards, type CardType } from '../model/doc'
 import type { SavedState } from '../model/save'
 import { useReadAloud } from '../readAloud'
 import { useAutosave, type SaveStatus, type SendSave } from './autosave'
-import { CARD_NODES, CONVERTIBLE, convertCard, currentCard, deleteCard, duplicateCard, insertCardAfter, moveCard, selectCard } from './nodes'
+import { CARD_NODES, CONVERTIBLE, convertCard, currentCard, deleteCard, duplicateCard, insertCardAfter, insertMediaCards, moveCard, selectCard } from './nodes'
 import { ReadingHighlight, setReadingCard } from './reading'
 import { CARD_MENU, SlashMenu } from './slash'
 
@@ -108,7 +108,12 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
       ...CARD_NODES,
     ],
     content: doc,
-    editorProps: { attributes: { class: 'lvn-editor-content focus:outline-none', 'aria-label': t('content'), 'aria-multiline': 'true', role: 'textbox' } },
+    editorProps: {
+      attributes: { class: 'lvn-editor-content focus:outline-none', 'aria-label': t('content'), 'aria-multiline': 'true', role: 'textbox' },
+      // Pictures, video, audio and PDFs dropped or pasted into the note become media cards that upload them.
+      handleDrop: (view, event, _slice, moved) => !moved && insertMediaCards(view, [...(event.dataTransfer?.files ?? [])], view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos),
+      handlePaste: (view, event) => insertMediaCards(view, [...(event.clipboardData?.files ?? [])]),
+    },
     onUpdate: ({ editor: e }) => autosave.changed(titleRef.current, e.getJSON()),
   })
 

@@ -10,7 +10,7 @@ import { cn } from '@/lib/cn'
 import type { CardType } from '../model/doc'
 import { replaceCurrentCard } from './nodes'
 
-/** The cards the slash menu and the Add-card menu offer, with words people search for. Media cards come with uploads. */
+/** The cards the slash menu and the Add-card menu offer, with words people search for. */
 export const CARD_MENU: { type: CardType; keywords: string }[] = [
   { type: 'text', keywords: 'paragraph text plain' },
   { type: 'heading', keywords: 'heading title h1 h2 h3 section' },
@@ -24,6 +24,10 @@ export const CARD_MENU: { type: CardType; keywords: string }[] = [
   { type: 'flashcard', keywords: 'flashcard flash card front back revise' },
   { type: 'markdown', keywords: 'markdown md' },
   { type: 'diagram', keywords: 'diagram mermaid chart flow graph' },
+  { type: 'image', keywords: 'image picture photo screenshot upload' },
+  { type: 'video', keywords: 'video movie clip recording upload' },
+  { type: 'audio', keywords: 'audio sound voice recording music upload' },
+  { type: 'file', keywords: 'file pdf document attachment upload' },
 ]
 
 export interface SlashListHandle {

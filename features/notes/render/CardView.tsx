@@ -2,6 +2,7 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import type { Doc, Inline } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
 import { FlashcardCardView, QuestionCardView, QuizCardView } from './interactive'
+import { MediaBlock } from './MediaBlock'
 import { InlineText, RichDoc } from './RichText'
 
 /**
@@ -115,6 +116,11 @@ export function CardView({ id, type, content, highlighted }: { id: string; type:
         return <QuizCardView content={c} />
       case 'flashcard':
         return <FlashcardCardView content={c} />
+      case 'image':
+      case 'video':
+      case 'audio':
+      case 'file':
+        return <MediaBlock type={type} content={c} />
       default:
         return null
     }
