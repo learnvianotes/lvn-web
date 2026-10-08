@@ -1,4 +1,10 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
+input AppealModerationInput {
+  entityId: UUID!
+  entityType: ReportEntityType!
+  message: String!
+}
+
 type AuthPayload {
   session: Session
   userErrors: [UserError!]!
@@ -335,7 +341,88 @@ type MediaFile {
   width: Int
 }
 
+input ModerateContentInput {
+  action: ModerationActionType!
+  entityId: UUID!
+  entityType: ReportEntityType!
+
+  """Required for HIDE, REMOVE and WARN: the author is told"""
+  reason: String
+}
+
+"""A note as moderators see it: the published version readers would see"""
+type ModeratedNote {
+  deleted: Boolean!
+  excerpt: String!
+  id: UUID!
+  moderation: ModerationState!
+  moderationReason: String
+  owner: User!
+  title: String!
+  visibility: String!
+}
+
+"""
+APPROVE frees a held note; HIDE and REMOVE take it off for everyone but its author; DISMISS closes reports; WARN tells the author. SUSPEND is not available yet.
+"""
+enum ModerationActionType {
+  APPROVE
+  DISMISS
+  HIDE
+  REMOVE
+  SUSPEND
+  WARN
+}
+
+type ModerationAppeal {
+  createdAt: DateTime!
+  message: String!
+}
+
+type ModerationCase {
+  appeal: ModerationAppeal
+  entityId: UUID!
+  entityType: ReportEntityType!
+
+  """Set for NOTE cases"""
+  note: ModeratedNote
+  openedAt: DateTime!
+  reports: [ModerationReport!]!
+
+  """Set for USER cases"""
+  user: User
+}
+
+type ModerationCaseConnection {
+  edges: [ModerationCaseEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ModerationCaseEdge {
+  cursor: String!
+  node: ModerationCase!
+}
+
+type ModerationReport {
+  createdAt: DateTime!
+  details: String
+  reason: ReportReason!
+
+  """null when the scorer held the content on its way to the public"""
+  reporter: User
+}
+
+enum ModerationState {
+  HIDDEN
+  OK
+  PENDING_REVIEW
+  REMOVED
+}
+
 type Mutation {
+  """The author's one appeal against hiding or removing their note"""
+  appealModeration(input: AppealModerationInput!): OkPayload!
+
   """
   PRIVATE, SHARED or PUBLIC (owner, verified account); PUBLIC needs a published version
   """
@@ -373,6 +460,9 @@ type Mutation {
   A PRIVATE copy of a note you may fork, credited to its origin; returns the copy
   """
   forkNote(input: NoteIdInput!): NotePayload!
+
+  """A moderator's decision on a case (PLATFORM_ADMIN)"""
+  moderateContent(input: ModerateContentInput!): OkPayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
   proposeTopic(input: ProposeTopicInput!): TopicPayload!
 
@@ -382,6 +472,11 @@ type Mutation {
   publishNote(input: NoteIdInput!): NotePayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
   renameTag(input: RenameTagInput!): TagPayload!
+
+  """
+  Report a note or a person you can see; reporting again updates your report
+  """
+  reportContent(input: ReportContentInput!): OkPayload!
   requestDocumentVerification(input: RequestDocumentVerificationInput!): VerificationRequestPayload!
 
   """Always ok, whether or not an account exists"""
@@ -469,6 +564,9 @@ type Note {
   id: UUID!
   kind: NoteKind!
 
+  """Owner only; null for everyone else"""
+  moderation: NoteModeration
+
   """The headings, for navigation"""
   outline: [OutlineItem!]!
   owner: User!
@@ -544,6 +642,20 @@ enum NoteKind {
   NOTE
   POST
   PROJECT
+}
+
+"""Where a note stands with moderation"""
+type NoteModeration {
+  """Hidden or removed notes can be appealed once (appealModeration)"""
+  canAppeal: Boolean!
+
+  """Why, in words for the owner"""
+  reason: String
+
+  """
+  OK, or PENDING_REVIEW (held from the public until a moderator looks), HIDDEN or REMOVED (by a moderator)
+  """
+  state: ModerationState!
 }
 
 type NotePayload {
@@ -670,6 +782,9 @@ type Query {
 
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
+
+  """Open cases, oldest first (PLATFORM_ADMIN)"""
+  moderationQueue(after: String, first: Int): ModerationCaseConnection!
   myFolders: [Folder!]!
 
   """The viewer's own notes, most recently edited first"""
@@ -720,6 +835,29 @@ input RefreshSessionInput {
 input RenameTagInput {
   id: UUID!
   name: String!
+}
+
+input ReportContentInput {
+  """What is wrong, in the reporter's words (at most 1,000 characters)"""
+  details: String
+  entityId: UUID!
+  entityType: ReportEntityType!
+  reason: ReportReason!
+}
+
+enum ReportEntityType {
+  NOTE
+  USER
+}
+
+enum ReportReason {
+  COPYRIGHT
+  HARASSMENT
+  HATE
+  OTHER
+  SELF_HARM
+  SEXUAL
+  SPAM
 }
 
 """
@@ -956,7 +1094,7 @@ type UploadIntentPayload {
   userErrors: [UserError!]!
 }
 
-"""A person, owned by the users subgraph; notes refer to people by id."""
+"""A person, owned by the users subgraph"""
 type User {
   createdAt: DateTime!
   displayName: String!
