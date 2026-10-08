@@ -619,5 +619,20 @@
       "notAllowed": "Only moderators can see this page",
       "notAllowedLead": "It is for platform admins."
     }
+  },
+  "publicNote": {
+    "topics": "Topics",
+    "untitled": "Untitled note",
+    "readingTime": "{n} min read",
+    "empty": "This note has no cards yet.",
+    "copiedFrom": "Copied from “{title}” by {name}",
+    "copiedFromAuthor": "Copied from a note by {name}",
+    "ctaKicker": "Free for students and teachers",
+    "ctaTitle": "Write notes like this one",
+    "ctaLead": "Cards for every idea, quizzes and flashcards, read aloud — on the web and your phone.",
+    "ctaStart": "Start writing",
+    "ctaOpen": "Open in LearnViaNotes",
+    "reportLead": "Something wrong with this note?",
+    "reportLink": "Open it to report"
   }
 }

@@ -78,6 +78,8 @@ export function mediaOf(cards: { media?: MediaFieldsFragment | null }[]): Map<st
 
 interface MediaStore {
   noteId: string | null
+  /** Read URLs are still on their way (public pages ask for them after loading) */
+  loading?: boolean
   get: (fileId: string | undefined | null) => MediaInfo | undefined
   /** Uploads a file to the note; the card can show it right away from this device. */
   upload: (file: File, onProgress: (p: number) => void) => Promise<string>
@@ -85,6 +87,12 @@ interface MediaStore {
 
 const MediaContext = createContext<MediaStore>({ noteId: null, get: () => undefined, upload: () => Promise.reject(new UploadError('no note')) })
 export const useMedia = () => useContext(MediaContext)
+
+/** Read URLs only, for pages without the signed-in app around them (public note pages). */
+export function MediaMapProvider({ media, loading = false, children }: { media: Map<string, MediaInfo>; loading?: boolean; children: ReactNode }) {
+  const store = useMemo<MediaStore>(() => ({ noteId: null, loading, get: (fileId) => (fileId ? media.get(fileId) : undefined), upload: () => Promise.reject(new UploadError('read only')) }), [media, loading])
+  return <MediaContext.Provider value={store}>{children}</MediaContext.Provider>
+}
 
 /** Files dropped or pasted into the editor, waiting for the media card made for them to upload them. */
 export const pendingFiles = new Map<string, File>()

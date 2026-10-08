@@ -1,0 +1,19 @@
+{
+  "notes": [
+    {
+      "id": "01920000-0000-7000-8000-00000000d001",
+      "title": "Dijkstra's algorithm",
+      "slug": "dijkstras-algorithm",
+      "kind": "NOTE",
+      "publishedAt": "2026-10-01T10:00:00.000Z",
+      "owner": { "displayName": "Ravi Kumar", "handle": "ravi" },
+      "topics": [{ "id": "01920000-0000-7000-8000-00000000e101", "title": "Shortest paths", "subject": { "title": "Algorithms" } }],
+      "forkedFrom": null,
+      "cards": [
+        { "id": "01920000-0000-7000-8000-00000000c101", "type": "heading", "content": { "level": 2, "content": [{ "type": "text", "text": "The idea" }] }, "media": null },
+        { "id": "01920000-0000-7000-8000-00000000c102", "type": "text", "content": { "doc": { "type": "doc", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Always settle the closest unvisited vertex next." }] }] } }, "media": null },
+        { "id": "01920000-0000-7000-8000-00000000c103", "type": "image", "content": { "fileId": "01920000-0000-7000-8000-00000000f101", "alt": "A small weighted graph" }, "media": { "id": "01920000-0000-7000-8000-00000000f101" } }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import {
   type Visibility,
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { publicNotePath } from '@/features/public-notes/paths'
 import type { NoteMeta } from './api'
 import { accentOf } from './look'
 
@@ -57,7 +58,8 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const people = shares.data?.note?.shares ?? []
-  const link = typeof window === 'undefined' ? '' : `${window.location.origin}/notes/${meta.id}`
+  // Public notes have their own page anyone can open; shared ones open in the app for the people they are shared with.
+  const link = typeof window === 'undefined' ? '' : `${window.location.origin}${meta.visibility === 'PUBLIC' ? publicNotePath(meta) : `/notes/${meta.id}`}`
 
   const pickVisibility = async (visibility: Visibility) => {
     if (visibility === meta.visibility) return
