@@ -4,8 +4,11 @@ import { listPublicNotes } from '@/features/public-notes/data'
 import { publicNotePath } from '@/features/public-notes/paths'
 import { env } from '@/lib/env'
 
-/** The sitemap is rebuilt with the public notes list (tag `public-notes`), at most hourly. */
-export const revalidate = 3600
+/**
+ * Built on request, never at build time (the API is not there while images build); the public notes list it reads is
+ * cached for an hour and dropped when the API says it changed (tag `public-notes`).
+ */
+export const dynamic = 'force-dynamic'
 
 /** Static pages, /core, and public notes (/n/[slug]-[id]) from the API; without the API the rest still ships. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
