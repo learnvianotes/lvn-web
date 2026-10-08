@@ -106,6 +106,11 @@ enum CardType {
   video
 }
 
+input ChangeNoteVisibilityInput {
+  noteId: UUID!
+  visibility: Visibility!
+}
+
 """
 After a provider sign-in (no signUp call): the same details, collected once
 """
@@ -224,6 +229,15 @@ type FolderPayload {
   userErrors: [UserError!]!
 }
 
+"""
+Where a copy came from (§4.4, ADR-0010). Every reader sees the author; the origin itself only those who can open it.
+"""
+type ForkCredit {
+  author: User!
+  note: Note
+  title: String
+}
+
 enum GlobalRole {
   PLATFORM_ADMIN
   STUDENT
@@ -302,6 +316,11 @@ enum LimitKey {
 }
 
 type Mutation {
+  """
+  PRIVATE, SHARED or PUBLIC (owner, verified account); PUBLIC needs a published version
+  """
+  changeNoteVisibility(input: ChangeNoteVisibilityInput!): NotePayload!
+
   """Attach the old site's data to this account"""
   claimLegacyData: OkPayload!
   completeRegistration(input: CompleteRegistrationInput!): OkPayload!
@@ -329,6 +348,11 @@ type Mutation {
 
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
+
+  """
+  A PRIVATE copy of a note you may fork, credited to its origin; returns the copy
+  """
+  forkNote(input: NoteIdInput!): NotePayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
   proposeTopic(input: ProposeTopicInput!): TopicPayload!
 
@@ -368,12 +392,21 @@ type Mutation {
   Adds or replaces the college or organisation email; a code is sent to it
   """
   setInstitutionalEmail(input: SetInstitutionalEmailInput!): OkPayload!
+
+  """Allow or stop copies of your note"""
+  setNoteForking(input: SetNoteForkingInput!): NotePayload!
+
+  """
+  Share with one person, or change their role; a PRIVATE note becomes SHARED
+  """
+  shareNote(input: ShareNoteInput!): NotePayload!
   signIn(input: SignInInput!): AuthPayload!
   signInWithGoogle(input: SignInWithGoogleInput!): AuthPayload!
 
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+  unshareNote(input: UnshareNoteInput!): NotePayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
@@ -409,6 +442,9 @@ type Note {
 
   """The owner's folder; null for anyone else"""
   folder: Folder
+
+  """Set on a copy of another note; it cannot be removed"""
+  forkedFrom: ForkCredit
   forkingEnabled: Boolean!
   id: UUID!
   kind: NoteKind!
@@ -418,6 +454,9 @@ type Note {
   owner: User!
   publishedAt: DateTime
   publishedVersion: NoteVersion
+
+  """Owner only: the people the note is shared with; null for anyone else"""
+  shares: [NoteShare!]
 
   """URL part of the title, set when published"""
   slug: String!
@@ -502,6 +541,20 @@ type NotePermissions {
   fork: Boolean!
   publish: Boolean!
   share: Boolean!
+}
+
+"""
+A person a note is shared with; EDITORs work on the draft, VIEWERs read the published version
+"""
+type NoteShare {
+  createdAt: DateTime!
+  role: NoteShareRole!
+  user: User!
+}
+
+enum NoteShareRole {
+  EDITOR
+  VIEWER
 }
 
 """An immutable snapshot of a note's cards (§4.3)"""
@@ -608,6 +661,9 @@ type Query {
   A note the viewer can read; null otherwise (anonymous visitors: PUBLIC notes)
   """
   note(id: UUID!): Note
+
+  """Notes other people shared with the viewer, most recently changed first"""
+  sharedWithMe(after: String, first: Int): NoteConnection!
   signInOptions: SignInOptions!
   subject(slug: String!): Subject
   subjects: [Subject!]!
@@ -702,6 +758,19 @@ input SetGlobalRoleInput {
 
 input SetInstitutionalEmailInput {
   email: String!
+}
+
+input SetNoteForkingInput {
+  enabled: Boolean!
+  noteId: UUID!
+}
+
+input ShareNoteInput {
+  noteId: UUID!
+
+  """A handle (@asha or asha) or an email address"""
+  person: String!
+  role: NoteShareRole!
 }
 
 input SignInInput {
@@ -801,6 +870,11 @@ type TopicPayload {
 }
 
 scalar UUID
+
+input UnshareNoteInput {
+  noteId: UUID!
+  userId: UUID!
+}
 
 """
 Omitted fields stay as they are; `parentId: null` moves the folder to the top level

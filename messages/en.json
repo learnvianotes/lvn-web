@@ -216,7 +216,8 @@
         "label": "Notes",
         "all": "All notes",
         "unfiled": "Not in a folder",
-        "trash": "Trash"
+        "trash": "Trash",
+        "shared": "Shared with me"
       },
       "folder": "Folder",
       "folders": "Folders",
@@ -276,7 +277,13 @@
       "inHere": "{n, plural, =0 {Nothing here yet} one {# note} other {# notes}}",
       "search": "Search your notes",
       "noMatch": "No note matches “{query}”.",
-      "noWordsYet": "Nothing written yet — open it and start."
+      "noWordsYet": "Nothing written yet — open it and start.",
+      "sharedHint": "Notes people shared with you",
+      "emptyShared": "Nothing shared with you yet",
+      "emptySharedLead": "When a classmate or teacher shares a note with you, it shows up here.",
+      "sharedBy": "From {name}",
+      "canEdit": "Can edit",
+      "canView": "Can view"
     },
     "editor": {
       "title": "Title",
@@ -459,6 +466,49 @@
       "save": "Save",
       "failed": "The details could not be saved. Try again."
     },
-    "addTagsTopics": "Add tags and topics"
+    "addTagsTopics": "Add tags and topics",
+    "share": {
+      "button": "Share",
+      "title": "Share this note",
+      "whoCanRead": "Who can read it",
+      "visibility": {
+        "PRIVATE": "Private",
+        "SHARED": "Shared",
+        "PUBLIC": "Public"
+      },
+      "visibilityHint": {
+        "PRIVATE": "Only you.",
+        "SHARED": "You and the people you add below.",
+        "PUBLIC": "Anyone with the link reads the published version."
+      },
+      "publishFirst": "Publish the note first: readers see the published version.",
+      "verifyToShare": "Verify your account to share notes.",
+      "verifyLink": "Verify now",
+      "people": "People",
+      "personLabel": "Handle or email",
+      "personPlaceholder": "@handle or email",
+      "roleLabel": "What they can do",
+      "role": {
+        "VIEWER": "Can view",
+        "EDITOR": "Can edit"
+      },
+      "roleFor": "What {name} can do",
+      "add": "Add",
+      "remove": "Remove {name}",
+      "nobodyYet": "Not shared with anyone yet.",
+      "privateHidesShares": "The note is private, so the people above cannot open it until you choose Shared or Public.",
+      "allowCopies": "Let people make a copy",
+      "allowCopiesHint": "Copies are private to whoever makes them and always name you as the author.",
+      "copyLink": "Copy link",
+      "copyLinkPrivate": "Private notes have no link to share.",
+      "copied": "Link copied",
+      "done": "Done",
+      "failed": "That did not work. Try again.",
+      "makeCopy": "Make a copy",
+      "makeCopyHint": "A private copy for you to change, credited to the author",
+      "copyFailed": "Could not make a copy. Try again.",
+      "copiedFrom": "Copied from <title></title> by {name}",
+      "copiedFromAuthor": "Copied from a note by {name}"
+    }
   }
 }

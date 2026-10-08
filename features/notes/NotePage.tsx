@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { ArrowLeft, Folder, Hash, History, Rocket, SlidersHorizontal, Trash2, BookMarked } from 'lucide-react'
+import { ArrowLeft, Folder, Hash, History, Rocket, Share2, SlidersHorizontal, Trash2, BookMarked, CopyPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -11,6 +11,7 @@ import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graph
 import { loadNote, sendSave, type NoteMeta } from './api'
 import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
+import { ForkCredit, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
 import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
 import { NoteEditor } from './editor/NoteEditor'
@@ -37,6 +38,8 @@ export function NotePage({ id }: { id: string }) {
   const [generation, setGeneration] = useState(0)
   const [versionsOpen, setVersionsOpen] = useState<{ open: boolean; versionId?: string }>({ open: false })
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const copy = useMakeCopy(id)
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
   const [notice, setNotice] = useState<string | null>(null)
@@ -121,6 +124,7 @@ export function NotePage({ id }: { id: string }) {
   const menuItems = [
     ...(meta.viewerAccess === 'OWNER' ? [{ label: t('details.button'), icon: SlidersHorizontal, onClick: () => setDetailsOpen(true) }] : []),
     { label: t('versions.button'), icon: History, onClick: () => setVersionsOpen({ open: true }) },
+    ...(meta.viewerCan.fork ? [{ label: t('share.makeCopy'), icon: CopyPlus, onClick: () => void copy.makeCopy() }] : []),
     ...(meta.viewerCan.delete ? [{ label: t('trash'), icon: Trash2, onClick: () => void moveToTrash(), danger: true }] : []),
   ]
 
@@ -136,6 +140,12 @@ export function NotePage({ id }: { id: string }) {
         <History className="size-4" aria-hidden />
         {t('versions.button')}
       </Button>
+      {meta.viewerAccess === 'OWNER' ? (
+        <Button variant="secondary" size="sm" className="gap-1.5" aria-label={t('share.button')} onClick={() => setShareOpen(true)}>
+          <Share2 className="size-4" aria-hidden />
+          <span className="hidden sm:inline">{t('share.button')}</span>
+        </Button>
+      ) : null}
       {meta.viewerAccess === 'OWNER' ? (
         <Button size="sm" className="gap-1.5 shadow-md shadow-accent/25" disabled={!meta.viewerCan.publish || publishing.loading} title={meta.viewerCan.publish ? t('publishHint') : t('verifyToPublish')} onClick={(e) => void doPublish(e)}>
           <Rocket className="size-4" aria-hidden />
@@ -180,11 +190,22 @@ export function NotePage({ id }: { id: string }) {
           <ArrowLeft className="size-4" aria-hidden />
           {t('backToNotes')}
         </Link>
-        <span className="text-xs text-muted">
+        <span className="flex items-center gap-2 text-xs text-muted">
+          {meta.viewerAccess === 'OWNER' ? (
+            <button type="button" className="rounded-full hover:ring-1 hover:ring-accent/40" title={t('share.title')} onClick={() => setShareOpen(true)}>
+              <VisibilityBadge visibility={meta.visibility} />
+            </button>
+          ) : null}
           {meta.publishedVersion ? t('publishedVersion', { n: meta.publishedVersion.number }) : t('neverPublished')}
           {meta.viewerAccess === 'EDITOR' ? ` · ${t('editingFor', { name: meta.owner.displayName })}` : ''}
         </span>
       </nav>
+      {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
+      {copy.copyError ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {copy.copyError}
+        </p>
+      ) : null}
       {loaded.offline ? <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">{t('offlineCopy')}</p> : null}
       {notice ? (
         <p role="status" className="animate-rise rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-medium">
@@ -222,6 +243,7 @@ export function NotePage({ id }: { id: string }) {
           reload()
         }}
       />
+      {meta.viewerAccess === 'OWNER' ? <ShareDialog meta={meta} open={shareOpen} onClose={() => setShareOpen(false)} onSaved={onNote} /> : null}
       {meta.viewerAccess === 'OWNER' ? <NoteDetailsDialog meta={meta} open={detailsOpen} onClose={() => setDetailsOpen(false)} onSaved={onNote} /> : null}
     </div>
   )
@@ -246,6 +268,7 @@ function mirrorMeta(id: string, title: string): NoteMeta {
     publishedAt: null,
     publishedVersion: null,
     forkingEnabled: true,
+    forkedFrom: null,
     cardCount: 0,
     deletedAt: null,
   }

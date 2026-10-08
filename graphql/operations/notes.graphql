@@ -73,6 +73,17 @@ fragment NoteMeta on Note {
     createdAt
   }
   forkingEnabled
+  forkedFrom {
+    title
+    author {
+      id
+      displayName
+      handle
+    }
+    note {
+      id
+    }
+  }
   cardCount
   deletedAt
 }
@@ -316,6 +327,108 @@ mutation RenameTag($id: UUID!, $name: String!) {
 mutation DeleteTag($id: UUID!) {
   deleteTag(input: { id: $id }) {
     ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+# Visibility, sharing and copies (P2c).
+
+fragment ShareFields on NoteShare {
+  role
+  createdAt
+  user {
+    id
+    displayName
+    handle
+  }
+}
+
+query NoteShares($id: UUID!) {
+  note(id: $id) {
+    id
+    visibility
+    shares {
+      ...ShareFields
+    }
+  }
+}
+
+query SharedWithMe($first: Int, $after: String) {
+  sharedWithMe(first: $first, after: $after) {
+    edges {
+      node {
+        ...NoteListFields
+        viewerAccess
+        owner {
+          id
+          displayName
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation ChangeNoteVisibility($noteId: UUID!, $visibility: Visibility!) {
+  changeNoteVisibility(input: { noteId: $noteId, visibility: $visibility }) {
+    note {
+      ...NoteMeta
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation ShareNote($noteId: UUID!, $person: String!, $role: NoteShareRole!) {
+  shareNote(input: { noteId: $noteId, person: $person, role: $role }) {
+    note {
+      ...NoteMeta
+      shares {
+        ...ShareFields
+      }
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation UnshareNote($noteId: UUID!, $userId: UUID!) {
+  unshareNote(input: { noteId: $noteId, userId: $userId }) {
+    note {
+      id
+      shares {
+        ...ShareFields
+      }
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation ForkNote($noteId: UUID!) {
+  forkNote(input: { noteId: $noteId }) {
+    note {
+      id
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation SetNoteForking($noteId: UUID!, $enabled: Boolean!) {
+  setNoteForking(input: { noteId: $noteId, enabled: $enabled }) {
+    note {
+      ...NoteMeta
+    }
     userErrors {
       ...Problems
     }
