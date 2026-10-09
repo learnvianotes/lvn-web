@@ -35,6 +35,9 @@ const config: NextConfig = {
       { source: '/:path*', headers: securityHeaders },
       // The retired app's service worker is replaced by public/sw.js, which removes itself.
       { source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
+      // pdf.js's character maps, fonts and decoders (scripts/pdfjs-assets.mjs), under a versioned path: the phone's PDF
+      // reader, a web view without this origin, loads them too (lvn-backend ADR-0040).
+      { source: '/pdfjs/:path*', headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }, { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
     ]
   },
   async redirects() {
