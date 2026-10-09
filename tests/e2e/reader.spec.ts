@@ -78,6 +78,7 @@ async function mockReader(page: Page, opts: { reader?: boolean; cards?: unknown[
     CreateNoteUpload: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: PIC_ID, uploadUrl: 'http://storage.test/put/snip', uploadHeaders: [{ __typename: 'UploadHeader', name: 'content-type', value: 'image/png' }] }, ...noProblems } }),
     CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...noProblems } }),
     StudyPdf: () => ({ studyPdf: { note: { __typename: 'Note', id: '01920000-0000-7000-8000-00000000a0ff' }, ...noProblems } }),
+    NotePdfConversion: () => ({ note: { __typename: 'Note', id: NOTE_ID, pdfConversion: null } }),
   })
   return { calls, highlights }
 }
@@ -259,4 +260,41 @@ test('a PDF card in a note opens the reader', async ({ page }) => {
   await page.getByRole('link', { name: /Read & make notes/ }).click()
   await expect(page).toHaveURL(new RegExp(`${READER_URL}$`))
   await expect(page.getByTestId('pdf-reader')).toBeVisible()
+})
+
+test('converting a PDF makes a note that opens beside it, shows its progress and gets its cards', async ({ page }) => {
+  await mockStorage(page)
+  const NEW = '01920000-0000-7000-8000-00000000a0cc'
+  const conversion = (status: string, extra: object = {}) => ({ __typename: 'PdfConversion', id: '01920000-0000-7000-8000-0000000c0001', status, progress: status === 'DONE' ? 100 : 15, pages: 1, scannedPages: 0, cards: null, error: null, ...extra })
+  let checks = 0
+  const converted = [
+    fileCard,
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c0b1', type: 'heading', position: 'a1', revision: 1, content: { level: 1, content: [{ type: 'text', text: 'Photosynthesis' }], anchor: { fileId: PDF_ID, page: 1, rects: [[0.12, 0.08, 0.4, 0.11]] } }, media: null },
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c0b2', type: 'text', position: 'a2', revision: 1, content: { doc: { type: 'doc', content: [p(PDF_TEXT.page1[1]!)] }, anchor: { fileId: PDF_ID, page: 1, rects: [[0.12, 0.12, 0.6, 0.14]] } }, media: null },
+  ]
+  const calls = await mockApi(page, {
+    NoteToEdit: (v) => ({ note: { ...meta({ id: v.id, title: v.id === NEW ? 'Biology chapter 3' : 'Biology' }), cards: page1(v.id === NEW && checks > 2 ? converted : [fileCard]) } }),
+    NoteFile: () => ({ noteFile: pdfFile }),
+    NoteHighlights: (v) => ({ note: { __typename: 'Note', id: v.id, highlights: [] } }),
+    PdfPagesThisMonth: () => ({ pdfPagesThisMonth: { __typename: 'PdfPagesUsage', used: 3, limit: 100 } }),
+    ConvertPdfToNote: () => ({ convertPdfToNote: { __typename: 'PdfConversionPayload', conversion: { ...conversion('TRIAGE'), note: { __typename: 'Note', id: NEW } }, ...noProblems } }),
+    NotePdfConversion: (v) => {
+      if (v.id !== NEW) return { note: { __typename: 'Note', id: v.id, pdfConversion: null } }
+      checks++
+      return { note: { __typename: 'Note', id: NEW, pdfConversion: checks > 2 ? conversion('DONE', { cards: 2 }) : conversion('PARSING') } }
+    },
+  })
+  await page.goto(READER_URL)
+  await page.getByRole('button', { name: 'Convert to cards' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Convert this PDF into cards' })
+  await expect(dialog.getByText('You have converted 3 of 100 pages this month.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Convert' }).click()
+
+  await expect(page).toHaveURL(new RegExp(`/notes/${NEW}/read/${PDF_ID}$`))
+  await expect(page.getByText('Reading the PDF: layout, tables, pictures and scans…')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ConvertPdfToNote')?.variables).toEqual({ noteId: NOTE_ID, fileId: PDF_ID })
+  await expect(page.getByText(/Made 2 cards from 1 page\./)).toBeVisible({ timeout: 15_000 })
+  if (isPhone()) await page.getByRole('button', { name: 'Show notes' }).click()
+  await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(PDF_TEXT.page1[1]!)).toBeVisible()
+  await expect(page.locator('.lvn-anchor-chip')).toHaveCount(2)
 })

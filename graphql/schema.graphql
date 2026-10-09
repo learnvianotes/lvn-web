@@ -155,6 +155,12 @@ input CompleteRegistrationInput {
   institutionalEmail: String
 }
 
+input ConvertPdfInput {
+  """A PDF of the note the viewer can read"""
+  fileId: UUID!
+  noteId: UUID!
+}
+
 type CoreProblemMark {
   mark: ProblemMark!
   problemId: String!
@@ -530,6 +536,12 @@ type Mutation {
   """Checks the uploaded bytes (size, magic bytes) and makes the file READY"""
   completeUpload(fileId: UUID!): OkPayload!
   confirmNoteImport(input: NoteIdInput!): NoteImportPayload!
+
+  """
+  Convert a PDF of a note the viewer can read into a new PRIVATE note of their own (the rule for copies), counted
+  against their PDF pages this month; follow it with pdfConversion. One at a time.
+  """
+  convertPdfToNote(input: ConvertPdfInput!): PdfConversionPayload!
   createFolder(input: CreateFolderInput!): FolderPayload!
   createNote(input: CreateNoteInput!): NotePayload!
   createUploadIntent(input: CreateUploadIntentInput!): UploadIntentPayload!
@@ -690,6 +702,11 @@ type Note {
   """The headings, for navigation"""
   outline: [OutlineItem!]!
   owner: User!
+
+  """
+  The latest conversion filling this note, for the person who asked for it
+  """
+  pdfConversion: PdfConversion
   publishedAt: DateTime
   publishedVersion: NoteVersion
 
@@ -916,6 +933,50 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type PdfConversion {
+  cards: Int
+  createdAt: DateTime!
+
+  """Why it failed, in words for people"""
+  error: String
+
+  """The PDF"""
+  fileId: UUID!
+  finishedAt: DateTime
+  id: UUID!
+
+  """The new note the cards go into"""
+  note: Note
+  pages: Int
+
+  """0 to 100"""
+  progress: Int!
+
+  """Pages without a text layer, read with OCR"""
+  scannedPages: Int
+  status: PdfConversionStatus!
+}
+
+type PdfConversionPayload {
+  conversion: PdfConversion
+  userErrors: [UserError!]!
+}
+
+enum PdfConversionStatus {
+  DONE
+  FAILED
+
+  """Making the cards"""
+  MAPPING
+
+  """Reading the layout, tables, pictures and scanned pages"""
+  PARSING
+  QUEUED
+
+  """Counting the pages"""
+  TRIAGE
+}
+
 """A highlight on one page of a PDF attached to the note"""
 type PdfHighlight {
   """The card made from it"""
@@ -948,6 +1009,14 @@ input PdfHighlightIdInput {
 type PdfHighlightPayload {
   highlight: PdfHighlight
   userErrors: [UserError!]!
+}
+
+type PdfPagesUsage {
+  """null when there is no limit"""
+  limit: Int
+
+  """Pages converted this month (UTC)"""
+  used: Int!
 }
 
 enum ProblemMark {
@@ -1004,6 +1073,10 @@ type Query {
 
   """Your latest imports, newest first"""
   noteImports: [NoteImport!]!
+
+  """A conversion the viewer asked for"""
+  pdfConversion(id: UUID!): PdfConversion
+  pdfPagesThisMonth: PdfPagesUsage!
 
   """
   Notes anyone may read, newest published first (at most 100 a page): sitemaps and public pages

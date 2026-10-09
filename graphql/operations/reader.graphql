@@ -68,3 +68,43 @@ mutation StudyPdf($noteId: UUID!, $fileId: UUID!) {
     }
   }
 }
+
+fragment ConversionFields on PdfConversion {
+  id
+  status
+  progress
+  pages
+  scannedPages
+  cards
+  error
+}
+
+query NotePdfConversion($id: UUID!) {
+  note(id: $id) {
+    id
+    pdfConversion {
+      ...ConversionFields
+    }
+  }
+}
+
+query PdfPagesThisMonth {
+  pdfPagesThisMonth {
+    used
+    limit
+  }
+}
+
+mutation ConvertPdfToNote($noteId: UUID!, $fileId: UUID!) {
+  convertPdfToNote(input: { noteId: $noteId, fileId: $fileId }) {
+    conversion {
+      ...ConversionFields
+      note {
+        id
+      }
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
