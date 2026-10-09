@@ -53,7 +53,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
               <span className="font-medium text-fg">{note.owner.displayName}</span> <span>@{note.owner.handle}</span>
             </span>
           </span>
-          {published ? <time dateTime={published.toISOString()}>· {published.toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })}</time> : null}
+          {published ? <time dateTime={published.toISOString()}>· {published.toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time> : null}
           {minutes ? (
             <span className="inline-flex items-center gap-1">
               · <Clock className="size-3.5" aria-hidden /> {t('readingTime', { n: minutes })}

@@ -29,6 +29,8 @@ test('sitemap lists /core pages', async ({ request }) => {
 })
 
 test('landing page has no serious accessibility violations', async ({ page }) => {
+  // Checked as it settles: fade-ins would be measured half-transparent.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
   expect(violations.filter((v) => v.impact === 'critical' || v.impact === 'serious').map((v) => v.id)).toEqual([])

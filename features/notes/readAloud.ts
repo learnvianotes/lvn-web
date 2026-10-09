@@ -27,7 +27,9 @@ export function useReadAloud(cards: () => SpokenCard[]) {
   const [current, setCurrent] = useState<string | null>(null)
   const [rate, setRate] = useState(1)
   const run = useRef(0)
-  const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
+  // Known only in the browser and after hydration: the server's HTML never offers it, so the first render matches.
+  const [supported, setSupported] = useState(false)
+  useEffect(() => setSupported('speechSynthesis' in window), [])
 
   const stop = useCallback(() => {
     run.current++

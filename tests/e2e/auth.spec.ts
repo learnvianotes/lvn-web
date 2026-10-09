@@ -213,6 +213,8 @@ test.describe('Google first', () => {
 })
 
 test('sign-in and sign-up have no serious accessibility violations', async ({ page }) => {
+  // Checked as it settles: fade-ins would be measured half-transparent.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await mockApi(page, {})
   for (const path of ['/sign-in', '/sign-up']) {
     await page.goto(path)

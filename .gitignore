@@ -36,3 +36,7 @@ branding/.logo-square.svg
 
 # pdf.js run-time files (scripts/pdfjs-assets.mjs)
 public/pdfjs/
+
+# Lighthouse (scripts/lighthouse.mjs)
+lighthouse-report/
+.next-lighthouse/

@@ -4,11 +4,11 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { env } from '@/lib/env'
 import { THEME_KEY } from '@/lib/theme'
-import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import '../globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
-const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', display: 'swap' })
+// Code only: not preloaded on every page, fetched where code is shown.
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', display: 'swap', preload: false })
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('site')
