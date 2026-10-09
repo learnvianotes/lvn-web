@@ -46,6 +46,28 @@ export interface MediaInfo {
   mimeType: string
   fileName: string
   sizeBytes: number
+  width?: number | null
+  height?: number | null
+  pageCount?: number | null
+  /** Made by the server after the upload (lvn-backend ADR-0041); null until then, and for files just uploaded here */
+  thumbUrl?: string | null
+  mediumUrl?: string | null
+  largeUrl?: string | null
+  posterUrl?: string | null
+  playbackUrl?: string | null
+}
+
+/** The picture sizes the server makes, by width (lvn-backend ADR-0041), never wider than the original. */
+const SIZES = [
+  ['thumbUrl', 320],
+  ['mediumUrl', 960],
+  ['largeUrl', 1920],
+] as const
+
+/** A `srcset` of the sizes made so far, or undefined before there are any. */
+export function srcSetOf(file: MediaInfo): string | undefined {
+  const parts = SIZES.flatMap(([key, width]) => (file[key] ? [`${file[key]} ${file.width ? Math.min(width, file.width) : width}w`] : []))
+  return parts.length ? parts.join(', ') : undefined
 }
 
 export class UploadError extends Error {}
@@ -78,7 +100,11 @@ export async function uploadToNote(client: ApolloClient, noteId: string, file: F
 
 /** Read URLs by file id, from the loaded cards. */
 export function mediaOf(cards: { media?: MediaFieldsFragment | null }[]): Map<string, MediaInfo> {
-  return new Map(cards.flatMap((c) => (c.media ? [[c.media.id, { url: c.media.url, mimeType: c.media.mimeType, fileName: c.media.fileName, sizeBytes: c.media.sizeBytes }] as const] : [])))
+  return new Map(cards.flatMap((c) => (c.media ? [[c.media.id, infoOf(c.media)] as const] : [])))
+}
+
+export function infoOf(m: MediaFieldsFragment): MediaInfo {
+  return { url: m.url, mimeType: m.mimeType, fileName: m.fileName, sizeBytes: m.sizeBytes, width: m.width, height: m.height, pageCount: m.pageCount, thumbUrl: m.thumbUrl, mediumUrl: m.mediumUrl, largeUrl: m.largeUrl, posterUrl: m.posterUrl, playbackUrl: m.playbackUrl }
 }
 
 interface MediaStore {

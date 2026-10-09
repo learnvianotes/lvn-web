@@ -293,7 +293,7 @@ test('an upload the API refuses says why, in its words', async ({ page }) => {
 
 test('a reader sees the pictures and files of a note', async ({ page }) => {
   await mockStorage(page)
-  const media = (id: string, fileName: string, mimeType: string) => ({ __typename: 'MediaFile', id, url: `http://storage.test/get/${fileName}`, expiresAt: new Date(Date.now() + 900_000).toISOString(), mimeType, fileName, sizeBytes: 2_400_000, width: null, height: null, durationMs: null })
+  const media = (id: string, fileName: string, mimeType: string) => ({ __typename: 'MediaFile', id, url: `http://storage.test/get/${fileName}`, expiresAt: new Date(Date.now() + 900_000).toISOString(), mimeType, fileName, sizeBytes: 2_400_000, width: null, height: null, durationMs: null, pageCount: null, thumbUrl: null, mediumUrl: null, largeUrl: null, posterUrl: null, playbackUrl: null })
   const PDF_ID = FILE_ID.replace('f001', 'f002')
   const withMedia = [
     ...cards.map((c) => ({ ...c, media: null })),
@@ -309,4 +309,28 @@ test('a reader sees the pictures and files of a note', async ({ page }) => {
   const file = page.getByRole('link', { name: /lecture-4\.pdf/ })
   await expect(file).toHaveAttribute('href', 'http://storage.test/get/lecture-4.pdf')
   await expect(file).toContainText('2.3 MB')
+})
+
+test('a reader sees the sizes, posters and transcodes the server made (ADR-0041)', async ({ page }) => {
+  await mockStorage(page)
+  const base = (id: string, fileName: string, mimeType: string) => ({ __typename: 'MediaFile', id, url: `http://storage.test/get/${fileName}`, expiresAt: new Date(Date.now() + 900_000).toISOString(), mimeType, fileName, sizeBytes: 2_400_000, width: null, height: null, durationMs: null, pageCount: null, thumbUrl: null, mediumUrl: null, largeUrl: null, posterUrl: null, playbackUrl: null })
+  const variant = (fileName: string, name: string) => `http://storage.test/get/${fileName}/${name}`
+  const VIDEO_ID = FILE_ID.replace('f001', 'f003')
+  const PDF_ID = FILE_ID.replace('f001', 'f004')
+  const withMedia = [
+    ...cards.map((c) => ({ ...c, media: null })),
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c010', type: 'image', position: 'a2', revision: 1, content: { fileId: FILE_ID, alt: 'A search tree' }, media: { ...base(FILE_ID, 'tree.jpg', 'image/jpeg'), width: 2400, height: 1600, thumbUrl: variant('tree.jpg', 'thumb'), mediumUrl: variant('tree.jpg', 'medium'), largeUrl: variant('tree.jpg', 'large') } },
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c011', type: 'video', position: 'a3', revision: 1, content: { fileId: VIDEO_ID }, media: { ...base(VIDEO_ID, 'lecture.mov', 'video/quicktime'), durationMs: 60_000, posterUrl: variant('lecture.mov', 'poster'), playbackUrl: variant('lecture.mov', 'video720') } },
+    { __typename: 'Card', id: '01920000-0000-7000-8000-00000000c012', type: 'file', position: 'a4', revision: 1, content: { fileId: PDF_ID }, media: { ...base(PDF_ID, 'chapter-2.pdf', 'application/pdf'), pageCount: 12 } },
+  ]
+  await mockApi(page, { NoteToEdit: () => ({ note: { ...meta({ viewerAccess: 'READER', owner: friend }), cards: page1(withMedia) } }) })
+  await page.goto(`/notes/${NOTE_ID}`)
+  const picture = page.getByRole('img', { name: 'A search tree' })
+  await expect(picture).toHaveAttribute('src', variant('tree.jpg', 'medium'))
+  await expect(picture).toHaveAttribute('srcset', `${variant('tree.jpg', 'thumb')} 320w, ${variant('tree.jpg', 'medium')} 960w, ${variant('tree.jpg', 'large')} 1920w`)
+  await expect(picture).toHaveAttribute('width', '2400')
+  const video = page.locator('video')
+  await expect(video).toHaveAttribute('src', variant('lecture.mov', 'video720'))
+  await expect(video).toHaveAttribute('poster', variant('lecture.mov', 'poster'))
+  await expect(page.getByRole('link', { name: /chapter-2\.pdf/ })).toContainText('2.3 MB · 12 pages')
 })

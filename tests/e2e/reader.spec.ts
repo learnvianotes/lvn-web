@@ -17,7 +17,7 @@ const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-methods
 const noProblems = { userErrors: [] }
 const READER_URL = `/notes/${NOTE_ID}/read/${PDF_ID}`
 
-const media = (id: string, fileName: string, mimeType: string, size: number) => ({ __typename: 'MediaFile', id, url: `http://storage.test/get/${fileName}`, expiresAt: new Date(Date.now() + 3_600_000).toISOString(), mimeType, fileName, sizeBytes: size, width: null, height: null, durationMs: null })
+const media = (id: string, fileName: string, mimeType: string, size: number) => ({ __typename: 'MediaFile', id, url: `http://storage.test/get/${fileName}`, expiresAt: new Date(Date.now() + 3_600_000).toISOString(), mimeType, fileName, sizeBytes: size, width: null, height: null, durationMs: null, pageCount: null, thumbUrl: null, mediumUrl: null, largeUrl: null, posterUrl: null, playbackUrl: null })
 const pdfFile = media(PDF_ID, 'Biology chapter 3.pdf', 'application/pdf', PDF.length)
 const fileCard = { __typename: 'Card', id: FILE_CARD, type: 'file', position: 'a0', revision: 1, content: { fileId: PDF_ID }, media: pdfFile }
 

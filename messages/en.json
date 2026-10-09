@@ -438,6 +438,7 @@
         "alt": "Describe the picture for people who cannot see it",
         "caption": "Caption",
         "unavailable": "This file is not available.",
+        "pages": "{count, plural, one {# page} other {# pages}}",
         "open": "Open",
         "read": "Read & make notes",
         "readLead": "Open it beside this note: highlight, snip and write as you read"

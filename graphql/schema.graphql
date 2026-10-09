@@ -430,8 +430,22 @@ type MediaFile {
   fileName: String!
   height: Int
   id: UUID!
+  largeUrl: String
+  mediumUrl: String
   mimeType: String!
+  pageCount: Int
+
+  """The 720p H.264 transcode of a video, or the loudness-normalised audio"""
+  playbackUrl: String
+
+  """A frame of a video (WebP)"""
+  posterUrl: String
   sizeBytes: Int!
+
+  """
+  Made after the upload (ADR-0041); null until made: pictures 320, 960 and 1920 pixels wide (WebP)
+  """
+  thumbUrl: String
   url: String!
   width: Int
 }
