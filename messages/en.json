@@ -763,6 +763,31 @@
     "readOnly": "You can read this note. To highlight and make notes on this PDF, start notes of your own: the PDF comes along, with a credit to this note.",
     "study": "Start my notes on this PDF",
     "noCopies": "The owner does not allow copies of this note, so its PDF cannot be studied in your own notes.",
-    "saveFailed": "That did not save. Check your connection and try again."
+    "saveFailed": "That did not save. Check your connection and try again.",
+    "convert": {
+      "button": "Convert to cards",
+      "title": "Convert this PDF into cards",
+      "lead": "{name} becomes a new note of your own made of editable cards, which you check beside the PDF.",
+      "point1": "Headings, paragraphs, lists, tables and pictures become cards.",
+      "point2": "Every card links to the page it came from.",
+      "point3": "Scanned pages are read with OCR; it takes a few seconds a page.",
+      "usage": "You have converted {used} of {limit} pages this month.",
+      "usageUnlimited": "You have converted {used} pages this month.",
+      "start": "Convert",
+      "starting": "Starting…",
+      "cancel": "Cancel",
+      "failed": "The conversion could not start. Try again.",
+      "notAllowed": "The owner does not allow copies of this note, so its PDF cannot be converted.",
+      "waiting": "Your cards appear here when the conversion is done.",
+      "stage": {
+        "QUEUED": "Waiting to start…",
+        "TRIAGE": "Counting the pages…",
+        "PARSING": "Reading the PDF: layout, tables, pictures and scans…",
+        "MAPPING": "Making your cards…"
+      },
+      "pages": "{n, plural, one {# page} other {# pages}}{scanned, plural, =0 {} one {, # scanned} other {, # scanned}}",
+      "done": "Made {cards, plural, one {# card} other {# cards}} from {pages, plural, one {# page} other {# pages}}. Check them beside the PDF: each card’s page chip shows where it came from.",
+      "dismiss": "Dismiss"
+    }
   }
 }

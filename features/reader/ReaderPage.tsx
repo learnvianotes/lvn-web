@@ -2,7 +2,7 @@
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import type { Editor } from '@tiptap/react'
-import { ArrowLeft, Crop, Highlighter, ListTree, Minus, NotebookPen, PanelRightClose, PanelRightOpen, Plus, Search, StretchHorizontal, X } from 'lucide-react'
+import { ArrowLeft, Crop, Highlighter, ListTree, Minus, NotebookPen, PanelRightClose, PanelRightOpen, Plus, Search, StretchHorizontal, Wand2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -12,6 +12,7 @@ import {
   AddPdfHighlightDocument,
   NoteFileDocument,
   NoteHighlightsDocument,
+  NotePdfConversionDocument,
   RemovePdfHighlightDocument,
   StudyPdfDocument,
   UpdatePdfHighlightDocument,
@@ -30,6 +31,7 @@ import { savedStateOf } from '@/features/notes/model/save'
 import { CardView } from '@/features/notes/render/CardView'
 import { useLoadedNote } from '@/features/notes/useLoadedNote'
 import type { PageRect } from './geometry'
+import { ACTIVE, ConversionBanner, ConvertDialog } from './convert'
 import { AreaActions, FindBar, HighlightCard, HighlightsList, OutlineList, SelectionActions, ToolButton } from './parts'
 import { PdfViewer, type AreaSelection, type Mark, type OutlineItem, type PdfViewerHandle, type TextSelection } from './PdfViewer'
 
@@ -53,7 +55,8 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
   const params = useSearchParams()
   const viewerQuery = useQuery(ViewerDocument)
   const userId = viewerQuery.data?.viewer?.id
-  const [loaded, setLoaded] = useLoadedNote(noteId, userId, 0)
+  const [generation, setGeneration] = useState(0)
+  const [loaded, setLoaded] = useLoadedNote(noteId, userId, generation)
   const file = useQuery(NoteFileDocument, { variables: { noteId, fileId }, fetchPolicy: 'network-only' })
   const ready = loaded.state === 'ready'
   const editable = ready && loaded.meta.viewerAccess !== 'READER'
@@ -90,6 +93,27 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
       return 1
     }
   })
+
+  const [convertOpen, setConvertOpen] = useState(false)
+  const [bannerHidden, setBannerHidden] = useState(false)
+  const conversionQuery = useQuery(NotePdfConversionDocument, { variables: { id: noteId }, skip: !userId, fetchPolicy: 'network-only' })
+  const conversion = conversionQuery.data?.note?.pdfConversion ?? null
+  const converting = !!conversion && ACTIVE.includes(conversion.status)
+  // While the engine works the note's cards are on their way: check every two seconds, then load them.
+  const wasConverting = useRef(false)
+  const { startPolling, stopPolling } = conversionQuery
+  useEffect(() => {
+    if (!converting) return stopPolling()
+    wasConverting.current = true
+    startPolling(2000)
+    return () => stopPolling()
+  }, [converting, startPolling, stopPolling])
+  useEffect(() => {
+    if (!converting && wasConverting.current) {
+      wasConverting.current = false
+      setGeneration((g) => g + 1)
+    }
+  }, [converting])
 
   const [addHighlight] = useMutation(AddPdfHighlightDocument)
   const [updateHighlight] = useMutation(UpdatePdfHighlightDocument)
@@ -341,8 +365,10 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               }}
             />
           ) : null}
+          {meta?.viewerCan.fork && !converting ? <ToolButton icon={Wand2} label={t('convert.button')} onClick={() => setConvertOpen(true)} /> : null}
           <ToolButton icon={panelOpen ? PanelRightClose : PanelRightOpen} label={panelOpen ? t('hidePanel') : t('showPanel')} pressed={panelOpen} onClick={() => setPanelOpen((o) => !o)} />
         </header>
+        {conversion && !bannerHidden ? <ConversionBanner conversion={conversion} onDismiss={() => setBannerHidden(true)} /> : null}
         {findOpen ? (
           <FindBar
             result={found}
@@ -407,6 +433,8 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
                   <p role="status" className="py-8 text-center text-sm text-muted">
                     {t('loadingNotes')}
                   </p>
+                ) : converting ? (
+                  <p className="py-8 text-center text-sm text-muted">{t('convert.waiting')}</p>
                 ) : editable ? (
                   <NoteEditor
                     noteId={noteId}
@@ -532,6 +560,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
             }}
           />
         ) : null}
+        <ConvertDialog open={convertOpen} onClose={() => setConvertOpen(false)} noteId={noteId} fileId={fileId} fileName={fileName} />
         {notice ? (
           <div role="status" className="fixed bottom-4 left-1/2 z-[70] flex -translate-x-1/2 animate-rise items-center gap-3 rounded-full bg-fg px-4 py-2 text-sm text-bg shadow-xl">
             {notice.text}
