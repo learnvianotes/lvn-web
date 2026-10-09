@@ -1,5 +1,6 @@
 import type { CardType } from '@/lib/contracts/domain/enums'
-import type { Doc, Inline } from '@/lib/contracts/validation'
+import { useTranslations } from 'next-intl'
+import { cardAnchor, type CardAnchor, type Doc, type Inline } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
 import { FlashcardCardView, QuestionCardView, QuizCardView } from './interactive'
 import { MediaBlock } from './MediaBlock'
@@ -21,7 +22,11 @@ const CALLOUT: Record<string, string> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- card content is checked per type by the API
 type Any = any
 
-export function CardView({ id, type, content, highlighted }: { id: string; type: CardType; content: unknown; highlighted?: boolean }) {
+/**
+ * `onAnchor` opens the PDF a card came from (lvn-backend ADR-0040); without it the card only says which page.
+ */
+export function CardView({ id, type, content, highlighted, onAnchor }: { id: string; type: CardType; content: unknown; highlighted?: boolean; onAnchor?: (anchor: CardAnchor, cardId: string) => void }) {
+  const t = useTranslations('notes.editor')
   const c = content as Any
   const body = (() => {
     switch (type) {
@@ -126,9 +131,19 @@ export function CardView({ id, type, content, highlighted }: { id: string; type:
     }
   })()
   if (!body) return null
+  const anchor = cardAnchor(content)
   return (
-    <section data-card-id={id} data-card-type={type} className={cn('rounded-lg transition-colors', highlighted && 'bg-accent-soft ring-2 ring-accent/30')}>
+    <section data-card-id={id} data-card-type={type} className={cn('flex flex-col rounded-lg transition-colors', highlighted && 'bg-accent-soft ring-2 ring-accent/30')}>
       {body}
+      {anchor ? (
+        onAnchor ? (
+          <button type="button" className="lvn-anchor-chip mt-1.5" title={anchor.quote} onClick={() => onAnchor(anchor, id)}>
+            ↗ {t('anchorPage', { page: anchor.page })}
+          </button>
+        ) : (
+          <span className="mt-1 self-end text-xs text-muted">{t('fromPage', { page: anchor.page })}</span>
+        )
+      ) : null}
     </section>
   )
 }

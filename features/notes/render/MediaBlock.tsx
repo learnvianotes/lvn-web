@@ -1,6 +1,7 @@
 'use client'
 
-import { Download, FileText, ImageOff } from 'lucide-react'
+import { BookOpenText, Download, FileText, ImageOff } from 'lucide-react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { Inline } from '@/lib/contracts/validation'
 import { formatBytes, useMedia, type MediaCardType } from '../media'
@@ -55,9 +56,19 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
           {caption}
         </figure>
       )
-    default:
+    default: {
+      const reader = file.mimeType === 'application/pdf' && content.fileId ? store.readerHref?.(content.fileId) : undefined
       return (
-        <figure>
+        <figure className="flex flex-col gap-2">
+          {reader ? (
+            <Link href={reader} className="flex items-center gap-3 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-fg shadow-md shadow-accent/20 transition hover:bg-accent/90">
+              <BookOpenText className="size-5 shrink-0" aria-hidden />
+              <span className="flex min-w-0 flex-col">
+                <span>{t('read')}</span>
+                <span className="text-xs font-normal opacity-85">{t('readLead')}</span>
+              </span>
+            </Link>
+          ) : null}
           <a href={file.url} target="_blank" rel="noopener noreferrer" className="lvn-chip group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition hover:border-accent/50 hover:shadow-md">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
               <FileText className="size-5" aria-hidden />
@@ -74,5 +85,6 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
           {caption}
         </figure>
       )
+    }
   }
 }

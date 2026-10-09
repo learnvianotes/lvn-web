@@ -33,3 +33,6 @@ __pycache__/
 
 # temporary render input (branding/render-icons.mjs)
 branding/.logo-square.svg
+
+# pdf.js run-time files (scripts/pdfjs-assets.mjs)
+public/pdfjs/

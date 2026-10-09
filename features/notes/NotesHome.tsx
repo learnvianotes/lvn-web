@@ -1,11 +1,11 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
+import { BookOpen, BookOpenText, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { NightSky } from '@/components/brand/NightSky'
 import {
@@ -28,6 +28,7 @@ import { NotebookArt } from './art'
 import { VisibilityBadge } from './ShareDialog'
 import { accentOf, ago, daypart } from './look'
 import { TEMPLATE_KEYS, templateCards, type TemplateKey } from './templates'
+import { useReadPdf } from '@/features/reader/readPdf'
 
 type View = { kind: 'all' } | { kind: 'unfiled' } | { kind: 'shared' } | { kind: 'trash' } | { kind: 'folder'; id: string } | { kind: 'tag'; id: string }
 
@@ -68,6 +69,8 @@ export function NotesHome() {
   const [destroy] = useMutation(DeleteNoteForeverDocument)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const readPdf = useReadPdf()
+  const pdfInput = useRef<HTMLInputElement>(null)
   const folders = organise.data?.myFolders ?? []
   const tags = organise.data?.myTags ?? []
   const all = useMemo<(NoteListFieldsFragment | SharedNote)[]>(() => connection?.edges.map((e) => e.node) ?? [], [connection])
@@ -122,10 +125,28 @@ export function NotesHome() {
 
   return (
     <div className="grid gap-6 md:grid-cols-[15rem_minmax(0,1fr)]">
+      <input
+        ref={pdfInput}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="sr-only"
+        tabIndex={-1}
+        aria-label={t('readPdf')}
+        data-testid="read-pdf-input"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (file) void readPdf.start(file, view.kind === 'folder' ? view.id : null)
+        }}
+      />
       <aside className="hidden flex-col gap-5 md:sticky md:top-20 md:flex md:self-start">
         <Button size="lg" className="w-full gap-2 shadow-lg shadow-accent/20" disabled={creating.loading || view.kind === 'trash'} onClick={() => void newNote()}>
           <Plus className="size-5" aria-hidden />
           {t('newNote')}
+        </Button>
+        <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={!!readPdf.uploading || view.kind === 'trash'} onClick={() => pdfInput.current?.click()}>
+          <BookOpenText className="size-5" aria-hidden />
+          {t('readPdf')}
         </Button>
         <nav aria-label={t('views.label')} className="flex flex-col gap-0.5">
           {navItem({ kind: 'all' }, t('views.all'), BookOpen)}
@@ -194,10 +215,16 @@ export function NotesHome() {
                 <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                   {all.length ? t('heroWithNotes') : t('heroFirst')}
                 </h1>
-                <Button size="lg" className="mt-3 w-fit gap-2 bg-white text-[#1C1A3A] hover:bg-white/90 md:hidden" disabled={creating.loading} onClick={() => void newNote()}>
-                  <Plus className="size-5" aria-hidden />
-                  {t('newNote')}
-                </Button>
+                <div className="mt-3 flex flex-wrap gap-2 md:hidden">
+                  <Button size="lg" className="w-fit gap-2 bg-white text-[#1C1A3A] hover:bg-white/90" disabled={creating.loading} onClick={() => void newNote()}>
+                    <Plus className="size-5" aria-hidden />
+                    {t('newNote')}
+                  </Button>
+                  <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" disabled={!!readPdf.uploading} onClick={() => pdfInput.current?.click()}>
+                    <BookOpenText className="size-5" aria-hidden />
+                    {t('readPdf')}
+                  </Button>
+                </div>
                 {latest ? (
                   <Link href={`/notes/${latest.id}`} className="mt-2 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-white/10 py-1.5 pl-3 pr-2 text-sm font-medium ring-1 ring-white/20 transition hover:bg-white/20">
                     <span className="truncate">
@@ -280,10 +307,18 @@ export function NotesHome() {
               </label>
             ) : null}
           </div>
-          {error ? (
+          {error || readPdf.error ? (
             <p role="alert" className="rounded-xl border border-red-600/30 bg-red-50 px-4 py-3 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-200">
-              {error}
+              {error ?? readPdf.error}
             </p>
+          ) : null}
+          {readPdf.uploading ? (
+            <div role="status" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+              <span className="truncate font-medium">{t('readPdfUploading', { name: readPdf.uploading.name })}</span>
+              <span className="h-2 overflow-hidden rounded-full bg-border" aria-hidden>
+                <span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
+              </span>
+            </div>
           ) : null}
           {notes.loading && !notes.data ? (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
