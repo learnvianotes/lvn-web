@@ -19,14 +19,19 @@ const answer = (query, variables) => {
   return null
 }
 
+// The browser's own calls (Lighthouse runs, scripts/lighthouse.mjs) come from the web app's origin.
+// Sign-in checks send cookies, so the origin is echoed rather than '*'.
+const cors = (req) => ({ 'access-control-allow-origin': req.headers.origin ?? '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': req.headers['access-control-request-headers'] ?? '*', 'access-control-allow-methods': 'POST, GET, OPTIONS' })
+
 createServer((req, res) => {
+  if (req.method === 'OPTIONS') return res.writeHead(204, cors(req)).end()
   if (req.method === 'GET') return res.writeHead(200).end('ok')
   let raw = ''
   req.on('data', (c) => (raw += c))
   req.on('end', () => {
     const { query, variables } = JSON.parse(raw)
     const data = answer(query, variables ?? {})
-    res.writeHead(200, { 'content-type': 'application/json' })
+    res.writeHead(200, { 'content-type': 'application/json', ...cors(req) })
     res.end(JSON.stringify(data ? { data } : { errors: [{ message: 'not mocked' }] }))
   })
 }).listen(port, '127.0.0.1')

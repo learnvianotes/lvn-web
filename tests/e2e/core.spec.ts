@@ -112,6 +112,8 @@ const KNOWN_OLD_SITE_FINDINGS: Record<string, RegExp> = {
 }
 
 test('topic page has no serious accessibility violations beyond the old site\'s', async ({ page }) => {
+  // Checked as it settles: fade-ins would be measured half-transparent.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/core/dsa-basics/analysis')
   await ready(page)
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()

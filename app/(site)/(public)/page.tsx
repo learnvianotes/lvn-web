@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { AuthProvider } from '@/components/auth/AuthProvider'
@@ -35,7 +36,7 @@ export default async function HomePage() {
           </div>
           <div className="lg:-mt-4">
             <Link href="/core" className="inline-flex h-11 items-center gap-2 rounded-full border border-white/30 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
-              {t('cta')} <i className="ti ti-arrow-right" aria-hidden />
+              {t('cta')} <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
         </div>

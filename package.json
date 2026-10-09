@@ -32,7 +32,8 @@
     "graphql:sync": "node scripts/graphql-sync.mjs",
     "contracts:sync": "node scripts/contracts-sync.mjs",
     "codegen": "graphql-codegen --config codegen.ts",
-    "pdfjs:assets": "node scripts/pdfjs-assets.mjs"
+    "pdfjs:assets": "node scripts/pdfjs-assets.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.3.2",
@@ -81,9 +82,11 @@
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "chrome-launcher": "1.2.2",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.27",
     "java-parser": "^2.3.4",
+    "lighthouse": "13.5.0",
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
