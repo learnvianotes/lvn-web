@@ -179,6 +179,33 @@ test('a learner reads a PDF beside a new note: a highlight and a passage in the 
   await expect(page.locator('.lvn-anchor-chip')).toHaveText('↗ p. 1')
 })
 
+test('a learner converts a PDF into cards with the real engine, and checks them beside it', async ({ page }, info) => {
+  test.setTimeout(240_000)
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Converter')
+  await page.getByLabel('Email', { exact: true }).fill(`live-convert-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.goto('/notes')
+  await page.getByTestId('read-pdf-input').setInputFiles({ name: 'Biology_chapter_3.pdf', mimeType: 'application/pdf', buffer: samplePdf() })
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}\/read\/[0-9a-f-]{36}$/, { timeout: 20_000 })
+  const first = page.url()
+  await page.getByRole('button', { name: 'Convert to cards' }).click()
+  await page.getByRole('dialog', { name: 'Convert this PDF into cards' }).getByRole('button', { name: 'Convert' }).click()
+  await expect.poll(() => page.url(), { timeout: 20_000 }).not.toBe(first)
+  // The engine counts the pages, reads the PDF (models load on its first job) and the cards arrive.
+  await expect(page.getByText(/Made \d+ cards? from 2 pages\./)).toBeVisible({ timeout: 200_000 })
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Show notes' }).click()
+  const notes = page.getByRole('textbox', { name: 'Note content' })
+  await expect(notes.getByText('Cells release energy from glucose.')).toBeVisible()
+  await expect(page.locator('.lvn-anchor-chip').first()).toBeVisible()
+  await expect(page.locator('.lvn-mark-anchor').first()).toBeAttached()
+})
+
 test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {
   const { TERMS_VERSION } = await import('../../features/legal/documents')
   const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })
