@@ -57,7 +57,7 @@ test('offers Google when the environment has it', async ({ page, request }) => {
 })
 
 test('a learner writes a note: cards from the slash menu, autosave, back after a reload, trash and restore', async ({ page }, info) => {
-  const email = `live-notes-${Date.now()}-${info.project.name}@example.com`
+  const email = `live-notes-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${info.project.name}@example.com`
   await page.goto('/sign-up')
   await page.getByLabel('Your name').fill('Live Writer')
   await page.getByLabel('Email', { exact: true }).fill(email)
@@ -87,7 +87,10 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByRole('button', { name: 'Add a card', exact: true }).click()
   await page.getByRole('button', { name: /^Flashcard/ }).click()
   await page.getByLabel('Front').fill('LIFO')
+  // The save that carries the back of the card, not an earlier one that happened to say Saved.
+  const backSaved = page.waitForResponse((r) => r.url().endsWith('/graphql') && /UpdateNoteDraft/.test(r.request().postData() ?? '') && (r.request().postData() ?? '').includes('Last in, first out'), { timeout: 15_000 })
   await page.getByLabel('Back').fill('Last in, first out: a stack')
+  await backSaved
   await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 15_000 })
 
   await page.reload()
