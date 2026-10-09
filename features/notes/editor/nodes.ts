@@ -11,11 +11,12 @@ import { CalloutView, CheckItemView, CodeLikeView, FlashcardView, HeadingView, O
 /**
  * The note editor's schema (lvn-backend §4.1, §12.2): the document is a list of cards, one node type per card type.
  * Rich-text cards hold paragraphs and lists; code-like cards hold plain text; structured cards (table, question, quiz,
- * flashcard) are atoms edited through forms. Every card node carries `id`, `position` and `revision` (../model/doc).
+ * flashcard) are atoms edited through forms. Every card node carries `id`, `position`, `revision` and `anchor`
+ * (../model/doc).
  */
 
 const hidden = (fallback: unknown = null) => ({ default: fallback, rendered: false, keepOnSplit: false })
-const cardAttributes = () => ({ id: hidden(), position: hidden(), revision: hidden() })
+const cardAttributes = () => ({ id: hidden(), position: hidden(), revision: hidden(), anchor: hidden() })
 
 export const NoteDocument = Node.create({ name: 'doc', topNode: true, content: 'card+' })
 
@@ -328,7 +329,7 @@ export function convertCard(editor: Editor, to: CardType): boolean {
   const from = card.node.type.name
   if (!['textCard', 'headingCard', 'quoteCard', 'calloutCard'].includes(from)) return false
   const json = card.node.toJSON() as JSONContent
-  const attrs = { id: json.attrs?.id, position: json.attrs?.position, revision: json.attrs?.revision }
+  const attrs = { id: json.attrs?.id, position: json.attrs?.position, revision: json.attrs?.revision, anchor: json.attrs?.anchor ?? null }
   const blocks: JSONContent[] = from === 'headingCard' ? [{ type: 'paragraph', content: json.content ?? [] }] : (json.content ?? [{ type: 'paragraph' }])
   const firstLine = (blocks.find((b) => b.type === 'paragraph')?.content ?? []) as JSONContent[]
   const next: JSONContent =

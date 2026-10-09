@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { PDF_TEXT, samplePdf } from './support/sample-pdf'
 
 /**
  * The deployed stack with nothing mocked: web, API, database, Redis and mail of an environment — the local environment
@@ -135,6 +136,47 @@ test('a learner adds a picture to a note: it goes to storage, and is there after
   const picture = page.getByRole('img', { name: 'A dot' })
   await expect(picture).toHaveAttribute('src', /^https?:\/\/.+X-Amz-Signature=/)
   await expect.poll(() => picture.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1)
+})
+
+test('a learner reads a PDF beside a new note: a highlight and a passage in the note stay after a reload', async ({ page }, info) => {
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Reader')
+  await page.getByLabel('Email', { exact: true }).fill(`live-pdf-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.goto('/notes')
+  await page.getByTestId('read-pdf-input').setInputFiles({ name: 'Biology_chapter_3.pdf', mimeType: 'application/pdf', buffer: samplePdf() })
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}\/read\/[0-9a-f-]{36}$/, { timeout: 20_000 })
+  const line = (text: string) => page.locator('.textLayer span', { hasText: text })
+  await expect(line(PDF_TEXT.page1[1]!)).toBeAttached({ timeout: 20_000 })
+  const select = (text: string) =>
+    page.evaluate((words) => {
+      const span = [...document.querySelectorAll('.textLayer span')].find((s) => s.textContent === words)!
+      const range = document.createRange()
+      range.selectNodeContents(span)
+      document.getSelection()!.removeAllRanges()
+      document.getSelection()!.addRange(range)
+    }, text)
+
+  await select(PDF_TEXT.page1[1]!)
+  await page.getByRole('dialog', { name: 'Selected words' }).getByRole('button', { name: 'Highlight in yellow' }).click()
+  await expect(page.locator('.lvn-mark-highlight')).toHaveCount(1)
+  await select(PDF_TEXT.page1[2]!)
+  await page.getByRole('dialog', { name: 'Selected words' }).getByRole('button', { name: 'Add to notes' }).click()
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Show notes' }).click()
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 15_000 })
+
+  await page.reload()
+  await expect(line(PDF_TEXT.page1[1]!)).toBeAttached({ timeout: 20_000 })
+  await expect(page.locator('.lvn-mark-highlight[data-color="YELLOW"]')).toHaveCount(1)
+  await expect(page.locator('.lvn-mark-anchor')).toHaveCount(1)
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Show notes' }).click()
+  await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(PDF_TEXT.page1[2]!)).toBeVisible()
+  await expect(page.locator('.lvn-anchor-chip')).toHaveText('↗ p. 1')
 })
 
 test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {

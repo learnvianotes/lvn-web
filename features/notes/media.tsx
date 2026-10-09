@@ -88,6 +88,8 @@ interface MediaStore {
   get: (fileId: string | undefined | null) => MediaInfo | undefined
   /** Uploads a file to the note; the card can show it right away from this device. */
   upload: (file: File, onProgress: (p: number) => void) => Promise<string>
+  /** Where a PDF of the note opens in the reader (lvn-backend ADR-0040), on pages of a note */
+  readerHref?: (fileId: string) => string | undefined
 }
 
 const MediaContext = createContext<MediaStore>({ noteId: null, get: () => undefined, upload: () => Promise.reject(new UploadError('no note')) })
@@ -102,7 +104,8 @@ export function MediaMapProvider({ media, loading = false, children }: { media: 
 /** Files dropped or pasted into the editor, waiting for the media card made for them to upload them. */
 export const pendingFiles = new Map<string, File>()
 
-export function MediaProvider({ noteId, cards, children }: { noteId: string | null; cards: CardFieldsFragment[] | { media?: MediaFieldsFragment | null }[]; children: ReactNode }) {
+/** `readNoteId` links the note's PDFs to the reader, except `readingFileId`, the one already open beside it. */
+export function MediaProvider({ noteId, cards, readNoteId, readingFileId, children }: { noteId: string | null; cards: CardFieldsFragment[] | { media?: MediaFieldsFragment | null }[]; readNoteId?: string; readingFileId?: string; children: ReactNode }) {
   const client = useApolloClient()
   const loaded = useMemo(() => mediaOf(cards), [cards])
   const local = useRef(new Map<string, MediaInfo>())
@@ -118,7 +121,10 @@ export function MediaProvider({ noteId, cards, children }: { noteId: string | nu
     },
     [client, noteId],
   )
-  const store = useMemo(() => ({ noteId, get, upload }), [noteId, get, upload])
+  const store = useMemo<MediaStore>(
+    () => ({ noteId, get, upload, readerHref: readNoteId ? (fileId: string) => (fileId === readingFileId ? undefined : `/notes/${readNoteId}/read/${fileId}`) : undefined }),
+    [noteId, get, upload, readNoteId, readingFileId],
+  )
   return <MediaContext.Provider value={store}>{children}</MediaContext.Provider>
 }
 

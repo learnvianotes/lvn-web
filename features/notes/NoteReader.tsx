@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { cardPlainText } from '@/lib/contracts/validation'
@@ -17,6 +18,7 @@ import { CardView } from './render/CardView'
 /** A note the viewer can read but not edit: its published version, with an outline and read aloud. */
 export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[] }) {
   const t = useTranslations('notes')
+  const router = useRouter()
   const spoken = useCallback(() => cards.map((c) => ({ id: c.id, text: cardPlainText(c.type, c.content) })), [cards])
   const reader = useReadAloud(spoken)
   const copy = useMakeCopy(meta.id)
@@ -80,7 +82,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
         </header>
         <div className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
           {cards.map((c) => (
-            <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} />
+            <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
           ))}
         </div>
       </article>

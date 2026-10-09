@@ -33,6 +33,13 @@ export const CardType = {
 } as const
 export type CardType = (typeof CardType)[keyof typeof CardType]
 
+/** A highlight in the PDF reader (ADR-0040): a passage of text, or an area of a page such as a figure. */
+export const HighlightKind = { TEXT: 'TEXT', AREA: 'AREA' } as const
+export type HighlightKind = (typeof HighlightKind)[keyof typeof HighlightKind]
+
+export const HighlightColor = { YELLOW: 'YELLOW', GREEN: 'GREEN', BLUE: 'BLUE', PINK: 'PINK', PURPLE: 'PURPLE' } as const
+export type HighlightColor = (typeof HighlightColor)[keyof typeof HighlightColor]
+
 /**
  * What a note is presented as (ADR-0014, ADR-0015). Every kind is a Note — same editor, versions, visibility,
  * moderation, search and permissions. Anyone writes NOTE and PROJECT; BLOG and POST are teacher publications.

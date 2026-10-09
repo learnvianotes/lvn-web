@@ -286,7 +286,12 @@
       "emptySharedLead": "When a classmate or teacher shares a note with you, it shows up here.",
       "sharedBy": "From {name}",
       "canEdit": "Can edit",
-      "canView": "Can view"
+      "canView": "Can view",
+      "readPdf": "Read a PDF",
+      "readPdfUploading": "Uploading {name}…",
+      "readPdfNotPdf": "Choose a PDF file.",
+      "readPdfTooLarge": "PDFs can be up to {mb} MB.",
+      "readPdfFailed": "The PDF could not be uploaded. Check your connection and try again."
     },
     "editor": {
       "title": "Title",
@@ -433,8 +438,12 @@
         "alt": "Describe the picture for people who cannot see it",
         "caption": "Caption",
         "unavailable": "This file is not available.",
-        "open": "Open"
-      }
+        "open": "Open",
+        "read": "Read & make notes",
+        "readLead": "Open it beside this note: highlight, snip and write as you read"
+      },
+      "anchorPage": "p. {page}",
+      "fromPage": "From page {page} of the PDF"
     },
     "reader": {
       "by": "By {name}",
@@ -687,5 +696,73 @@
       "failed": "The import did not work. Try again.",
       "untitled": "Untitled note"
     }
+  },
+  "reader": {
+    "title": "PDF reader",
+    "back": "Back to the note",
+    "untitled": "Untitled note",
+    "pdf": "PDF",
+    "panel": "Notes beside the PDF",
+    "loading": "Opening the PDF…",
+    "loadingNotes": "Loading the note…",
+    "failed": "This PDF could not be opened. The link may have expired: go back to the note and open it again.",
+    "passwordNeeded": "This PDF is locked with a password.",
+    "notFound": "This PDF is not in the note, or you cannot open it.",
+    "page": "Page",
+    "pageOf": "of {n}",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fitWidth": "Fit to width",
+    "find": "Find in the PDF",
+    "findPlaceholder": "Find words in the PDF",
+    "findNext": "Next match",
+    "findPrevious": "Previous match",
+    "findCount": "{current} of {total}",
+    "findNone": "Not found",
+    "close": "Close",
+    "snip": "Snip an area",
+    "snipHint": "Drag over a figure, formula or table to snip it. Tap the scissors again to stop.",
+    "snipAlt": "Page {page} of {name}",
+    "snipFailed": "That area could not be snipped. Try again.",
+    "showPanel": "Show notes",
+    "hidePanel": "Hide notes",
+    "panels": {
+      "notes": "Notes",
+      "highlights": "Highlights",
+      "contents": "Contents"
+    },
+    "selectionActions": "Selected words",
+    "areaActions": "Snipped area",
+    "highlightCard": "Highlight",
+    "highlightIn": "Highlight in {color}",
+    "colors": {
+      "YELLOW": "yellow",
+      "GREEN": "green",
+      "BLUE": "blue",
+      "PINK": "pink",
+      "PURPLE": "purple"
+    },
+    "addToNotes": "Add to notes",
+    "addAgain": "Add to notes again",
+    "adding": "Adding…",
+    "added": "Added to your notes",
+    "openNotes": "Show",
+    "copy": "Copy",
+    "copied": "Copied",
+    "cancel": "Cancel",
+    "comment": "Comment",
+    "commentPlaceholder": "Add a thought about this…",
+    "saveComment": "Save comment",
+    "remove": "Remove highlight",
+    "inNotes": "In your notes",
+    "area": "An area of the page",
+    "pageLabel": "Page {page}",
+    "highlightsEmpty": "Select words in the PDF and pick a colour to highlight them, or snip an area. Your highlights gather here, page by page.",
+    "highlightsFailed": "Your highlights could not be loaded. Reload to try again.",
+    "contentsEmpty": "This PDF has no table of contents.",
+    "readOnly": "You can read this note. To highlight and make notes on this PDF, start notes of your own: the PDF comes along, with a credit to this note.",
+    "study": "Start my notes on this PDF",
+    "noCopies": "The owner does not allow copies of this note, so its PDF cannot be studied in your own notes.",
+    "saveFailed": "That did not save. Check your connection and try again."
   }
 }

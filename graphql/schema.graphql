@@ -4,6 +4,24 @@ input AcceptTermsInput {
   version: String!
 }
 
+input AddPdfHighlightInput {
+  cardId: UUID
+
+  """YELLOW when left out"""
+  color: HighlightColor
+  comment: String
+
+  """A PDF attached to the note"""
+  fileId: UUID!
+  kind: HighlightKind!
+  noteId: UUID!
+  page: Int!
+  quote: String
+
+  """One rectangle for an AREA; up to 100 lines for TEXT"""
+  rects: [[Float!]!]!
+}
+
 input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
@@ -292,6 +310,22 @@ enum GlobalRole {
   TEACHER
 }
 
+enum HighlightColor {
+  BLUE
+  GREEN
+  PINK
+  PURPLE
+  YELLOW
+}
+
+enum HighlightKind {
+  """An area of the page, such as a figure or a formula"""
+  AREA
+
+  """A passage of text"""
+  TEXT
+}
+
 input IdInput {
   id: UUID!
 }
@@ -478,6 +512,9 @@ type Mutation {
   """Accept the current Terms, Privacy Policy and content licence"""
   acceptTerms(input: AcceptTermsInput!): OkPayload!
 
+  """Owner and editors"""
+  addPdfHighlight(input: AddPdfHighlightInput!): PdfHighlightPayload!
+
   """The author's one appeal against hiding or removing their note"""
   appealModeration(input: AppealModerationInput!): OkPayload!
 
@@ -533,6 +570,7 @@ type Mutation {
   """
   publishNote(input: NoteIdInput!): NotePayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
+  removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
   """
@@ -589,11 +627,18 @@ type Mutation {
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
 
+  """
+  Start notes of your own on a PDF of a note you can read (the rule for copies): a new PRIVATE note with the PDF in a
+  file card, crediting the original note when it was someone else's
+  """
+  studyPdf(input: StudyPdfInput!): NotePayload!
+
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
+  updatePdfHighlight(input: UpdatePdfHighlightInput!): PdfHighlightPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
@@ -631,6 +676,11 @@ type Note {
   """Set on a copy of another note; it cannot be removed"""
   forkedFrom: ForkCredit
   forkingEnabled: Boolean!
+
+  """
+  The owner's and editors' highlights, in page order (empty for readers); only those on one PDF with `fileId`
+  """
+  highlights(fileId: UUID): [PdfHighlight!]!
   id: UUID!
   kind: NoteKind!
 
@@ -866,6 +916,40 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+"""A highlight on one page of a PDF attached to the note"""
+type PdfHighlight {
+  """The card made from it"""
+  cardId: UUID
+  color: HighlightColor!
+  comment: String
+  createdAt: DateTime!
+  createdBy: User!
+  fileId: UUID!
+  id: UUID!
+  kind: HighlightKind!
+
+  """1-based"""
+  page: Int!
+
+  """The highlighted words (TEXT)"""
+  quote: String
+
+  """
+  [x0, y0, x1, y1] rectangles as fractions of the page's width and height from its top left
+  """
+  rects: [[Float!]!]!
+  updatedAt: DateTime!
+}
+
+input PdfHighlightIdInput {
+  highlightId: UUID!
+}
+
+type PdfHighlightPayload {
+  highlight: PdfHighlight
+  userErrors: [UserError!]!
+}
+
 enum ProblemMark {
   REVISIT
   SOLVED
@@ -912,6 +996,11 @@ type Query {
   A note the viewer can read; null otherwise (anonymous visitors: PUBLIC notes)
   """
   note(id: UUID!): Note
+
+  """
+  A PDF (or other file) of a note to read, with a link that works for an hour; null when the viewer may not open it
+  """
+  noteFile(fileId: UUID!, noteId: UUID!): MediaFile
 
   """Your latest imports, newest first"""
   noteImports: [NoteImport!]!
@@ -1132,6 +1221,11 @@ type StudentProfile {
   yearOfStudy: YearOfStudy
 }
 
+input StudyPdfInput {
+  fileId: UUID!
+  noteId: UUID!
+}
+
 type Subject {
   id: UUID!
   slug: String!
@@ -1291,6 +1385,16 @@ type UpdateNoteDraftPayload {
   note: Note
   results: [CardOpResult!]!
   userErrors: [UserError!]!
+}
+
+input UpdatePdfHighlightInput {
+  """null unlinks the card"""
+  cardId: UUID
+  color: HighlightColor
+
+  """An empty comment removes it"""
+  comment: String
+  highlightId: UUID!
 }
 
 """Omitted fields stay as they are; null clears a field"""

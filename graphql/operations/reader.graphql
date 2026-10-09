@@ -1,0 +1,70 @@
+# The PDF reader (lvn-backend ADR-0040): the PDF of a note, its highlights, and studying it in a note of one's own.
+
+fragment HighlightFields on PdfHighlight {
+  id
+  fileId
+  page
+  kind
+  color
+  rects
+  quote
+  comment
+  cardId
+}
+
+query NoteFile($noteId: UUID!, $fileId: UUID!) {
+  noteFile(noteId: $noteId, fileId: $fileId) {
+    ...MediaFields
+  }
+}
+
+query NoteHighlights($id: UUID!, $fileId: UUID) {
+  note(id: $id) {
+    id
+    highlights(fileId: $fileId) {
+      ...HighlightFields
+    }
+  }
+}
+
+mutation AddPdfHighlight($input: AddPdfHighlightInput!) {
+  addPdfHighlight(input: $input) {
+    highlight {
+      ...HighlightFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation UpdatePdfHighlight($input: UpdatePdfHighlightInput!) {
+  updatePdfHighlight(input: $input) {
+    highlight {
+      ...HighlightFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation RemovePdfHighlight($highlightId: UUID!) {
+  removePdfHighlight(input: { highlightId: $highlightId }) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation StudyPdf($noteId: UUID!, $fileId: UUID!) {
+  studyPdf(input: { noteId: $noteId, fileId: $fileId }) {
+    note {
+      id
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

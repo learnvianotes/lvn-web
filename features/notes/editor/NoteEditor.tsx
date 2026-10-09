@@ -41,7 +41,7 @@ import {
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
-import { cardPlainText } from '@/lib/contracts/validation'
+import { cardPlainText, type CardAnchor } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
 import { readingMinutes } from '../look'
 import { docToCards, type CardType } from '../model/doc'
@@ -50,6 +50,7 @@ import { ReadAloudControls } from '../ReadAloudControls'
 import { useReadAloud } from '../readAloud'
 import { useAutosave, type SaveStatus, type SendSave } from './autosave'
 import { CARD_NODES, CONVERTIBLE, convertCard, currentCard, deleteCard, duplicateCard, insertCardAfter, insertMediaCards, moveCard, selectCard } from './nodes'
+import { AnchorChips } from './anchors'
 import { ReadingHighlight, setReadingCard } from './reading'
 import { CARD_MENU, SlashMenu } from './slash'
 
@@ -67,6 +68,12 @@ export interface NoteEditorProps {
   /** The page's actions again, as items of the phone's More menu */
   menuItems?: { label: string; icon: LucideIcon; onClick: () => void; danger?: boolean }[]
   onOpenVersion: (versionId: string) => void
+  /** Opens the PDF a card came from (its page chip, lvn-backend ADR-0040) */
+  onAnchor?: (anchor: CardAnchor, cardId: string) => void
+  /** The editor, for pages that add cards to it (the PDF reader) */
+  onEditor?: (editor: Editor | null) => void
+  /** Beside a PDF: no outline column or focus mode, a smaller title */
+  compact?: boolean
 }
 
 const SAFE_LINK = /^(https?:\/\/|mailto:)/i
@@ -77,8 +84,10 @@ const SAFE_LINK = /^(https?:\/\/|mailto:)/i
  * beside the note on wide screens and in a sheet on phones; autosave reports itself in a pill; focus mode hides
  * everything but the writing; read aloud highlights the card being read.
  */
-export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion }: NoteEditorProps) {
+export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion, onAnchor, onEditor, compact = false }: NoteEditorProps) {
   const t = useTranslations('notes.editor')
+  const anchorRef = useRef(onAnchor)
+  anchorRef.current = onAnchor
   const [title, setTitle] = useState(initialTitle)
   const [focus, setFocus] = useState(false)
   const [contentsOpen, setContentsOpen] = useState(false)
@@ -103,6 +112,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
       Placeholder.configure({ placeholder: ({ node }) => (node.type.name === 'paragraph' ? t('placeholder') : ''), includeChildren: true }),
       ReadingHighlight,
       SlashMenu,
+      AnchorChips.configure({ onOpen: (anchor, cardId) => anchorRef.current?.(anchor, cardId), label: (page) => t('anchorPage', { page }) }),
       ...CARD_NODES,
     ],
     content: doc,
@@ -114,6 +124,10 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
     },
     onUpdate: ({ editor: e }) => autosave.changed(titleRef.current, e.getJSON()),
   })
+
+  useEffect(() => {
+    onEditor?.(editor ?? null)
+  }, [editor, onEditor])
 
   const changeTitle = (value: string) => {
     setTitle(value)
@@ -143,8 +157,8 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
   }, [focus])
 
   return (
-    <div className={cn('grid gap-6', !focus && 'lg:grid-cols-[13rem_minmax(0,1fr)]')}>
-      {!focus ? (
+    <div className={cn('grid gap-6', !focus && !compact && 'lg:grid-cols-[13rem_minmax(0,1fr)]')}>
+      {!focus && !compact ? (
         <nav aria-label={t('outline')} className="hidden lg:block">
           <div className="sticky top-20">
             <Outline editor={editor} />
@@ -163,13 +177,13 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden" onClick={() => setContentsOpen(true)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
               <ListTree className="size-4" aria-hidden />
               {t('contents')}
             </button>
             <span className="hidden sm:contents">
               <ReadAloudControls reader={reader} />
-              <IconButton icon={focus ? Minimize2 : Maximize2} label={focus ? t('focusExit') : t('focus')} onClick={() => setFocus((f) => !f)} pressed={focus} />
+              {!compact ? <IconButton icon={focus ? Minimize2 : Maximize2} label={focus ? t('focusExit') : t('focus')} onClick={() => setFocus((f) => !f)} pressed={focus} /> : null}
             </span>
             {!focus ? actions : null}
             {reader.state !== 'idle' ? (
@@ -199,7 +213,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         <div className="flex flex-col gap-2 px-1">
           <textarea
             rows={1}
-            className="w-full resize-none overflow-hidden bg-transparent text-3xl font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none sm:text-[2.6rem]"
+            className={cn('w-full resize-none overflow-hidden bg-transparent font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
             placeholder={t('untitled')}
             aria-label={t('title')}
             value={title}
@@ -221,8 +235,8 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
           {meta}
         </div>
 
-        <Toolbar editor={editor} />
-        <div className="lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm sm:py-6 sm:pl-14 sm:pr-10">
+        <Toolbar editor={editor} sticky={compact ? 'top-0' : 'top-14'} />
+        <div className={cn('lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
           {editor ? <CardHandle editor={editor} /> : null}
           {editor ? <SelectionMenu editor={editor} /> : null}
           <EditorContent editor={editor} />
@@ -332,12 +346,12 @@ function SelectionMenu({ editor }: { editor: Editor }) {
   )
 }
 
-function Toolbar({ editor }: { editor: Editor | null }) {
+function Toolbar({ editor, sticky }: { editor: Editor | null; sticky: 'top-0' | 'top-14' }) {
   const t = useTranslations('notes.editor')
   const active = useMarks(editor)
   if (!editor) return null
   return (
-    <div role="toolbar" aria-label={t('toolbar')} className="sticky top-14 z-20 flex items-center gap-0.5 overflow-x-auto rounded-2xl border border-border bg-bg/85 p-1 shadow-sm backdrop-blur [scrollbar-width:none]">
+    <div role="toolbar" aria-label={t('toolbar')} className={cn('sticky z-20 flex items-center gap-0.5 overflow-x-auto rounded-2xl border border-border bg-bg/85 p-1 shadow-sm backdrop-blur [scrollbar-width:none]', sticky)}>
       {MARKS.slice(0, 3).map((m) => (
         <IconButton key={m.mark} icon={m.icon} label={t(`marks.${m.mark}`)} pressed={!!active?.[m.mark]} onClick={() => m.run(editor)} />
       ))}

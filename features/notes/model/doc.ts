@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core'
 import { CardType } from '@/lib/contracts/domain/enums'
-import { parseCardContent } from '@/lib/contracts/validation'
+import { parseCardContent, type CardAnchor } from '@/lib/contracts/validation'
 
 /**
  * The editor holds a whole note as one Tiptap document whose top-level nodes are cards (lvn-backend spec §4.1: "one
@@ -45,8 +45,16 @@ const blocks = (doc: { content?: JSONContent[] } | undefined): JSONContent[] => 
 const textOf = (node: JSONContent): string => (node.content ?? []).map((n) => n.text ?? '').join('')
 const plain = (s: string): JSONContent[] => (s ? [{ type: 'text', text: s }] : [])
 
-/** Attributes every card node has; `position` and `revision` are what the server last stored. */
-export const cardAttrs = (card: { id: string; position?: string | null; revision?: number | null }) => ({ id: card.id, position: card.position ?? null, revision: card.revision ?? null })
+/**
+ * Attributes every card node has; `position` and `revision` are what the server last stored, `anchor` where the card
+ * came from in a PDF of the note (lvn-backend ADR-0040) — kept through every edit of the card.
+ */
+export const cardAttrs = (card: { id: string; position?: string | null; revision?: number | null; content?: unknown }) => ({
+  id: card.id,
+  position: card.position ?? null,
+  revision: card.revision ?? null,
+  anchor: ((card.content as { anchor?: CardAnchor } | null)?.anchor ?? null) as CardAnchor | null,
+})
 
 export function cardToNode(card: StoredCard | (DraftCard & { position?: string | null; revision?: number | null })): JSONContent {
   const attrs = cardAttrs(card)
@@ -92,6 +100,13 @@ export function cardsToDoc(cards: StoredCard[]): JSONContent {
 
 /** Card content from a card node, in the shape @lvn/contracts validates (not yet normalised). */
 export function nodeToCard(node: JSONContent): DraftCard | null {
+  const card = nodeContent(node)
+  const anchor = node.attrs?.anchor as CardAnchor | null | undefined
+  if (!card || !anchor || !card.content || typeof card.content !== 'object') return card
+  return { ...card, content: { ...(card.content as object), anchor } }
+}
+
+function nodeContent(node: JSONContent): DraftCard | null {
   const a = (node.attrs ?? {}) as Record<string, unknown>
   const id = a.id as string | null
   if (!id) return null

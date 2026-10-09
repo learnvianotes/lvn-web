@@ -90,3 +90,25 @@ body { font-family: var(--font-sans); min-height: 100dvh; }
 .lvn-editor .ProseMirror .ProseMirror-selectednode { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lvn-editor .ProseMirror .lvn-reading { background: var(--accent-soft); box-shadow: 0 0 0 6px var(--accent-soft); }
 
+
+/* The PDF reader (features/reader, lvn-backend ADR-0040): marks drawn over pdf.js pages. The layer multiplies with the
+   page, so highlights tint the paper without hiding the words. */
+.lvn-pdf { background: var(--surface-2); }
+.lvn-pdf .pdfViewer .page { box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 8px 24px rgb(0 0 0 / 0.06); }
+.lvn-marks { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; z-index: 1; }
+.lvn-mark { position: absolute; border-radius: 2px; }
+.lvn-mark-highlight[data-color='YELLOW'] { background: rgb(250 204 21 / 0.5); }
+.lvn-mark-highlight[data-color='GREEN'] { background: rgb(74 222 128 / 0.45); }
+.lvn-mark-highlight[data-color='BLUE'] { background: rgb(96 165 250 / 0.45); }
+.lvn-mark-highlight[data-color='PINK'] { background: rgb(244 114 182 / 0.45); }
+.lvn-mark-highlight[data-color='PURPLE'] { background: rgb(167 139 250 / 0.5); }
+.lvn-mark-anchor { background: rgb(79 70 229 / 0.08); border-bottom: 2px solid rgb(79 70 229 / 0.75); }
+.lvn-mark-pending { outline: 2px dashed rgb(79 70 229); background: rgb(79 70 229 / 0.1); }
+.lvn-mark-flash { background: rgb(79 70 229 / 0.35); animation: lvn-flash 1.8s ease-out forwards; }
+@keyframes lvn-flash { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
+.lvn-snipping, .lvn-snipping .textLayer { cursor: crosshair; user-select: none; touch-action: none; }
+.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: rgb(79 70 229 / 0.12); pointer-events: none; }
+.lvn-anchor-chip { align-self: flex-end; display: inline-flex; align-items: center; gap: 0.25rem; margin-top: -0.5rem; border-radius: 9999px; border: 1px solid var(--border); background: var(--surface); padding: 0.125rem 0.6rem; font-size: 0.75rem; line-height: 1.2rem; color: var(--muted); cursor: pointer; user-select: none; }
+.lvn-anchor-chip:hover { border-color: var(--accent); color: var(--accent); }
+.lvn-card-flash { animation: lvn-card-flash 1.8s ease-out; }
+@keyframes lvn-card-flash { 0%, 50% { box-shadow: 0 0 0 3px var(--accent); background: var(--accent-soft); } 100% { box-shadow: 0 0 0 0 transparent; } }

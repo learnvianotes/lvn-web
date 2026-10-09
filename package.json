@@ -8,8 +8,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "next dev -H 0.0.0.0 -p 3000",
-    "build": "next build",
+    "dev": "node scripts/pdfjs-assets.mjs && next dev -H 0.0.0.0 -p 3000",
+    "build": "node scripts/pdfjs-assets.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -31,7 +31,8 @@
     "content:data-science": "content-src/authoring/data-science/.venv/bin/python content-src/authoring/data-science/build.py && pnpm content:extract",
     "graphql:sync": "node scripts/graphql-sync.mjs",
     "contracts:sync": "node scripts/contracts-sync.mjs",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "pdfjs:assets": "node scripts/pdfjs-assets.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.3.2",
@@ -58,6 +59,7 @@
     "modern-screenshot": "^4.7.0",
     "next": "^15.5.27",
     "next-intl": "^4.14.9",
+    "pdfjs-dist": "6.3.289",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-hook-form": "^7.89.0",

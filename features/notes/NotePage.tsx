@@ -5,10 +5,10 @@ import { ArrowLeft, Folder, Hash, History, Rocket, Share2, SlidersHorizontal, Tr
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument, type CardFieldsFragment } from '@/graphql/generated/graphql'
-import { loadNote, sendSave, type NoteMeta } from './api'
+import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { sendSave, type NoteMeta } from './api'
 import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
 import { ModerationBanner } from '@/features/moderation/ModerationBanner'
@@ -17,27 +17,20 @@ import { ForkCredit, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDi
 import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
 import { NoteEditor } from './editor/NoteEditor'
-import { readMirror, removeMirror, savedFromMirror } from './editor/mirror'
-import { cardsToDoc, docToCards, type StoredCard } from './model/doc'
-import { planSave, savedStateOf } from './model/save'
+import { savedFromMirror } from './editor/mirror'
+import { cardsToDoc } from './model/doc'
+import { savedStateOf } from './model/save'
+import { useLoadedNote } from './useLoadedNote'
 
-type Loaded =
-  | { state: 'loading' }
-  | { state: 'missing' }
-  | { state: 'ready'; meta: NoteMeta; cards: StoredCard[]; media: CardFieldsFragment[]; mirror: Awaited<ReturnType<typeof readMirror>>; offline: boolean }
-
-/**
- * A note: the editor for its owner and editors, the reader for everyone else. Edits a previous visit left in this
- * browser (the IndexedDB mirror) are sent first; when that is impossible (offline), the editor opens on them.
- */
+/** A note: the editor for its owner and editors, the reader for everyone else (loading: ./useLoadedNote). */
 export function NotePage({ id }: { id: string }) {
   const t = useTranslations('notes')
   const client = useApolloClient()
   const router = useRouter()
   const viewer = useQuery(ViewerDocument)
   const userId = viewer.data?.viewer?.id
-  const [loaded, setLoaded] = useState<Loaded>({ state: 'loading' })
   const [generation, setGeneration] = useState(0)
+  const [loaded, setLoaded] = useLoadedNote(id, userId, generation)
   const [versionsOpen, setVersionsOpen] = useState<{ open: boolean; versionId?: string }>({ open: false })
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -48,47 +41,7 @@ export function NotePage({ id }: { id: string }) {
 
   const reload = useCallback(() => setGeneration((g) => g + 1), [])
 
-  useEffect(() => {
-    if (!userId) return
-    let cancelled = false
-    void (async () => {
-      setLoaded({ state: 'loading' })
-      const mirror = await readMirror(userId, id)
-      let offline = false
-      // Kept when it could not be sent: the editor opens on it and its autosave tries again.
-      let keep = false
-      if (mirror) {
-        const plan = planSave(savedFromMirror(mirror), mirror.title, docToCards(mirror.doc))
-        try {
-          const res = plan.ops.length || plan.title !== undefined ? await sendSave(client, () => {})({ noteId: id, ...(plan.title !== undefined ? { title: plan.title } : {}), ops: plan.ops }) : null
-          if (res?.userErrors.length) keep = true
-          else await removeMirror(userId, id)
-        } catch {
-          offline = true
-          keep = true
-        }
-      }
-      let note: Awaited<ReturnType<typeof loadNote>> = null
-      try {
-        note = await loadNote(client, id)
-      } catch {
-        offline = true
-      }
-      if (cancelled) return
-      if (!note && mirror && offline) {
-        // Offline with a local copy: open the editor on it; the autosave sends it when the connection is back.
-        setLoaded({ state: 'ready', meta: mirrorMeta(id, mirror.title), cards: [], media: [], mirror, offline: true })
-        return
-      }
-      if (!note) return setLoaded({ state: 'missing' })
-      setLoaded({ state: 'ready', meta: note.meta, cards: note.cards, media: note.media, mirror: keep ? mirror : null, offline })
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [client, id, userId, generation])
-
-  const onNote = useCallback((meta: NoteMeta) => setLoaded((l) => (l.state === 'ready' ? { ...l, meta } : l)), [])
+  const onNote = useCallback((meta: NoteMeta) => setLoaded((l) => (l.state === 'ready' ? { ...l, meta } : l)), [setLoaded])
   const send = useMemo(() => sendSave(client, onNote), [client, onNote])
 
   if (loaded.state === 'loading' || !userId) return <p role="status" className="py-16 text-center text-sm text-muted">{t('loading')}</p>
@@ -106,7 +59,7 @@ export function NotePage({ id }: { id: string }) {
   const { meta } = loaded
   if (meta.viewerAccess === 'READER') {
     return (
-      <MediaProvider noteId={null} cards={loaded.media}>
+      <MediaProvider noteId={null} cards={loaded.media} readNoteId={id}>
         <NoteReader meta={meta} cards={loaded.cards} />
       </MediaProvider>
     )
@@ -192,7 +145,7 @@ export function NotePage({ id }: { id: string }) {
     ) : null
 
   return (
-    <MediaProvider noteId={id} cards={loaded.media}>
+    <MediaProvider noteId={id} cards={loaded.media} readNoteId={id}>
       <div className="flex flex-col gap-3">
         <nav className="flex items-center justify-between gap-2 text-sm">
           <Link href="/notes" className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-muted transition hover:bg-surface-2 hover:text-fg">
@@ -242,6 +195,7 @@ export function NotePage({ id }: { id: string }) {
           meta={chips}
           menuItems={menuItems}
           onOpenVersion={(versionId) => setVersionsOpen({ open: true, versionId })}
+          onAnchor={(anchor, cardId) => router.push(`/notes/${id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)}
         />
         <VersionsDialog
           noteId={id}
@@ -258,30 +212,4 @@ export function NotePage({ id }: { id: string }) {
       </div>
     </MediaProvider>
   )
-}
-
-/** What the page shows about a note while offline with only its local copy. */
-function mirrorMeta(id: string, title: string): NoteMeta {
-  return {
-    id,
-    title,
-    slug: '',
-    kind: 'NOTE',
-    visibility: 'PRIVATE',
-    viewerAccess: 'OWNER',
-    viewerCan: { edit: true, publish: false, changeVisibility: false, delete: false, share: false, fork: false },
-    owner: { id: '', displayName: '', handle: '' },
-    folder: null,
-    tags: [],
-    topics: [],
-    draftRevision: null,
-    draftUpdatedAt: null,
-    publishedAt: null,
-    publishedVersion: null,
-    forkingEnabled: true,
-    moderation: null,
-    forkedFrom: null,
-    cardCount: 0,
-    deletedAt: null,
-  }
 }
