@@ -3,7 +3,7 @@ import { positionsBetween } from '@/lib/contracts/validation'
 import { cardsToDoc, cardToNode, contentKey, docToCards, newCardId, nodeToCard, type StoredCard } from '@/features/notes/model/doc'
 import { assignPositions } from '@/features/notes/model/positions'
 import { afterSave, planSave, savedStateOf } from '@/features/notes/model/save'
-import { acceptFor, cardTypeFor, mimeOf } from '@/features/notes/media'
+import { acceptFor, cardTypeFor, mimeOf, srcSetOf } from '@/features/notes/media'
 
 const p = (text: string) => ({ type: 'paragraph', content: [{ type: 'text', text }] })
 const doc = (...blocks: object[]) => ({ type: 'doc', content: blocks })
@@ -156,5 +156,13 @@ describe('media cards (P2c-2)', () => {
     expect(cardTypeFor(file('notes.pdf', 'application/pdf'))).toBe('file')
     expect(cardTypeFor(file('run.exe', 'application/x-msdownload'))).toBeNull()
     expect(acceptFor('image')).toBe('image/jpeg,image/png,image/webp,image/gif')
+  })
+
+  it('offer the picture sizes the server made, never wider than the original (ADR-0041)', () => {
+    const file = { url: 'o', mimeType: 'image/jpeg', fileName: 'a.jpg', sizeBytes: 1 }
+    expect(srcSetOf(file)).toBeUndefined()
+    expect(srcSetOf({ ...file, width: 2400, thumbUrl: 't', mediumUrl: 'm', largeUrl: 'l' })).toBe('t 320w, m 960w, l 1920w')
+    expect(srcSetOf({ ...file, width: 500, thumbUrl: 't', mediumUrl: 'm', largeUrl: 'l' })).toBe('t 320w, m 500w, l 500w')
+    expect(srcSetOf({ ...file, width: null, thumbUrl: 't', mediumUrl: null, largeUrl: null })).toBe('t 320w')
   })
 })

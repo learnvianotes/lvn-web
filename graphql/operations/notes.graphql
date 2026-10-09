@@ -10,6 +10,12 @@ fragment MediaFields on MediaFile {
   width
   height
   durationMs
+  pageCount
+  thumbUrl
+  mediumUrl
+  largeUrl
+  posterUrl
+  playbackUrl
 }
 
 fragment CardFields on Card {

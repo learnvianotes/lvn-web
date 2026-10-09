@@ -4,7 +4,7 @@ import { BookOpenText, Download, FileText, ImageOff } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { Inline } from '@/lib/contracts/validation'
-import { formatBytes, useMedia, type MediaCardType } from '../media'
+import { formatBytes, srcSetOf, useMedia, type MediaCardType } from '../media'
 import { InlineText } from './RichText'
 
 export interface MediaContent {
@@ -37,14 +37,23 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
       return (
         <figure>
           {/* eslint-disable-next-line @next/next/no-img-element -- short-lived storage URLs, not for next/image */}
-          <img src={file.url} alt={content.alt ?? ''} loading="lazy" className="mx-auto max-h-[70vh] w-auto rounded-xl object-contain shadow-sm" />
+          <img
+            src={file.mediumUrl ?? file.url}
+            srcSet={srcSetOf(file)}
+            sizes="(min-width: 48rem) 48rem, 100vw"
+            width={file.width ?? undefined}
+            height={file.height ?? undefined}
+            alt={content.alt ?? ''}
+            loading="lazy"
+            className="mx-auto max-h-[70vh] w-auto rounded-xl object-contain shadow-sm"
+          />
           {caption}
         </figure>
       )
     case 'video':
       return (
         <figure>
-          <video src={file.url} controls preload="metadata" playsInline className="w-full rounded-xl bg-black shadow-sm" />
+          <video src={file.playbackUrl ?? file.url} poster={file.posterUrl ?? undefined} controls preload="metadata" playsInline className="w-full rounded-xl bg-black shadow-sm" />
           {caption}
         </figure>
       )
@@ -52,7 +61,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
       return (
         <figure className="rounded-xl border border-border bg-surface-2 p-3">
           <p className="mb-2 truncate text-sm font-medium">{file.fileName}</p>
-          <audio src={file.url} controls preload="metadata" className="w-full" />
+          <audio src={file.playbackUrl ?? file.url} controls preload="metadata" className="w-full" />
           {caption}
         </figure>
       )
@@ -75,7 +84,10 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-medium">{file.fileName}</span>
-              <span className="text-xs text-muted">{formatBytes(file.sizeBytes)}</span>
+              <span className="text-xs text-muted">
+                {formatBytes(file.sizeBytes)}
+                {file.pageCount ? ` · ${t('pages', { count: file.pageCount })}` : null}
+              </span>
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1 text-sm text-muted group-hover:text-accent">
               <Download className="size-4" aria-hidden />
