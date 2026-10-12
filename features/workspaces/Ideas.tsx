@@ -12,6 +12,8 @@ import { ago } from '@/features/notes/look'
 import { RichDoc } from '@/features/notes/render/RichText'
 import { CreateIdeaDocument, DeleteGroupPostDocument, WorkspaceIdeasDocument, type GroupDetailFragment } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
+import { ContentModeration } from '@/features/moderation/ModerationBanner'
+import { ReportButton } from '@/features/moderation/ReportDialog'
 
 /** The ideas board (lvn-backend ADR-0048): ideas ranked by the team's reactions; react and discuss under each. */
 export function Ideas({ group }: { group: GroupDetailFragment }) {
@@ -67,12 +69,16 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
                   {idea.author.displayName}
                 </Link>
                 <span className="text-xs text-muted">{ago(idea.createdAt)}</span>
-                {idea.viewerCan.delete ? (
-                  <button type="button" className="ml-auto text-xs font-semibold text-muted hover:text-red-600" onClick={() => void remove({ variables: { postId: idea.id } }).then(() => refetch())}>
-                    {t('delete')}
-                  </button>
-                ) : null}
+                <span className="ml-auto flex items-center gap-3 text-xs font-semibold text-muted">
+                  {idea.viewerCan.delete ? (
+                    <button type="button" className="hover:text-red-600" onClick={() => void remove({ variables: { postId: idea.id } }).then(() => refetch())}>
+                      {t('delete')}
+                    </button>
+                  ) : null}
+                  <ReportButton look="text" entityType="GROUP_POST" entityId={idea.id} authorId={idea.author.id} />
+                </span>
               </div>
+              <ContentModeration entityType="GROUP_POST" item={idea} onAppealed={() => void refetch()} />
               <RichDoc doc={idea.body as Doc} className="text-sm" />
               <PostComments type="GROUP_POST" id={idea.id} count={idea.discussion.commentCount} />
             </li>

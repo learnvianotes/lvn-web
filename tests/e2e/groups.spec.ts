@@ -7,12 +7,12 @@ const GROUP = '01920000-0000-7000-8000-0000000a0001'
 const OTHER = '01920000-0000-7000-8000-00000000bbbb'
 const can = (over: Record<string, boolean> = {}) => ({ __typename: 'GroupActions', join: false, requestJoin: false, post: false, moderate: false, manage: false, delete: false, reviewRequests: false, leave: false, askDoubt: false, inviteMentor: false, acceptMentorInvite: false, ...over })
 const group = (over: Record<string, unknown> = {}) => ({
-  __typename: 'Group', id: GROUP, type: 'COMMUNITY', name: 'Algorithms study', description: 'Weekly problems and solutions', privacy: 'PUBLIC', joinPolicy: 'APPROVAL', memberCount: 12, viewerRole: null, createdAt: '2026-10-01T10:00:00.000Z', viewerRequestId: null, viewerMentorInviteId: null,
+  __typename: 'Group', id: GROUP, type: 'COMMUNITY', name: 'Algorithms study', description: 'Weekly problems and solutions', privacy: 'PUBLIC', joinPolicy: 'APPROVAL', memberCount: 12, viewerRole: null, createdAt: '2026-10-01T10:00:00.000Z', viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null,
   owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
 })
 const card = (id: string, name: string, viewerRole: string | null = null) => ({ __typename: 'Group', id, type: 'COMMUNITY', name, description: null, privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 3, viewerRole })
 const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: s }] }] })
-const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'GroupPost', id, kind: 'POST', body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer', handle: 'meera' }, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
+const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'GroupPost', id, kind: 'POST', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer', handle: 'meera' }, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
 const page = (pinned: unknown[], nodes: unknown[]) => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned, edges: nodes.map((node) => ({ __typename: 'GroupPostEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
 
 test('your groups, public groups to find, and starting a new one', async ({ page: p }) => {
@@ -135,4 +135,102 @@ test('older posts are added below the newer ones, not swapped for them', async (
   await expect(p.getByText('Last week')).toBeVisible()
   await expect(p.getByText('This week')).toBeVisible()
   await expect(p.getByRole('button', { name: 'Show older' })).toHaveCount(0)
+})
+
+test('a member reports someone else’s post, and sees why their own was hidden, with one appeal (ADR-0051)', async ({ page: p }) => {
+  let appealed = false
+  const mine = post('p9', 'My hot take', { author: { __typename: 'User', id: USER, displayName: 'Asha Rao', handle: 'asharao' }, moderation: 'HIDDEN', moderationReason: 'Be kind to the others.', moderationCanAppeal: true })
+  const calls = await mockApi(p, {
+    Group: () => ({ group: group({ viewerRole: 'MEMBER', viewerCan: can({ post: true, leave: true }) }) }),
+    GroupPosts: () => page([], [post('p2', 'You are all hopeless'), appealed ? { ...mine, moderationCanAppeal: false } : mine]),
+    ReportContent: () => ({ reportContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+    AppealModeration: () => ((appealed = true), { appealModeration: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await p.goto(`/groups/${GROUP}`)
+  await expect(p.getByRole('tab', { name: 'Reports' })).toHaveCount(0)
+  const items = p.getByRole('tabpanel').getByRole('listitem')
+  await expect(items).toHaveCount(2)
+  // Only other people's posts can be reported.
+  await expect(items.nth(1).getByRole('button', { name: 'Report' })).toHaveCount(0)
+  await items.first().getByRole('button', { name: 'Report' }).click()
+  const dialog = p.getByRole('dialog', { name: 'Report this post' })
+  await dialog.getByText('Bullying or harassment').click()
+  await dialog.getByRole('button', { name: 'Send report' }).click()
+  await expect(dialog.getByText('Thank you for telling us')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ReportContent')?.variables).toEqual({ input: { entityType: 'GROUP_POST', entityId: 'p2', reason: 'HARASSMENT', details: null } })
+  await dialog.getByRole('button', { name: 'Done' }).click()
+
+  const own = items.nth(1)
+  await expect(own.getByText('Hidden by moderators')).toBeVisible()
+  await expect(own.getByText('Be kind to the others.')).toBeVisible()
+  await expect(own.getByText('Only you can see it now.')).toBeVisible()
+  await own.getByRole('button', { name: 'Appeal' }).click()
+  const appeal = p.getByRole('dialog', { name: 'Appeal this decision' })
+  await expect(appeal.getByText('Tell the moderators why it should come back. You can appeal once.')).toBeVisible()
+  await appeal.getByLabel('Your message').fill('It was a joke among friends.')
+  await appeal.getByRole('button', { name: 'Send appeal' }).click()
+  await expect(own.getByText('Your appeal is with the moderators.')).toBeVisible()
+  await expect(own.getByRole('button', { name: 'Appeal' })).toHaveCount(0)
+  expect(calls.find((c) => c.op === 'AppealModeration')?.variables).toEqual({ input: { entityType: 'GROUP_POST', entityId: 'p9', message: 'It was a joke among friends.' } })
+})
+
+test('group moderators work through the group’s reports: open it, mute the author, hide with a reason (ADR-0051)', async ({ page: p }) => {
+  let open = true
+  const item = {
+    __typename: 'ModerationCase', entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: new Date(Date.now() - 3_600_000).toISOString(), note: null, user: null, group: null, appeal: null,
+    content: { __typename: 'ModeratedContent', entityType: 'GROUP_POST', id: 'p2', excerpt: 'You are all hopeless at heaps.', moderation: 'OK', moderationReason: null, deleted: false, path: `/groups/${GROUP}`, author: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer', handle: 'meera' } },
+    reports: [{ __typename: 'ModerationReport', reason: 'HARASSMENT', details: 'Rude to everyone', createdAt: new Date().toISOString(), reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
+  }
+  const calls = await mockApi(p, {
+    Group: () => ({ group: group({ viewerRole: 'MODERATOR', viewerCan: can({ post: true, moderate: true, leave: true }) }) }),
+    GroupPosts: () => page([], []),
+    ModerationQueue: () => ({ moderationQueue: { __typename: 'ModerationCaseConnection', edges: open ? [{ __typename: 'ModerationCaseEdge', cursor: 'c1', node: item }] : [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
+    MuteGroupMember: () => ({ muteGroupMember: { __typename: 'GroupPayload', group: { __typename: 'Group', id: GROUP }, userErrors: [] } }),
+    ModerateContent: () => ((open = false), { moderateContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await p.goto(`/groups/${GROUP}`)
+  await p.getByRole('tab', { name: 'Reports' }).click()
+  await expect(p.getByText(/Only the group’s moderators see them/)).toBeVisible()
+  expect(calls.find((c) => c.op === 'ModerationQueue')?.variables).toMatchObject({ scope: { scope: 'GROUP', id: GROUP } })
+  const card = p.getByRole('article', { name: 'Post' })
+  await expect(card.getByText('by Meera Iyer (@meera)')).toBeVisible()
+  await expect(card.getByText('You are all hopeless at heaps.')).toBeVisible()
+  await expect(card.getByText('Rude to everyone')).toBeVisible()
+  await expect(card.getByRole('link', { name: 'Open where it is' })).toHaveAttribute('href', `/groups/${GROUP}`)
+  // Approving a post that is up would change nothing; dismissing does that.
+  await expect(card.getByRole('button', { name: 'Approve' })).toHaveCount(0)
+  await card.getByRole('button', { name: 'Mute the author for a day' }).click()
+  await expect(card.getByRole('button', { name: 'Muted for a day' })).toBeDisabled()
+  expect(calls.find((c) => c.op === 'MuteGroupMember')?.variables).toMatchObject({ groupId: GROUP, userId: OTHER })
+  await card.getByRole('button', { name: 'Hide' }).click()
+  await expect(card.getByRole('alert')).toHaveText('Write a reason first: the author is told.')
+  await card.getByLabel(/^Reason/).fill('Be kind to the others.')
+  await card.getByRole('button', { name: 'Hide' }).click()
+  await expect(p.getByText('Nothing to review. Thank you!')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ModerateContent')?.variables).toEqual({ input: { entityType: 'GROUP_POST', entityId: 'p2', action: 'HIDE', reason: 'Be kind to the others.' } })
+})
+
+test('the owner reads the platform moderators’ warning on the group; others can report the group (ADR-0051)', async ({ page: p }) => {
+  let owner = true
+  const calls = await mockApi(p, {
+    Group: () => ({ group: owner ? group({ viewerRole: 'OWNER', moderationWarning: 'Rename the group, please.', owner: { __typename: 'User', id: USER, displayName: 'Asha Rao' }, viewerCan: can({ post: true, moderate: true, manage: true, delete: true }) }) : group({ viewerRole: 'MEMBER', viewerCan: can({ post: true, leave: true }) }) }),
+    GroupPosts: () => page([], []),
+    ReportContent: () => ({ reportContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await p.goto(`/groups/${GROUP}`)
+  const header = p.getByRole('banner').filter({ hasText: 'Algorithms study' })
+  await expect(p.getByText('A warning from the moderators')).toBeVisible()
+  await expect(p.getByText('Rename the group, please.')).toBeVisible()
+  await expect(header.getByRole('button', { name: 'Report' })).toHaveCount(0)
+
+  owner = false
+  await p.reload()
+  await expect(p.getByText('A warning from the moderators')).toHaveCount(0)
+  await p.getByRole('button', { name: 'Report' }).click()
+  const dialog = p.getByRole('dialog', { name: 'Report this group' })
+  await dialog.getByText('Hate', { exact: true }).click()
+  await dialog.getByLabel('Anything moderators should know (optional)').fill('The group name')
+  await dialog.getByRole('button', { name: 'Send report' }).click()
+  await expect(dialog.getByText('Thank you for telling us')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ReportContent')?.variables).toEqual({ input: { entityType: 'GROUP', entityId: GROUP, reason: 'HATE', details: 'The group name' } })
 })

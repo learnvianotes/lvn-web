@@ -54,6 +54,18 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'DOUBT', actor: meera, group, data: { kind: 'RESOLVED' } })).toBe('Meera Iyer marked your doubt in Heap visualiser resolved')
   })
 
+  it('tells authors what moderators decided, where, never why (lvn-backend ADR-0051)', () => {
+    const group = { id: 'g1', name: 'Heaps club' }
+    const classroom = { id: 'c1', name: 'Physics 9A' }
+    expect(say({ category: 'MODERATION', group, path: '/groups/g1', data: { kind: 'HIDDEN', entityType: 'GROUP_POST' } })).toBe('Moderators hid your post in Heaps club. Open it to see why.')
+    expect(say({ category: 'MODERATION', classroom, path: '/classes/c1', data: { kind: 'REMOVED', entityType: 'COMMENT' } })).toBe('Moderators removed your comment in Physics 9A. Open it to see why.')
+    expect(say({ category: 'MODERATION', note: { id: 'n1', title: 'Heaps' }, data: { kind: 'HIDDEN', entityType: 'COMMENT' } })).toBe('Moderators hid your comment on “Heaps”. Open it to see why.')
+    expect(say({ category: 'MODERATION', classroom, path: '/classes/c1', data: { kind: 'WARNED', entityType: 'CLASSROOM_POST' } })).toBe('Moderators left a warning on your announcement in Physics 9A.')
+    expect(say({ category: 'MODERATION', group, path: '/groups/g1/doubts/d1', data: { kind: 'RESTORED', entityType: 'DOUBT' } })).toBe('Moderators put your doubt in Heaps club back.')
+    expect(say({ category: 'MODERATION', group, path: '/groups/g1', data: { kind: 'WARNED', entityType: 'GROUP' } })).toBe('Moderators left a warning on your group Heaps club.')
+    expect(say({ category: 'MODERATION', path: '/groups/g1', data: { kind: 'REMOVED', entityType: 'GROUP' } })).toBe('Moderators removed your group.')
+  })
+
   it('names the class of a request, an answer, an invite or an announcement (lvn-backend ADR-0046)', () => {
     const c = { id: 'c1', name: 'Physics 9A' }
     const path = '/classes/c1'

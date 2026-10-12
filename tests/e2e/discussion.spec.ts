@@ -15,7 +15,7 @@ const reactions = (over: Record<string, number | null> = {}, viewerReaction: str
 const can = (over: Record<string, boolean> = {}) => ({ __typename: 'CommentActions', reply: true, edit: false, delete: false, approve: false, ...over })
 type MockComment = Record<string, unknown> & { id: string; replies: MockComment[] }
 const comment = (id: string, text: string, over: Record<string, unknown> = {}): MockComment => ({
-  __typename: 'Comment', id, body: doc(text), cardId: null, removed: false, pendingApproval: false, private: false, createdAt: new Date().toISOString(), editedAt: null, author: ravi, reactions: reactions(), viewerCan: can(), replies: [], ...over,
+  __typename: 'Comment', id, body: doc(text), moderation: 'OK', moderationReason: null, moderationCanAppeal: false, cardId: null, removed: false, pendingApproval: false, private: false, createdAt: new Date().toISOString(), editedAt: null, author: ravi, reactions: reactions(), viewerCan: can(), replies: [], ...over,
 })
 const discussion = (list: unknown[], over: Record<string, unknown> = {}) => ({
   discussion: { __typename: 'Discussion', commentCount: list.length, viewerCanComment: true, whyNot: null, reactions: reactions(), comments: { __typename: 'CommentConnection', edges: list.map((node) => ({ __typename: 'CommentEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } }, ...over },
@@ -92,7 +92,7 @@ test('a class announcement’s comments are a private thread with the staff', as
   const teacher = { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }
   const calls = await mockApi(page, {
     Classroom: () => ({ classroom: { __typename: 'Classroom', id: CLASS, name: 'Physics 9A', description: null, memberCount: 31, viewerRole: 'STUDENT', teacher, createdAt: '2026-10-01T10:00:00.000Z', joinCode: null, viewerRequestId: null, viewerInviteId: null, viewerCan: { __typename: 'ClassroomActions', requestJoin: false, acceptInvite: false, review: false, post: false, manage: false, leave: true } } }),
-    ClassroomPosts: () => ({ classroom: { __typename: 'Classroom', id: CLASS, posts: { __typename: 'ClassroomPostConnection', edges: [{ __typename: 'ClassroomPostEdge', node: { __typename: 'ClassroomPost', id: 'p1', body: doc('Test on Friday'), createdAt: new Date().toISOString(), viewerCanDelete: false, author: { ...teacher, handle: 'meera' }, discussion: { __typename: 'Discussion', commentCount: 1 } } }], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } }),
+    ClassroomPosts: () => ({ classroom: { __typename: 'Classroom', id: CLASS, posts: { __typename: 'ClassroomPostConnection', edges: [{ __typename: 'ClassroomPostEdge', node: { __typename: 'ClassroomPost', id: 'p1', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, body: doc('Test on Friday'), createdAt: new Date().toISOString(), viewerCanDelete: false, author: { ...teacher, handle: 'meera' }, discussion: { __typename: 'Discussion', commentCount: 1 } } }], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } }),
     Discussion: () => discussion([comment('c1', 'Which chapters?', { author: asha, private: true })]),
   })
   await page.goto(`/classes/${CLASS}`)
@@ -100,4 +100,39 @@ test('a class announcement’s comments are a private thread with the staff', as
   await expect(page.getByText('Private thread')).toBeVisible()
   await expect(page.getByLabel('Write a comment')).toHaveAttribute('placeholder', "Ask the teacher a question. Only you and the class's staff see it.")
   expect(calls.find((c) => c.op === 'Discussion')?.variables).toEqual({ target: { type: 'CLASSROOM_POST', id: 'p1' } })
+})
+
+test('the author of a held or hidden comment is told why, appeals once; others’ comments can be reported (ADR-0051)', async ({ page }) => {
+  const held = comment('c2', 'Buy followers here', { author: asha, moderation: 'PENDING_REVIEW', moderationReason: 'A moderator will look at this before others see it: it contains words linked to spam.', viewerCan: can({ edit: true, delete: true }) })
+  const hidden = comment('c3', 'You are wrong and so is everyone', { author: asha, moderation: 'HIDDEN', moderationReason: 'Disagree with the note, not the person.', moderationCanAppeal: true, viewerCan: can({ delete: true }) })
+  const calls = await mockApi(page, {
+    NoteToEdit: asReader,
+    Discussion: () => discussion([comment('c1', 'Why halve it?'), held, hidden]),
+    ReportContent: () => ({ reportContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+    AppealModeration: () => ({ appealModeration: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  const thread = page.getByRole('region', { name: 'Discussion' })
+  const items = thread.getByRole('article')
+  await expect(items).toHaveCount(3)
+  await expect(items.nth(1).getByText('Waiting for a moderator')).toBeVisible()
+  await expect(items.nth(1).getByText(/it contains words linked to spam/)).toBeVisible()
+  await expect(items.nth(1).getByText('Until then, only you can see it.')).toBeVisible()
+  await expect(items.nth(1).getByRole('button', { name: 'Appeal' })).toHaveCount(0)
+  await expect(items.nth(1).getByRole('button', { name: 'Report' })).toHaveCount(0)
+
+  await items.nth(2).getByRole('button', { name: 'Appeal' }).click()
+  const appeal = page.getByRole('dialog', { name: 'Appeal this decision' })
+  await appeal.getByLabel('Your message').fill('I meant the argument, not the people.')
+  await appeal.getByRole('button', { name: 'Send appeal' }).click()
+  await expect(items.nth(2).getByText('Your appeal is with the moderators.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'AppealModeration')?.variables).toEqual({ input: { entityType: 'COMMENT', entityId: 'c3', message: 'I meant the argument, not the people.' } })
+
+  await items.first().getByRole('button', { name: 'Report' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Report this comment' })
+  await expect(dialog.getByLabel('Anything moderators should know (optional)')).toHaveAttribute('placeholder', 'What is wrong, in a few words')
+  await dialog.getByText('Spam or advertising').click()
+  await dialog.getByRole('button', { name: 'Send report' }).click()
+  await expect(dialog.getByText('Thank you for telling us')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ReportContent')?.variables).toEqual({ input: { entityType: 'COMMENT', entityId: 'c1', reason: 'SPAM', details: null } })
 })

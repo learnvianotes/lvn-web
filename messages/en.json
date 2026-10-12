@@ -564,7 +564,15 @@
   "moderation": {
     "report": {
       "button": "Report",
-      "title": "Report this note",
+      "title": {
+        "NOTE": "Report this note",
+        "USER": "Report this person",
+        "COMMENT": "Report this comment",
+        "GROUP_POST": "Report this post",
+        "CLASSROOM_POST": "Report this announcement",
+        "DOUBT": "Report this doubt",
+        "GROUP": "Report this group"
+      },
       "lead": "What is wrong with it? Moderators look at every report; the author is not told who sent it.",
       "reasons": {
         "SPAM": "Spam or advertising",
@@ -592,13 +600,15 @@
       "failed": "The report did not go through. Try again.",
       "thanks": "Thank you for telling us",
       "thanksLead": "A moderator will look at it.",
-      "done": "Done"
+      "done": "Done",
+      "detailsPlaceholderOther": "What is wrong, in a few words"
     },
     "banner": {
       "title": {
         "PENDING_REVIEW": "Waiting for a moderator",
         "HIDDEN": "Hidden by moderators",
-        "REMOVED": "Removed by moderators"
+        "REMOVED": "Removed by moderators",
+        "WARNED": "A warning from the moderators"
       },
       "heldLead": "Until then, only you and the people you share it with can read it.",
       "appeal": "Appeal",
@@ -608,7 +618,11 @@
       "sendAppeal": "Send appeal",
       "cancel": "Cancel",
       "appealed": "Your appeal is with the moderators.",
-      "failed": "The appeal did not go through. Try again."
+      "failed": "The appeal did not go through. Try again.",
+      "heldLeadContent": "Until then, only you can see it.",
+      "hiddenLeadContent": "Only you can see it now.",
+      "warnedLead": "It stays up. Please keep this in mind next time.",
+      "appealLeadContent": "Tell the moderators why it should come back. You can appeal once."
     },
     "queue": {
       "title": "Moderation queue",
@@ -619,7 +633,12 @@
       "by": "by {name} (@{handle})",
       "entity": {
         "NOTE": "Note",
-        "USER": "Account"
+        "USER": "Account",
+        "COMMENT": "Comment",
+        "GROUP_POST": "Post",
+        "CLASSROOM_POST": "Announcement",
+        "DOUBT": "Doubt",
+        "GROUP": "Group"
       },
       "state": {
         "OK": "Public",
@@ -640,11 +659,26 @@
         "WARN": "Warn",
         "HIDE": "Hide",
         "REMOVE": "Remove",
-        "SUSPEND": "Suspend"
+        "SUSPEND": "Suspend",
+        "KEEP": "Keep the decision",
+        "RESTORE": "Put it back"
       },
       "failed": "That did not work. Try again.",
       "notAllowed": "Only moderators can see this page",
-      "notAllowedLead": "It is for platform admins."
+      "notAllowedLead": "It is for platform admins.",
+      "scope": {
+        "GROUP": "In a group",
+        "CLASSROOM": "In a class"
+      },
+      "leadScoped": {
+        "GROUP": "Reports from members and posts held for review, oldest first. Only the group’s moderators see them, and the author is never told who reported.",
+        "CLASSROOM": "Reports from the class and comments held for review, oldest first. Only the teacher and TAs see them, and the author is never told who reported."
+      },
+      "notAllowedScoped": "Only the moderators of this place can see its reports.",
+      "deleted": "The author has deleted it.",
+      "open": "Open where it is",
+      "muteDay": "Mute the author for a day",
+      "muted": "Muted for a day"
     }
   },
   "publicNote": {
@@ -847,7 +881,23 @@
     "mentorInvite": "{actor} asked you to mentor {group}",
     "doubtAsked": "{actor} asked a doubt in {group}",
     "doubtAnswered": "{actor} answered your doubt in {group}",
-    "doubtResolved": "{actor} marked your doubt in {group} resolved"
+    "doubtResolved": "{actor} marked your doubt in {group} resolved",
+    "moderationHidden": "Moderators hid {what}. Open it to see why.",
+    "moderationRemoved": "Moderators removed {what}. Open it to see why.",
+    "moderationWarned": "Moderators left a warning on {what}.",
+    "moderationRestored": "Moderators put {what} back.",
+    "moderationThing": {
+      "COMMENT": "your comment",
+      "GROUP_POST": "your post",
+      "CLASSROOM_POST": "your announcement",
+      "DOUBT": "your doubt",
+      "GROUP": "your group",
+      "OTHER": "something you posted"
+    },
+    "moderationWhatIn": "{thing} in {place}",
+    "moderationWhatOn": "{thing} on “{note}”",
+    "moderationWhatGroup": "your group {group}",
+    "moderationGroupRemoved": "Moderators removed {what}."
   },
   "people": {
     "teacher": "Teacher",
@@ -966,7 +1016,8 @@
         "EXPERIENCE": "Experience",
         "SKILL": "Skills"
       }
-    }
+    },
+    "report": "Report"
   },
   "groups": {
     "title": "Groups",
@@ -1011,7 +1062,8 @@
       "requests": "Requests",
       "settings": "Settings",
       "ideas": "Ideas",
-      "doubts": "Doubts"
+      "doubts": "Doubts",
+      "reports": "Reports"
     },
     "join": "Join",
     "askToJoin": "Ask to join",
@@ -1106,7 +1158,8 @@
       "notes": "Notes",
       "people": "People",
       "requests": "Requests",
-      "settings": "Settings"
+      "settings": "Settings",
+      "reports": "Reports"
     },
     "code": "Class code",
     "codeHint": "Students ask to join with this code or the link. You or a TA let them in.",

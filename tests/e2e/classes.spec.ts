@@ -15,7 +15,7 @@ const classroom = (over: Record<string, unknown> = {}) => ({
 const asTeacher = () => classroom({ viewerRole: 'TEACHER', teacher: { __typename: 'User', id: USER, displayName: 'Asha Rao' }, joinCode: 'K7PQ2MXA', viewerCan: can({ review: true, post: true, manage: true }) })
 const asStudent = () => classroom({ viewerRole: 'STUDENT', viewerCan: can({ leave: true }) })
 const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: s }] }] })
-const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'ClassroomPost', id, body: doc(text), createdAt: new Date().toISOString(), viewerCanDelete: false, author: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer', handle: 'meera' }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
+const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'ClassroomPost', id, body: doc(text), moderation: 'OK', moderationReason: null, moderationCanAppeal: false, createdAt: new Date().toISOString(), viewerCanDelete: false, author: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer', handle: 'meera' }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
 const posts = (nodes: unknown[]) => ({ classroom: { __typename: 'Classroom', id: CLASS, posts: { __typename: 'ClassroomPostConnection', edges: nodes.map((node) => ({ __typename: 'ClassroomPostEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
 const card = (over: Record<string, unknown> = {}) => ({ __typename: 'Classroom', id: CLASS, name: 'Physics 9A', description: null, memberCount: 31, viewerRole: 'STUDENT', teacher: teacherRef, ...over })
 
@@ -106,7 +106,7 @@ test('the teacher starts a class, sees its code, and posts an announcement', asy
   await dialog.getByRole('button', { name: 'Create class' }).click()
   await expect(p).toHaveURL(new RegExp(`/classes/${CLASS}$`))
   await expect(p.getByTestId('class-code')).toHaveText('K7PQ2MXA')
-  await expect(p.getByRole('tab')).toHaveText(['Announcements', 'Notes', 'People', 'Requests', 'Settings'])
+  await expect(p.getByRole('tab')).toHaveText(['Announcements', 'Notes', 'People', 'Requests', 'Reports', 'Settings'])
   await p.getByLabel('Write an announcement').fill('Test on Friday')
   await p.getByRole('button', { name: 'Post', exact: true }).click()
   await expect(p.getByRole('tabpanel')).toContainText('Test on Friday')
@@ -157,4 +157,40 @@ test('staff let students in, invite a TA, and hand the class over only after con
   expect(calls.filter((c) => c.op === 'SetClassroomRole')).toEqual([])
   await p.getByLabel('Role of Ravi Kumar').selectOption('TA')
   await expect.poll(() => calls.find((c) => c.op === 'SetClassroomRole')?.variables).toEqual({ classroomId: CLASS, userId: PUPIL, role: 'TA' })
+})
+
+test('staff review the class’s reports; a teacher reads a warning on their announcement (ADR-0051)', async ({ page: p }) => {
+  let open = true
+  const item = {
+    __typename: 'ModerationCase', entityType: 'COMMENT', entityId: 'c1', scope: 'CLASSROOM', scopeId: CLASS, openedAt: new Date(Date.now() - 600_000).toISOString(), note: null, user: null, group: null, appeal: null,
+    content: { __typename: 'ModeratedContent', entityType: 'COMMENT', id: 'c1', excerpt: 'Buy followers here, cheap.', moderation: 'PENDING_REVIEW', moderationReason: 'A moderator will look at this before others see it.', deleted: false, path: `/classes/${CLASS}`, author: { __typename: 'User', id: PUPIL, displayName: 'Ravi Kumar', handle: 'ravi' } },
+    reports: [{ __typename: 'ModerationReport', reason: 'SPAM', details: 'Held when posted: it contains words linked to spam.', createdAt: new Date().toISOString(), reporter: null }],
+  }
+  const calls = await mockApi(p, {
+    Classroom: () => ({ classroom: asTeacher() }),
+    ClassroomPosts: () => posts([post('p1', 'Test on Monday', { author: { __typename: 'User', id: USER, displayName: 'Asha Rao', handle: 'asharao' }, viewerCanDelete: true, moderationReason: 'Check the date, please.' })]),
+    ModerationQueue: () => ({ moderationQueue: { __typename: 'ModerationCaseConnection', edges: open ? [{ __typename: 'ModerationCaseEdge', cursor: 'c1', node: item }] : [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
+    ModerateContent: () => ((open = false), { moderateContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await p.goto(`/classes/${CLASS}`)
+  const announcement = p.getByRole('tabpanel').getByRole('listitem').first()
+  await expect(announcement.getByText('A warning from the moderators')).toBeVisible()
+  await expect(announcement.getByText('Check the date, please.')).toBeVisible()
+  await expect(announcement.getByText('It stays up. Please keep this in mind next time.')).toBeVisible()
+  await expect(announcement.getByRole('button', { name: 'Report' })).toHaveCount(0)
+
+  await p.getByRole('tab', { name: 'Reports' }).click()
+  await expect(p.getByText(/Only the teacher and TAs see them/)).toBeVisible()
+  expect(calls.find((c) => c.op === 'ModerationQueue')?.variables).toMatchObject({ scope: { scope: 'CLASSROOM', id: CLASS } })
+  const card = p.getByRole('article', { name: 'Comment' })
+  await expect(card.getByText('held automatically')).toBeVisible()
+  await expect(card.getByText('Held', { exact: true })).toBeVisible()
+  // No muting in a class: that is for groups.
+  await expect(card.getByRole('button', { name: 'Mute the author for a day' })).toHaveCount(0)
+  await card.getByRole('button', { name: 'Remove' }).click()
+  await expect(card.getByRole('alert')).toHaveText('Write a reason first: the author is told.')
+  await card.getByLabel(/^Reason/).fill('No selling in class.')
+  await card.getByRole('button', { name: 'Remove' }).click()
+  await expect(p.getByText('Nothing to review. Thank you!')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ModerateContent')?.variables).toEqual({ input: { entityType: 'COMMENT', entityId: 'c1', action: 'REMOVE', reason: 'No selling in class.' } })
 })

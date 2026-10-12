@@ -42,6 +42,15 @@ export function describeNotification(
     }
     case 'CLASSROOM_POST':
       return t('classPost', { actor, classroom: place ?? t('aClass') })
+    case 'MODERATION': {
+      // What a moderator decided about the viewer's own content (lvn-backend ADR-0051); the reason is shown with it.
+      const type = typeof data.entityType === 'string' ? data.entityType : 'OTHER'
+      const thing = t(`moderationThing.${['COMMENT', 'GROUP_POST', 'CLASSROOM_POST', 'DOUBT', 'GROUP'].includes(type) ? type : 'OTHER'}`)
+      const what = type === 'GROUP' ? (place ? t('moderationWhatGroup', { group: place }) : thing) : n.note ? t('moderationWhatOn', { thing, note: n.note.title || t('untitled') }) : place ? t('moderationWhatIn', { thing, place }) : thing
+      // A removed group can't be opened to see why.
+      const kind = data.kind === 'REMOVED' ? (type === 'GROUP' ? 'moderationGroupRemoved' : 'moderationRemoved') : data.kind === 'WARNED' ? 'moderationWarned' : data.kind === 'RESTORED' ? 'moderationRestored' : 'moderationHidden'
+      return t(kind, { what })
+    }
     case 'CONNECTION':
       return data.kind === 'ACCEPTED' ? t('connectionAccepted', { actor }) : t('connectionRequested', { actor })
     case 'DATA_EXPORT':

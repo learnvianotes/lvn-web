@@ -148,3 +148,19 @@ test('Ctrl+K finds a person; Enter opens their profile', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/u\/meera$/)
 })
+
+test('a signed-in viewer reports a person from the menu (ADR-0051)', async ({ page }) => {
+  const calls = await mockApi(page, {
+    ProfileRelation: () => profileRelation(relation()),
+    ReportContent: () => ({ reportContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await page.goto('/u/meera')
+  await page.getByRole('button', { name: 'More options' }).click()
+  await page.getByRole('menuitem', { name: 'Report' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Report this person' })
+  await dialog.getByText('Bullying or harassment').click()
+  await dialog.getByLabel('Anything moderators should know (optional)').fill('Messages me every day')
+  await dialog.getByRole('button', { name: 'Send report' }).click()
+  await expect(dialog.getByText('Thank you for telling us')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ReportContent')?.variables).toEqual({ input: { entityType: 'USER', entityId: MEERA, reason: 'HARASSMENT', details: 'Messages me every day' } })
+})

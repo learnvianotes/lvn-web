@@ -19,6 +19,9 @@ fragment CommentFields on Comment {
   private
   createdAt
   editedAt
+  moderation
+  moderationReason
+  moderationCanAppeal
   author {
     id
     displayName

@@ -163,7 +163,7 @@ export function NotePage({ id }: { id: string }) {
             {meta.viewerAccess === 'EDITOR' ? ` · ${t('editingFor', { name: meta.owner.displayName })}` : ''}
           </span>
         </nav>
-        {meta.moderation ? <ModerationBanner noteId={id} moderation={meta.moderation} /> : null}
+        {meta.moderation ? <ModerationBanner entityType="NOTE" entityId={id} moderation={meta.moderation} /> : null}
         {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
         {copy.copyError ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">

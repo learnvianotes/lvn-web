@@ -9,6 +9,9 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ago } from '@/features/notes/look'
 import { PostComments } from '@/features/discussion/PostComments'
+import { ContentModeration, ModerationBanner } from '@/features/moderation/ModerationBanner'
+import { ModerationQueue } from '@/features/moderation/ModerationQueue'
+import { ReportButton } from '@/features/moderation/ReportDialog'
 import { RichDoc } from '@/features/notes/render/RichText'
 import {
   CreateGroupPostDocument,
@@ -39,7 +42,7 @@ import { Ideas } from '@/features/workspaces/Ideas'
 import { InviteMentor, ShowcaseSetting, WorkspaceHeader } from '@/features/workspaces/Workspace'
 import { attempt, textToDoc } from './shared'
 
-type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'members' | 'requests' | 'settings'
+type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'members' | 'requests' | 'reports' | 'settings'
 
 /** One group (lvn-backend ADR-0045): who it is for and how to get in; inside, posts, shared notes and members. */
 export function GroupPage({ id }: { id: string }) {
@@ -50,7 +53,7 @@ export function GroupPage({ id }: { id: string }) {
   if (!group) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
   const member = !!group.viewerRole
   const project = group.type === 'PROJECT'
-  const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
+  const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.moderate ? (['reports'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header group={group} onChanged={() => void refetch()} />
@@ -75,6 +78,7 @@ export function GroupPage({ id }: { id: string }) {
               </div>
             ) : null}
             {tab === 'requests' ? <Requests group={group} /> : null}
+            {tab === 'reports' ? <ModerationQueue scope={{ scope: 'GROUP', id: group.id }} groupId={group.id} /> : null}
             {tab === 'settings' ? (
               <div className="flex flex-col gap-8">
                 <Settings group={group} onSaved={() => void refetch()} />
@@ -122,6 +126,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
       </div>
       <h1 className="text-2xl font-extrabold tracking-tight">{group.name}</h1>
       {group.description ? <p className="whitespace-pre-line text-muted">{group.description}</p> : null}
+      {group.moderationWarning ? <ModerationBanner entityType="GROUP" entityId={group.id} moderation={{ state: 'OK', reason: group.moderationWarning, canAppeal: false }} /> : null}
       {group.type === 'PROJECT' ? <WorkspaceHeader group={group} onChanged={onChanged} /> : null}
       <div className="flex flex-wrap items-center gap-2">
         {group.viewerCan.join ? <Button onClick={() => void run(() => join({ variables: { groupId: group.id } }))}>{t('join')}</Button> : null}
@@ -141,6 +146,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
             {t('leave')}
           </Button>
         ) : null}
+        <ReportButton entityType="GROUP" entityId={group.id} authorId={group.owner.id} className="ml-auto" />
       </div>
       {asking && group.viewerCan.requestJoin ? (
         <form
@@ -214,7 +220,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
       {all.length ? (
         <ul className="flex flex-col gap-3">
           {all.map((p) => (
-            <PostItem key={p.id} post={p} onPin={() => void act(() => pin({ variables: { postId: p.id, pinned: !p.pinned } }))} onDelete={() => void act(() => remove({ variables: { postId: p.id } }))} />
+            <PostItem key={p.id} post={p} onPin={() => void act(() => pin({ variables: { postId: p.id, pinned: !p.pinned } }))} onDelete={() => void act(() => remove({ variables: { postId: p.id } }))} onChanged={() => void refetch()} />
           ))}
         </ul>
       ) : posts ? (
@@ -235,7 +241,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
   )
 }
 
-function PostItem({ post, onPin, onDelete }: { post: GroupPostFieldsFragment; onPin: () => void; onDelete: () => void }) {
+function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsFragment; onPin: () => void; onDelete: () => void; onChanged: () => void }) {
   const t = useTranslations('groups')
   return (
     <li className={`flex flex-col gap-2 rounded-2xl border bg-surface p-4 ${post.pinned ? 'border-accent/50' : 'border-border'}`}>
@@ -259,8 +265,10 @@ function PostItem({ post, onPin, onDelete }: { post: GroupPostFieldsFragment; on
               <Trash2 className="size-4" aria-hidden />
             </button>
           ) : null}
+          <ReportButton look="icon" entityType="GROUP_POST" entityId={post.id} authorId={post.author.id} />
         </span>
       </div>
+      <ContentModeration entityType="GROUP_POST" item={post} onAppealed={onChanged} />
       <RichDoc doc={post.body as Doc} className="text-sm" />
       <PostComments type="GROUP_POST" id={post.id} count={post.discussion.commentCount} />
     </li>

@@ -19,6 +19,9 @@ fragment DoubtSummary on Doubt {
   repoRef
   createdAt
   answerCount
+  moderation
+  moderationReason
+  moderationCanAppeal
   author {
     id
     displayName

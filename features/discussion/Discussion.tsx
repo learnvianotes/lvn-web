@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { RichDoc } from '@/features/notes/render/RichText'
+import { ContentModeration } from '@/features/moderation/ModerationBanner'
+import { ReportButton } from '@/features/moderation/ReportDialog'
 import { AddCommentDocument, ApproveCommentDocument, DeleteCommentDocument, DiscussionDocument, EditCommentDocument, type CommentFieldsFragment, type CommentTargetType } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
 import { ReactionBar } from './Reactions'
@@ -196,6 +198,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
         ) : null}
         {c.pendingApproval ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">{t('waiting')}</span> : null}
       </div>
+      <ContentModeration entityType="COMMENT" item={c} onAppealed={onChanged} />
       {editing ? (
         <form
           className="flex flex-col gap-2"
@@ -251,6 +254,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
               {t('delete')}
             </button>
           ) : null}
+          {c.author ? <ReportButton look="text" entityType="COMMENT" entityId={c.id} authorId={c.author.id} /> : null}
         </span>
       </div>
       {error ? (
