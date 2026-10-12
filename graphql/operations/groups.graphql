@@ -2,6 +2,7 @@
 
 fragment GroupCard on Group {
   id
+  type
   name
   description
   privacy
@@ -14,6 +15,7 @@ fragment GroupDetail on Group {
   ...GroupCard
   createdAt
   viewerRequestId
+  viewerMentorInviteId
   owner {
     id
     displayName
@@ -27,11 +29,15 @@ fragment GroupDetail on Group {
     delete
     reviewRequests
     leave
+    askDoubt
+    inviteMentor
+    acceptMentorInvite
   }
 }
 
 fragment GroupPostFields on GroupPost {
   id
+  kind
   body
   pinned
   createdAt
@@ -124,6 +130,8 @@ query GroupNotes($id: UUID!) {
         node {
           id
           title
+          kind
+          visibility
           publishedAt
           owner {
             id

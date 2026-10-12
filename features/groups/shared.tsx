@@ -39,6 +39,7 @@ export function GroupCardView({ group }: { group: GroupCardFragment }) {
       <span className="flex items-center gap-2 font-semibold">
         <Icon className="size-4 shrink-0 text-accent" aria-label={t(`privacy.${group.privacy}`)} />
         <span className="truncate">{group.name}</span>
+        {group.type === 'PROJECT' ? <span className="ml-auto shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-semibold text-muted">{t('project')}</span> : null}
       </span>
       {group.description ? <span className="line-clamp-2 text-sm text-muted">{group.description}</span> : null}
       <span className="mt-auto flex items-center gap-1.5 text-xs text-muted">

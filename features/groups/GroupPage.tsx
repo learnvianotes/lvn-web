@@ -34,9 +34,12 @@ import {
   type GroupPostFieldsFragment,
 } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
+import { Doubts } from '@/features/workspaces/Doubts'
+import { Ideas } from '@/features/workspaces/Ideas'
+import { InviteMentor, ShowcaseSetting, WorkspaceHeader } from '@/features/workspaces/Workspace'
 import { attempt, textToDoc } from './shared'
 
-type Tab = 'posts' | 'notes' | 'members' | 'requests' | 'settings'
+type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'members' | 'requests' | 'settings'
 
 /** One group (lvn-backend ADR-0045): who it is for and how to get in; inside, posts, shared notes and members. */
 export function GroupPage({ id }: { id: string }) {
@@ -46,7 +49,8 @@ export function GroupPage({ id }: { id: string }) {
   const group = data?.group
   if (!group) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
   const member = !!group.viewerRole
-  const tabs: Tab[] = member ? ['posts', 'notes', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
+  const project = group.type === 'PROJECT'
+  const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header group={group} onChanged={() => void refetch()} />
@@ -61,10 +65,22 @@ export function GroupPage({ id }: { id: string }) {
           </div>
           <div role="tabpanel">
             {tab === 'posts' ? <Posts group={group} /> : null}
+            {tab === 'ideas' ? <Ideas group={group} /> : null}
+            {tab === 'doubts' ? <Doubts group={group} /> : null}
             {tab === 'notes' ? <SharedNotes group={group} /> : null}
-            {tab === 'members' ? <Members group={group} /> : null}
+            {tab === 'members' ? (
+              <div className="flex flex-col gap-4">
+                {group.viewerCan.inviteMentor ? <InviteMentor groupId={group.id} /> : null}
+                <Members group={group} />
+              </div>
+            ) : null}
             {tab === 'requests' ? <Requests group={group} /> : null}
-            {tab === 'settings' ? <Settings group={group} onSaved={() => void refetch()} /> : null}
+            {tab === 'settings' ? (
+              <div className="flex flex-col gap-8">
+                <Settings group={group} onSaved={() => void refetch()} />
+                {project ? <ShowcaseSetting group={group} /> : null}
+              </div>
+            ) : null}
           </div>
         </>
       ) : (
@@ -93,6 +109,12 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
         <Icon className="size-4" aria-hidden />
         {t(`privacy.${group.privacy}`)}
+        {group.type === 'PROJECT' ? (
+          <>
+            <span aria-hidden>·</span>
+            {t('project')}
+          </>
+        ) : null}
         <span aria-hidden>·</span>
         <Users className="size-4" aria-hidden />
         {t('members', { count: group.memberCount })}
@@ -100,6 +122,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
       </div>
       <h1 className="text-2xl font-extrabold tracking-tight">{group.name}</h1>
       {group.description ? <p className="whitespace-pre-line text-muted">{group.description}</p> : null}
+      {group.type === 'PROJECT' ? <WorkspaceHeader group={group} onChanged={onChanged} /> : null}
       <div className="flex flex-wrap items-center gap-2">
         {group.viewerCan.join ? <Button onClick={() => void run(() => join({ variables: { groupId: group.id } }))}>{t('join')}</Button> : null}
         {group.viewerCan.requestJoin && !asking ? (

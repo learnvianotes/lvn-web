@@ -38,10 +38,29 @@ input AnswerClassroomInviteInput {
   inviteId: UUID!
 }
 
+input AnswerDoubtInput {
+  body: JSON!
+  doubtId: UUID!
+}
+
+input AnswerMentorInviteInput {
+  accept: Boolean!
+  inviteId: UUID!
+}
+
 input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
   message: String!
+}
+
+input AskDoubtInput {
+  body: JSON!
+  groupId: UUID!
+  repoRef: String
+
+  """3 to 200 characters"""
+  title: String!
 }
 
 type AuthPayload {
@@ -385,6 +404,11 @@ type ConnectionRequestItem {
   person: User!
 }
 
+enum ContributorRole {
+  CONTRIBUTOR
+  MENTOR
+}
+
 input ConvertPdfInput {
   """A PDF of the note the viewer can read"""
   fileId: UUID!
@@ -441,11 +465,17 @@ input CreateGroupInput {
   """3 to 80 characters"""
   name: String!
   privacy: GroupPrivacy!
+
+  """PROJECT starts a project workspace (ADR-0048); COMMUNITY when left out"""
+  type: GroupType
 }
 
 input CreateGroupPostInput {
   body: JSON!
   groupId: UUID!
+
+  """IDEA: on a project workspace's ideas board; POST when left out"""
+  kind: GroupPostKind
 }
 
 input CreateNoteInput {
@@ -536,6 +566,66 @@ enum DomainReviewStatus {
   REJECTED
 }
 
+type Doubt {
+  answerCount: Int!
+
+  """Oldest first"""
+  answers: [DoubtAnswer!]!
+  author: User!
+
+  """Rich text: a card's document"""
+  body: JSON!
+  createdAt: DateTime!
+  id: UUID!
+
+  """A path, line or commit in the repository"""
+  repoRef: String
+  resolvedAt: DateTime
+  status: DoubtStatus!
+  title: String!
+  viewerCan: DoubtActions!
+}
+
+type DoubtActions {
+  answer: Boolean!
+  delete: Boolean!
+  reopen: Boolean!
+  resolve: Boolean!
+}
+
+type DoubtAnswer {
+  author: User!
+  body: JSON!
+  byMentor: Boolean!
+  createdAt: DateTime!
+  id: UUID!
+}
+
+type DoubtConnection {
+  edges: [DoubtEdge!]!
+  pageInfo: PageInfo!
+}
+
+type DoubtEdge {
+  cursor: String!
+  node: Doubt!
+}
+
+input DoubtIdInput {
+  doubtId: UUID!
+}
+
+type DoubtPayload {
+  doubt: Doubt
+  userErrors: [UserError!]!
+}
+
+enum DoubtStatus {
+  ANSWERED
+  OPEN
+  RESOLVED
+}
+
 input EditCommentInput {
   body: JSON!
   commentId: UUID!
@@ -606,7 +696,13 @@ A group, owned by the core subgraph: null when the viewer may no longer see it
 type Group {
   createdAt: DateTime!
   description: String
+
+  """Members and the mentor: doubts, newest first"""
+  doubts(after: String, first: Int, status: DoubtStatus): DoubtConnection
   id: UUID!
+
+  """Members: the ideas board, most reactions first"""
+  ideas: [GroupPost!]
 
   """A private group always approves members, whatever was chosen"""
   joinPolicy: GroupJoinPolicy!
@@ -624,12 +720,23 @@ type Group {
   posts(after: String, first: Int): GroupPostConnection
   privacy: GroupPrivacy!
 
+  """The linked repository, for anyone who sees the workspace"""
+  repository: GroupRepository
+
   """
   Members only: notes shared to the group that the viewer may open, the most recently shared first
   """
   sharedNotes(after: String, first: Int): NoteConnection
+
+  """
+  The note that credits the team; null when there is none or the viewer cannot read it
+  """
+  showcase: Note
   type: GroupType!
   viewerCan: GroupActions!
+
+  """The viewer's open invite to mentor this workspace"""
+  viewerMentorInviteId: UUID
 
   """The viewer's request to join, while it waits"""
   viewerRequestId: UUID
@@ -640,7 +747,15 @@ type Group {
 What the viewer may do in the group, from the same rules the API applies
 """
 type GroupActions {
+  """A teacher with an open invite to mentor"""
+  acceptMentorInvite: Boolean!
+
+  """Project workspaces (ADR-0048): the team asks doubts"""
+  askDoubt: Boolean!
   delete: Boolean!
+
+  """Project workspaces: admins invite teachers to mentor"""
+  inviteMentor: Boolean!
   join: Boolean!
   leave: Boolean!
   manage: Boolean!
@@ -696,6 +811,7 @@ type GroupPost {
   discussion: Discussion!
   editedAt: DateTime
   id: UUID!
+  kind: GroupPostKind!
   pinned: Boolean!
   viewerCan: GroupPostActions!
 }
@@ -723,6 +839,11 @@ input GroupPostIdInput {
   postId: UUID!
 }
 
+enum GroupPostKind {
+  IDEA
+  POST
+}
+
 type GroupPostPayload {
   post: GroupPost
   userErrors: [UserError!]!
@@ -731,6 +852,21 @@ type GroupPostPayload {
 enum GroupPrivacy {
   PRIVATE
   PUBLIC
+}
+
+"""
+Public details come from the provider's API when it shows the repository; otherwise the card is the link
+"""
+type GroupRepository {
+  available: Boolean!
+  description: String
+  language: String
+  name: String
+  provider: RepositoryProvider!
+  pushedAt: DateTime
+  refreshedAt: DateTime
+  stars: Int
+  url: String!
 }
 
 enum GroupRole {
@@ -803,6 +939,13 @@ enum InstitutionalEmailStatus {
   Confirmed, but the domain waits for platform-admin review before it verifies the account
   """
   PENDING_REVIEW
+}
+
+input InviteMentorInput {
+  groupId: UUID!
+
+  """A teacher's handle or email"""
+  person: String!
 }
 
 input InviteToClassroomInput {
@@ -917,6 +1060,13 @@ type MediaFile {
   width: Int
 }
 
+type MentorInviteItem {
+  expiresAt: DateTime!
+  group: Group!
+  id: UUID!
+  invitedBy: User!
+}
+
 input ModerateContentInput {
   action: ModerationActionType!
   entityId: UUID!
@@ -1004,9 +1154,16 @@ type Mutation {
   addPdfHighlight(input: AddPdfHighlightInput!): PdfHighlightPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
 
+  """The team and the mentor"""
+  answerDoubt(input: AnswerDoubtInput!): DoubtPayload!
+  answerMentorInvite(input: AnswerMentorInviteInput!): GroupPayload!
+
   """The author's one appeal against hiding or removing their note"""
   appealModeration(input: AppealModerationInput!): OkPayload!
   approveComment(input: CommentIdInput!): CommentPayload!
+
+  """The team"""
+  askDoubt(input: AskDoubtInput!): DoubtPayload!
 
   """
   Ends follows both ways and stops new interaction both ways; they are not told
@@ -1056,6 +1213,9 @@ type Mutation {
   """
   deleteComment(input: CommentIdInput!): CommentPayload!
 
+  """The asker or a moderator"""
+  deleteDoubt(input: DoubtIdInput!): GroupPayload!
+
   """Its notes and subfolders move up one level"""
   deleteFolder(input: IdInput!): OkPayload!
 
@@ -1086,6 +1246,9 @@ type Mutation {
 
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
+
+  """Admins and the Owner invite a teacher; the invite lasts 14 days"""
+  inviteMentor(input: InviteMentorInput!): GroupPayload!
 
   """Staff; the invited person accepts within 14 days"""
   inviteToClassroom(input: InviteToClassroomInput!): ClassroomPayload!
@@ -1120,6 +1283,9 @@ type Mutation {
   removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
+  """The asker or the mentor"""
+  reopenDoubt(input: DoubtIdInput!): DoubtPayload!
+
   """
   Report a note or a person you can see; reporting again updates your report
   """
@@ -1150,6 +1316,9 @@ type Mutation {
   """Sets the password and signs out every device"""
   resetPassword(input: ResetPasswordInput!): OkPayload!
 
+  """The mentor, admins, the Owner or the asker"""
+  resolveDoubt(input: DoubtIdInput!): DoubtPayload!
+
   """Returns the person who asked"""
   respondToConnectionRequest(input: RespondToConnectionRequestInput!): PersonPayload!
   restoreNote(input: NoteIdInput!): NotePayload!
@@ -1176,6 +1345,9 @@ type Mutation {
   Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
   """
   setGlobalRole(input: SetGlobalRoleInput!): OkPayload!
+
+  """Admins and the Owner"""
+  setGroupRepository(input: SetGroupRepositoryInput!): GroupPayload!
   setGroupRole(input: SetGroupRoleInput!): GroupPayload!
 
   """
@@ -1190,6 +1362,9 @@ type Mutation {
   Teachers: share with all your connections, live, or stop (people shared with directly keep their access)
   """
   setNoteSharedWithConnections(input: SetNoteSharedWithConnectionsInput!): NotePayload!
+
+  """Admins and the Owner"""
+  setProjectShowcase(input: SetProjectShowcaseInput!): GroupPayload!
 
   """
   Share with one person, or change their role; a PRIVATE note becomes SHARED
@@ -1262,6 +1437,11 @@ type Note {
 
   """Owner only: the classes the note is shared to"""
   classrooms: [Classroom!]
+
+  """
+  A workspace's showcase: its team and mentors, for anyone who reads the note
+  """
+  contributors: [NoteContributor!]!
   createdAt: DateTime!
 
   """Set while the note is in the trash (owner only)"""
@@ -1360,6 +1540,12 @@ input NoteClassroomInput {
 type NoteConnection {
   edges: [NoteEdge!]!
   pageInfo: PageInfo!
+}
+
+"""Someone a project workspace's showcase note credits (ADR-0048)"""
+type NoteContributor {
+  role: ContributorRole!
+  user: User!
 }
 
 type NoteEdge {
@@ -1543,7 +1729,7 @@ type Notification {
   createdAt: DateTime!
 
   """
-  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }
+  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }, DOUBT { kind: ASKED | ANSWERED | RESOLVED, byMentor }
   """
   data: JSON
 
@@ -1786,6 +1972,9 @@ type Query {
   """
   domainReviews(status: DomainReviewStatus): [DomainReview!]!
 
+  """A doubt the viewer's workspace holds"""
+  doubt(id: UUID!): Doubt
+
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
 
@@ -1820,6 +2009,9 @@ type Query {
 
   """The viewer's groups, most recently active first"""
   myGroups: [Group!]!
+
+  """Teachers: invites to mentor waiting for an answer"""
+  myMentorInvites: [MentorInviteItem!]!
 
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
@@ -2007,6 +2199,11 @@ enum ReportReason {
   SPAM
 }
 
+enum RepositoryProvider {
+  GITHUB
+  GITLAB
+}
+
 """
 fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by platform admins only, deleted 30 days after the decision
 """
@@ -2113,6 +2310,15 @@ input SetGlobalRoleInput {
   userId: UUID!
 }
 
+input SetGroupRepositoryInput {
+  groupId: UUID!
+
+  """
+  https://github.com/<owner>/<repo> or https://gitlab.com/<namespace>/<project>; empty unlinks
+  """
+  url: String
+}
+
 input SetGroupRoleInput {
   groupId: UUID!
 
@@ -2135,6 +2341,13 @@ input SetNoteForkingInput {
 input SetNoteSharedWithConnectionsInput {
   noteId: UUID!
   shared: Boolean!
+}
+
+input SetProjectShowcaseInput {
+  groupId: UUID!
+
+  """A PUBLIC project note shared to the workspace; null clears it"""
+  noteId: UUID
 }
 
 input ShareNoteInput {

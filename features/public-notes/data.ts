@@ -19,6 +19,8 @@ export interface PublicNote {
   owner: { displayName: string; handle: string }
   topics: { id: string; title: string; subject: { title: string } }[]
   forkedFrom: { title: string | null; author: { displayName: string } } | null
+  /** A project workspace's showcase: who it credits (lvn-backend ADR-0048) */
+  contributors?: { role: 'CONTRIBUTOR' | 'MENTOR'; user: { id: string; displayName: string; handle: string } }[]
   cards: { id: string; type: CardType; content: unknown; hasMedia: boolean }[]
 }
 
@@ -43,6 +45,7 @@ const NOTE = `query PublicNote($id: UUID!, $after: String) {
     owner { displayName handle }
     topics { id title subject { title } }
     forkedFrom { title author { displayName } }
+    contributors { role user { id displayName handle } }
     cards(first: 100, after: $after) { edges { node { id type content media { id } } } pageInfo { hasNextPage endCursor } }
   }
 }`

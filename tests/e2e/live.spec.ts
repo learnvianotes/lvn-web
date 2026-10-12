@@ -318,3 +318,59 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   const seen = await api<{ discussion: { comments: { edges: { node: { private: boolean; author: { displayName: string } } }[] } } }>('query ($target: CommentTargetInput!) { discussion(target: $target) { comments { edges { node { private author { displayName } } } } } }', { target: { type: 'CLASSROOM_POST', id: postId } }, teacher.accessToken)
   expect(seen.discussion.comments.edges.map((e) => e.node)).toEqual([{ private: true, author: { displayName: 'Live Learner' } }])
 })
+
+test('a learner starts a project workspace, a teacher mentors it and answers a doubt (lvn-backend ADR-0048)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a teacher')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-mentor-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Mentor', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const mentor = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${mentor.user.id}'`)
+  const mentorHandle = (await api<{ viewer: { handle: string } }>('{ viewer { handle } }', {}, mentor.accessToken)).viewer.handle
+
+  const email = `live-project-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Builder')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+
+  await page.goto('/groups')
+  await page.getByRole('button', { name: 'New group' }).click()
+  const dialog = page.getByRole('dialog', { name: 'New group' })
+  await dialog.getByLabel('Name').fill(`Live project ${stamp}`)
+  await dialog.getByLabel(/Project workspace/).check()
+  await dialog.getByLabel('Private').check()
+  await dialog.getByRole('button', { name: 'Create group' }).click()
+  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]+$/)
+  const groupId = page.url().split('/').pop()!
+  await page.getByRole('tab', { name: 'Members' }).click()
+  await page.getByLabel("A teacher's handle or email").fill(mentorHandle)
+  await page.getByRole('button', { name: 'Invite', exact: true }).click()
+  await expect(page.getByText('Invite sent. It lasts 14 days.')).toBeVisible()
+  const invites = await api<{ myMentorInvites: { id: string; group: { id: string } }[] }>('{ myMentorInvites { id group { id } } }', {}, mentor.accessToken)
+  const invite = invites.myMentorInvites.find((i) => i.group.id === groupId)!
+  await api('mutation ($input: AnswerMentorInviteInput!) { answerMentorInvite(input: $input) { group { id } } }', { input: { inviteId: invite.id, accept: true } }, mentor.accessToken)
+
+  await page.getByRole('tab', { name: 'Doubts' }).click()
+  await page.getByRole('button', { name: 'Ask a doubt' }).click()
+  await page.getByLabel('Your question').fill('Why a min-heap for the scheduler?')
+  await page.getByLabel('Details').fill('We pick the next job by deadline.')
+  await page.getByRole('button', { name: 'Ask', exact: true }).click()
+  await expect(page).toHaveURL(/\/doubts\/[0-9a-f-]+$/)
+  const doubtId = page.url().split('/').pop()!
+  await api('mutation ($input: AnswerDoubtInput!) { answerDoubt(input: $input) { doubt { id } } }', { input: { doubtId, body: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'The earliest deadline is always on top.' }] }] } } }, mentor.accessToken)
+  // The answer reaches the bell live; the doubt shows it, marked as the mentor's.
+  await expect(page.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible({ timeout: 60_000 })
+  await page.reload()
+  await expect(page.getByText('The earliest deadline is always on top.')).toBeVisible()
+  await expect(page.getByText('Mentor', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Mark resolved' }).click()
+  await expect(page.getByText('This doubt is resolved. Reopen it to answer again.')).toBeVisible()
+})
