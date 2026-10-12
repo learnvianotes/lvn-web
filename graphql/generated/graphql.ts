@@ -383,6 +383,7 @@ export type NotificationCategory =
   | 'FORK_PUBLISHED'
   | 'JOIN_DECISION'
   | 'JOIN_REQUEST'
+  | 'MENTION'
   | 'MENTOR_INVITE'
   | 'MODERATION'
   | 'NOTES_IMPORT'

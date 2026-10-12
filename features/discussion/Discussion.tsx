@@ -97,10 +97,15 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
           <label className="sr-only" htmlFor={`comment-${target.id}`}>
             {t('write')}
           </label>
-          <textarea id={`comment-${target.id}`} value={text} rows={2} maxLength={5000} onChange={(e) => setText(e.target.value)} placeholder={target.type === 'CLASSROOM_POST' ? t('askStaff') : t('placeholder')} className="resize-y rounded-xl border border-border bg-bg px-3 py-2 text-sm" />
-          <Button type="submit" size="sm" className="self-end" disabled={adding.loading || !text.trim()}>
-            {t('send')}
-          </Button>
+          <textarea id={`comment-${target.id}`} value={text} rows={2} maxLength={5000} onChange={(e) => setText(e.target.value)} placeholder={target.type === 'CLASSROOM_POST' ? t('askStaff') : t('placeholder')} aria-describedby={`mention-hint-${target.id}`} className="resize-y rounded-xl border border-border bg-bg px-3 py-2 text-sm" />
+          <div className="flex items-center justify-between gap-2">
+            <span id={`mention-hint-${target.id}`} className="text-xs text-muted">
+              {t('mentionHint')}
+            </span>
+            <Button type="submit" size="sm" disabled={adding.loading || !text.trim()}>
+              {t('send')}
+            </Button>
+          </div>
         </form>
       ) : d.whyNot ? (
         <p className="text-sm text-muted">{d.whyNot}</p>
@@ -221,7 +226,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
           </div>
         </form>
       ) : (
-        <RichDoc doc={c.body as Doc} className="text-sm" />
+        <RichDoc doc={c.body as Doc} className="text-sm" mentions />
       )}
       <div className="flex flex-wrap items-center gap-3">
         <ReactionBar size="sm" target={{ type: 'COMMENT', id: c.id }} reactions={c.reactions} disabled={c.pendingApproval} onChanged={onChanged} />

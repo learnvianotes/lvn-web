@@ -920,7 +920,14 @@
     "moderationGroupRemoved": "Moderators removed {what}. Open it to see why.",
     "moderationAccountWarned": "Moderators warned your account. Open your account to read why.",
     "moderationAccountSuspended": "Moderators suspended your account. Open your account to see until when and why.",
-    "moderationAccountRestored": "Your account’s suspension has ended early."
+    "moderationAccountRestored": "Your account’s suspension has ended early.",
+    "mentionOnNote": "{actor} mentioned you in a comment on “{note}”",
+    "mentionIn": "{actor} mentioned you in {thing} in {place}",
+    "mentionThing": {
+      "COMMENT": "a comment",
+      "GROUP_POST": "a post"
+    },
+    "mentionGone": "{actor} mentioned you somewhere you can no longer open"
   },
   "people": {
     "teacher": "Teacher",
@@ -1259,7 +1266,8 @@
     },
     "comments": "{count, plural, =0 {Comment} one {# comment} other {# comments}}",
     "hide": "Hide comments",
-    "signIn": "Sign in to join the discussion."
+    "signIn": "Sign in to join the discussion.",
+    "mentionHint": "Type @ and someone’s handle to mention them."
   },
   "workspaces": {
     "failed": "That did not work. Try again.",
@@ -1393,7 +1401,8 @@
       "DOUBT": "Doubts",
       "VERIFICATION": "Verification",
       "DATA_EXPORT": "Data exports",
-      "NOTES_IMPORT": "Imports"
+      "NOTES_IMPORT": "Imports",
+      "MENTION": "Mentions of you"
     },
     "unsubscribeTitle": "Stop these emails",
     "unsubscribeLead": "Click below and we'll stop sending you this kind of email. Everything still shows in the app.",

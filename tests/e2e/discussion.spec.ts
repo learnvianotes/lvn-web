@@ -136,3 +136,13 @@ test('the author of a held or hidden comment is told why, appeals once; othersâ€
   await expect(dialog.getByText('Thank you for telling us')).toBeVisible()
   expect(calls.find((c) => c.op === 'ReportContent')?.variables).toEqual({ input: { entityType: 'COMMENT', entityId: 'c1', reason: 'SPAM', details: null } })
 })
+
+test('@handle in a comment links to the person; an email address does not (lvn-backend ADR-0054)', async ({ page }) => {
+  await mockApi(page, { NoteToEdit: asReader, Discussion: () => discussion([comment('c1', 'Thanks @asharao! Mail me at ravi@example.com')]) })
+  await page.goto(`/notes/${NOTE_ID}`)
+  const thread = page.getByRole('region', { name: 'Discussion' })
+  await expect(thread.getByRole('link', { name: '@asharao' })).toHaveAttribute('href', '/u/asharao')
+  await expect(thread.getByText(/Mail me at ravi@example\.com/)).toBeVisible()
+  await expect(thread.getByRole('link', { name: /example\.com/ })).toHaveCount(0)
+  await expect(thread.getByText('Type @ and someoneâ€™s handle to mention them.')).toBeVisible()
+})

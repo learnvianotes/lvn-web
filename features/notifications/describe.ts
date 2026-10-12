@@ -40,6 +40,13 @@ export function describeNotification(
       if (place) return t(reply ? 'replyIn' : 'commentIn', { actor, place })
       return t('commentGone', { actor })
     }
+    case 'MENTION': {
+      // Someone named the viewer with @handle (lvn-backend ADR-0054); where, never what they wrote.
+      const thing = t(`mentionThing.${data.entityType === 'GROUP_POST' ? 'GROUP_POST' : 'COMMENT'}`)
+      if (n.note) return t('mentionOnNote', { actor, note: n.note.title || t('untitled') })
+      if (place) return t('mentionIn', { actor, thing, place })
+      return t('mentionGone', { actor })
+    }
     case 'CLASSROOM_POST':
       return t('classPost', { actor, classroom: place ?? t('aClass') })
     case 'MODERATION': {

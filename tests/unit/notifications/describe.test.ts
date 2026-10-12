@@ -67,6 +67,12 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'MODERATION', group, path: '/groups/g1', data: { kind: 'RESTORED', entityType: 'GROUP' } })).toBe('Moderators put your group Heaps club back.')
   })
 
+  it('says who mentioned the viewer and where, never what they wrote (lvn-backend ADR-0054)', () => {
+    expect(say({ category: 'MENTION', actor: meera, note: { id: 'n1', title: 'Heaps' }, path: '/notes/n1', data: { entityType: 'COMMENT' } })).toBe('Meera Iyer mentioned you in a comment on “Heaps”')
+    expect(say({ category: 'MENTION', actor: meera, group: { id: 'g1', name: 'Heaps club' }, path: '/groups/g1', data: { entityType: 'GROUP_POST' } })).toBe('Meera Iyer mentioned you in a post in Heaps club')
+    expect(say({ category: 'MENTION', actor: meera, path: '/groups/g1', data: { entityType: 'GROUP_POST' } })).toBe('Meera Iyer mentioned you somewhere you can no longer open')
+  })
+
   it('tells a person about their own account: a warning, a suspension, and a suspension lifted (lvn-backend ADR-0053)', () => {
     const path = '/profile'
     expect(say({ category: 'MODERATION', path, data: { kind: 'WARNED', entityType: 'USER' } })).toBe('Moderators warned your account. Open your account to read why.')
