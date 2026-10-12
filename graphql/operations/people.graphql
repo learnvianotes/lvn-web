@@ -1,0 +1,183 @@
+# People (lvn-backend ADR-0043): follows, blocks, restrictions. Profiles are read on the server
+# (features/people/data.ts); what the viewer may do is fetched here, in the browser.
+
+fragment PersonFields on User {
+  id
+  handle
+  displayName
+  globalRole
+  verified
+}
+
+fragment RelationFields on Relation {
+  following
+  followedBy
+  blocked
+  restricted
+  viewerCan {
+    follow
+    unfollow
+    removeFollower
+    block
+    unblock
+    restrict
+    unrestrict
+  }
+}
+
+query ProfileRelation($handle: String!) {
+  userByHandle(handle: $handle) {
+    id
+    followerCount
+    followingCount
+    relation {
+      ...RelationFields
+    }
+  }
+  viewer {
+    id
+  }
+}
+
+mutation FollowUser($input: PersonInput!) {
+  followUser(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation UnfollowUser($input: PersonInput!) {
+  unfollowUser(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RemoveFollower($input: PersonInput!) {
+  removeFollower(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation BlockUser($input: PersonInput!) {
+  blockUser(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation UnblockUser($input: PersonInput!) {
+  unblockUser(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RestrictUser($input: PersonInput!) {
+  restrictUser(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation UnrestrictUser($input: PersonInput!) {
+  unrestrictUser(input: $input) {
+    user {
+      id
+      relation {
+        ...RelationFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+query MyPeople($first: Int, $after: String) {
+  viewer {
+    id
+    handle
+    followerCount
+    followingCount
+  }
+  myFollowers(first: $first, after: $after) {
+    edges {
+      since
+      node {
+        ...PersonFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+  myFollowing(first: $first) {
+    edges {
+      since
+      node {
+        ...PersonFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+  myBlocked {
+    since
+    node {
+      ...PersonFields
+    }
+  }
+  myRestricted {
+    since
+    node {
+      ...PersonFields
+    }
+  }
+}

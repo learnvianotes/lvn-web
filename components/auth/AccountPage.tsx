@@ -50,6 +50,10 @@ export function AccountPage() {
           <span aria-hidden>→</span>
         </Link>
       ) : null}
+      <Link href="/profile/people" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+        {t('people')}
+        <span aria-hidden>→</span>
+      </Link>
       <Verification viewer={viewer} />
       {viewer.restrictedMinor ? <Alert>{t('minor')}</Alert> : null}
       <InstitutionalEmail viewer={viewer} />

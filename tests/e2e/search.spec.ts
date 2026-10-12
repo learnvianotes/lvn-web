@@ -5,7 +5,7 @@ import { NOTE_ID, cards, meta, mockApi, page1 } from './support/notes-api'
 
 const hit = { __typename: 'NoteSearchHit', snippet: 'Always settle the closest vertex; heaps make it fast.', note: { __typename: 'Note', id: NOTE_ID, title: "Dijkstra's algorithm", visibility: 'PUBLIC', viewerAccess: 'READER', publishedAt: new Date().toISOString(), owner: { __typename: 'User', id: '01920000-0000-7000-8000-00000000bbbb', displayName: 'Ravi Kumar' } } }
 const topic = { __typename: 'Topic', id: '01920000-0000-7000-8000-00000000e101', title: 'Shortest paths', subject: { __typename: 'Subject', id: '01920000-0000-7000-8000-00000000e201', title: 'Algorithms' } }
-const answer = (v: Record<string, unknown>) => ({ search: { __typename: 'SearchResults', notes: String(v.query).startsWith('nothing') ? [] : [hit], topics: String(v.query).startsWith('nothing') ? [] : [topic] } })
+const answer = (v: Record<string, unknown>) => ({ search: { __typename: 'SearchResults', notes: String(v.query).startsWith('nothing') ? [] : [hit], topics: String(v.query).startsWith('nothing') ? [] : [topic], people: [] } })
 const empty = { Organise: () => ({ myFolders: [], myTags: [] }), MyNotes: () => ({ myNotes: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }) }
 
 test('Ctrl+K searches as you type, and Enter opens the note', async ({ page }) => {
@@ -13,7 +13,7 @@ test('Ctrl+K searches as you type, and Enter opens the note', async ({ page }) =
   await page.goto('/notes')
   await expect(page.getByText('Start your first note')).toBeVisible()
   await page.keyboard.press('Control+k')
-  const palette = page.getByRole('dialog', { name: 'Search notes and topics' })
+  const palette = page.getByRole('dialog', { name: 'Search notes, people and topics' })
   await expect(palette).toBeVisible()
   await palette.getByRole('combobox').fill('heap')
   await expect(palette.getByRole('option', { name: /Dijkstra's algorithm/ })).toBeVisible()
@@ -27,7 +27,7 @@ test('the header button opens search, and a topic searches for its notes', async
   const calls = await mockApi(page, { ...empty, Search: answer })
   await page.goto('/notes')
   await page.getByRole('button', { name: 'Search' }).click()
-  const palette = page.getByRole('dialog', { name: 'Search notes and topics' })
+  const palette = page.getByRole('dialog', { name: 'Search notes, people and topics' })
   await palette.getByRole('combobox').fill('short')
   await palette.getByRole('option', { name: /Shortest paths/ }).click()
   await expect(palette.getByRole('combobox')).toHaveValue('Shortest paths')

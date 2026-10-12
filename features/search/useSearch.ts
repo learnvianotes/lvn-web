@@ -14,5 +14,5 @@ export function useSearch(query: string, first: number) {
   const ready = settled.length >= 2
   const result = useQuery(SearchDocument, { variables: { query: settled, first }, skip: !ready, fetchPolicy: 'cache-first' })
   const data = ready ? (result.data ?? result.previousData)?.search : undefined
-  return { notes: data?.notes ?? [], topics: data?.topics ?? [], loading: ready && result.loading, searched: ready && !!result.data, settled }
+  return { notes: data?.notes ?? [], people: data?.people ?? [], topics: data?.topics ?? [], loading: ready && result.loading, searched: ready && !!result.data, settled }
 }

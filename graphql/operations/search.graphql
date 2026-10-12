@@ -1,7 +1,7 @@
-# Search (lvn-backend §10.4): notes the viewer may read, and topics.
+# Search (lvn-backend §10.4): notes the viewer may read, people (never minors, never across a block) and topics.
 
 query Search($query: String!, $first: Int) {
-  search(query: $query, scopes: [NOTES, TOPICS], first: $first) {
+  search(query: $query, scopes: [NOTES, PEOPLE, TOPICS], first: $first) {
     notes {
       snippet
       note {
@@ -15,6 +15,12 @@ query Search($query: String!, $first: Int) {
           displayName
         }
       }
+    }
+    people {
+      id
+      handle
+      displayName
+      globalRole
     }
     topics {
       id

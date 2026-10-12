@@ -16,6 +16,8 @@ export function describeNotification(n: Pick<NotificationFieldsFragment, 'catego
       if (data.kind === 'REQUESTED') return t('verificationRequested', { actor })
       if (data.decision === 'APPROVED') return n.actor ? t('verificationApprovedBy', { actor }) : t('verificationApproved')
       return t('verificationRejected')
+    case 'FOLLOW':
+      return t('follow', { actor })
     case 'DATA_EXPORT':
       return t('dataExport')
     case 'NOTES_IMPORT': {

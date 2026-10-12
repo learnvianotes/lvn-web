@@ -1,14 +1,19 @@
 // A stand-in for lvn-backend that server rendering talks to in Playwright runs (API_INTERNAL_URL): public notes from
-// public-notes.json, anything else unknown. The browser's own GraphQL calls are mocked per test with page.route.
+// public-notes.json, profiles from profiles.json (by handle, any case, or id), anything else unknown. The browser's own GraphQL calls are mocked per test with page.route.
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 
 const { notes } = JSON.parse(readFileSync(new URL('./public-notes.json', import.meta.url), 'utf8'))
+const { profiles } = JSON.parse(readFileSync(new URL('./profiles.json', import.meta.url), 'utf8'))
 const port = Number(process.env.SSR_API_PORT ?? 3199)
 
 const answer = (query, variables) => {
   if (query.includes('query PublicNotes(')) {
     return { publicNotes: { edges: notes.map((n) => ({ node: { id: n.id, slug: n.slug, publishedAt: n.publishedAt } })), pageInfo: { hasNextPage: false, endCursor: null } } }
+  }
+  if (query.includes('query PublicProfile(')) {
+    const h = String(variables.handle).replace(/^@/, '').toLowerCase()
+    return { userByHandle: profiles.find((p) => p.handle === h || p.id === h) ?? null }
   }
   if (query.includes('query PublicNote(')) {
     const n = notes.find((x) => x.id === variables.id)

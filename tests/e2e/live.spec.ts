@@ -229,6 +229,24 @@ test('a notification reaches the bell live: the data export the worker builds (l
   await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible()
 })
 
+test('a new learner opens their own profile from their account, rendered by the server (lvn-backend ADR-0043)', async ({ page }, info) => {
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Profile')
+  await page.getByLabel('Email', { exact: true }).fill(`live-profile-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.getByRole('link', { name: 'Followers, following and blocked people' }).click()
+  await expect(page.getByText('Nobody follows you yet.')).toBeVisible()
+  await page.getByRole('link', { name: 'See your profile' }).click()
+  await expect(page).toHaveURL(/\/u\/[a-z0-9]+$/)
+  await expect(page.getByRole('heading', { level: 1, name: /Live Profile/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: '0 followers · 0 following' })).toBeVisible()
+  await expect(page.getByText('No public notes yet.')).toBeVisible()
+})
+
 test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {
   const { TERMS_VERSION } = await import('../../features/legal/documents')
   const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })

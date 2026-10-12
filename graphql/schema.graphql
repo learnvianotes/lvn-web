@@ -552,6 +552,11 @@ type Mutation {
   appealModeration(input: AppealModerationInput!): OkPayload!
 
   """
+  Ends follows both ways and stops new interaction both ways; they are not told
+  """
+  blockUser(input: PersonInput!): PersonPayload!
+
+  """
   PRIVATE, SHARED or PUBLIC (owner, verified account); PUBLIC needs a published version
   """
   changeNoteVisibility(input: ChangeNoteVisibilityInput!): NotePayload!
@@ -590,6 +595,7 @@ type Mutation {
 
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
+  followUser(input: PersonInput!): PersonPayload!
 
   """
   A PRIVATE copy of a note you may fork, credited to its origin; returns the copy
@@ -610,6 +616,9 @@ type Mutation {
   """
   publishNote(input: NoteIdInput!): NotePayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
+
+  """Stops someone following you; they are not told"""
+  removeFollower(input: PersonInput!): PersonPayload!
   removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
@@ -637,6 +646,11 @@ type Mutation {
   Make an old version the draft again; the current draft is kept as a DRAFT version
   """
   restoreNoteVersion(input: RestoreNoteVersionInput!): NotePayload!
+
+  """
+  Their comments wait for your approval and they cause you no notifications; they are not told
+  """
+  restrictUser(input: PersonInput!): PersonPayload!
 
   """
   Teachers: requests addressed to them. Platform admins: all, including documents.
@@ -675,6 +689,9 @@ type Mutation {
 
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
+  unblockUser(input: PersonInput!): PersonPayload!
+  unfollowUser(input: PersonInput!): PersonPayload!
+  unrestrictUser(input: PersonInput!): PersonPayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
@@ -1101,6 +1118,29 @@ type PdfPagesUsage {
   used: Int!
 }
 
+type PersonConnection {
+  edges: [PersonEdge!]!
+  pageInfo: PageInfo!
+}
+
+type PersonEdge {
+  cursor: String!
+  node: User!
+
+  """Since when (followed, blocked, restricted)"""
+  since: DateTime!
+}
+
+input PersonInput {
+  userId: UUID!
+}
+
+type PersonPayload {
+  """The person, as the viewer now stands with them"""
+  user: User
+  userErrors: [UserError!]!
+}
+
 enum ProblemMark {
   REVISIT
   SOLVED
@@ -1133,13 +1173,21 @@ type Query {
 
   """Open cases, oldest first (PLATFORM_ADMIN)"""
   moderationQueue(after: String, first: Int): ModerationCaseConnection!
+  myBlocked: [PersonEdge!]!
 
   """Your latest data exports, newest first"""
   myDataExports: [DataExport!]!
   myFolders: [Folder!]!
 
+  """
+  The viewer's followers, newest first; restricted minors are counted but never listed
+  """
+  myFollowers(after: String, first: Int): PersonConnection!
+  myFollowing(after: String, first: Int): PersonConnection!
+
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
+  myRestricted: [PersonEdge!]!
   myTags: [Tag!]!
   myVerificationRequests: [VerificationRequest!]!
 
@@ -1196,6 +1244,11 @@ type Query {
   unreadNotificationCount: Int!
 
   """
+  A person by handle (with or without @) or by id; null when there is none, or when they have no public profile (restricted minors, ADR-0043)
+  """
+  userByHandle(handle: String!): User
+
+  """
   Platform admins only: a 15-minute link to one document; the view is written to the audit log
   """
   verificationDocumentUrl(fileId: UUID!, requestId: UUID!): SignedUrl!
@@ -1212,6 +1265,29 @@ type Query {
 input RefreshSessionInput {
   """Mobile only; web sends the cookie"""
   refreshToken: String
+}
+
+"""How the viewer stands with a person"""
+type Relation {
+  """The viewer blocked them; being blocked by them is never shown"""
+  blocked: Boolean!
+  followedBy: Boolean!
+  following: Boolean!
+  restricted: Boolean!
+  viewerCan: RelationActions!
+}
+
+"""
+What the viewer may do about a person, from the same rules the API applies
+"""
+type RelationActions {
+  block: Boolean!
+  follow: Boolean!
+  removeFollower: Boolean!
+  restrict: Boolean!
+  unblock: Boolean!
+  unfollow: Boolean!
+  unrestrict: Boolean!
 }
 
 input RenameTagInput {
@@ -1592,6 +1668,15 @@ type User {
   """Viewer only"""
   email: String
   emailVerified: Boolean!
+
+  """Viewer only: exact counts"""
+  followerCount: Int
+
+  """
+  Everyone: followers as a milestone (ADR-0027) — 1000 for 1,000+, null below 1,000
+  """
+  followerMilestone: Int
+  followingCount: Int
   globalRole: GlobalRole!
   handle: String!
   id: UUID!
@@ -1616,8 +1701,18 @@ type User {
   """The viewer's own profile; for others only when they show it"""
   profile: StudentProfile
 
+  """
+  Their PUBLIC notes, of one kind or all, newest published first (ADR-0043): what anyone may read
+  """
+  publicNotes(after: String, first: Int, kind: NoteKind): NoteConnection!
+
   """False until the registration details are given (ADR-0017)"""
   registrationComplete: Boolean!
+
+  """
+  The viewer's relation to this person; null for anonymous viewers and on one's own profile
+  """
+  relation: Relation
 
   """
   Viewer only: a minor without verified consent (§15.2) — no public publishing, no DMs
