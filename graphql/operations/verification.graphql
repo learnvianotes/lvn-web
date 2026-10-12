@@ -1,0 +1,100 @@
+# Verification without a college email (lvn-backend ADR-0019): ask a verified teacher to vouch, or send proof of
+# enrolment that platform admins review; teachers and admins answer the requests addressed to them.
+
+fragment VerificationRequestFields on VerificationRequest {
+  id
+  method
+  status
+  message
+  reason
+  createdAt
+  decidedAt
+  requester {
+    id
+    displayName
+    handle
+  }
+  teacher {
+    id
+    displayName
+    handle
+  }
+}
+
+query MyVerificationRequests {
+  myVerificationRequests {
+    ...VerificationRequestFields
+  }
+}
+
+query VerificationRequestsToReview($after: UUID) {
+  verificationRequestsToReview(first: 30, after: $after) {
+    ...VerificationRequestFields
+    documents {
+      fileId
+      fileName
+      mimeType
+      sizeBytes
+    }
+  }
+}
+
+query VerificationDocumentUrl($requestId: UUID!, $fileId: UUID!) {
+  verificationDocumentUrl(requestId: $requestId, fileId: $fileId) {
+    url
+    expiresAt
+  }
+}
+
+query FindTeachers($query: String!) {
+  search(query: $query, scopes: [PEOPLE], first: 8) {
+    people {
+      id
+      handle
+      displayName
+      globalRole
+    }
+  }
+}
+
+mutation RequestTeacherVerification($input: RequestTeacherVerificationInput!) {
+  requestTeacherVerification(input: $input) {
+    request {
+      ...VerificationRequestFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation RequestDocumentVerification($input: RequestDocumentVerificationInput!) {
+  requestDocumentVerification(input: $input) {
+    request {
+      ...VerificationRequestFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation WithdrawVerificationRequest($requestId: UUID!) {
+  withdrawVerificationRequest(requestId: $requestId) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation ReviewVerificationRequest($input: ReviewVerificationRequestInput!) {
+  reviewVerificationRequest(input: $input) {
+    request {
+      ...VerificationRequestFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

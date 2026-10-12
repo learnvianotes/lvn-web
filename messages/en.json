@@ -199,7 +199,8 @@
     "skills": "Your Skills tab",
     "groups": "Your groups",
     "classes": "Your classes",
-    "notificationSettings": "Notification settings"
+    "notificationSettings": "Notification settings",
+    "verificationQueue": "Proof of study to review"
   },
   "notes": {
     "pageTitle": "Note",
@@ -1412,5 +1413,42 @@
       "DIGEST": "Done. You won't get the weekly email."
     },
     "allSettings": "All notification settings"
+  },
+  "verification": {
+    "lead": "No college email? Ask a teacher who knows you to vouch for you, or send proof that you study (an ID card or a fee receipt) for our team to check.",
+    "askTeacher": "Ask a teacher",
+    "sendDocuments": "Send proof of study",
+    "findTeacher": "Find your teacher",
+    "findTeacherHint": "Their name or handle",
+    "noTeachers": "No verified teacher matches. They need a verified LearnViaNotes account.",
+    "teacherChosen": "{name} (@{handle})",
+    "changeTeacher": "Choose another teacher",
+    "message": "A note (optional)",
+    "messageHint": "For example: I am in your Data Structures class, section B.",
+    "sendRequest": "Send request",
+    "sending": "Sending…",
+    "documentsLead": "Up to three pictures or PDFs. Only our team sees them, and they are deleted 30 days after we decide.",
+    "chooseDocuments": "Choose files",
+    "removeDocument": "Remove {name}",
+    "waitingTeacher": "Waiting for {name} to vouch for you.",
+    "waitingDocuments": "Our team is checking your documents.",
+    "sent": "Sent {when}.",
+    "withdraw": "Withdraw the request",
+    "rejected": "Your last request was not accepted: {reason}",
+    "failed": "That did not work. Try again.",
+    "review": {
+      "teacherTitle": "Students asking you to verify them",
+      "teacherLead": "Vouch only for students you know. Approving lets them share, comment and join groups.",
+      "adminTitle": "Proof of study to review",
+      "adminLead": "Oldest first. Every document you open is recorded.",
+      "notAllowed": "This page is for platform admins.",
+      "none": "Nothing to review.",
+      "reason": "Reason (needed to decline; the student reads it)",
+      "reasonHint": "For example: The ID card is from another college.",
+      "reasonNeeded": "Tell the student why, so they can try again.",
+      "approve": "Verify",
+      "reject": "Decline",
+      "failed": "That did not work. Try again."
+    }
   }
 }
