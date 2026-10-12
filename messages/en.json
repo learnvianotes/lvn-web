@@ -193,7 +193,8 @@
     },
     "minor": "Some features stay off until a parent, guardian or your school confirms your account.",
     "unsavedDrafts": "Some note changes have not reached the server yet. Signing out deletes them from this browser. Sign out anyway?",
-    "moderationQueue": "Moderation queue"
+    "moderationQueue": "Moderation queue",
+    "people": "Followers, following and blocked people"
   },
   "notes": {
     "pageTitle": "Note",
@@ -656,8 +657,8 @@
   },
   "search": {
     "title": "Search",
-    "label": "Search notes and topics",
-    "placeholder": "Search notes and topics…",
+    "label": "Search notes, people and topics",
+    "placeholder": "Search notes, people and topics…",
     "results": "Results",
     "hint": "Type to search your notes, notes shared with you and public notes.",
     "nothing": "Nothing found for “{query}”.",
@@ -670,7 +671,9 @@
       "PRIVATE": "Private",
       "SHARED": "Shared",
       "PUBLIC": "Public"
-    }
+    },
+    "people": "People",
+    "teacher": "Teacher"
   },
   "data": {
     "title": "Your data",
@@ -809,6 +812,82 @@
     "verificationRejected": "Your verification was not accepted. You can try again from your profile.",
     "dataExport": "Your data export is ready to download",
     "notesImport": "Your import is done: {created, plural, one {# note} other {# notes}} added{skipped, plural, =0 {} other {, # skipped}}{failed, plural, =0 {} other {, # could not be read}}",
-    "other": "Something new for you"
+    "other": "Something new for you",
+    "follow": "{actor} started following you"
+  },
+  "people": {
+    "teacher": "Teacher",
+    "verified": "Verified",
+    "followersMilestone": "{count, number}+ followers",
+    "follow": "Follow",
+    "following": "Following",
+    "unfollowLabel": "Following — select to unfollow",
+    "followsYou": "Follows you",
+    "more": "More options",
+    "removeFollower": "Remove follower",
+    "restrict": "Restrict",
+    "unrestrict": "Unrestrict",
+    "block": "Block",
+    "unblock": "Unblock",
+    "cancel": "Cancel",
+    "restrictedNote": "Restricted: their comments wait for your approval and they don't notify you.",
+    "blockTitle": "Block this person?",
+    "blockEffects": {
+      "follows": "You stop following each other.",
+      "contact": "Neither of you can follow, share with or invite the other.",
+      "hidden": "You won't see each other in search, and their notes won't show for you.",
+      "silent": "They are not told. You can unblock them any time."
+    },
+    "failed": "That did not work. Try again.",
+    "counts": "{followers, plural, one {# follower} other {# followers}} · {following} following",
+    "editProfile": "Edit your profile",
+    "year": {
+      "YEAR_1": "1st year",
+      "YEAR_2": "2nd year",
+      "YEAR_3": "3rd year",
+      "YEAR_4": "4th year",
+      "YEAR_5": "5th year",
+      "POSTGRADUATE": "Postgraduate",
+      "GRADUATED": "Graduated",
+      "SCHOOL": "At school",
+      "NOT_STUDYING": "Not studying"
+    },
+    "tabs": {
+      "label": "What they made public",
+      "NOTE": "Notes",
+      "BLOG": "Blog",
+      "PROJECT": "Projects",
+      "POST": "Posts",
+      "untitled": "Untitled note",
+      "empty": {
+        "NOTE": "No public notes yet.",
+        "BLOG": "No blog posts yet.",
+        "PROJECT": "No projects yet.",
+        "POST": "No posts yet."
+      }
+    },
+    "lists": {
+      "title": "Your people",
+      "yourProfile": "See your profile",
+      "tab": {
+        "followers": "Followers",
+        "following": "Following",
+        "blocked": "Blocked",
+        "restricted": "Restricted"
+      },
+      "undo": {
+        "followers": "Remove",
+        "following": "Unfollow",
+        "blocked": "Unblock",
+        "restricted": "Unrestrict"
+      },
+      "empty": {
+        "followers": "Nobody follows you yet.",
+        "following": "You don't follow anyone yet.",
+        "blocked": "You haven't blocked anyone.",
+        "restricted": "You haven't restricted anyone."
+      },
+      "notNamed": "{count, plural, one {# more follower is} other {# more followers are}} not shown by name: young learners never appear in lists."
+    }
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, CornerDownLeft, FileText, Search } from 'lucide-react'
+import { BookMarked, CornerDownLeft, FileText, Search, UserRound } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -22,8 +22,12 @@ export function SearchPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
-  const { notes, topics, searched, settled } = useSearch(open ? query : '', 8)
-  const items = [...notes.map((n) => ({ kind: 'note' as const, id: n.note.id, n })), ...topics.slice(0, 4).map((topic) => ({ kind: 'topic' as const, id: topic.id, topic }))]
+  const { notes, people, topics, searched, settled } = useSearch(open ? query : '', 8)
+  const items = [
+    ...notes.map((n) => ({ kind: 'note' as const, id: n.note.id, n })),
+    ...people.slice(0, 4).map((person) => ({ kind: 'person' as const, id: person.id, person })),
+    ...topics.slice(0, 4).map((topic) => ({ kind: 'topic' as const, id: topic.id, topic })),
+  ]
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -58,7 +62,7 @@ export function SearchPalette() {
     setActive(0)
   }
 
-  /** Opens a note, searches a topic, or — with nothing chosen — shows all results. */
+  /** Opens a note or a person's profile, searches a topic, or — with nothing chosen — shows all results. */
   const go = (item: (typeof items)[number] | undefined) => {
     if (item?.kind === 'topic') {
       setQuery(item.topic.title)
@@ -66,7 +70,7 @@ export function SearchPalette() {
     }
     if (!item && query.trim().length < 2) return
     setOpen(false)
-    router.push(item ? `/notes/${item.id}` : `/search?q=${encodeURIComponent(query.trim())}`)
+    router.push(item?.kind === 'person' ? `/u/${item.person.handle}` : item ? `/notes/${item.id}` : `/search?q=${encodeURIComponent(query.trim())}`)
   }
 
   return (
@@ -118,6 +122,13 @@ export function SearchPalette() {
                         <span className="truncate font-medium">{item.n.note.title || t('untitled')}</span>
                         <Snippet text={item.n.snippet} className="line-clamp-2 text-xs leading-5 text-muted" />
                         <span className="text-[11px] text-muted">{t('by', { name: item.n.note.owner.displayName })}</span>
+                      </span>
+                    </>
+                  ) : item.kind === 'person' ? (
+                    <>
+                      <UserRound className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+                      <span className="text-sm">
+                        {item.person.displayName} <span className="text-muted">@{item.person.handle}</span>
                       </span>
                     </>
                   ) : (

@@ -1,0 +1,35 @@
+{
+  "profiles": [
+    {
+      "id": "01920000-0000-7000-8000-0000000000e1",
+      "handle": "meera",
+      "displayName": "Meera Iyer",
+      "globalRole": "TEACHER",
+      "verified": true,
+      "createdAt": "2026-09-01T10:00:00.000Z",
+      "followerMilestone": 1000,
+      "profile": null,
+      "publicNotes": {
+        "edges": [
+          { "node": { "id": "01920000-0000-7000-8000-00000000d0e1", "title": "Heaps, explained", "slug": "heaps-explained", "kind": "NOTE", "publishedAt": "2026-10-02T10:00:00.000Z" } },
+          { "node": { "id": "01920000-0000-7000-8000-00000000d0e2", "title": "Graphs before trees", "slug": "graphs-before-trees", "kind": "NOTE", "publishedAt": "2026-10-01T10:00:00.000Z" } }
+        ]
+      }
+    },
+    {
+      "id": "01920000-0000-7000-8000-0000000000e2",
+      "handle": "ravi",
+      "displayName": "Ravi Kumar",
+      "globalRole": "STUDENT",
+      "verified": true,
+      "createdAt": "2026-09-05T10:00:00.000Z",
+      "followerMilestone": null,
+      "profile": { "department": "Computer Science", "yearOfStudy": "YEAR_3" },
+      "publicNotes": {
+        "edges": [
+          { "node": { "id": "01920000-0000-7000-8000-00000000d001", "title": "Dijkstra's algorithm", "slug": "dijkstras-algorithm", "kind": "NOTE", "publishedAt": "2026-10-01T10:00:00.000Z" } }
+        ]
+      }
+    }
+  ]
+}

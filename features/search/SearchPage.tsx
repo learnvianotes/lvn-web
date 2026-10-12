@@ -16,7 +16,7 @@ export function SearchPage() {
   const router = useRouter()
   const initial = useSearchParams().get('q') ?? ''
   const [query, setQuery] = useState(initial)
-  const { notes, topics, loading, searched, settled } = useSearch(query, 20)
+  const { notes, people, topics, loading, searched, settled } = useSearch(query, 20)
   const set = (q: string) => {
     setQuery(q)
     router.replace(q ? `/search?q=${encodeURIComponent(q)}` : '/search', { scroll: false })
@@ -30,6 +30,26 @@ export function SearchPage() {
         <span className="sr-only">{t('label')}</span>
         <input autoFocus value={query} onChange={(e) => set(e.target.value)} placeholder={t('placeholder')} className="h-14 flex-1 bg-transparent text-lg placeholder:text-muted focus:outline-none focus-visible:outline-none" />
       </label>
+      {people.length ? (
+        <section aria-labelledby="people-heading" className="flex flex-col gap-2">
+          <h2 id="people-heading" className="text-sm font-semibold text-muted">
+            {t('people')}
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {people.map((p) => (
+              <li key={p.id}>
+                <Link href={`/u/${p.handle}`} className="inline-flex items-center gap-2 rounded-full border border-border bg-surface py-1 pl-1 pr-3 text-sm hover:border-accent hover:text-accent">
+                  <span aria-hidden className="grid size-7 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent">
+                    {p.displayName.slice(0, 1).toUpperCase()}
+                  </span>
+                  {p.displayName} <span className="text-muted">@{p.handle}</span>
+                  {p.globalRole === 'TEACHER' ? <span className="rounded-full bg-accent-soft px-1.5 text-[10px] font-semibold uppercase text-accent">{t('teacher')}</span> : null}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {topics.length ? (
         <section aria-labelledby="topics-heading" className="flex flex-col gap-2">
           <h2 id="topics-heading" className="text-sm font-semibold text-muted">
