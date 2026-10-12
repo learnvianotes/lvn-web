@@ -1,17 +1,13 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { mockApi, USER } from './support/notes-api'
+import { MEERA, profileRelation, RAVI, relation } from './support/people'
 
 /**
  * People (lvn-backend ADR-0043): profiles rendered on the server from what people made public (the stand-in API in
  * tests/e2e/support), the viewer's buttons in the browser against a mocked API, and the viewer's own lists.
  */
 
-const MEERA = '01920000-0000-7000-8000-0000000000e1'
-const RAVI = '01920000-0000-7000-8000-0000000000e2'
-const can = (over: Record<string, boolean> = {}) => ({ __typename: 'RelationActions', follow: true, unfollow: false, removeFollower: false, block: true, unblock: false, restrict: true, unrestrict: false, ...over })
-const relation = (over: Record<string, unknown> = {}, actions: Record<string, boolean> = {}) => ({ __typename: 'Relation', following: false, followedBy: false, blocked: false, restricted: false, viewerCan: can(actions), ...over })
-const profileRelation = (rel: unknown, viewerId = USER, id = MEERA) => ({ userByHandle: { __typename: 'User', id, followerCount: id === viewerId ? 12 : null, followingCount: id === viewerId ? 3 : null, relation: rel }, viewer: { __typename: 'User', id: viewerId } })
 const payload = (name: string, rel: unknown) => ({ [name]: { __typename: 'PersonPayload', user: { __typename: 'User', id: MEERA, relation: rel }, userErrors: [] } })
 
 /** A visitor who is not signed in: the refresh is refused. */
@@ -26,7 +22,7 @@ test('a teacher’s profile is rendered for anyone, indexed, with what they made
   await expect(page.getByText('@meera', { exact: true })).toBeVisible()
   await expect(page.getByText('Teacher', { exact: true })).toBeVisible()
   await expect(page.getByText('1,000+ followers')).toBeVisible()
-  await expect(page.getByRole('tab')).toHaveText(['Notes 2', 'Blog 0', 'Projects 0', 'Posts 0'])
+  await expect(page.getByRole('tab')).toHaveText(['Notes 2', 'Blog 0', 'Projects 0', 'Posts 0', 'Skills'])
   await expect(page.getByRole('link', { name: /Heaps, explained/ })).toHaveAttribute('href', '/n/heaps-explained-01920000-0000-7000-8000-00000000d0e1')
   await page.getByRole('tab', { name: /Blog/ }).click()
   await expect(page.getByText('No blog posts yet.')).toBeVisible()
@@ -105,7 +101,9 @@ test('your people: followers (young learners counted, not named), following, blo
   const edge = (node: unknown) => ({ __typename: 'PersonEdge', since: '2026-10-10T10:00:00.000Z', node })
   const calls = await mockApi(page, {
     MyPeople: () => ({
-      viewer: { __typename: 'User', id: USER, handle: 'asharao', followerCount: followers.length + 1, followingCount: 1 },
+      viewer: { __typename: 'User', id: USER, handle: 'asharao', globalRole: 'STUDENT', followerCount: followers.length + 1, followingCount: 1 },
+      myConnections: [],
+      myConnectionRequests: [],
       myFollowers: { __typename: 'PersonConnection', edges: followers.map(edge), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } },
       myFollowing: { __typename: 'PersonConnection', edges: [edge(person(MEERA, 'Meera Iyer', 'meera'))], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } },
       myBlocked: [],

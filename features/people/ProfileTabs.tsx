@@ -7,12 +7,12 @@ import { useState } from 'react'
 import { publicNotePath } from '@/features/public-notes/paths'
 import type { PublicProfile } from './data'
 
-type Kind = PublicProfile['notes'][number]['kind']
+type Kind = PublicProfile['notes'][number]['kind'] | 'SKILLS'
 
-/** Notes · Projects for everyone; teachers add Blog and Posts (ADR-0014, ADR-0015). */
-export function ProfileTabs({ teacher, notes }: { teacher: boolean; notes: PublicProfile['notes'] }) {
+/** Notes · Projects for everyone; teachers add Blog, Posts and Skills (ADR-0012, ADR-0014, ADR-0015). */
+export function ProfileTabs({ teacher, notes, skills }: { teacher: boolean; notes: PublicProfile['notes']; skills: PublicProfile['teacherProfile'] }) {
   const t = useTranslations('people.tabs')
-  const kinds: Kind[] = teacher ? ['NOTE', 'BLOG', 'PROJECT', 'POST'] : ['NOTE', 'PROJECT']
+  const kinds: Kind[] = teacher ? ['NOTE', 'BLOG', 'PROJECT', 'POST', 'SKILLS'] : ['NOTE', 'PROJECT']
   const [kind, setKind] = useState<Kind>('NOTE')
   const shown = notes.filter((n) => n.kind === kind)
   return (
@@ -27,12 +27,14 @@ export function ProfileTabs({ teacher, notes }: { teacher: boolean; notes: Publi
             onClick={() => setKind(k)}
             className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2 text-sm font-semibold ${k === kind ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-fg'}`}
           >
-            {t(k)} <span className="font-normal">{notes.filter((n) => n.kind === k).length}</span>
+            {t(k)} {k === 'SKILLS' ? null : <span className="font-normal">{notes.filter((n) => n.kind === k).length}</span>}
           </button>
         ))}
       </div>
       <div role="tabpanel">
-        {shown.length ? (
+        {kind === 'SKILLS' ? (
+          <Skills profile={skills} />
+        ) : shown.length ? (
           <ul className="grid gap-3 sm:grid-cols-2">
             {shown.map((n) => (
               <li key={n.id}>
@@ -51,5 +53,50 @@ export function ProfileTabs({ teacher, notes }: { teacher: boolean; notes: Publi
         )}
       </div>
     </section>
+  )
+}
+
+const SKILL_KINDS = ['QUALIFICATION', 'EXPERIENCE', 'SKILL'] as const
+
+/** The Skills tab (ADR-0012): what the teacher wrote about themselves, grouped. */
+function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
+  const t = useTranslations('people.skills')
+  if (!profile || (!profile.headline && !profile.bio && !profile.skills.length)) {
+    return <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-muted">{t('empty')}</p>
+  }
+  return (
+    <div className="flex flex-col gap-5">
+      {profile.headline ? <p className="text-lg font-semibold">{profile.headline}</p> : null}
+      {profile.bio ? <p className="whitespace-pre-line text-muted">{profile.bio}</p> : null}
+      {SKILL_KINDS.map((k) => {
+        const items = profile.skills.filter((s) => s.kind === k)
+        if (!items.length) return null
+        return (
+          <section key={k} aria-labelledby={`skills-${k}`} className="flex flex-col gap-2">
+            <h2 id={`skills-${k}`} className="text-sm font-semibold uppercase tracking-wide text-muted">
+              {t(`kind.${k}`)}
+            </h2>
+            {k === 'SKILL' ? (
+              <ul className="flex flex-wrap gap-2">
+                {items.map((s) => (
+                  <li key={s.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent" title={s.detail ?? undefined}>
+                    {s.name}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {items.map((s) => (
+                  <li key={s.id} className="rounded-2xl border border-border bg-surface px-4 py-3">
+                    <p className="font-semibold">{s.name}</p>
+                    {s.detail ? <p className="text-sm text-muted">{s.detail}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )
+      })}
+    </div>
   )
 }

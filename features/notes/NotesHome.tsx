@@ -79,9 +79,9 @@ export function NotesHome() {
   const refresh = () => Promise.all([organise.refetch(), mine.refetch()])
   const firstName = viewer.data?.viewer?.displayName.split(' ')[0] ?? ''
 
-  const newNote = async (template?: TemplateKey) => {
+  const newNote = async (template?: TemplateKey, kind?: 'PROJECT' | 'BLOG' | 'POST') => {
     const res = await create({
-      variables: { input: { ...(view.kind === 'folder' ? { folderId: view.id } : {}), ...(template ? { title: t(`templates.${template}.title`), cards: templateCards(template) } : {}) } },
+      variables: { input: { ...(view.kind === 'folder' ? { folderId: view.id } : {}), ...(template ? { title: t(`templates.${template}.title`), cards: templateCards(template) } : {}), ...(kind ? { kind } : {}) } },
     })
     const id = res.data?.createNote.note?.id
     if (id) router.push(`/notes/${id}`)
@@ -148,6 +148,7 @@ export function NotesHome() {
           <BookOpenText className="size-5" aria-hidden />
           {t('readPdf')}
         </Button>
+        <NewKinds teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading || view.kind === 'trash'} onNew={(kind) => void newNote(undefined, kind)} className="-mt-3" />
         <nav aria-label={t('views.label')} className="flex flex-col gap-0.5">
           {navItem({ kind: 'all' }, t('views.all'), BookOpen)}
           {navItem({ kind: 'unfiled' }, t('views.unfiled'), Inbox)}
@@ -224,6 +225,7 @@ export function NotesHome() {
                     <BookOpenText className="size-5" aria-hidden />
                     {t('readPdf')}
                   </Button>
+                  <NewKinds onDark teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading} onNew={(kind) => void newNote(undefined, kind)} className="w-full" />
                 </div>
                 {latest ? (
                   <Link href={`/notes/${latest.id}`} className="mt-2 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-white/10 py-1.5 pl-3 pr-2 text-sm font-medium ring-1 ring-white/20 transition hover:bg-white/20">
@@ -444,5 +446,26 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
     <Link href={`/notes/${n.id}`} className={cn(tile, 'hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/10 focus-visible:-translate-y-0.5 active:scale-[0.99]')}>
       {body}
     </Link>
+  )
+}
+
+/** Projects for everyone; blogs and posts for teachers (lvn-backend ADR-0014, ADR-0015, ADR-0044). */
+function NewKinds({ teacher, disabled, onNew, onDark, className }: { teacher: boolean; disabled: boolean; onNew: (kind: 'PROJECT' | 'BLOG' | 'POST') => void; onDark?: boolean; className?: string }) {
+  const t = useTranslations('notes.home')
+  const kinds = teacher ? (['PROJECT', 'BLOG', 'POST'] as const) : (['PROJECT'] as const)
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className ?? ''}`} role="group" aria-label={t('newKind.label')}>
+      {kinds.map((kind) => (
+        <button
+          key={kind}
+          type="button"
+          disabled={disabled}
+          onClick={() => onNew(kind)}
+          className={`rounded-full px-3 py-1 text-xs font-medium disabled:opacity-60 ${onDark ? 'bg-white/10 text-white ring-1 ring-white/30 hover:bg-white/20' : 'border border-border text-muted hover:border-accent hover:text-accent'}`}
+        >
+          {t(`newKind.${kind}`)}
+        </button>
+      ))}
+    </div>
   )
 }

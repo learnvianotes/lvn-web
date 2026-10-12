@@ -363,6 +363,7 @@ mutation DeleteTag($id: UUID!) {
 
 fragment ShareFields on NoteShare {
   role
+  source
   createdAt
   user {
     id
@@ -375,8 +376,26 @@ query NoteShares($id: UUID!) {
   note(id: $id) {
     id
     visibility
+    sharedWithConnections
     shares {
       ...ShareFields
+    }
+  }
+  viewer {
+    id
+    globalRole
+  }
+}
+
+mutation SetNoteSharedWithConnections($noteId: UUID!, $shared: Boolean!) {
+  setNoteSharedWithConnections(input: { noteId: $noteId, shared: $shared }) {
+    note {
+      id
+      visibility
+      sharedWithConnections
+    }
+    userErrors {
+      message
     }
   }
 }

@@ -155,6 +155,27 @@ input CompleteRegistrationInput {
   institutionalEmail: String
 }
 
+enum ConnectionDirection {
+  """They asked the viewer"""
+  INCOMING
+
+  """The viewer asked them"""
+  OUTGOING
+}
+
+input ConnectionRequestInput {
+  requestId: UUID!
+}
+
+type ConnectionRequestItem {
+  createdAt: DateTime!
+  direction: ConnectionDirection!
+  id: UUID!
+
+  """Who asked (INCOMING) or was asked (OUTGOING)"""
+  person: User!
+}
+
 input ConvertPdfInput {
   """A PDF of the note the viewer can read"""
   fileId: UUID!
@@ -616,6 +637,7 @@ type Mutation {
   """
   publishNote(input: NoteIdInput!): NotePayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
+  removeConnection(input: PersonInput!): PersonPayload!
 
   """Stops someone following you; they are not told"""
   removeFollower(input: PersonInput!): PersonPayload!
@@ -626,6 +648,9 @@ type Mutation {
   Report a note or a person you can see; reporting again updates your report
   """
   reportContent(input: ReportContentInput!): OkPayload!
+
+  """Teacher to teacher; the other accepts or declines (ADR-0013)"""
+  requestConnection(input: PersonInput!): PersonPayload!
 
   """
   Ask for an archive of everything about you: notes as Markdown and JSON with their files, and your account data. One a day; you are emailed when it is ready
@@ -640,6 +665,9 @@ type Mutation {
 
   """Sets the password and signs out every device"""
   resetPassword(input: ResetPasswordInput!): OkPayload!
+
+  """Returns the person who asked"""
+  respondToConnectionRequest(input: RespondToConnectionRequestInput!): PersonPayload!
   restoreNote(input: NoteIdInput!): NotePayload!
 
   """
@@ -671,6 +699,11 @@ type Mutation {
   setNoteForking(input: SetNoteForkingInput!): NotePayload!
 
   """
+  Teachers: share with all your connections, live, or stop (people shared with directly keep their access)
+  """
+  setNoteSharedWithConnections(input: SetNoteSharedWithConnectionsInput!): NotePayload!
+
+  """
   Share with one person, or change their role; a PRIVATE note becomes SHARED
   """
   shareNote(input: ShareNoteInput!): NotePayload!
@@ -697,8 +730,12 @@ type Mutation {
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
   updatePdfHighlight(input: UpdatePdfHighlightInput!): PdfHighlightPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
+  updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
+
+  """Returns the person who was asked"""
+  withdrawConnectionRequest(input: ConnectionRequestInput!): PersonPayload!
   withdrawVerificationRequest(requestId: UUID!): OkPayload!
 }
 
@@ -753,6 +790,11 @@ type Note {
   pdfConversion: PdfConversion
   publishedAt: DateTime
   publishedVersion: NoteVersion
+
+  """
+  Owner only: every connection of the owner reads it, and new connections will too (teachers, ADR-0013)
+  """
+  sharedWithConnections: Boolean
 
   """Owner only: the people the note is shared with; null for anyone else"""
   shares: [NoteShare!]
@@ -905,12 +947,21 @@ A person a note is shared with; EDITORs work on the draft, VIEWERs read the publ
 type NoteShare {
   createdAt: DateTime!
   role: NoteShareRole!
+  source: NoteShareSource!
   user: User!
 }
 
 enum NoteShareRole {
   EDITOR
   VIEWER
+}
+
+"""
+DIRECT: shared with this person; CONNECTIONS: a connection of the owner, who shares with all of them (ADR-0044)
+"""
+enum NoteShareSource {
+  CONNECTIONS
+  DIRECT
 }
 
 """An immutable snapshot of a note's cards (§4.3)"""
@@ -1118,6 +1169,11 @@ type PdfPagesUsage {
   used: Int!
 }
 
+type PendingConnection {
+  direction: ConnectionDirection!
+  requestId: UUID!
+}
+
 type PersonConnection {
   edges: [PersonEdge!]!
   pageInfo: PageInfo!
@@ -1174,6 +1230,12 @@ type Query {
   """Open cases, oldest first (PLATFORM_ADMIN)"""
   moderationQueue(after: String, first: Int): ModerationCaseConnection!
   myBlocked: [PersonEdge!]!
+
+  """Pending connection requests to and from the viewer, newest first"""
+  myConnectionRequests: [ConnectionRequestItem!]!
+
+  """The teachers the viewer is connected with (ADR-0013)"""
+  myConnections: [PersonEdge!]!
 
   """Your latest data exports, newest first"""
   myDataExports: [DataExport!]!
@@ -1271,8 +1333,12 @@ input RefreshSessionInput {
 type Relation {
   """The viewer blocked them; being blocked by them is never shown"""
   blocked: Boolean!
+
+  """Teachers who connected (ADR-0013)"""
+  connected: Boolean!
   followedBy: Boolean!
   following: Boolean!
+  pendingConnection: PendingConnection
   restricted: Boolean!
   viewerCan: RelationActions!
 }
@@ -1283,7 +1349,12 @@ What the viewer may do about a person, from the same rules the API applies
 type RelationActions {
   block: Boolean!
   follow: Boolean!
+  removeConnection: Boolean!
   removeFollower: Boolean!
+
+  """Teachers connect with teachers (ADR-0013)"""
+  requestConnection: Boolean!
+  respondToConnection: Boolean!
   restrict: Boolean!
   unblock: Boolean!
   unfollow: Boolean!
@@ -1340,6 +1411,11 @@ input ResetPasswordInput {
   token: String!
 }
 
+input RespondToConnectionRequestInput {
+  accept: Boolean!
+  requestId: UUID!
+}
+
 input RestoreNoteVersionInput {
   noteId: UUID!
   versionId: UUID!
@@ -1394,6 +1470,11 @@ input SetInstitutionalEmailInput {
 input SetNoteForkingInput {
   enabled: Boolean!
   noteId: UUID!
+}
+
+input SetNoteSharedWithConnectionsInput {
+  noteId: UUID!
+  shared: Boolean!
 }
 
 input ShareNoteInput {
@@ -1560,6 +1641,47 @@ type TagPayload {
   userErrors: [UserError!]!
 }
 
+type TeacherProfile {
+  bio: String
+  headline: String
+
+  """In the teacher's order"""
+  skills: [TeacherSkill!]!
+  updatedAt: DateTime
+}
+
+type TeacherProfilePayload {
+  profile: TeacherProfile
+  userErrors: [UserError!]!
+}
+
+type TeacherSkill {
+  detail: String
+  id: UUID!
+  kind: TeacherSkillKind!
+  name: String!
+  source: TeacherSkillSource!
+}
+
+input TeacherSkillInput {
+  """At most 500 characters"""
+  detail: String
+  kind: TeacherSkillKind!
+
+  """At most 120 characters"""
+  name: String!
+}
+
+enum TeacherSkillKind {
+  EXPERIENCE
+  QUALIFICATION
+  SKILL
+}
+
+enum TeacherSkillSource {
+  MANUAL
+}
+
 """
 A topic within a subject; curated by LVN or proposed by a user (usable by its proposer until curated)
 """
@@ -1640,6 +1762,15 @@ input UpdateProfileInput {
   yearOfStudy: YearOfStudy
 }
 
+"""
+Replaces the whole tab: headline (120 characters), bio (2,000) and at most 60 items in this order
+"""
+input UpdateTeacherProfileInput {
+  bio: String
+  headline: String
+  skills: [TeacherSkillInput!]!
+}
+
 type UploadHeader {
   name: String!
   value: String!
@@ -1718,6 +1849,9 @@ type User {
   Viewer only: a minor without verified consent (§15.2) — no public publishing, no DMs
   """
   restrictedMinor: Boolean
+
+  """The Skills tab, for anyone; null for people who are not teachers"""
+  teacherProfile: TeacherProfile
 
   """
   The viewer's own: whether they accepted the current version (Query.termsVersion); false means ask again. null for others.
