@@ -51,7 +51,7 @@ test('the owner of a hidden note sees why, cannot make it public, and appeals on
 test('a platform admin works through the queue: reasons first, then the decision', async ({ page }) => {
   let open = true
   const item = {
-    __typename: 'ModerationCase',
+    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null,
     entityType: 'NOTE',
     entityId: NOTE_ID,
     scope: 'PLATFORM',
@@ -103,12 +103,12 @@ test('platform admins see every scope: a group’s appealed post to put back or 
   const GROUP = '01920000-0000-7000-8000-0000000a0001'
   const at = new Date(Date.now() - 7_200_000).toISOString()
   const appealed = {
-    __typename: 'ModerationCase', entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: at, note: null, user: null, group: null, reports: [],
+    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: at, note: null, user: null, group: null, reports: [],
     content: { __typename: 'ModeratedContent', entityType: 'GROUP_POST', id: 'p2', excerpt: 'Idea: dark mode', moderation: 'HIDDEN', moderationReason: 'Off topic.', deleted: false, path: `/groups/${GROUP}`, author: ravi },
     appeal: { __typename: 'ModerationAppeal', message: 'It is on topic: the app needs it.', createdAt: at },
   }
   const reported = {
-    __typename: 'ModerationCase', entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, appeal: null,
+    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, appeal: null,
     group: { __typename: 'Group', id: GROUP, name: 'Heaps club' },
     reports: [{ __typename: 'ModerationReport', reason: 'HATE', details: 'The group name', createdAt: at, reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
   }
@@ -133,4 +133,112 @@ test('platform admins see every scope: a group’s appealed post to put back or 
   const group = page.getByRole('article', { name: 'Heaps club' })
   await expect(group.getByRole('link', { name: 'Heaps club' })).toHaveAttribute('href', `/groups/${GROUP}`)
   await expect(group.getByRole('button')).toHaveText(['Dismiss reports', 'Warn', 'Remove'])
+})
+
+test('platform admins suspend an account for some days, and lift a suspension after its appeal (ADR-0053)', async ({ page }) => {
+  const DEV = '01920000-0000-7000-8000-00000000dddd'
+  const at = new Date(Date.now() - 3_600_000).toISOString()
+  const reportedPerson = {
+    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'USER', entityId: ravi.id, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, content: null, group: null, appeal: null,
+    user: ravi,
+    reports: [{ __typename: 'ModerationReport', reason: 'SPAM', details: 'The same link everywhere', createdAt: at, reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
+  }
+  const appealing = {
+    ...reportedPerson, entityId: DEV, user: { __typename: 'User', id: DEV, displayName: 'Dev Patel', handle: 'dev' }, reports: [],
+    suspendedUntil: new Date(Date.now() + 6 * 86_400_000).toISOString(),
+    appeal: { __typename: 'ModerationAppeal', message: 'It was a class announcement.', createdAt: at },
+  }
+  const calls = await mockApi(
+    page,
+    {
+      ModerationQueue: () => ({ moderationQueue: { edges: [reportedPerson, appealing].map((node) => ({ __typename: 'ModerationCaseEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
+      ModerateContent: () => ok('moderateContent'),
+    },
+    { globalRole: 'PLATFORM_ADMIN' },
+  )
+  await page.goto('/admin/moderation')
+  const ravis = page.getByRole('article', { name: 'Ravi Kumar' })
+  await expect(ravis.getByRole('button')).toHaveText(['Dismiss reports', 'Warn', 'Suspend'])
+  await ravis.getByRole('button', { name: 'Suspend' }).click()
+  await expect(ravis.getByRole('alert')).toHaveText('Write a reason first: the author is told.')
+  await ravis.getByLabel(/^Reason/).fill('Posting the same link everywhere.')
+  await ravis.getByLabel('Suspend for').selectOption({ label: '30 days' })
+  await ravis.getByRole('button', { name: 'Suspend' }).click()
+  await expect.poll(() => calls.find((c) => c.op === 'ModerateContent')?.variables).toEqual({ input: { entityType: 'USER', entityId: ravi.id, action: 'SUSPEND', reason: 'Posting the same link everywhere.', suspendDays: 30 } })
+
+  const devs = page.getByRole('article', { name: 'Dev Patel' })
+  await expect(devs.getByText(/^Suspended until /)).toBeVisible()
+  await expect(devs.getByText('It was a class announcement.')).toBeVisible()
+  await expect(devs.getByLabel('Suspend for')).toHaveCount(0)
+  await expect(devs.getByRole('button')).toHaveText(['Lift the suspension', 'Keep the decision', 'Warn'])
+  await devs.getByRole('button', { name: 'Lift the suspension' }).click()
+  await expect.poll(() => calls.filter((c) => c.op === 'ModerateContent').at(-1)?.variables).toEqual({ input: { entityType: 'USER', entityId: DEV, action: 'APPROVE', reason: null } })
+})
+
+test('a removed group’s appeal: platform admins read why it went and put it back (ADR-0053)', async ({ page }) => {
+  const GROUP = '01920000-0000-7000-8000-0000000a0001'
+  const at = new Date(Date.now() - 3_600_000).toISOString()
+  const removed = {
+    __typename: 'ModerationCase', suspendedUntil: null, entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, group: null, reports: [],
+    removedGroup: { __typename: 'RemovedGroup', id: GROUP, name: 'Exam leaks', reason: 'Shares exam papers.', removedAt: at },
+    appeal: { __typename: 'ModerationAppeal', message: 'Last year’s papers, shared by the teacher.', createdAt: at },
+  }
+  const calls = await mockApi(
+    page,
+    {
+      ModerationQueue: () => ({ moderationQueue: { edges: [{ __typename: 'ModerationCaseEdge', node: removed }], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
+      ModerateContent: () => ok('moderateContent'),
+    },
+    { globalRole: 'PLATFORM_ADMIN' },
+  )
+  await page.goto('/admin/moderation')
+  const card = page.getByRole('article', { name: 'Exam leaks' })
+  await expect(card.getByText('Removed: Shares exam papers.')).toBeVisible()
+  await expect(card.getByRole('button')).toHaveText(['Put it back', 'Keep the decision'])
+  await card.getByRole('button', { name: 'Put it back' }).click()
+  await expect.poll(() => calls.find((c) => c.op === 'ModerateContent')?.variables).toEqual({ input: { entityType: 'GROUP', entityId: GROUP, action: 'APPROVE', reason: null } })
+})
+
+test('a suspended person reads until when and why on their account, and appeals once; warnings are listed (ADR-0053)', async ({ page }) => {
+  let appealed = false
+  const until = new Date(Date.now() + 7 * 86_400_000).toISOString()
+  const calls = await mockApi(page, {
+    MyStanding: () => ({ myStanding: { __typename: 'AccountStanding', suspendedUntil: until, suspensionReason: 'Posting the same link everywhere.', canAppeal: !appealed, warnings: [{ __typename: 'AccountWarning', reason: 'Keep comments about the work.', at: new Date().toISOString() }] } }),
+    AppealModeration: () => ((appealed = true), ok('appealModeration')),
+    MyDataExports: () => ({ myDataExports: [] }),
+  })
+  await page.goto('/profile')
+  const banner = page.getByRole('alert').filter({ hasText: 'Your account is suspended until' })
+  await expect(banner).toBeVisible()
+  await expect(banner.getByText('Posting the same link everywhere.')).toBeVisible()
+  await expect(page.getByText('A warning from the moderators')).toBeVisible()
+  await expect(page.getByText('Keep comments about the work.')).toBeVisible()
+  await banner.getByRole('button', { name: 'Appeal' }).click()
+  await banner.getByLabel('Tell the moderators why').fill('It was a class announcement.')
+  await banner.getByRole('button', { name: 'Send appeal' }).click()
+  await expect(banner.getByText('You have used your one appeal.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'AppealModeration')?.variables).toEqual({ input: { entityType: 'USER', entityId: USER, message: 'It was a class announcement.' } })
+})
+
+test('the owner of a removed group reads why where it was, and appeals once; anyone else finds nothing (ADR-0053)', async ({ page }) => {
+  const GROUP = '01920000-0000-7000-8000-0000000a0001'
+  let mine = true
+  let appealed = false
+  const calls = await mockApi(page, {
+    Group: () => ({ group: null }),
+    RemovedGroup: () => ({ removedGroup: mine ? { __typename: 'RemovedGroup', id: GROUP, name: 'Exam leaks', reason: 'Shares exam papers before the exam.', removedAt: new Date().toISOString(), canAppeal: !appealed } : null }),
+    AppealModeration: () => ((appealed = true), ok('appealModeration')),
+  })
+  await page.goto(`/groups/${GROUP}`)
+  await expect(page.getByRole('heading', { name: 'Moderators removed Exam leaks' })).toBeVisible()
+  await expect(page.getByText('Shares exam papers before the exam.')).toBeVisible()
+  await page.getByRole('button', { name: 'Appeal' }).click()
+  await page.getByLabel('Tell the moderators why').fill('These were last year’s papers.')
+  await page.getByRole('button', { name: 'Send appeal' }).click()
+  await expect(page.getByText('You have used your one appeal.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'AppealModeration')?.variables).toEqual({ input: { entityType: 'GROUP', entityId: GROUP, message: 'These were last year’s papers.' } })
+
+  mine = false
+  await page.reload()
+  await expect(page.getByText('This group is not available.')).toBeVisible()
 })

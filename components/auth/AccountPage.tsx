@@ -22,6 +22,7 @@ import {
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
+import { AccountStanding } from '@/features/moderation/Standing'
 
 type Viewer = NonNullable<ViewerQuery['viewer']>
 const YEARS: YearOfStudy[] = ['YEAR_1', 'YEAR_2', 'YEAR_3', 'YEAR_4', 'YEAR_5', 'POSTGRADUATE', 'GRADUATED', 'SCHOOL', 'NOT_STUDYING']
@@ -44,6 +45,7 @@ export function AccountPage() {
         </div>
         <SignOutButton />
       </header>
+      <AccountStanding userId={viewer.id} />
       {viewer.globalRole === 'PLATFORM_ADMIN' ? (
         <Link href="/admin/moderation" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
           {t('moderationQueue')}

@@ -4,6 +4,27 @@ input AcceptTermsInput {
   version: String!
 }
 
+"""An account's standing, for its owner alone (ADR-0053)"""
+type AccountStanding {
+  """The suspension can still be appealed (once)"""
+  canAppeal: Boolean!
+
+  """
+  Set while the account is suspended: nothing it does reaches other people until then
+  """
+  suspendedUntil: DateTime
+  suspensionReason: String
+
+  """Warnings from the last 90 days, newest first"""
+  warnings: [AccountWarning!]!
+}
+
+"""A warning platform moderators gave an account (ADR-0053)"""
+type AccountWarning {
+  at: DateTime!
+  reason: String!
+}
+
 type ActivityConnection {
   edges: [ActivityEdge!]!
   pageInfo: PageInfo!
@@ -1185,8 +1206,11 @@ input ModerateContentInput {
   entityId: UUID!
   entityType: ReportEntityType!
 
-  """Required for HIDE, REMOVE and WARN: the author is told"""
+  """Required for HIDE, REMOVE, WARN and SUSPEND: the author is told"""
   reason: String
+
+  """SUSPEND: for how many days, 1 to 365"""
+  suspendDays: Int
 }
 
 """
@@ -1220,7 +1244,7 @@ type ModeratedNote {
 }
 
 """
-APPROVE frees a held note; HIDE and REMOVE take it off for everyone but its author; DISMISS closes reports; WARN tells the author. SUSPEND is not available yet.
+APPROVE frees a held note, puts back hidden or removed content and removed groups, and lifts a suspension; HIDE and REMOVE take it off for everyone but its author; DISMISS closes reports; WARN tells the author; SUSPEND (accounts only, platform admins, ADR-0053) stops an account reaching others for suspendDays
 """
 enum ModerationActionType {
   APPROVE
@@ -1250,11 +1274,17 @@ type ModerationCase {
   """Set for NOTE cases"""
   note: ModeratedNote
   openedAt: DateTime!
+
+  """GROUP cases of a group platform moderators removed (ADR-0053)"""
+  removedGroup: RemovedGroup
   reports: [ModerationReport!]!
   scope: ModerationScope!
 
   """The group or class, for those scopes"""
   scopeId: UUID
+
+  """USER cases: until when the account is suspended, if it is"""
+  suspendedUntil: DateTime
 
   """Set for USER cases"""
   user: User
@@ -1316,7 +1346,7 @@ type Mutation {
   answerMentorInvite(input: AnswerMentorInviteInput!): GroupPayload!
 
   """
-  The author's one appeal against hiding or removing their note or content
+  The author's one appeal against hiding or removing their note or content, a group's owner's against its removal, or a suspended person's against the suspension
   """
   appealModeration(input: AppealModerationInput!): OkPayload!
   approveComment(input: CommentIdInput!): CommentPayload!
@@ -1902,7 +1932,7 @@ type Notification {
   createdAt: DateTime!
 
   """
-  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }, DOUBT { kind: ASKED | ANSWERED | RESOLVED, byMentor }, MODERATION { kind: HIDDEN | REMOVED | WARNED | RESTORED, entityType }
+  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }, DOUBT { kind: ASKED | ANSWERED | RESOLVED, byMentor }, MODERATION { kind: HIDDEN | REMOVED | WARNED | RESTORED | SUSPENDED, entityType }
   """
   data: JSON
 
@@ -2224,6 +2254,11 @@ type Query {
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
   myRestricted: [PersonEdge!]!
+
+  """
+  The viewer's account standing: a suspension and recent warnings (ADR-0053)
+  """
+  myStanding: AccountStanding!
   myTags: [Tag!]!
   myVerificationRequests: [VerificationRequest!]!
 
@@ -2252,6 +2287,11 @@ type Query {
   Notes anyone may read, newest published first (at most 100 a page): sitemaps and public pages
   """
   publicNotes(after: String, first: Int): NoteConnection!
+
+  """
+  Its owner only: a group platform moderators removed, with why; null for anything else
+  """
+  removedGroup(id: UUID!): RemovedGroup
 
   """
   At most 100 characters; `first` per group, 1 to 20 (default 5). Works signed out too: public notes only.
@@ -2385,6 +2425,17 @@ type RelationActions {
   unblock: Boolean!
   unfollow: Boolean!
   unrestrict: Boolean!
+}
+
+"""
+A group platform moderators removed (ADR-0053): its owner reads why and may appeal once
+"""
+type RemovedGroup {
+  canAppeal: Boolean!
+  id: UUID!
+  name: String!
+  reason: String!
+  removedAt: DateTime!
 }
 
 input RenameTagInput {
@@ -2657,6 +2708,11 @@ input SyncOpInput {
 
   """For CREATE_NOTE, the id the device gave the note"""
   noteId: UUID!
+
+  """
+  CREATE_NOTE: what the note is (NOTE when left out). Blogs and posts are for teachers, as in createNote (ADR-0052)
+  """
+  noteKind: NoteKind
 
   """UPDATE_NOTE: card changes, as in updateNoteDraft"""
   ops: [CardOpInput!]

@@ -501,3 +501,45 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   expect(seen.group.memberCount).toBe(2)
   expect(seen.group.posts.edges.map((e) => e.node.author.displayName)).toEqual(['Live Joiner'])
 })
+
+test('a platform admin suspends a learner, who reads why on their account and is told so when starting a group (lvn-backend ADR-0053)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a platform admin')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const admin = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
+
+  const email = `live-suspended-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Suspended')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+  const learnerId = execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT id FROM users.\\"User\\" WHERE email = '${email}'"`]).toString().trim()
+
+  const decided = await api<{ moderateContent: { ok: boolean; userErrors: { message: string }[] } }>('mutation ($input: ModerateContentInput!) { moderateContent(input: $input) { ok userErrors { message } } }', { input: { entityType: 'USER', entityId: learnerId, action: 'SUSPEND', reason: 'Posting the same link everywhere.', suspendDays: 3 } }, admin.accessToken)
+  expect(decided.moderateContent).toEqual({ ok: true, userErrors: [] })
+
+  await page.reload()
+  const banner = page.getByRole('alert').filter({ hasText: 'Your account is suspended until' })
+  await expect(banner).toBeVisible()
+  await expect(banner.getByText('Posting the same link everywhere.')).toBeVisible()
+  await page.goto('/groups')
+  await page.getByRole('button', { name: 'New group' }).click()
+  const dialog = page.getByRole('dialog', { name: 'New group' })
+  await dialog.getByLabel('Name').fill(`Not now ${stamp}`)
+  await dialog.getByRole('button', { name: 'Create group' }).click()
+  await expect(dialog.getByRole('alert')).toContainText('Your account is suspended until')
+
+  // Lifted: the account page has nothing to say, and the group starts.
+  await api('mutation ($input: ModerateContentInput!) { moderateContent(input: $input) { ok } }', { input: { entityType: 'USER', entityId: learnerId, action: 'APPROVE' } }, admin.accessToken)
+  await dialog.getByRole('button', { name: 'Create group' }).click()
+  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]+$/)
+})

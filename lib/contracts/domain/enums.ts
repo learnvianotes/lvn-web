@@ -196,7 +196,6 @@ export const ReportReason = {
 } as const
 export type ReportReason = (typeof ReportReason)[keyof typeof ReportReason]
 
-/** What can be reported (§15.1); comments, groups and resources join when they exist. */
 /** What can be reported (ADR-0037, ADR-0051); each has a scope that decides whose queue it goes to. */
 export const ReportEntityType = { NOTE: 'NOTE', USER: 'USER', COMMENT: 'COMMENT', GROUP_POST: 'GROUP_POST', CLASSROOM_POST: 'CLASSROOM_POST', DOUBT: 'DOUBT', GROUP: 'GROUP' } as const
 export type ReportEntityType = (typeof ReportEntityType)[keyof typeof ReportEntityType]

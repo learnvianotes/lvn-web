@@ -2,9 +2,9 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Bot, Check, EyeOff, Flag, MessageSquareWarning, ShieldCheck, Trash2, User, Users, VolumeX } from 'lucide-react'
+import { Ban, Bot, Check, EyeOff, Flag, MessageSquareWarning, ShieldCheck, Trash2, User, Users, VolumeX } from 'lucide-react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ModerateContentDocument, ModerationQueueDocument, MuteGroupMemberDocument, ViewerDocument, type ModerationActionType, type ModerationQueueQuery, type ModerationScope } from '@/graphql/generated/graphql'
@@ -13,7 +13,9 @@ import { ago } from '@/features/notes/look'
 
 type Case = ModerationQueueQuery['moderationQueue']['edges'][number]['node']
 
-const NEEDS_REASON = new Set<ModerationActionType>(['HIDE', 'REMOVE', 'WARN'])
+const NEEDS_REASON = new Set<ModerationActionType>(['HIDE', 'REMOVE', 'WARN', 'SUSPEND'])
+/** How long a suspension lasts, in days (ADR-0053: 1 to 365). */
+const SUSPEND_DAYS = [1, 3, 7, 14, 30, 90, 365] as const
 
 /**
  * A moderation queue (§15.1, ADR-0037, ADR-0051): open cases oldest first, what was reported and why, the author's
@@ -91,8 +93,10 @@ function choicesFor(c: Case): Choice[] {
   const hide: Choice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
   const remove: Choice = { action: 'REMOVE', label: 'REMOVE', icon: Trash2, tone: 'text-red-600 dark:text-red-400' }
   const approve: Choice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
-  if (c.entityType === 'USER') return [dismiss, warn]
-  if (c.entityType === 'GROUP') return [dismiss, warn, remove]
+  // Accounts are warned or suspended; a suspension is lifted or kept (ADR-0053).
+  if (c.entityType === 'USER') return c.suspendedUntil ? [{ action: 'APPROVE', label: 'LIFT', icon: Check, tone: '' }, { ...dismiss, label: c.appeal ? 'KEEP' : 'DISMISS' }, warn] : [dismiss, warn, { action: 'SUSPEND', label: 'SUSPEND', icon: Ban, tone: 'text-red-600 dark:text-red-400' }]
+  // A removed group is put back or stays removed.
+  if (c.entityType === 'GROUP') return c.removedGroup ? [{ action: 'APPROVE', label: 'RESTORE', icon: Check, tone: '' }, { ...dismiss, label: 'KEEP' }] : [dismiss, warn, remove]
   // Approving content that is up changes nothing a dismissal doesn't.
   if (c.content && c.content.moderation === 'OK') return [dismiss, warn, hide, remove]
   return [approve, dismiss, warn, hide, remove]
@@ -104,8 +108,10 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
   const [moderate, deciding] = useMutation(ModerateContentDocument)
   const [mute, muting] = useMutation(MuteGroupMemberDocument)
   const [reason, setReason] = useState('')
+  const [days, setDays] = useState<number>(7)
   const [error, setError] = useState<string | null>(null)
   const [muted, setMuted] = useState(false)
+  const format = useFormatter()
   const actions = choicesFor(c)
   const author = c.content?.author ?? c.note?.owner ?? null
   const state = c.content?.moderation ?? c.note?.moderation ?? null
@@ -114,7 +120,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
     setError(null)
     if (NEEDS_REASON.has(action) && !reason.trim()) return setError(t('reasonNeeded'))
     try {
-      const res = await moderate({ variables: { input: { entityType: c.entityType, entityId: c.entityId, action, reason: reason.trim() || null } } })
+      const res = await moderate({ variables: { input: { entityType: c.entityType, entityId: c.entityId, action, reason: reason.trim() || null, ...(action === 'SUSPEND' ? { suspendDays: days } : {}) } } })
       const problem = res.data?.moderateContent.userErrors[0]?.message
       if (problem) setError(problem)
       else onDone()
@@ -135,7 +141,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
     }
   }
 
-  const title = c.note ? c.note.title || t('untitled') : c.group ? c.group.name : c.user ? c.user.displayName : t(`entity.${c.entityType}`)
+  const title = c.note ? c.note.title || t('untitled') : c.group ? c.group.name : c.removedGroup ? c.removedGroup.name : c.user ? c.user.displayName : t(`entity.${c.entityType}`)
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5" aria-label={title}>
       <header className="flex flex-wrap items-start justify-between gap-2">
@@ -150,6 +156,11 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
                 {c.group.name}
               </Link>
             </h2>
+          ) : c.removedGroup ? (
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <Users className="size-4" aria-hidden />
+              {c.removedGroup.name}
+            </h2>
           ) : c.user ? (
             <h2 className="flex items-center gap-2 text-lg font-bold">
               <User className="size-4" aria-hidden />
@@ -161,10 +172,13 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {platform && c.scope !== 'PLATFORM' ? <span className="rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
           {state ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`state.${state}`)}</span> : null}
+          {c.suspendedUntil ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
+          {c.removedGroup ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t(`state.REMOVED`)}</span> : null}
           <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('opened', { when: ago(c.openedAt) })}</span>
         </div>
       </header>
       {c.note?.excerpt ? <p className="line-clamp-6 whitespace-pre-line rounded-xl bg-surface-2 px-3 py-2 text-sm">{c.note.excerpt}</p> : null}
+      {c.removedGroup ? <p className="rounded-xl bg-surface-2 px-3 py-2 text-sm">{t('removedReason', { reason: c.removedGroup.reason })}</p> : null}
       {c.content ? (
         <div className="flex flex-col gap-1 rounded-xl bg-surface-2 px-3 py-2 text-sm">
           <p className="line-clamp-6 whitespace-pre-line">{c.content.deleted ? <em className="text-muted">{t('deleted')}</em> : c.content.excerpt}</p>
@@ -197,6 +211,18 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
           <span className="text-xs font-semibold text-muted">{t('reason')}</span>
           <input className="h-10 rounded-xl border border-border bg-bg px-3 text-sm focus-visible:border-accent focus-visible:outline-none" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPlaceholder')} />
         </label>
+        {actions.some((a) => a.action === 'SUSPEND') ? (
+          <label className="flex items-center gap-2 text-xs font-semibold text-muted">
+            {t('suspendFor')}
+            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="h-9 rounded-lg border border-border bg-bg px-2 text-sm font-normal text-fg">
+              {SUSPEND_DAYS.map((d) => (
+                <option key={d} value={d}>
+                  {t('days', { count: d })}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {actions.map(({ action, label, icon: Icon, tone }) => (
             <Button key={action} size="sm" variant={action === 'APPROVE' ? 'primary' : 'secondary'} className={cn('gap-1.5', tone)} disabled={deciding.loading} onClick={() => void decide(action)}>

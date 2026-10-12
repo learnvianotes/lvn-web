@@ -54,6 +54,8 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
     if (op === 'Viewer') return route.fulfill({ json: { data: { viewer: { __typename: 'User', id: USER, handle: 'asharao', displayName: 'Asha Rao', email: 'asha@example.com', emailVerified: true, registrationComplete: true, verified: true, verificationMethod: 'INSTITUTIONAL_EMAIL', globalRole: 'STUDENT', restrictedMinor: false, institutionalEmail: null, institutionalEmailStatus: 'NONE', institution: null, ...viewer } } } })
     // The header's bell asks on every signed-in page (lvn-backend ADR-0042).
     if (op === 'UnreadNotificationCount' && !handlers[op]) return route.fulfill({ json: { data: { unreadNotificationCount: 0 } } })
+    // The account page asks for the viewer's standing (lvn-backend ADR-0053): nothing to tell unless a test says so.
+    if (op === 'MyStanding' && !handlers[op]) return route.fulfill({ json: { data: { myStanding: { __typename: 'AccountStanding', suspendedUntil: null, suspensionReason: null, canAppeal: false, warnings: [] } } } })
     if (op === 'TermsStatus' && !handlers[op]) return route.fulfill({ json: { data: { termsVersion: '2026-10-08', viewer: { __typename: 'User', id: USER, termsAccepted: true } } } })
     const handler = handlers[op]
     if (!handler) return route.fulfill({ status: 500, json: { errors: [{ message: `unmocked ${op}` }] } })
