@@ -543,3 +543,35 @@ test('a platform admin suspends a learner, who reads why on their account and is
   await dialog.getByRole('button', { name: 'Create group' }).click()
   await expect(page).toHaveURL(/\/groups\/[0-9a-f-]+$/)
 })
+
+test('a learner without a college email asks a teacher to vouch, and is verified when the teacher agrees (lvn-backend ADR-0019)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a teacher')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-voucher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Vouching Teacher ${stamp}`, dateOfBirth: '1985-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const teacher = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
+
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Learner Without Email')
+  await page.getByLabel('Email', { exact: true }).fill(`live-novouch-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2004-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.getByRole('button', { name: 'Ask a teacher' }).click()
+  await page.getByLabel('Find your teacher').fill(`Vouching Teacher ${stamp}`)
+  await page.getByRole('button', { name: new RegExp(`Vouching Teacher ${stamp}`) }).click()
+  await page.getByRole('button', { name: 'Send request' }).click()
+  await expect(page.getByText(`Waiting for Vouching Teacher ${stamp} to vouch for you.`)).toBeVisible()
+
+  const waiting = await api<{ verificationRequestsToReview: { id: string }[] }>('{ verificationRequestsToReview { id } }', {}, teacher.accessToken)
+  expect(waiting.verificationRequestsToReview).toHaveLength(1)
+  await api('mutation ($input: ReviewVerificationRequestInput!) { reviewVerificationRequest(input: $input) { request { status } } }', { input: { requestId: waiting.verificationRequestsToReview[0]!.id, approve: true } }, teacher.accessToken)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: /✓/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ask a teacher' })).toHaveCount(0)
+})

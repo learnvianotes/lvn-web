@@ -128,7 +128,7 @@ function Verification({ viewer }: { viewer: Viewer }) {
       {!viewer.verified ? <p className="text-sm text-muted">{t('verifyLead')}</p> : null}
       {!viewer.emailVerified ? <Alert>{t('emailUnverified')}</Alert> : null}
       {/* Without a college email (ADR-0019): a teacher vouches, or our team checks proof of study. */}
-      {!viewer.verified && viewer.emailVerified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
+      {!viewer.verified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
     </section>
   )
 }
