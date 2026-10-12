@@ -87,7 +87,7 @@ test('a teacher verifies a student who asked, and must say why to decline', asyn
     {
       ...basics,
       VerificationRequestsToReview: () => ({ verificationRequestsToReview: waiting.map((r) => ({ ...r, documents: [] })) }),
-      ReviewVerificationRequest: (v: { input: { requestId: string } }) => ((waiting = waiting.filter((r) => r.id !== v.input.requestId)), { reviewVerificationRequest: { request: null, ...none } }),
+      ReviewVerificationRequest: (v) => ((waiting = waiting.filter((r) => r.id !== (v.input as { requestId: string }).requestId)), { reviewVerificationRequest: { request: null, ...none } }),
     },
     { ...viewerExtras, globalRole: 'TEACHER' },
   )
