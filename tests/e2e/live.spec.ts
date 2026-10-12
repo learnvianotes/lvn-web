@@ -493,6 +493,8 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   await page.getByRole('button', { name: 'Join', exact: true }).click()
   await page.getByLabel('Write a post').fill('Hello from the web')
   await page.getByRole('button', { name: 'Post', exact: true }).click()
+  // The box empties once the API has the post; until then its own words could pass for the post in the list.
+  await expect(page.getByLabel('Write a post')).toHaveValue('')
   await expect(page.getByRole('tabpanel').getByText('Hello from the web')).toBeVisible()
 
   const seen = await api<{ group: { memberCount: number; posts: { edges: { node: { author: { displayName: string }; body: unknown } }[] } } }>('query ($id: UUID!) { group(id: $id) { memberCount posts { edges { node { author { displayName } body } } } } }', { id: groupId }, owner.accessToken)
