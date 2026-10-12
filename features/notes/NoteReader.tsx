@@ -14,6 +14,7 @@ import { ForkCredit, MakeCopyButton, useMakeCopy } from './ShareDialog'
 import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
+import { Discussion } from '@/features/discussion/Discussion'
 
 /** A note the viewer can read but not edit: its published version, with an outline and read aloud. */
 export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[] }) {
@@ -85,6 +86,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
             <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
           ))}
         </div>
+        <Discussion target={{ type: 'NOTE', id: meta.id }} />
       </article>
     </div>
   )

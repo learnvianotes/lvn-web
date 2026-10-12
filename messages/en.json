@@ -838,7 +838,12 @@
     "classJoinRejected": "Your request to join a class wasn't accepted",
     "classInvite": "{actor} invited you to {classroom}",
     "classPost": "{actor} posted an announcement in {classroom}",
-    "aClass": "a class"
+    "aClass": "a class",
+    "commentOnNote": "{actor} commented on “{note}”",
+    "replyOnNote": "{actor} replied to your comment on “{note}”",
+    "commentIn": "{actor} commented in {place}",
+    "replyIn": "{actor} replied to your comment in {place}",
+    "commentGone": "{actor} commented on something you can no longer open"
   },
   "people": {
     "teacher": "Teacher",
@@ -1123,5 +1128,39 @@
     "saved": "Saved.",
     "delete": "Delete class",
     "deleteConfirm": "Delete {name} for everyone? This cannot be undone."
+  },
+  "discussion": {
+    "title": "Discussion",
+    "count": "{count, plural, =0 {} one {# comment} other {# comments}}",
+    "loading": "Loading the discussion…",
+    "failed": "That did not work. Try again.",
+    "none": "No comments yet.",
+    "more": "Show more",
+    "write": "Write a comment",
+    "placeholder": "Add a comment…",
+    "askStaff": "Ask the teacher a question. Only you and the class's staff see it.",
+    "send": "Comment",
+    "reply": "Reply",
+    "writeReply": "Write a reply",
+    "sendReply": "Reply",
+    "cancel": "Cancel",
+    "removed": "This comment was removed.",
+    "edited": "edited",
+    "private": "Private thread",
+    "waiting": "Waiting for approval",
+    "editLabel": "Edit your comment",
+    "save": "Save",
+    "approve": "Approve",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this comment?",
+    "react": {
+      "LIKE": "Like",
+      "HELPFUL": "Helpful",
+      "CELEBRATE": "Celebrate"
+    },
+    "comments": "{count, plural, =0 {Comment} one {# comment} other {# comments}}",
+    "hide": "Hide comments",
+    "signIn": "Sign in to join the discussion."
   }
 }

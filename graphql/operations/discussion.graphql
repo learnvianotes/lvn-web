@@ -1,0 +1,116 @@
+# Comments and reactions (lvn-backend ADR-0047) on notes, group posts and class announcements. A thread is read with
+# the discussion query on its own: nested under a note or post it would pass the API's depth limit.
+
+fragment ReactionsFields on Reactions {
+  viewerReaction
+  counts {
+    kind
+    count
+    atLeast
+  }
+}
+
+fragment CommentFields on Comment {
+  id
+  body
+  cardId
+  removed
+  pendingApproval
+  private
+  createdAt
+  editedAt
+  author {
+    id
+    displayName
+    handle
+  }
+  reactions {
+    ...ReactionsFields
+  }
+  viewerCan {
+    reply
+    edit
+    delete
+    approve
+  }
+}
+
+query Discussion($target: CommentTargetInput!, $after: String, $cardId: UUID) {
+  discussion(target: $target) {
+    commentCount
+    viewerCanComment
+    whyNot
+    reactions {
+      ...ReactionsFields
+    }
+    comments(first: 30, after: $after, cardId: $cardId) {
+      edges {
+        node {
+          ...CommentFields
+          replies {
+            ...CommentFields
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+mutation AddComment($input: AddCommentInput!) {
+  addComment(input: $input) {
+    comment {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation EditComment($commentId: UUID!, $body: JSON!) {
+  editComment(input: { commentId: $commentId, body: $body }) {
+    comment {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DeleteComment($commentId: UUID!) {
+  deleteComment(input: { commentId: $commentId }) {
+    comment {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ApproveComment($commentId: UUID!) {
+  approveComment(input: { commentId: $commentId }) {
+    comment {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation React($target: ReactionTargetInput!, $kind: ReactionKind) {
+  react(input: { target: $target, kind: $kind }) {
+    reactions {
+      ...ReactionsFields
+    }
+    userErrors {
+      message
+    }
+  }
+}

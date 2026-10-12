@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { PostComments } from '@/features/discussion/PostComments'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { RichDoc } from '@/features/notes/render/RichText'
@@ -207,6 +208,7 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
                 ) : null}
               </div>
               <RichDoc doc={p.body as Doc} className="text-sm" />
+              <PostComments type="CLASSROOM_POST" id={p.id} count={p.discussion.commentCount} />
             </li>
           ))}
         </ul>

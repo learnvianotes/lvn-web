@@ -21,6 +21,7 @@ import { savedFromMirror } from './editor/mirror'
 import { cardsToDoc } from './model/doc'
 import { savedStateOf } from './model/save'
 import { useLoadedNote } from './useLoadedNote'
+import { Discussion } from '@/features/discussion/Discussion'
 
 /** A note: the editor for its owner and editors, the reader for everyone else (loading: ./useLoadedNote). */
 export function NotePage({ id }: { id: string }) {
@@ -197,6 +198,8 @@ export function NotePage({ id }: { id: string }) {
           onOpenVersion={(versionId) => setVersionsOpen({ open: true, versionId })}
           onAnchor={(anchor, cardId) => router.push(`/notes/${id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)}
         />
+        {/* What readers said about the published note (lvn-backend ADR-0047). */}
+        {meta.publishedVersion ? <Discussion target={{ type: 'NOTE', id }} /> : null}
         <VersionsDialog
           noteId={id}
           open={versionsOpen.open}

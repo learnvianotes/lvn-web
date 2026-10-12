@@ -34,7 +34,16 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'JOIN_REQUEST', actor: meera, group: g })).toBe('Meera Iyer asked to join Algorithms study')
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'APPROVED' }, group: g })).toBe("You're in: Algorithms study accepted your request")
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'REJECTED' }, group: null })).toBe("a group didn't accept your request")
-    expect(say({ category: 'COMMENT' })).toBe('Something new for you')
+    expect(say({ category: 'QUIZ_PUBLISHED' })).toBe('Something new for you')
+  })
+
+  it('says who commented or replied, and on what (lvn-backend ADR-0047)', () => {
+    const note = { id: 'n1', title: 'Heaps' }
+    expect(say({ category: 'COMMENT', actor: meera, note, data: { kind: 'COMMENT' } })).toBe('Meera Iyer commented on “Heaps”')
+    expect(say({ category: 'COMMENT', actor: meera, note, data: { kind: 'REPLY' } })).toBe('Meera Iyer replied to your comment on “Heaps”')
+    expect(say({ category: 'COMMENT', path: '/groups/g1', actor: meera, group: { id: 'g1', name: 'Algorithms study' }, data: { kind: 'COMMENT' } })).toBe('Meera Iyer commented in Algorithms study')
+    expect(say({ category: 'COMMENT', path: '/classes/c1', actor: meera, classroom: { id: 'c1', name: 'Physics 9A' }, data: { kind: 'REPLY' } })).toBe('Meera Iyer replied to your comment in Physics 9A')
+    expect(say({ category: 'COMMENT', actor: meera, data: { kind: 'COMMENT' } })).toBe('Meera Iyer commented on something you can no longer open')
   })
 
   it('names the class of a request, an answer, an invite or an announcement (lvn-backend ADR-0046)', () => {

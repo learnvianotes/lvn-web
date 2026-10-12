@@ -13,6 +13,8 @@ const path = `/n/${note.slug}-${note.id}`
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360f8cfc0f01f0005000201a1d0f3a50000000049454e44ae426082', 'hex')
 
 test('anyone reads a public note without an account', async ({ page }) => {
+  // In the browser the API answers that nobody is signed in.
+  await page.route('**/graphql', (route) => route.fulfill({ json: { data: { refreshSession: null } } }))
   const res = await page.goto(path)
   expect(res?.status()).toBe(200)
   await expect(page.getByRole('heading', { level: 1, name: "Dijkstra's algorithm" })).toBeVisible()
@@ -20,6 +22,8 @@ test('anyone reads a public note without an account', async ({ page }) => {
   await expect(page.getByText('Always settle the closest unvisited vertex next.')).toBeVisible()
   await expect(page.getByText('Shortest paths · Algorithms')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Start writing' })).toHaveAttribute('href', '/sign-up')
+  // The discussion is for signed-in readers (lvn-backend ADR-0047).
+  await expect(page.getByRole('link', { name: 'Sign in to join the discussion.' })).toHaveAttribute('href', `/sign-in?next=${encodeURIComponent(path)}`)
   // For sharing and search engines.
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', new RegExp(`${path}$`))
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', "Dijkstra's algorithm")

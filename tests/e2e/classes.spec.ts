@@ -15,7 +15,7 @@ const classroom = (over: Record<string, unknown> = {}) => ({
 const asTeacher = () => classroom({ viewerRole: 'TEACHER', teacher: { __typename: 'User', id: USER, displayName: 'Asha Rao' }, joinCode: 'K7PQ2MXA', viewerCan: can({ review: true, post: true, manage: true }) })
 const asStudent = () => classroom({ viewerRole: 'STUDENT', viewerCan: can({ leave: true }) })
 const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: s }] }] })
-const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'ClassroomPost', id, body: doc(text), createdAt: new Date().toISOString(), viewerCanDelete: false, author: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer', handle: 'meera' }, ...over })
+const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'ClassroomPost', id, body: doc(text), createdAt: new Date().toISOString(), viewerCanDelete: false, author: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer', handle: 'meera' }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
 const posts = (nodes: unknown[]) => ({ classroom: { __typename: 'Classroom', id: CLASS, posts: { __typename: 'ClassroomPostConnection', edges: nodes.map((node) => ({ __typename: 'ClassroomPostEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
 const card = (over: Record<string, unknown> = {}) => ({ __typename: 'Classroom', id: CLASS, name: 'Physics 9A', description: null, memberCount: 31, viewerRole: 'STUDENT', teacher: teacherRef, ...over })
 

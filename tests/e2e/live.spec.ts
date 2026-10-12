@@ -309,4 +309,12 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   await expect(page).toHaveURL(new RegExp(`/classes/${classroomId}$`))
   await expect(page.getByText('Live test on Friday')).toBeVisible()
   await expect(page.getByTestId('class-code')).toHaveCount(0)
+  // A question under the announcement goes to the staff only (ADR-0047).
+  await page.getByRole('button', { name: 'Comment', exact: true }).click()
+  await page.getByLabel('Write a comment').fill('Which chapters?')
+  await page.getByRole('button', { name: 'Comment', exact: true }).last().click()
+  await expect(page.getByText('Private thread')).toBeVisible()
+  const postId = (await api<{ classroom: { posts: { edges: { node: { id: string } }[] } } }>('query ($id: UUID!) { classroom(id: $id) { posts { edges { node { id } } } } }', { id: classroomId }, teacher.accessToken)).classroom.posts.edges[0]!.node.id
+  const seen = await api<{ discussion: { comments: { edges: { node: { private: boolean; author: { displayName: string } } }[] } } }>('query ($target: CommentTargetInput!) { discussion(target: $target) { comments { edges { node { private author { displayName } } } } } }', { target: { type: 'CLASSROOM_POST', id: postId } }, teacher.accessToken)
+  expect(seen.discussion.comments.edges.map((e) => e.node)).toEqual([{ private: true, author: { displayName: 'Live Learner' } }])
 })

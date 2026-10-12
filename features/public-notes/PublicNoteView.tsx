@@ -10,6 +10,7 @@ import type { PublicNote } from './data'
 import { publicNotePath } from './paths'
 import { PublicMedia } from './PublicMedia'
 import { PublicReadAloud } from './PublicReadAloud'
+import { PublicDiscussion } from '@/features/discussion/PublicDiscussion'
 
 /** A public note as anyone sees it (P2d): rendered on the server, cached, readable without an account. */
 export async function PublicNoteView({ note }: { note: PublicNote }) {
@@ -79,6 +80,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
           {!note.cards.length ? <p className="text-muted">{t('empty')}</p> : null}
         </article>
       </PublicMedia>
+      <PublicDiscussion noteId={note.id} />
 
       <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ago } from '@/features/notes/look'
+import { PostComments } from '@/features/discussion/PostComments'
 import { RichDoc } from '@/features/notes/render/RichText'
 import {
   CreateGroupPostDocument,
@@ -232,6 +233,7 @@ function PostItem({ post, onPin, onDelete }: { post: GroupPostFieldsFragment; on
         </span>
       </div>
       <RichDoc doc={post.body as Doc} className="text-sm" />
+      <PostComments type="GROUP_POST" id={post.id} count={post.discussion.commentCount} />
     </li>
   )
 }

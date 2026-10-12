@@ -30,6 +30,12 @@ export function describeNotification(
       return data.decision === 'APPROVED' ? t('joinApproved', { group: place ?? t('aGroup') }) : t('joinRejected', { group: place ?? t('aGroup') })
     case 'CLASSROOM_INVITE':
       return t('classInvite', { actor, classroom: place ?? t('aClass') })
+    case 'COMMENT': {
+      const reply = data.kind === 'REPLY'
+      if (n.note) return t(reply ? 'replyOnNote' : 'commentOnNote', { actor, note: n.note.title || t('untitled') })
+      if (place) return t(reply ? 'replyIn' : 'commentIn', { actor, place })
+      return t('commentGone', { actor })
+    }
     case 'CLASSROOM_POST':
       return t('classPost', { actor, classroom: place ?? t('aClass') })
     case 'CONNECTION':

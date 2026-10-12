@@ -4,6 +4,17 @@ input AcceptTermsInput {
   version: String!
 }
 
+input AddCommentInput {
+  body: JSON!
+
+  """A card of the note"""
+  cardId: UUID
+
+  """Reply to this top-level comment"""
+  parentId: UUID
+  target: CommentTargetInput!
+}
+
 input AddPdfHighlightInput {
   cardId: UUID
 
@@ -235,6 +246,11 @@ type ClassroomPost {
   author: User!
   body: JSON!
   createdAt: DateTime!
+
+  """
+  Members: comments and reactions. A student's thread is seen by them and the class's staff only
+  """
+  discussion: Discussion!
   id: UUID!
   viewerCanDelete: Boolean!
 }
@@ -268,6 +284,74 @@ enum ClassroomRole {
   STUDENT
   TA
   TEACHER
+}
+
+type Comment {
+  """Null when removed"""
+  author: User
+
+  """Rich text: a card's document; null when removed"""
+  body: JSON
+
+  """The card of the note it is about"""
+  cardId: UUID
+  createdAt: DateTime!
+  editedAt: DateTime
+  id: UUID!
+
+  """
+  Waiting for the owner's approval: seen by its author and the owner only
+  """
+  pendingApproval: Boolean!
+
+  """
+  In a class: seen by the student whose thread it is and the class's staff only
+  """
+  private: Boolean!
+  reactions: Reactions!
+  removed: Boolean!
+
+  """Replies, oldest first (one level)"""
+  replies: [Comment!]!
+  viewerCan: CommentActions!
+}
+
+type CommentActions {
+  """The content's owner: let a restricted person's comment be seen"""
+  approve: Boolean!
+  delete: Boolean!
+  edit: Boolean!
+  reply: Boolean!
+}
+
+type CommentConnection {
+  edges: [CommentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment!
+}
+
+input CommentIdInput {
+  commentId: UUID!
+}
+
+type CommentPayload {
+  comment: Comment
+  userErrors: [UserError!]!
+}
+
+input CommentTargetInput {
+  id: UUID!
+  type: CommentTargetType!
+}
+
+enum CommentTargetType {
+  CLASSROOM_POST
+  GROUP_POST
+  NOTE
 }
 
 """
@@ -421,6 +505,21 @@ input DecideDomainReviewInput {
   domain: String!
 }
 
+type Discussion {
+  """Comments and replies the viewer can see"""
+  commentCount: Int!
+
+  """
+  Top-level comments, oldest first; with cardId, those on one card of the note
+  """
+  comments(after: String, cardId: UUID, first: Int): CommentConnection!
+  reactions: Reactions!
+  viewerCanComment: Boolean!
+
+  """Why the viewer may not comment or react, in words"""
+  whyNot: String
+}
+
 type DomainReview {
   domain: String!
   firstSeenAt: DateTime!
@@ -435,6 +534,11 @@ enum DomainReviewStatus {
   APPROVED
   NEEDS_REVIEW
   REJECTED
+}
+
+input EditCommentInput {
+  body: JSON!
+  commentId: UUID!
 }
 
 input EditGroupPostInput {
@@ -587,6 +691,9 @@ type GroupPost {
   """Rich text: a card's document"""
   body: JSON!
   createdAt: DateTime!
+
+  """Members: comments and reactions on the post"""
+  discussion: Discussion!
   editedAt: DateTime
   id: UUID!
   pinned: Boolean!
@@ -891,6 +998,7 @@ enum ModerationState {
 type Mutation {
   """Accept the current Terms, Privacy Policy and content licence"""
   acceptTerms(input: AcceptTermsInput!): OkPayload!
+  addComment(input: AddCommentInput!): CommentPayload!
 
   """Owner and editors"""
   addPdfHighlight(input: AddPdfHighlightInput!): PdfHighlightPayload!
@@ -898,6 +1006,7 @@ type Mutation {
 
   """The author's one appeal against hiding or removing their note"""
   appealModeration(input: AppealModerationInput!): OkPayload!
+  approveComment(input: CommentIdInput!): CommentPayload!
 
   """
   Ends follows both ways and stops new interaction both ways; they are not told
@@ -942,6 +1051,11 @@ type Mutation {
   deleteClassroom(input: ClassroomIdInput!): OkPayload!
   deleteClassroomPost(input: ClassroomPostIdInput!): ClassroomPayload!
 
+  """
+  Its author, the note's owner, group moderators or class staff; with replies it stays as removed
+  """
+  deleteComment(input: CommentIdInput!): CommentPayload!
+
   """Its notes and subfolders move up one level"""
   deleteFolder(input: IdInput!): OkPayload!
 
@@ -959,6 +1073,9 @@ type Mutation {
 
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
+
+  """Its author"""
+  editComment(input: EditCommentInput!): CommentPayload!
   editGroupPost(input: EditGroupPostInput!): GroupPostPayload!
   followUser(input: PersonInput!): PersonPayload!
 
@@ -992,6 +1109,7 @@ type Mutation {
   Snapshot the draft as the version readers see (owner; a verified account)
   """
   publishNote(input: NoteIdInput!): NotePayload!
+  react(input: ReactInput!): ReactPayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
   removeClassroomMember(input: ClassroomMemberInput!): ClassroomPayload!
   removeConnection(input: PersonInput!): PersonPayload!
@@ -1148,6 +1266,11 @@ type Note {
 
   """Set while the note is in the trash (owner only)"""
   deletedAt: DateTime
+
+  """
+  Signed-in readers of the note: its comments and reactions. Null for anonymous visitors
+  """
+  discussion: Discussion
 
   """Editors only: bumped by every change to the draft"""
   draftRevision: Int
@@ -1420,7 +1543,7 @@ type Notification {
   createdAt: DateTime!
 
   """
-  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }
+  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }
   """
   data: JSON
 
@@ -1654,6 +1777,11 @@ type Query {
   discoverGroups(first: Int, query: String): [Group!]!
 
   """
+  The discussion of a note, group post or class announcement the viewer can read; null otherwise. Queried on its own, it keeps comment threads within the depth limit
+  """
+  discussion(target: CommentTargetInput!): Discussion
+
+  """
   Platform admins: institutional email domains waiting for review (ADR-0017)
   """
   domainReviews(status: DomainReviewStatus): [DomainReview!]!
@@ -1768,6 +1896,50 @@ type Query {
 
   """The signed-in user, null for anonymous visitors"""
   viewer: User
+}
+
+input ReactInput {
+  """Null takes the viewer's reaction away"""
+  kind: ReactionKind
+  target: ReactionTargetInput!
+}
+
+type ReactPayload {
+  reactions: Reactions
+  userErrors: [UserError!]!
+}
+
+type ReactionCount {
+  atLeast: Boolean!
+
+  """
+  Exact; or, on a public note for anyone but its owner, a milestone (ADR-0027) when atLeast, and null below the first
+  """
+  count: Int
+  kind: ReactionKind!
+}
+
+enum ReactionKind {
+  CELEBRATE
+  HELPFUL
+  LIKE
+}
+
+input ReactionTargetInput {
+  id: UUID!
+  type: ReactionTargetType!
+}
+
+enum ReactionTargetType {
+  CLASSROOM_POST
+  COMMENT
+  GROUP_POST
+  NOTE
+}
+
+type Reactions {
+  counts: [ReactionCount!]!
+  viewerReaction: ReactionKind
 }
 
 input RefreshSessionInput {
