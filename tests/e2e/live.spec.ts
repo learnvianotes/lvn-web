@@ -317,6 +317,29 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   const postId = (await api<{ classroom: { posts: { edges: { node: { id: string } }[] } } }>('query ($id: UUID!) { classroom(id: $id) { posts { edges { node { id } } } } }', { id: classroomId }, teacher.accessToken)).classroom.posts.edges[0]!.node.id
   const seen = await api<{ discussion: { comments: { edges: { node: { private: boolean; author: { displayName: string } } }[] } } }>('query ($target: CommentTargetInput!) { discussion(target: $target) { comments { edges { node { private author { displayName } } } } } }', { target: { type: 'CLASSROOM_POST', id: postId } }, teacher.accessToken)
   expect(seen.discussion.comments.edges.map((e) => e.node)).toEqual([{ private: true, author: { displayName: 'Live Learner' } }])
+
+  // The announcement was also emailed (ADR-0050), with one-click unsubscribe; needs E2E_MAILPIT (Mailpit's web address).
+  const mailpit = process.env.E2E_MAILPIT
+  if (!mailpit) return
+  let message: { ID: string } | undefined
+  await expect
+    .poll(async () => {
+      const found = (await (await fetch(`${mailpit}/api/v1/search?query=${encodeURIComponent(`to:"${email}" subject:"posted in Live physics"`)}`)).json()) as { messages: { ID: string }[] }
+      message = found.messages[0]
+      return !!message
+    }, { timeout: 60_000 })
+    .toBe(true)
+  const full = (await (await fetch(`${mailpit}/api/v1/message/${message!.ID}`)).json()) as { Text: string }
+  expect(full.Text).toContain('Live test on Friday')
+  const headers = (await (await fetch(`${mailpit}/api/v1/message/${message!.ID}/headers`)).json()) as Record<string, string[]>
+  expect(headers['List-Unsubscribe-Post']).toEqual(['List-Unsubscribe=One-Click'])
+  const oneClick = headers['List-Unsubscribe']![0]!.replace(/^<|>$/g, '')
+  // The visible link asks for a click; the mail client's POST needs none.
+  const visible = /https?:\/\/\S+\/unsubscribe\?t=[\w.-]+/.exec(full.Text)![0]
+  await page.goto(visible)
+  await page.getByRole('button', { name: 'Stop these emails' }).click()
+  await expect(page.getByRole('status')).toHaveText("Done. You won't get emails about class announcements.")
+  expect((await page.request.post(oneClick, { form: { 'List-Unsubscribe': 'One-Click' } })).status()).toBe(200)
 })
 
 test('a learner starts a project workspace, a teacher mentors it and answers a doubt (lvn-backend ADR-0048)', async ({ page }, info) => {
