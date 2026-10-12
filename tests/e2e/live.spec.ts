@@ -209,6 +209,26 @@ test('a learner converts a PDF into cards with the real engine, and checks them 
   await expect(page.locator('.lvn-mark-anchor').first()).toBeAttached()
 })
 
+test('a notification reaches the bell live: the data export the worker builds (lvn-backend ADR-0042)', async ({ page }, info) => {
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Bell')
+  await page.getByLabel('Email', { exact: true }).fill(`live-bell-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible()
+
+  // The worker builds the archive and notifies; the count changes on this page without a reload.
+  await page.getByRole('button', { name: 'Prepare my archive' }).click()
+  await expect(page.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible({ timeout: 60_000 })
+  await page.getByRole('link', { name: 'Notifications, 1 unread' }).click()
+  await page.getByRole('button', { name: /Your data export is ready to download/ }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible()
+})
+
 test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {
   const { TERMS_VERSION } = await import('../../features/legal/documents')
   const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })
