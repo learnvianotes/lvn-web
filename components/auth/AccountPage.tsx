@@ -50,6 +50,10 @@ export function AccountPage() {
           <span aria-hidden>→</span>
         </Link>
       ) : null}
+      <Link href="/classes" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+        {t('classes')}
+        <span aria-hidden>→</span>
+      </Link>
       <Link href="/groups" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('groups')}
         <span aria-hidden>→</span>

@@ -22,6 +22,11 @@ input AddPdfHighlightInput {
   rects: [[Float!]!]!
 }
 
+input AnswerClassroomInviteInput {
+  accept: Boolean!
+  inviteId: UUID!
+}
+
 input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
@@ -146,6 +151,126 @@ input ChangeNoteVisibilityInput {
 }
 
 """
+A class, owned by the core subgraph: null when the viewer may no longer see it
+"""
+type Classroom {
+  createdAt: DateTime!
+  description: String
+  id: UUID!
+
+  """Staff only: the code students ask to join with"""
+  joinCode: String
+
+  """Staff only: waiting requests, oldest first"""
+  joinRequests: [ClassroomJoinRequest!]
+  memberCount: Int!
+
+  """Staff only"""
+  members: [ClassroomMember!]
+  name: String!
+
+  """Members only: announcements, newest first"""
+  posts(after: String, first: Int): ClassroomPostConnection
+
+  """
+  Members only: notes shared to the class that the viewer may open, the most recently shared first
+  """
+  sharedNotes(after: String, first: Int): NoteConnection
+  teacher: User!
+  viewerCan: ClassroomActions!
+  viewerInviteId: UUID
+  viewerRequestId: UUID
+  viewerRole: ClassroomRole
+}
+
+type ClassroomActions {
+  acceptInvite: Boolean!
+  leave: Boolean!
+
+  """The teacher: settings, roles, removing people"""
+  manage: Boolean!
+  post: Boolean!
+  requestJoin: Boolean!
+
+  """Teacher and TAs: answer requests, invite, post"""
+  review: Boolean!
+}
+
+input ClassroomIdInput {
+  classroomId: UUID!
+}
+
+type ClassroomInviteItem {
+  classroom: ClassroomPreview!
+  expiresAt: DateTime!
+  id: UUID!
+  invitedBy: User!
+  role: ClassroomRole!
+}
+
+type ClassroomJoinRequest {
+  createdAt: DateTime!
+  id: UUID!
+  user: User!
+  via: JoinVia!
+}
+
+type ClassroomMember {
+  joinedAt: DateTime!
+  role: ClassroomRole!
+  user: User!
+}
+
+input ClassroomMemberInput {
+  classroomId: UUID!
+  userId: UUID!
+}
+
+type ClassroomPayload {
+  classroom: Classroom
+  userErrors: [UserError!]!
+}
+
+type ClassroomPost {
+  author: User!
+  body: JSON!
+  createdAt: DateTime!
+  id: UUID!
+  viewerCanDelete: Boolean!
+}
+
+type ClassroomPostConnection {
+  edges: [ClassroomPostEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ClassroomPostEdge {
+  cursor: String!
+  node: ClassroomPost!
+}
+
+input ClassroomPostIdInput {
+  postId: UUID!
+}
+
+"""
+What a class code shows before joining: its name and teacher, nothing inside
+"""
+type ClassroomPreview {
+  id: UUID!
+  name: String!
+  teacher: User!
+  viewerRequestId: UUID
+  viewerRole: ClassroomRole
+}
+
+enum ClassroomRole {
+  STUDENT
+  TA
+  TEACHER
+}
+
+"""
 After a provider sign-in (no signUp call): the same details, collected once
 """
 input CompleteRegistrationInput {
@@ -203,6 +328,16 @@ type CoreTopicProgress {
   revisit: Boolean!
   secondsStudied: Int!
   topicKey: String!
+}
+
+input CreateClassroomInput {
+  description: String
+  name: String!
+}
+
+input CreateClassroomPostInput {
+  body: JSON!
+  classroomId: UUID!
 }
 
 input CreateFolderInput {
@@ -563,6 +698,16 @@ enum InstitutionalEmailStatus {
   PENDING_REVIEW
 }
 
+input InviteToClassroomInput {
+  classroomId: UUID!
+
+  """A handle or an email address"""
+  person: String!
+
+  """TA only by the teacher"""
+  role: ClassroomRole
+}
+
 scalar JSON
 
 enum JoinDecision {
@@ -572,6 +717,11 @@ enum JoinDecision {
 
 input JoinRequestIdInput {
   requestId: UUID!
+}
+
+enum JoinVia {
+  CODE
+  LINK
 }
 
 type LegacyCounts {
@@ -744,6 +894,7 @@ type Mutation {
 
   """Owner and editors"""
   addPdfHighlight(input: AddPdfHighlightInput!): PdfHighlightPayload!
+  answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
 
   """The author's one appeal against hiding or removing their note"""
   appealModeration(input: AppealModerationInput!): OkPayload!
@@ -771,6 +922,12 @@ type Mutation {
   against their PDF pages this month; follow it with pdfConversion. One at a time.
   """
   convertPdfToNote(input: ConvertPdfInput!): PdfConversionPayload!
+
+  """Teachers"""
+  createClassroom(input: CreateClassroomInput!): ClassroomPayload!
+
+  """Staff: an announcement every member reads"""
+  createClassroomPost(input: CreateClassroomPostInput!): ClassroomPayload!
   createFolder(input: CreateFolderInput!): FolderPayload!
   createGroup(input: CreateGroupInput!): GroupPayload!
   createGroupPost(input: CreateGroupPostInput!): GroupPostPayload!
@@ -782,6 +939,8 @@ type Mutation {
 
   """Decline the old site's data, or remove it after it was attached"""
   declineLegacyData: OkPayload!
+  deleteClassroom(input: ClassroomIdInput!): OkPayload!
+  deleteClassroomPost(input: ClassroomPostIdInput!): ClassroomPayload!
 
   """Its notes and subfolders move up one level"""
   deleteFolder(input: IdInput!): OkPayload!
@@ -811,8 +970,12 @@ type Mutation {
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
 
+  """Staff; the invited person accepts within 14 days"""
+  inviteToClassroom(input: InviteToClassroomInput!): ClassroomPayload!
+
   """A public group with the OPEN policy"""
   joinGroup(input: GroupIdInput!): GroupPayload!
+  leaveClassroom(input: ClassroomIdInput!): ClassroomPayload!
 
   """The owner hands the group over first"""
   leaveGroup(input: GroupIdInput!): GroupPayload!
@@ -830,6 +993,7 @@ type Mutation {
   """
   publishNote(input: NoteIdInput!): NotePayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
+  removeClassroomMember(input: ClassroomMemberInput!): ClassroomPayload!
   removeConnection(input: PersonInput!): PersonPayload!
 
   """Stops someone following you; they are not told"""
@@ -856,6 +1020,11 @@ type Mutation {
   requestPasswordReset(input: RequestPasswordResetInput!): OkPayload!
   requestTeacherVerification(input: RequestTeacherVerificationInput!): VerificationRequestPayload!
 
+  """
+  A request staff answer; the code identifies the class, it admits nobody
+  """
+  requestToJoinClassroom(input: RequestToJoinClassroomInput!): ClassroomPayload!
+
   """Every other group: the admins accept or reject"""
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
@@ -876,12 +1045,14 @@ type Mutation {
   Their comments wait for your approval and they cause you no notifications; they are not told
   """
   restrictUser(input: PersonInput!): PersonPayload!
+  reviewClassroomJoinRequest(input: ReviewClassroomJoinRequestInput!): ClassroomPayload!
   reviewGroupJoinRequest(input: ReviewGroupJoinRequestInput!): GroupPayload!
 
   """
   Teachers: requests addressed to them. Platform admins: all, including documents.
   """
   reviewVerificationRequest(input: ReviewVerificationRequestInput!): VerificationRequestPayload!
+  setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
 
   """
   Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
@@ -907,6 +1078,11 @@ type Mutation {
   """
   shareNote(input: ShareNoteInput!): NotePayload!
 
+  """
+  Class staff: share your note with the class; a PRIVATE note becomes SHARED
+  """
+  shareNoteToClassroom(input: NoteClassroomInput!): NotePayload!
+
   """Share your note with a group you are in; a PRIVATE note becomes SHARED"""
   shareNoteToGroup(input: NoteGroupInput!): NotePayload!
   signIn(input: SignInInput!): AuthPayload!
@@ -928,7 +1104,9 @@ type Mutation {
   unfollowUser(input: PersonInput!): PersonPayload!
   unrestrictUser(input: PersonInput!): PersonPayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
+  unshareNoteFromClassroom(input: NoteClassroomInput!): NotePayload!
   unshareNoteFromGroup(input: NoteGroupInput!): NotePayload!
+  updateClassroom(input: UpdateClassroomInput!): ClassroomPayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
 
   """Admins: name, description, privacy, join policy"""
@@ -939,6 +1117,7 @@ type Mutation {
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
+  withdrawClassroomJoinRequest(input: JoinRequestIdInput!): ClassroomPayload!
 
   """Returns the person who was asked"""
   withdrawConnectionRequest(input: ConnectionRequestInput!): PersonPayload!
@@ -962,6 +1141,9 @@ type Note {
 
   """In order; at most 100 per page"""
   cards(after: String, first: Int): CardConnection!
+
+  """Owner only: the classes the note is shared to"""
+  classrooms: [Classroom!]
   createdAt: DateTime!
 
   """Set while the note is in the trash (owner only)"""
@@ -1045,6 +1227,11 @@ enum NoteAccess {
   EDITOR
   OWNER
   READER
+}
+
+input NoteClassroomInput {
+  classroomId: UUID!
+  noteId: UUID!
 }
 
 type NoteConnection {
@@ -1225,6 +1412,11 @@ type Notification {
   """Who did it; null for the system, platform admins and deleted accounts"""
   actor: User
   category: NotificationCategory!
+
+  """
+  The class it is about (JOIN_REQUEST, JOIN_DECISION, CLASSROOM_INVITE, CLASSROOM_POST); null when there is none or the viewer may no longer see it
+  """
+  classroom: Classroom
   createdAt: DateTime!
 
   """
@@ -1249,6 +1441,7 @@ type Notification {
 }
 
 enum NotificationCategory {
+  CLASSROOM_INVITE
   CLASSROOM_POST
   COMMENT
   CONNECTION
@@ -1447,6 +1640,11 @@ input ProposeTopicInput {
 }
 
 type Query {
+  classroom(id: UUID!): Classroom
+
+  """The class a code names; at most 20 codes an hour"""
+  classroomByCode(code: String!): ClassroomPreview
+
   """
   Signed-in users: their progress on a /core subject (web reads it on /core pages)
   """
@@ -1471,6 +1669,10 @@ type Query {
   """Open cases, oldest first (PLATFORM_ADMIN)"""
   moderationQueue(after: String, first: Int): ModerationCaseConnection!
   myBlocked: [PersonEdge!]!
+
+  """Invites waiting for the viewer's answer"""
+  myClassroomInvites: [ClassroomInviteItem!]!
+  myClassrooms: [Classroom!]!
 
   """Pending connection requests to and from the viewer, newest first"""
   myConnectionRequests: [ConnectionRequestItem!]!
@@ -1650,6 +1852,11 @@ input RequestTeacherVerificationInput {
   teacherId: UUID!
 }
 
+input RequestToJoinClassroomInput {
+  code: String!
+  via: JoinVia
+}
+
 input RequestToJoinGroupInput {
   groupId: UUID!
 
@@ -1670,6 +1877,11 @@ input RespondToConnectionRequestInput {
 input RestoreNoteVersionInput {
   noteId: UUID!
   versionId: UUID!
+}
+
+input ReviewClassroomJoinRequestInput {
+  decision: JoinDecision!
+  requestId: UUID!
 }
 
 input ReviewGroupJoinRequestInput {
@@ -1712,6 +1924,16 @@ type Session {
   """
   refreshToken: String
   user: User!
+}
+
+input SetClassroomRoleInput {
+  classroomId: UUID!
+
+  """
+  TEACHER hands the class to another teacher, who must hold the teacher role
+  """
+  role: ClassroomRole!
+  userId: UUID!
 }
 
 input SetGlobalRoleInput {
@@ -1976,6 +2198,15 @@ scalar UUID
 input UnshareNoteInput {
   noteId: UUID!
   userId: UUID!
+}
+
+input UpdateClassroomInput {
+  classroomId: UUID!
+  description: String
+  name: String
+
+  """A new code; the old one stops working"""
+  newCode: Boolean
 }
 
 """

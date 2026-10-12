@@ -20,6 +20,10 @@ fragment NotificationFields on Notification {
     id
     name
   }
+  classroom {
+    id
+    name
+  }
 }
 
 query UnreadNotificationCount {

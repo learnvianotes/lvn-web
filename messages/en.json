@@ -137,7 +137,8 @@
       "account": "Account",
       "signInAction": "Sign in",
       "myNotes": "My notes",
-      "groups": "Groups"
+      "groups": "Groups",
+      "classes": "Classes"
     }
   },
   "profile": {
@@ -197,7 +198,8 @@
     "moderationQueue": "Moderation queue",
     "people": "Followers, following and blocked people",
     "skills": "Your Skills tab",
-    "groups": "Your groups"
+    "groups": "Your groups",
+    "classes": "Your classes"
   },
   "notes": {
     "pageTitle": "Note",
@@ -831,7 +833,12 @@
     "joinRequest": "{actor} asked to join {group}",
     "joinApproved": "You're in: {group} accepted your request",
     "joinRejected": "{group} didn't accept your request",
-    "aGroup": "a group"
+    "aGroup": "a group",
+    "classJoinApproved": "You're in: your request to join a class was accepted",
+    "classJoinRejected": "Your request to join a class wasn't accepted",
+    "classInvite": "{actor} invited you to {classroom}",
+    "classPost": "{actor} posted an announcement in {classroom}",
+    "aClass": "a class"
   },
   "people": {
     "teacher": "Teacher",
@@ -1030,6 +1037,91 @@
     "save": "Save",
     "saved": "Saved.",
     "delete": "Delete group",
+    "deleteConfirm": "Delete {name} for everyone? This cannot be undone."
+  },
+  "classes": {
+    "title": "Classes",
+    "new": "New class",
+    "mine": "Your classes",
+    "noneYet": "You're not in a class yet. Ask your teacher for the class code and enter it above.",
+    "noneYetTeacher": "You're not in a class yet. Start one, or enter a code from another teacher.",
+    "invites": "Invites waiting for you",
+    "invitedBy": "{name} invited you as {role}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "joinTitle": "Join a class",
+    "codeLabel": "Class code",
+    "codePlaceholder": "e.g. K7PQ2MXA",
+    "find": "Find",
+    "noSuchCode": "No class has that code. Check it with your teacher.",
+    "byTeacher": "Teacher: {name}",
+    "askToJoin": "Ask to join",
+    "askHint": "Your teacher or a TA lets you in.",
+    "alreadyIn": "You're in this class.",
+    "open": "Open the class",
+    "waiting": "Your request is waiting for your teacher.",
+    "withdraw": "Withdraw",
+    "invited": "You've been invited to this class.",
+    "members": "{count, plural, one {# person} other {# people}}",
+    "role": {
+      "TEACHER": "Teacher",
+      "TA": "TA",
+      "STUDENT": "Student"
+    },
+    "name": "Name",
+    "description": "About the class",
+    "cancel": "Cancel",
+    "create": "Create class",
+    "failed": "That did not work. Try again.",
+    "loading": "Loading…",
+    "notFound": "This class is not available.",
+    "sections": "Class sections",
+    "tab": {
+      "posts": "Announcements",
+      "notes": "Notes",
+      "people": "People",
+      "requests": "Requests",
+      "settings": "Settings"
+    },
+    "code": "Class code",
+    "codeHint": "Students ask to join with this code or the link. You or a TA let them in.",
+    "copyLink": "Copy join link",
+    "copied": "Link copied",
+    "newCode": "New code",
+    "newCodeConfirm": "Make a new code? The old code and link stop working.",
+    "leave": "Leave class",
+    "postLabel": "Write an announcement",
+    "postPlaceholder": "Tell the class something…",
+    "post": "Post",
+    "noPosts": "No announcements yet.",
+    "older": "Show older",
+    "deletePost": "Delete announcement",
+    "shareNote": "Share one of your notes with the class",
+    "chooseNote": "Choose a note…",
+    "share": "Share",
+    "untitled": "Untitled note",
+    "shareHint": "Members read the published version. A private note becomes shared.",
+    "by": "by {name}",
+    "noNotes": "No notes shared yet.",
+    "invite": "Invite someone",
+    "inviteLabel": "Handle or email",
+    "inviteAs": "Invite as",
+    "inviteSend": "Invite",
+    "inviteSent": "Invite sent. It lasts 14 days.",
+    "roleFor": "Role of {name}",
+    "makeTeacher": "Hand the class to {name}",
+    "handOverConfirm": "Hand the class to {name}? You'll stay on as a TA.",
+    "remove": "Remove",
+    "noRequests": "No requests waiting.",
+    "via": {
+      "CODE": "with the code",
+      "LINK": "with the link"
+    },
+    "approve": "Let in",
+    "reject": "Decline",
+    "save": "Save",
+    "saved": "Saved.",
+    "delete": "Delete class",
     "deleteConfirm": "Delete {name} for everyone? This cannot be undone."
   }
 }

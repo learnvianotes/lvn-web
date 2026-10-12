@@ -1,0 +1,304 @@
+# Classrooms (lvn-backend ADR-0046): joined with a code (a request staff answer) or a staff invite; staff post
+# announcements and share notes; members read them. The code and member list are for staff.
+
+fragment ClassroomCard on Classroom {
+  id
+  name
+  description
+  memberCount
+  viewerRole
+  teacher {
+    id
+    displayName
+  }
+}
+
+fragment ClassroomDetail on Classroom {
+  ...ClassroomCard
+  createdAt
+  joinCode
+  viewerRequestId
+  viewerInviteId
+  viewerCan {
+    requestJoin
+    acceptInvite
+    review
+    post
+    manage
+    leave
+  }
+}
+
+fragment ClassroomPostFields on ClassroomPost {
+  id
+  body
+  createdAt
+  viewerCanDelete
+  author {
+    id
+    displayName
+    handle
+  }
+}
+
+query MyClassrooms {
+  myClassrooms {
+    ...ClassroomCard
+  }
+  myClassroomInvites {
+    id
+    role
+    expiresAt
+    classroom {
+      id
+      name
+      teacher {
+        id
+        displayName
+      }
+    }
+    invitedBy {
+      id
+      displayName
+    }
+  }
+}
+
+query Classroom($id: UUID!) {
+  classroom(id: $id) {
+    ...ClassroomDetail
+  }
+}
+
+query ClassroomByCode($code: String!) {
+  classroomByCode(code: $code) {
+    id
+    name
+    viewerRole
+    viewerRequestId
+    teacher {
+      id
+      displayName
+    }
+  }
+}
+
+query ClassroomPosts($id: UUID!, $after: String) {
+  classroom(id: $id) {
+    id
+    posts(first: 20, after: $after) {
+      edges {
+        node {
+          ...ClassroomPostFields
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query ClassroomPeople($id: UUID!) {
+  classroom(id: $id) {
+    id
+    viewerRole
+    members {
+      role
+      joinedAt
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+    joinRequests {
+      id
+      via
+      createdAt
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+  }
+}
+
+query ClassroomNotes($id: UUID!) {
+  classroom(id: $id) {
+    id
+    sharedNotes(first: 50) {
+      edges {
+        node {
+          id
+          title
+          publishedAt
+          owner {
+            id
+            displayName
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation CreateClassroom($input: CreateClassroomInput!) {
+  createClassroom(input: $input) {
+    classroom {
+      ...ClassroomDetail
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation UpdateClassroom($input: UpdateClassroomInput!) {
+  updateClassroom(input: $input) {
+    classroom {
+      ...ClassroomDetail
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation DeleteClassroom($classroomId: UUID!) {
+  deleteClassroom(input: { classroomId: $classroomId }) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RequestToJoinClassroom($code: String!, $via: JoinVia) {
+  requestToJoinClassroom(input: { code: $code, via: $via }) {
+    classroom {
+      ...ClassroomDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation WithdrawClassroomJoinRequest($requestId: UUID!) {
+  withdrawClassroomJoinRequest(input: { requestId: $requestId }) {
+    classroom {
+      ...ClassroomDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ReviewClassroomJoinRequest($requestId: UUID!, $decision: JoinDecision!) {
+  reviewClassroomJoinRequest(input: { requestId: $requestId, decision: $decision }) {
+    classroom {
+      id
+      memberCount
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation InviteToClassroom($classroomId: UUID!, $person: String!, $role: ClassroomRole) {
+  inviteToClassroom(input: { classroomId: $classroomId, person: $person, role: $role }) {
+    classroom {
+      id
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation AnswerClassroomInvite($inviteId: UUID!, $accept: Boolean!) {
+  answerClassroomInvite(input: { inviteId: $inviteId, accept: $accept }) {
+    classroom {
+      ...ClassroomDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation LeaveClassroom($classroomId: UUID!) {
+  leaveClassroom(input: { classroomId: $classroomId }) {
+    classroom {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RemoveClassroomMember($classroomId: UUID!, $userId: UUID!) {
+  removeClassroomMember(input: { classroomId: $classroomId, userId: $userId }) {
+    classroom {
+      id
+      memberCount
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetClassroomRole($classroomId: UUID!, $userId: UUID!, $role: ClassroomRole!) {
+  setClassroomRole(input: { classroomId: $classroomId, userId: $userId, role: $role }) {
+    classroom {
+      ...ClassroomDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation CreateClassroomPost($classroomId: UUID!, $body: JSON!) {
+  createClassroomPost(input: { classroomId: $classroomId, body: $body }) {
+    classroom {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DeleteClassroomPost($postId: UUID!) {
+  deleteClassroomPost(input: { postId: $postId }) {
+    classroom {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ShareNoteToClassroom($noteId: UUID!, $classroomId: UUID!) {
+  shareNoteToClassroom(input: { noteId: $noteId, classroomId: $classroomId }) {
+    note {
+      id
+      visibility
+    }
+    userErrors {
+      message
+    }
+  }
+}

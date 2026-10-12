@@ -29,7 +29,7 @@ export async function SiteHeader() {
           </Link>
           <SearchButton label={t('nav.search')} />
           <NotificationBell />
-          <AccountLink labels={{ signIn: ta('signIn'), account: ta('account'), notes: ta('myNotes'), groups: ta('groups') }} />
+          <AccountLink labels={{ signIn: ta('signIn'), account: ta('account'), notes: ta('myNotes'), groups: ta('groups'), classes: ta('classes') }} />
           <ThemeToggle labels={{ toLight: t('theme.toLight'), toDark: t('theme.toDark') }} />
         </nav>
       </div>
