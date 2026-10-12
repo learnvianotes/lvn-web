@@ -843,7 +843,11 @@
     "replyOnNote": "{actor} replied to your comment on “{note}”",
     "commentIn": "{actor} commented in {place}",
     "replyIn": "{actor} replied to your comment in {place}",
-    "commentGone": "{actor} commented on something you can no longer open"
+    "commentGone": "{actor} commented on something you can no longer open",
+    "mentorInvite": "{actor} asked you to mentor {group}",
+    "doubtAsked": "{actor} asked a doubt in {group}",
+    "doubtAnswered": "{actor} answered your doubt in {group}",
+    "doubtResolved": "{actor} marked your doubt in {group} resolved"
   },
   "people": {
     "teacher": "Teacher",
@@ -1005,7 +1009,9 @@
       "notes": "Notes",
       "members": "Members",
       "requests": "Requests",
-      "settings": "Settings"
+      "settings": "Settings",
+      "ideas": "Ideas",
+      "doubts": "Doubts"
     },
     "join": "Join",
     "askToJoin": "Ask to join",
@@ -1042,7 +1048,21 @@
     "save": "Save",
     "saved": "Saved.",
     "delete": "Delete group",
-    "deleteConfirm": "Delete {name} for everyone? This cannot be undone."
+    "deleteConfirm": "Delete {name} for everyone? This cannot be undone.",
+    "project": "Project",
+    "kind": "What it is",
+    "type": {
+      "COMMUNITY": "Study group",
+      "PROJECT": "Project workspace"
+    },
+    "typeHint": {
+      "COMMUNITY": "Posts, shared notes and discussions.",
+      "PROJECT": "A team building something: a repository, ideas, doubts for a mentor, and a showcase."
+    },
+    "mentorInvites": "Invites to mentor",
+    "mentorInvitedBy": "{name} asked you to mentor this project",
+    "accept": "Accept",
+    "decline": "Decline"
   },
   "classes": {
     "title": "Classes",
@@ -1162,5 +1182,72 @@
     "comments": "{count, plural, =0 {Comment} one {# comment} other {# comments}}",
     "hide": "Hide comments",
     "signIn": "Sign in to join the discussion."
+  },
+  "workspaces": {
+    "failed": "That did not work. Try again.",
+    "loading": "Loading…",
+    "stars": "{count, plural, one {# star} other {# stars}}",
+    "pushed": "updated {when}",
+    "linkOnly": {
+      "GITHUB": "GitHub doesn't show this repository's details publicly.",
+      "GITLAB": "GitLab doesn't show this project's details here."
+    },
+    "noRepository": "No repository linked yet.",
+    "linkRepository": "Link a repository",
+    "changeRepository": "Change repository",
+    "repositoryLabel": "Repository address",
+    "repositoryHint": "A repository on github.com or gitlab.com. LearnViaNotes shows its public details; it never needs access.",
+    "save": "Save",
+    "saved": "Saved.",
+    "unlink": "Unlink",
+    "cancel": "Cancel",
+    "ideaLabel": "Share an idea",
+    "ideaPlaceholder": "An idea for the project…",
+    "shareIdea": "Share idea",
+    "ideasHint": "The ideas the team reacts to most come first.",
+    "rank": "Rank {n}",
+    "delete": "Delete",
+    "noIdeas": "No ideas yet.",
+    "status": {
+      "OPEN": "Open",
+      "ANSWERED": "Answered",
+      "RESOLVED": "Resolved"
+    },
+    "filter": "Show doubts",
+    "all": "All",
+    "ask": "Ask a doubt",
+    "doubtTitle": "Your question",
+    "doubtBody": "Details",
+    "repoRef": "Where in the repository (optional)",
+    "askSend": "Ask",
+    "answers": "{count, plural, =0 {No answers} one {# answer} other {# answers}}",
+    "noDoubts": "No doubts here.",
+    "doubtGone": "This doubt is not available.",
+    "backToWorkspace": "Back to the workspace",
+    "resolve": "Mark resolved",
+    "reopen": "Reopen",
+    "deleteDoubtConfirm": "Delete this doubt and its answers?",
+    "answersTitle": "Answers",
+    "mentor": "Mentor",
+    "answerLabel": "Your answer",
+    "answerPlaceholder": "Write an answer…",
+    "answerSend": "Answer",
+    "resolvedHint": "This doubt is resolved. Reopen it to answer again.",
+    "doubtTitlePage": "Doubt",
+    "mentorInvited": "You've been asked to mentor this project.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "showcaseLink": "Showcase: {title}",
+    "untitled": "Untitled note",
+    "inviteMentor": "Invite a mentor",
+    "mentorLabel": "A teacher's handle or email",
+    "invite": "Invite",
+    "mentorInviteSent": "Invite sent. It lasts 14 days.",
+    "showcase": "Showcase",
+    "showcaseHint": "A public project note shared to this workspace. It credits everyone on the team and the mentor, and appears on their profiles.",
+    "noShowcase": "No showcase",
+    "saveShowcase": "Save showcase",
+    "builtBy": "Built by",
+    "mentoredBy": "mentored by"
   }
 }

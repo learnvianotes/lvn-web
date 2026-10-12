@@ -5,19 +5,20 @@ import { mockApi, NOTE_ID, USER } from './support/notes-api'
 
 const GROUP = '01920000-0000-7000-8000-0000000a0001'
 const OTHER = '01920000-0000-7000-8000-00000000bbbb'
-const can = (over: Record<string, boolean> = {}) => ({ __typename: 'GroupActions', join: false, requestJoin: false, post: false, moderate: false, manage: false, delete: false, reviewRequests: false, leave: false, ...over })
+const can = (over: Record<string, boolean> = {}) => ({ __typename: 'GroupActions', join: false, requestJoin: false, post: false, moderate: false, manage: false, delete: false, reviewRequests: false, leave: false, askDoubt: false, inviteMentor: false, acceptMentorInvite: false, ...over })
 const group = (over: Record<string, unknown> = {}) => ({
-  __typename: 'Group', id: GROUP, name: 'Algorithms study', description: 'Weekly problems and solutions', privacy: 'PUBLIC', joinPolicy: 'APPROVAL', memberCount: 12, viewerRole: null, createdAt: '2026-10-01T10:00:00.000Z', viewerRequestId: null,
+  __typename: 'Group', id: GROUP, type: 'COMMUNITY', name: 'Algorithms study', description: 'Weekly problems and solutions', privacy: 'PUBLIC', joinPolicy: 'APPROVAL', memberCount: 12, viewerRole: null, createdAt: '2026-10-01T10:00:00.000Z', viewerRequestId: null, viewerMentorInviteId: null,
   owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
 })
-const card = (id: string, name: string, viewerRole: string | null = null) => ({ __typename: 'Group', id, name, description: null, privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 3, viewerRole })
+const card = (id: string, name: string, viewerRole: string | null = null) => ({ __typename: 'Group', id, type: 'COMMUNITY', name, description: null, privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 3, viewerRole })
 const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: s }] }] })
-const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'GroupPost', id, body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer', handle: 'meera' }, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
+const post = (id: string, text: string, over: Record<string, unknown> = {}) => ({ __typename: 'GroupPost', id, kind: 'POST', body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer', handle: 'meera' }, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 }, ...over })
 const page = (pinned: unknown[], nodes: unknown[]) => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned, edges: nodes.map((node) => ({ __typename: 'GroupPostEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
 
 test('your groups, public groups to find, and starting a new one', async ({ page: p }) => {
   const calls = await mockApi(p, {
     MyGroups: () => ({ myGroups: [card('01920000-0000-7000-8000-0000000a0002', 'Compilers club', 'OWNER')] }),
+    MyMentorInvites: () => ({ myMentorInvites: [] }),
     DiscoverGroups: (v) => ({ discoverGroups: v.query ? [card(GROUP, 'Algorithms study')] : [card(GROUP, 'Algorithms study'), card('01920000-0000-7000-8000-0000000a0002', 'Compilers club', 'OWNER')] }),
     CreateGroup: () => ({ createGroup: { __typename: 'GroupPayload', group: group({ viewerRole: 'OWNER' }), userErrors: [] } }),
     Group: () => ({ group: group({ viewerRole: 'OWNER', viewerCan: can({ post: true, moderate: true, manage: true, delete: true, reviewRequests: true }) }) }),
@@ -36,7 +37,7 @@ test('your groups, public groups to find, and starting a new one', async ({ page
   await dialog.getByLabel('Let people join without approval').check()
   await dialog.getByRole('button', { name: 'Create group' }).click()
   await expect(p).toHaveURL(new RegExp(`/groups/${GROUP}$`))
-  expect(calls.find((c) => c.op === 'CreateGroup')?.variables).toEqual({ input: { name: 'Algorithms study', description: null, privacy: 'PUBLIC', joinPolicy: 'OPEN' } })
+  expect(calls.find((c) => c.op === 'CreateGroup')?.variables).toEqual({ input: { name: 'Algorithms study', description: null, privacy: 'PUBLIC', joinPolicy: 'OPEN', type: 'COMMUNITY' } })
 })
 
 test('someone outside asks to join with a note for the admins; inside stays closed', async ({ page: p }) => {
@@ -83,7 +84,7 @@ test('a member shares one of their notes with the group', async ({ page: p }) =>
   const calls = await mockApi(p, {
     Group: () => ({ group: group({ viewerRole: 'MEMBER', viewerCan: can({ post: true, leave: true }) }) }),
     GroupPosts: () => page([], []),
-    GroupNotes: () => ({ group: { __typename: 'Group', id: GROUP, sharedNotes: { __typename: 'NoteConnection', edges: shared ? [{ __typename: 'NoteEdge', node: { __typename: 'Note', id: NOTE_ID, title: 'Binary heaps', publishedAt: null, owner: { __typename: 'User', id: USER, displayName: 'Asha Rao' } } }] : [] } } }),
+    GroupNotes: () => ({ group: { __typename: 'Group', id: GROUP, sharedNotes: { __typename: 'NoteConnection', edges: shared ? [{ __typename: 'NoteEdge', node: { __typename: 'Note', id: NOTE_ID, title: 'Binary heaps', kind: 'NOTE', visibility: 'SHARED', publishedAt: null, owner: { __typename: 'User', id: USER, displayName: 'Asha Rao' } } }] : [] } } }),
     MyNotes: () => ({ myNotes: { __typename: 'NoteConnection', edges: [{ __typename: 'NoteEdge', node: { __typename: 'Note', id: NOTE_ID, title: 'Binary heaps' } }], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
     ShareNoteToGroup: () => ((shared = true), { shareNoteToGroup: { __typename: 'NotePayload', note: { __typename: 'Note', id: NOTE_ID, visibility: 'SHARED' }, userErrors: [] } }),
   })

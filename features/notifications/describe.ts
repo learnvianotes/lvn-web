@@ -28,6 +28,10 @@ export function describeNotification(
     case 'JOIN_DECISION':
       if (!place && n.path.startsWith('/classes/')) return data.decision === 'APPROVED' ? t('classJoinApproved') : t('classJoinRejected')
       return data.decision === 'APPROVED' ? t('joinApproved', { group: place ?? t('aGroup') }) : t('joinRejected', { group: place ?? t('aGroup') })
+    case 'MENTOR_INVITE':
+      return t('mentorInvite', { actor, group: place ?? t('aGroup') })
+    case 'DOUBT':
+      return t(data.kind === 'ANSWERED' ? 'doubtAnswered' : data.kind === 'RESOLVED' ? 'doubtResolved' : 'doubtAsked', { actor, group: place ?? t('aGroup') })
     case 'CLASSROOM_INVITE':
       return t('classInvite', { actor, classroom: place ?? t('aClass') })
     case 'COMMENT': {

@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
-import { CreateGroupDocument, DiscoverGroupsDocument, MyGroupsDocument } from '@/graphql/generated/graphql'
+import { AnswerMentorInviteDocument, CreateGroupDocument, DiscoverGroupsDocument, MyGroupsDocument, MyMentorInvitesDocument } from '@/graphql/generated/graphql'
 import { attempt, GroupCardView } from './shared'
 
 /** /groups (lvn-backend ADR-0045): your groups, public groups to find, and starting one. */
@@ -34,6 +34,7 @@ export function GroupsHome() {
           {t('new')}
         </Button>
       </header>
+      <MentorInvites onAnswered={() => void mine.refetch()} />
       <section aria-labelledby="my-groups" className="flex flex-col gap-3">
         <h2 id="my-groups" className="text-sm font-semibold text-muted">
           {t('mine')}
@@ -83,12 +84,13 @@ function CreateGroupDialog({ open, onClose }: { open: boolean; onClose: () => vo
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [privacy, setPrivacy] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC')
+  const [type, setType] = useState<'COMMUNITY' | 'PROJECT'>('COMMUNITY')
   const [open_, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const submit = async () => {
     let id: string | undefined
     const problem = await attempt(async () => {
-      const res = await create({ variables: { input: { name, description: description || null, privacy, joinPolicy: privacy === 'PUBLIC' && open_ ? 'OPEN' : 'APPROVAL' } } })
+      const res = await create({ variables: { input: { name, description: description || null, privacy, joinPolicy: privacy === 'PUBLIC' && open_ ? 'OPEN' : 'APPROVAL', type } } })
       id = res.data?.createGroup.group?.id
       return res
     }, t('failed'))
@@ -112,6 +114,18 @@ function CreateGroupDialog({ open, onClose }: { open: boolean; onClose: () => vo
           <span className="text-sm font-semibold">{t('description')}</span>
           <textarea value={description} maxLength={2000} rows={3} onChange={(e) => setDescription(e.target.value)} className="rounded-xl border border-border bg-surface px-3 py-2" />
         </label>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-semibold">{t('kind')}</legend>
+          {(['COMMUNITY', 'PROJECT'] as const).map((k) => (
+            <label key={k} className="flex items-start gap-2 text-sm">
+              <input type="radio" name="type" checked={type === k} onChange={() => setType(k)} className="mt-1" />
+              <span>
+                <span className="font-medium">{t(`type.${k}`)}</span>
+                <span className="block text-xs text-muted">{t(`typeHint.${k}`)}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-sm font-semibold">{t('who')}</legend>
           {(['PUBLIC', 'PRIVATE'] as const).map((p) => (
@@ -145,5 +159,42 @@ function CreateGroupDialog({ open, onClose }: { open: boolean; onClose: () => vo
         </div>
       </form>
     </Dialog>
+  )
+}
+
+/** Teachers asked to mentor a project workspace (lvn-backend ADR-0048). */
+function MentorInvites({ onAnswered }: { onAnswered: () => void }) {
+  const t = useTranslations('groups')
+  const { data, refetch } = useQuery(MyMentorInvitesDocument, { fetchPolicy: 'cache-and-network' })
+  const [answer] = useMutation(AnswerMentorInviteDocument)
+  const invites = data?.myMentorInvites ?? []
+  if (!invites.length) return null
+  const reply = async (inviteId: string, accept: boolean) => {
+    await attempt(() => answer({ variables: { inviteId, accept } }), t('failed'))
+    await refetch()
+    onAnswered()
+  }
+  return (
+    <section aria-labelledby="mentor-invites" className="flex flex-col gap-3">
+      <h2 id="mentor-invites" className="text-sm font-semibold text-muted">
+        {t('mentorInvites')}
+      </h2>
+      <ul className="flex flex-col gap-2">
+        {invites.map((i) => (
+          <li key={i.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-accent/40 bg-accent-soft/40 px-4 py-3">
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="font-semibold">{i.group.name}</span>
+              <span className="text-sm text-muted">{t('mentorInvitedBy', { name: i.invitedBy.displayName })}</span>
+            </span>
+            <Button size="sm" onClick={() => void reply(i.id, true)}>
+              {t('accept')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => void reply(i.id, false)}>
+              {t('decline')}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

@@ -15,6 +15,7 @@ import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
 import { Discussion } from '@/features/discussion/Discussion'
+import { NoteCredits } from '@/features/workspaces/Credits'
 
 /** A note the viewer can read but not edit: its published version, with an outline and read aloud. */
 export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[] }) {
@@ -70,6 +71,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
             ) : null}
           </div>
           {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
+          {meta.kind === 'PROJECT' ? <NoteCredits noteId={meta.id} /> : null}
           <div className="flex flex-wrap items-center gap-2">
             <ReadAloudControls reader={reader} />
             {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}

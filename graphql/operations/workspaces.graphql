@@ -1,0 +1,235 @@
+# Project workspaces (lvn-backend ADR-0048): a PROJECT group's repository card, ideas board, doubts, mentors and the
+# showcase note that credits the team.
+
+fragment RepositoryCard on GroupRepository {
+  provider
+  url
+  available
+  name
+  description
+  language
+  stars
+  pushedAt
+}
+
+fragment DoubtSummary on Doubt {
+  id
+  title
+  status
+  repoRef
+  createdAt
+  answerCount
+  author {
+    id
+    displayName
+    handle
+  }
+}
+
+fragment DoubtDetail on Doubt {
+  ...DoubtSummary
+  body
+  resolvedAt
+  viewerCan {
+    answer
+    resolve
+    reopen
+    delete
+  }
+  answers {
+    id
+    body
+    byMentor
+    createdAt
+    author {
+      id
+      displayName
+      handle
+    }
+  }
+}
+
+query Workspace($id: UUID!) {
+  group(id: $id) {
+    id
+    repository {
+      ...RepositoryCard
+    }
+    showcase {
+      id
+      title
+    }
+  }
+}
+
+query WorkspaceIdeas($id: UUID!) {
+  group(id: $id) {
+    id
+    ideas {
+      ...GroupPostFields
+    }
+  }
+}
+
+query WorkspaceDoubts($id: UUID!, $status: DoubtStatus) {
+  group(id: $id) {
+    id
+    doubts(status: $status, first: 50) {
+      edges {
+        node {
+          ...DoubtSummary
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query Doubt($id: UUID!) {
+  doubt(id: $id) {
+    ...DoubtDetail
+  }
+}
+
+query MyMentorInvites {
+  myMentorInvites {
+    id
+    expiresAt
+    group {
+      id
+      name
+    }
+    invitedBy {
+      id
+      displayName
+    }
+  }
+}
+
+query NoteContributors($id: UUID!) {
+  note(id: $id) {
+    id
+    contributors {
+      role
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+  }
+}
+
+mutation CreateIdea($groupId: UUID!, $body: JSON!) {
+  createGroupPost(input: { groupId: $groupId, body: $body, kind: IDEA }) {
+    post {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetGroupRepository($groupId: UUID!, $url: String) {
+  setGroupRepository(input: { groupId: $groupId, url: $url }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation InviteMentor($groupId: UUID!, $person: String!) {
+  inviteMentor(input: { groupId: $groupId, person: $person }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation AnswerMentorInvite($inviteId: UUID!, $accept: Boolean!) {
+  answerMentorInvite(input: { inviteId: $inviteId, accept: $accept }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation AskDoubt($input: AskDoubtInput!) {
+  askDoubt(input: $input) {
+    doubt {
+      id
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation AnswerDoubt($doubtId: UUID!, $body: JSON!) {
+  answerDoubt(input: { doubtId: $doubtId, body: $body }) {
+    doubt {
+      ...DoubtDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ResolveDoubt($doubtId: UUID!) {
+  resolveDoubt(input: { doubtId: $doubtId }) {
+    doubt {
+      ...DoubtDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ReopenDoubt($doubtId: UUID!) {
+  reopenDoubt(input: { doubtId: $doubtId }) {
+    doubt {
+      ...DoubtDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DeleteDoubt($doubtId: UUID!) {
+  deleteDoubt(input: { doubtId: $doubtId }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetProjectShowcase($groupId: UUID!, $noteId: UUID) {
+  setProjectShowcase(input: { groupId: $groupId, noteId: $noteId }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
