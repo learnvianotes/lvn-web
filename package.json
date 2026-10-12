@@ -95,7 +95,8 @@
   },
   "pnpm": {
     "overrides": {
-      "next>postcss": "^8.5.23"
+      "next>postcss": "^8.5.23",
+      "@grpc/grpc-js": "^1.13.6"
     }
   }
 }

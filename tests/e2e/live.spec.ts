@@ -462,3 +462,40 @@ test('a group’s owner hides a reported post from the Reports tab, and puts it 
   await expect(page.getByText('Nothing to review. Thank you!')).toBeVisible()
   expect(await postsOf(reporter.accessToken)).toEqual([{ id: postId, moderation: 'OK', moderationReason: null }])
 })
+
+test('a learner finds a public group, joins it and posts; the owner reads the post (lvn-backend ADR-0045)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify accounts')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-owner-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Owner', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const owner = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${owner.user.id}'`)
+  const name = `Live algorithms ${stamp}`
+  const groupId = (await api<{ createGroup: { group: { id: string } } }>('mutation ($input: CreateGroupInput!) { createGroup(input: $input) { group { id } } }', { input: { name, privacy: 'PUBLIC', joinPolicy: 'OPEN' } }, owner.accessToken)).createGroup.group.id
+
+  const email = `live-joiner-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Joiner')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+
+  await page.goto('/groups')
+  await page.getByLabel('Search public groups').fill(name)
+  await page.getByRole('link', { name: new RegExp(name) }).click()
+  await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
+  await page.getByRole('button', { name: 'Join', exact: true }).click()
+  await page.getByLabel('Write a post').fill('Hello from the web')
+  await page.getByRole('button', { name: 'Post', exact: true }).click()
+  await expect(page.getByRole('tabpanel').getByText('Hello from the web')).toBeVisible()
+
+  const seen = await api<{ group: { memberCount: number; posts: { edges: { node: { author: { displayName: string }; body: unknown } }[] } } }>('query ($id: UUID!) { group(id: $id) { memberCount posts { edges { node { author { displayName } body } } } } }', { id: groupId }, owner.accessToken)
+  expect(seen.group.memberCount).toBe(2)
+  expect(seen.group.posts.edges.map((e) => e.node.author.displayName)).toEqual(['Live Joiner'])
+})
