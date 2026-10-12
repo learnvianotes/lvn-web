@@ -1,0 +1,311 @@
+# Groups (lvn-backend ADR-0045): membership, roles, posts and notes shared to a group. Content is for members.
+
+fragment GroupCard on Group {
+  id
+  name
+  description
+  privacy
+  joinPolicy
+  memberCount
+  viewerRole
+}
+
+fragment GroupDetail on Group {
+  ...GroupCard
+  createdAt
+  viewerRequestId
+  owner {
+    id
+    displayName
+  }
+  viewerCan {
+    join
+    requestJoin
+    post
+    moderate
+    manage
+    delete
+    reviewRequests
+    leave
+  }
+}
+
+fragment GroupPostFields on GroupPost {
+  id
+  body
+  pinned
+  createdAt
+  editedAt
+  author {
+    id
+    displayName
+    handle
+  }
+  viewerCan {
+    edit
+    delete
+    pin
+  }
+}
+
+query MyGroups {
+  myGroups {
+    ...GroupCard
+  }
+}
+
+query DiscoverGroups($query: String) {
+  discoverGroups(query: $query, first: 30) {
+    ...GroupCard
+  }
+}
+
+query Group($id: UUID!) {
+  group(id: $id) {
+    ...GroupDetail
+  }
+}
+
+query GroupPosts($id: UUID!, $after: String) {
+  group(id: $id) {
+    id
+    posts(first: 20, after: $after) {
+      pinned {
+        ...GroupPostFields
+      }
+      edges {
+        node {
+          ...GroupPostFields
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query GroupMembers($id: UUID!) {
+  group(id: $id) {
+    id
+    viewerRole
+    members {
+      role
+      joinedAt
+      mutedUntil
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+    joinRequests {
+      id
+      message
+      createdAt
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+  }
+}
+
+query GroupNotes($id: UUID!) {
+  group(id: $id) {
+    id
+    sharedNotes(first: 50) {
+      edges {
+        node {
+          id
+          title
+          publishedAt
+          owner {
+            id
+            displayName
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation CreateGroup($input: CreateGroupInput!) {
+  createGroup(input: $input) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation UpdateGroup($input: UpdateGroupInput!) {
+  updateGroup(input: $input) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation DeleteGroup($groupId: UUID!) {
+  deleteGroup(input: { groupId: $groupId }) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation JoinGroup($groupId: UUID!) {
+  joinGroup(input: { groupId: $groupId }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RequestToJoinGroup($groupId: UUID!, $message: String) {
+  requestToJoinGroup(input: { groupId: $groupId, message: $message }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation WithdrawGroupJoinRequest($requestId: UUID!) {
+  withdrawGroupJoinRequest(input: { requestId: $requestId }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ReviewGroupJoinRequest($requestId: UUID!, $decision: JoinDecision!) {
+  reviewGroupJoinRequest(input: { requestId: $requestId, decision: $decision }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation LeaveGroup($groupId: UUID!) {
+  leaveGroup(input: { groupId: $groupId }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RemoveGroupMember($groupId: UUID!, $userId: UUID!) {
+  removeGroupMember(input: { groupId: $groupId, userId: $userId }) {
+    group {
+      id
+      memberCount
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetGroupRole($groupId: UUID!, $userId: UUID!, $role: GroupRole!) {
+  setGroupRole(input: { groupId: $groupId, userId: $userId, role: $role }) {
+    group {
+      ...GroupDetail
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation MuteGroupMember($groupId: UUID!, $userId: UUID!, $until: DateTime) {
+  muteGroupMember(input: { groupId: $groupId, userId: $userId, until: $until }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation CreateGroupPost($groupId: UUID!, $body: JSON!) {
+  createGroupPost(input: { groupId: $groupId, body: $body }) {
+    post {
+      ...GroupPostFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DeleteGroupPost($postId: UUID!) {
+  deleteGroupPost(input: { postId: $postId }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation PinGroupPost($postId: UUID!, $pinned: Boolean!) {
+  pinGroupPost(input: { postId: $postId, pinned: $pinned }) {
+    post {
+      ...GroupPostFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ShareNoteToGroup($noteId: UUID!, $groupId: UUID!) {
+  shareNoteToGroup(input: { noteId: $noteId, groupId: $groupId }) {
+    note {
+      id
+      visibility
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation UnshareNoteFromGroup($noteId: UUID!, $groupId: UUID!) {
+  unshareNoteFromGroup(input: { noteId: $noteId, groupId: $groupId }) {
+    note {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}

@@ -5,10 +5,15 @@ import Link from 'next/link'
 import { useSession } from '@/state/session'
 
 /** "Sign in", or the visitor's notes and account once this tab knows they are signed in. */
-export function AccountLink({ labels }: { labels: { signIn: string; account: string; notes: string } }) {
+export function AccountLink({ labels }: { labels: { signIn: string; account: string; notes: string; groups: string } }) {
   const signedIn = useSession((s) => s.status === 'signed-in')
   return (
     <>
+      {signedIn ? (
+        <Link href="/groups" className="hidden whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg md:inline-flex">
+          {labels.groups}
+        </Link>
+      ) : null}
       {signedIn ? (
         <Link href="/notes" aria-label={labels.notes} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg sm:px-3">
           <NotebookPen className="size-4 sm:hidden" aria-hidden />

@@ -10,7 +10,7 @@ import { mockApi, mockLive, NOTE_ID, USER } from './support/notes-api'
 const TEACHER = '01920000-0000-7000-8000-00000000bbbb'
 const id = (n: number) => `01920000-0000-7000-8000-0000000f000${n}`
 const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString()
-const notification = (n: number, over: Record<string, unknown>) => ({ __typename: 'Notification', id: id(n), path: '/profile', data: null, readAt: null, createdAt: at(n * 5), actor: null, note: null, ...over })
+const notification = (n: number, over: Record<string, unknown>) => ({ __typename: 'Notification', id: id(n), path: '/profile', data: null, readAt: null, createdAt: at(n * 5), actor: null, note: null, group: null, ...over })
 const LIST = [
   notification(1, { category: 'SHARE', path: `/notes/${NOTE_ID}`, actor: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer' }, note: { __typename: 'Note', id: NOTE_ID, title: 'Binary heaps' } }),
   notification(2, { category: 'SHARE', path: '/notes/01920000-0000-7000-8000-00000000a0ff', actor: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer' } }),
