@@ -1,12 +1,14 @@
-# Search (lvn-backend §10.4): notes the viewer may read, people (never minors, never across a block) and topics.
+# Search (lvn-backend §11, ADR-0055, ADR-0056): notes the viewer may read, people (never minors, never across a block),
+# topics, and (signed in) groups and classes. Filters narrow notes; `after` continues the notes of the same search.
 
-query Search($query: String!, $first: Int) {
-  search(query: $query, scopes: [NOTES, PEOPLE, TOPICS], first: $first) {
+query Search($query: String!, $first: Int, $scopes: [SearchScope!], $filters: SearchFilters, $after: String) {
+  search(query: $query, scopes: $scopes, first: $first, filters: $filters, after: $after) {
     notes {
       snippet
       note {
         id
         title
+        kind
         visibility
         viewerAccess
         publishedAt
@@ -16,6 +18,7 @@ query Search($query: String!, $first: Int) {
         }
       }
     }
+    notesCursor
     people {
       id
       handle
@@ -29,6 +32,18 @@ query Search($query: String!, $first: Int) {
         id
         title
       }
+    }
+    groups {
+      id
+      name
+      type
+      privacy
+      memberCount
+    }
+    classrooms {
+      id
+      name
+      memberCount
     }
   }
 }

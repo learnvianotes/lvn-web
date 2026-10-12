@@ -126,7 +126,7 @@ test('your people: followers (young learners counted, not named), following, blo
 
 test('search finds people and links to their profiles', async ({ page }) => {
   await mockApi(page, {
-    Search: () => ({ search: { __typename: 'SearchResults', notes: [], topics: [], people: [{ __typename: 'User', id: MEERA, handle: 'meera', displayName: 'Meera Iyer', globalRole: 'TEACHER' }] } }),
+    Search: () => ({ search: { __typename: 'SearchResults', notes: [], notesCursor: null, groups: [], classrooms: [], topics: [], people: [{ __typename: 'User', id: MEERA, handle: 'meera', displayName: 'Meera Iyer', globalRole: 'TEACHER' }] } }),
   })
   await page.goto('/search?q=meera')
   const link = page.getByRole('link', { name: /Meera Iyer/ })
@@ -136,13 +136,13 @@ test('search finds people and links to their profiles', async ({ page }) => {
 
 test('Ctrl+K finds a person; Enter opens their profile', async ({ page }) => {
   await mockApi(page, {
-    Search: () => ({ search: { __typename: 'SearchResults', notes: [], topics: [], people: [{ __typename: 'User', id: MEERA, handle: 'meera', displayName: 'Meera Iyer', globalRole: 'TEACHER' }] } }),
+    Search: () => ({ search: { __typename: 'SearchResults', notes: [], notesCursor: null, groups: [], classrooms: [], topics: [], people: [{ __typename: 'User', id: MEERA, handle: 'meera', displayName: 'Meera Iyer', globalRole: 'TEACHER' }] } }),
   })
   await page.goto('/notes')
   // The palette listens once the signed-in app is up; the bell shows when it is.
   await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible()
   await page.keyboard.press('Control+k')
-  const palette = page.getByRole('dialog', { name: 'Search notes, people and topics' })
+  const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await palette.getByRole('combobox').fill('meera')
   await expect(palette.getByRole('option', { name: /Meera Iyer @meera/ })).toBeVisible()
   await page.keyboard.press('Enter')

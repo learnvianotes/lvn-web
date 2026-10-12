@@ -1886,6 +1886,18 @@ enum NoteShareSource {
   DIRECT
 }
 
+"""Where a note comes from, for the person searching (ADR-0056)"""
+enum NoteSource {
+  """Their own notes"""
+  MINE
+
+  """Other people's public notes"""
+  PUBLIC
+
+  """Notes shared with them, directly or through a group or class of theirs"""
+  SHARED
+}
+
 """An immutable snapshot of a note's cards (§4.3)"""
 type NoteVersion {
   cards(after: String, first: Int): CardConnection!
@@ -2295,9 +2307,11 @@ type Query {
   removedGroup(id: UUID!): RemovedGroup
 
   """
-  At most 100 characters; `first` per group, 1 to 20 (default 5). Works signed out too: public notes only.
+  At most 100 characters; `first` per kind, 1 to 20 (default 5). With filters the words may be left out: the notes
+  the filters allow come newest first. `after` continues the notes of the same search; a continued page has notes
+  only. Works signed out too: public notes, people and topics (group and class pages need an account).
   """
-  search(first: Int, query: String!, scopes: [SearchScope!]): SearchResults!
+  search(after: String, filters: SearchFilters, first: Int, query: String!, scopes: [SearchScope!]): SearchResults!
 
   """Notes other people shared with the viewer, most recently changed first"""
   sharedWithMe(after: String, first: Int): NoteConnection!
@@ -2539,16 +2553,55 @@ input ReviewVerificationRequestInput {
   requestId: UUID!
 }
 
+"""
+Narrows the notes found (and topics, by subject); never widens what the viewer may read
+"""
+input SearchFilters {
+  """Notes by this person"""
+  authorId: UUID
+
+  """Notes of these kinds"""
+  kinds: [NoteKind!]
+
+  """Any of these sources; signed out, only PUBLIC gives anything"""
+  sources: [NoteSource!]
+
+  """Notes about a topic of this subject; topics of this subject"""
+  subjectId: UUID
+
+  """Notes about this topic"""
+  topicId: UUID
+}
+
 type SearchResults {
-  """Only notes the viewer may read, best match first"""
+  """Classes the viewer is in"""
+  classrooms: [Classroom!]!
+
+  """
+  Signed in: public groups and project workspaces, and private ones the viewer is in
+  """
+  groups: [Group!]!
+
+  """
+  Only notes the viewer may read, best match first (newest first when filters alone searched)
+  """
   notes: [NoteSearchHit!]!
 
-  """People past the digital-consent age, by handle or name"""
+  """
+  More notes: pass as `after` with the same query and filters; null when there are no more (at most 200 notes)
+  """
+  notesCursor: String
+
+  """
+  People past the digital-consent age, by handle, name or (teachers) headline and bio
+  """
   people: [User!]!
   topics: [Topic!]!
 }
 
 enum SearchScope {
+  CLASSROOMS
+  GROUPS
   NOTES
   PEOPLE
   TOPICS

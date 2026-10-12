@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, CornerDownLeft, FileText, Search, UserRound } from 'lucide-react'
+import { BookMarked, CornerDownLeft, FileText, GraduationCap, Search, UserRound, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -11,8 +11,9 @@ import { useSearch } from './useSearch'
 export const OPEN_SEARCH_EVENT = 'lvn:open-search'
 
 /**
- * Ctrl/⌘+K (§12.2): search from anywhere in the app. Notes open on Enter; a topic searches for its notes. The header's
- * search button opens it too (OPEN_SEARCH_EVENT); "All results" goes to /search.
+ * Ctrl/⌘+K (§12.2): search from anywhere in the app — notes, people, groups, classes and topics (lvn-backend ADR-0056).
+ * Enter opens what is chosen; a topic lists its notes on /search. The header's search button opens it too
+ * (OPEN_SEARCH_EVENT); "All results" goes to /search.
  */
 export function SearchPalette() {
   const t = useTranslations('search')
@@ -22,10 +23,12 @@ export function SearchPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
-  const { notes, people, topics, searched, settled } = useSearch(open ? query : '', 8)
+  const { notes, people, topics, groups, classrooms, searched, settled } = useSearch(open ? query : '', 8)
   const items = [
     ...notes.map((n) => ({ kind: 'note' as const, id: n.note.id, n })),
     ...people.slice(0, 4).map((person) => ({ kind: 'person' as const, id: person.id, person })),
+    ...groups.slice(0, 3).map((group) => ({ kind: 'group' as const, id: group.id, group })),
+    ...classrooms.slice(0, 3).map((classroom) => ({ kind: 'classroom' as const, id: classroom.id, classroom })),
     ...topics.slice(0, 4).map((topic) => ({ kind: 'topic' as const, id: topic.id, topic })),
   ]
 
@@ -62,15 +65,22 @@ export function SearchPalette() {
     setActive(0)
   }
 
-  /** Opens a note or a person's profile, searches a topic, or — with nothing chosen — shows all results. */
+  /** Opens what is chosen (a topic: its notes on /search), or — with nothing chosen — all results. */
   const go = (item: (typeof items)[number] | undefined) => {
-    if (item?.kind === 'topic') {
-      setQuery(item.topic.title)
-      return
-    }
     if (!item && query.trim().length < 2) return
     setOpen(false)
-    router.push(item?.kind === 'person' ? `/u/${item.person.handle}` : item ? `/notes/${item.id}` : `/search?q=${encodeURIComponent(query.trim())}`)
+    const where = !item
+      ? `/search?q=${encodeURIComponent(query.trim())}`
+      : item.kind === 'person'
+        ? `/u/${item.person.handle}`
+        : item.kind === 'group'
+          ? `/groups/${item.id}`
+          : item.kind === 'classroom'
+            ? `/classes/${item.id}`
+            : item.kind === 'topic'
+              ? `/search?${new URLSearchParams({ topic: item.id, topicTitle: item.topic.title }).toString()}`
+              : `/notes/${item.id}`
+    router.push(where)
   }
 
   return (
@@ -129,6 +139,20 @@ export function SearchPalette() {
                       <UserRound className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                       <span className="text-sm">
                         {item.person.displayName} <span className="text-muted">@{item.person.handle}</span>
+                      </span>
+                    </>
+                  ) : item.kind === 'group' ? (
+                    <>
+                      <Users className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+                      <span className="text-sm">
+                        {item.group.name} <span className="text-muted">· {t(item.group.type === 'PROJECT' ? 'workspace' : item.group.privacy === 'PRIVATE' ? 'privateGroup' : 'group')}</span>
+                      </span>
+                    </>
+                  ) : item.kind === 'classroom' ? (
+                    <>
+                      <GraduationCap className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+                      <span className="text-sm">
+                        {item.classroom.name} <span className="text-muted">· {t('classroom')}</span>
                       </span>
                     </>
                   ) : (

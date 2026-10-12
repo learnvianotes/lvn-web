@@ -726,8 +726,8 @@
   },
   "search": {
     "title": "Search",
-    "label": "Search notes, people and topics",
-    "placeholder": "Search notes, people and topics…",
+    "label": "Search notes, people, groups and topics",
+    "placeholder": "Search notes, people, groups and topics…",
     "results": "Results",
     "hint": "Type to search your notes, notes shared with you and public notes.",
     "nothing": "Nothing found for “{query}”.",
@@ -742,7 +742,34 @@
       "PUBLIC": "Public"
     },
     "people": "People",
-    "teacher": "Teacher"
+    "teacher": "Teacher",
+    "nothingFiltered": "No notes match these filters.",
+    "newest": "Notes, newest first",
+    "more": "More results",
+    "loadingMore": "Loading…",
+    "places": "Groups and classes",
+    "group": "Group",
+    "privateGroup": "Private group",
+    "workspace": "Project workspace",
+    "classroom": "Class",
+    "members": "{count, plural, one {# member} other {# members}}",
+    "filters": {
+      "label": "Filters",
+      "kind": "Kind",
+      "from": "From",
+      "kinds": {
+        "NOTE": "Notes",
+        "BLOG": "Blog posts",
+        "POST": "Posts",
+        "PROJECT": "Projects"
+      },
+      "sources": {
+        "MINE": "Mine",
+        "SHARED": "Shared with me",
+        "PUBLIC": "Public"
+      },
+      "clearTopic": "Stop filtering by {topic}"
+    }
   },
   "data": {
     "title": "Your data",
