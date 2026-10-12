@@ -70,7 +70,7 @@ test('a live event refreshes the count, over a socket that sends the access toke
   await expect(page.getByRole('link', { name: 'Notifications, 3 unread' })).toBeVisible()
 })
 
-test('the signed-in header fits a phone, 360 pixels wide too, with a full badge, and the widths where Groups and Classes appear', async ({ page }) => {
+test('the signed-in header fits a phone, 360 pixels wide too, with a full badge, and the widths where Community appears', async ({ page }) => {
   await mockApi(page, { UnreadNotificationCount: () => ({ unreadNotificationCount: 150 }) })
   for (const width of [360, 412, 768, 1024]) {
     await page.setViewportSize({ width, height: 800 })
@@ -80,7 +80,7 @@ test('the signed-in header fits a phone, 360 pixels wide too, with a full badge,
     // One row: the header does not wrap onto a second line.
     expect((await page.locator('header').first().boundingBox())!.height).toBeLessThan(90)
   }
-  await expect(page.getByRole('link', { name: 'Classes', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Community', exact: true })).toBeVisible()
 })
 
 test('nothing for a visitor who is not signed in', async ({ page }) => {

@@ -4,6 +4,50 @@ input AcceptTermsInput {
   version: String!
 }
 
+type ActivityConnection {
+  edges: [ActivityEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ActivityEdge {
+  cursor: String!
+  node: ActivityItem!
+}
+
+type ActivityItem {
+  """Who posted, asked or shared"""
+  actor: User
+
+  """CLASS_ANNOUNCEMENT"""
+  announcement: ClassroomPost
+  at: DateTime!
+  classroom: Classroom
+
+  """DOUBT"""
+  doubt: Doubt
+  group: Group
+
+  """
+  Unique in the feed: a note shared to two places is two items. Deliberately not an id, so caches keep items apart
+  """
+  key: String!
+  kind: ActivityKind!
+
+  """SHARED_NOTE: null when the viewer can no longer read it"""
+  note: Note
+
+  """GROUP_POST and IDEA"""
+  post: GroupPost
+}
+
+enum ActivityKind {
+  CLASS_ANNOUNCEMENT
+  DOUBT
+  GROUP_POST
+  IDEA
+  SHARED_NOTE
+}
+
 input AddCommentInput {
   body: JSON!
 
@@ -1949,6 +1993,10 @@ input ProposeTopicInput {
 }
 
 type Query {
+  """
+  What happened in the viewer's groups and classes, newest first; their own doing left out
+  """
+  activityFeed(after: String, first: Int): ActivityConnection!
   classroom(id: UUID!): Classroom
 
   """The class a code names; at most 20 codes an hour"""
@@ -1977,6 +2025,11 @@ type Query {
 
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
+
+  """
+  The Following feed (ADR-0049): PUBLIC notes and publications of the people the viewer follows, newest first
+  """
+  followingFeed(after: String, first: Int): NoteConnection!
 
   """
   A group the viewer may know about: public ones, and private ones they are in or asked to join

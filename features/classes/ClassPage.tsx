@@ -216,7 +216,13 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noPosts')}</p>
       ) : null}
       {posts?.pageInfo.hasNextPage ? (
-        <Button variant="secondary" className="self-center" onClick={() => void fetchMore({ variables: { after: posts.pageInfo.endCursor } })}>
+        <Button variant="secondary" className="self-center" onClick={() =>
+            void fetchMore({
+              variables: { after: posts.pageInfo.endCursor },
+              updateQuery: (prev, { fetchMoreResult }) =>
+                prev.classroom?.posts && fetchMoreResult.classroom?.posts ? { classroom: { ...fetchMoreResult.classroom, posts: { ...fetchMoreResult.classroom.posts, edges: [...prev.classroom.posts.edges, ...fetchMoreResult.classroom.posts.edges] } } } : fetchMoreResult,
+            })
+          }>
           {t('older')}
         </Button>
       ) : null}

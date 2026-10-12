@@ -137,8 +137,7 @@
       "account": "Account",
       "signInAction": "Sign in",
       "myNotes": "My notes",
-      "groups": "Groups",
-      "classes": "Classes"
+      "community": "Community"
     }
   },
   "profile": {
@@ -1249,5 +1248,35 @@
     "saveShowcase": "Save showcase",
     "builtBy": "Built by",
     "mentoredBy": "mentored by"
+  },
+  "community": {
+    "title": "Community",
+    "places": "Your places",
+    "groups": "Groups",
+    "classes": "Classes",
+    "feeds": "Feeds",
+    "tab": {
+      "activity": "Your groups and classes",
+      "following": "Following"
+    },
+    "noActivity": "Nothing new in your groups and classes yet. Join a group or a class to see what happens there.",
+    "noFollowing": "Follow teachers and classmates to see their public notes here.",
+    "more": "Show more",
+    "someone": "Someone",
+    "untitled": "Untitled note",
+    "comments": "{count, plural, one {# comment} other {# comments}}",
+    "did": {
+      "GROUP_POST": "{actor} posted in",
+      "IDEA": "{actor} shared an idea in",
+      "DOUBT": "{actor} asked a doubt in",
+      "CLASS_ANNOUNCEMENT": "{actor} posted an announcement in",
+      "SHARED_NOTE": "{actor} shared a note with"
+    },
+    "kind": {
+      "NOTE": "Note",
+      "PROJECT": "Project",
+      "BLOG": "Blog",
+      "POST": "Post"
+    }
   }
 }
