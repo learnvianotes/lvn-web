@@ -136,7 +136,8 @@
       "signIn": "Sign in",
       "account": "Account",
       "signInAction": "Sign in",
-      "myNotes": "My notes"
+      "myNotes": "My notes",
+      "groups": "Groups"
     }
   },
   "profile": {
@@ -195,7 +196,8 @@
     "unsavedDrafts": "Some note changes have not reached the server yet. Signing out deletes them from this browser. Sign out anyway?",
     "moderationQueue": "Moderation queue",
     "people": "Followers, following and blocked people",
-    "skills": "Your Skills tab"
+    "skills": "Your Skills tab",
+    "groups": "Your groups"
   },
   "notes": {
     "pageTitle": "Note",
@@ -825,7 +827,11 @@
     "other": "Something new for you",
     "follow": "{actor} started following you",
     "connectionRequested": "{actor} wants to connect with you",
-    "connectionAccepted": "{actor} accepted your connection request"
+    "connectionAccepted": "{actor} accepted your connection request",
+    "joinRequest": "{actor} asked to join {group}",
+    "joinApproved": "You're in: {group} accepted your request",
+    "joinRejected": "{group} didn't accept your request",
+    "aGroup": "a group"
   },
   "people": {
     "teacher": "Teacher",
@@ -945,5 +951,85 @@
         "SKILL": "Skills"
       }
     }
+  },
+  "groups": {
+    "title": "Groups",
+    "new": "New group",
+    "mine": "Your groups",
+    "noneYet": "You're not in any group yet. Find one below, or start your own.",
+    "find": "Find a group",
+    "searchLabel": "Search public groups",
+    "searchPlaceholder": "Search public groups…",
+    "nothingFound": "No public groups match.",
+    "members": "{count, plural, one {# member} other {# members}}",
+    "privacy": {
+      "PUBLIC": "Public",
+      "PRIVATE": "Private"
+    },
+    "privacyHint": {
+      "PUBLIC": "Anyone can find it and ask to join. Posts and notes stay with members.",
+      "PRIVATE": "Not listed: people join with its link and your approval."
+    },
+    "role": {
+      "OWNER": "Owner",
+      "ADMIN": "Admin",
+      "MODERATOR": "Moderator",
+      "MEMBER": "Member",
+      "MENTOR": "Mentor"
+    },
+    "name": "Name",
+    "description": "What it is for",
+    "who": "Who can find it",
+    "openJoin": "Let people join without approval",
+    "cancel": "Cancel",
+    "create": "Create group",
+    "failed": "That did not work. Try again.",
+    "loading": "Loading…",
+    "notFound": "This group is not available.",
+    "membersOnly": "Posts, notes and members are for members. Join to see them.",
+    "sections": "Group sections",
+    "tab": {
+      "posts": "Posts",
+      "notes": "Notes",
+      "members": "Members",
+      "requests": "Requests",
+      "settings": "Settings"
+    },
+    "join": "Join",
+    "askToJoin": "Ask to join",
+    "waiting": "Your request is waiting for an answer.",
+    "withdraw": "Withdraw",
+    "leave": "Leave group",
+    "messageLabel": "A note for the admins (optional)",
+    "sendRequest": "Send request",
+    "postLabel": "Write a post",
+    "postPlaceholder": "Share something with the group…",
+    "post": "Post",
+    "noPosts": "No posts yet.",
+    "older": "Show older",
+    "edited": "edited",
+    "pinned": "Pinned",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "deletePost": "Delete post",
+    "shareNote": "Share one of your notes",
+    "chooseNote": "Choose a note…",
+    "share": "Share",
+    "untitled": "Untitled note",
+    "shareHint": "Members read the published version. A private note becomes shared.",
+    "by": "by {name}",
+    "noNotes": "No notes shared yet.",
+    "roleFor": "Role of {name}",
+    "remove": "Remove",
+    "muted": "muted",
+    "muteDay": "Mute for a day",
+    "unmute": "Unmute",
+    "noRequests": "No requests waiting.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "save": "Save",
+    "saved": "Saved.",
+    "delete": "Delete group",
+    "deleteConfirm": "Delete {name} for everyone? This cannot be undone."
   }
 }

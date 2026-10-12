@@ -6,7 +6,7 @@ type Translate = (key: string, values?: Record<string, string | number>) => stri
  * The sentence for a notification (lvn-backend ADR-0042): written here from its category, the actor's name and the
  * note's title, which the API resolved with its own read checks. Nothing in a notification is user-written text.
  */
-export function describeNotification(n: Pick<NotificationFieldsFragment, 'category' | 'data' | 'actor' | 'note'>, t: Translate): string {
+export function describeNotification(n: Pick<NotificationFieldsFragment, 'category' | 'data' | 'actor' | 'note'> & { group?: NotificationFieldsFragment['group'] }, t: Translate): string {
   const actor = n.actor?.displayName ?? t('someone')
   const data = (n.data ?? {}) as Record<string, unknown>
   switch (n.category) {
@@ -18,6 +18,10 @@ export function describeNotification(n: Pick<NotificationFieldsFragment, 'catego
       return t('verificationRejected')
     case 'FOLLOW':
       return t('follow', { actor })
+    case 'JOIN_REQUEST':
+      return t('joinRequest', { actor, group: n.group?.name ?? t('aGroup') })
+    case 'JOIN_DECISION':
+      return data.decision === 'APPROVED' ? t('joinApproved', { group: n.group?.name ?? t('aGroup') }) : t('joinRejected', { group: n.group?.name ?? t('aGroup') })
     case 'CONNECTION':
       return data.kind === 'ACCEPTED' ? t('connectionAccepted', { actor }) : t('connectionRequested', { actor })
     case 'DATA_EXPORT':

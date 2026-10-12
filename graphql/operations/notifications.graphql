@@ -16,6 +16,10 @@ fragment NotificationFields on Notification {
     id
     title
   }
+  group {
+    id
+    name
+  }
 }
 
 query UnreadNotificationCount {

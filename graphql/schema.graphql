@@ -210,6 +210,25 @@ input CreateFolderInput {
   parentId: UUID
 }
 
+input CreateGroupInput {
+  """At most 2,000 characters"""
+  description: String
+
+  """
+  OPEN lets anyone join a public group at once; new groups approve members unless told otherwise
+  """
+  joinPolicy: GroupJoinPolicy
+
+  """3 to 80 characters"""
+  name: String!
+  privacy: GroupPrivacy!
+}
+
+input CreateGroupPostInput {
+  body: JSON!
+  groupId: UUID!
+}
+
 input CreateNoteInput {
   cards: [CardInput!]
   folderId: UUID
@@ -283,6 +302,11 @@ enum DomainReviewStatus {
   REJECTED
 }
 
+input EditGroupPostInput {
+  body: JSON!
+  postId: UUID!
+}
+
 """Fixed error vocabulary (§6.2)"""
 enum ErrorCode {
   CONFLICT
@@ -335,6 +359,149 @@ enum GlobalRole {
   PLATFORM_ADMIN
   STUDENT
   TEACHER
+}
+
+"""
+A group, owned by the core subgraph: null when the viewer may no longer see it
+"""
+type Group {
+  createdAt: DateTime!
+  description: String
+  id: UUID!
+
+  """A private group always approves members, whatever was chosen"""
+  joinPolicy: GroupJoinPolicy!
+
+  """Admins only: requests waiting for an answer, oldest first"""
+  joinRequests: [GroupJoinRequest!]
+  memberCount: Int!
+
+  """Members only"""
+  members: [GroupMember!]
+  name: String!
+  owner: User!
+
+  """Members only: pinned posts, then the newest"""
+  posts(after: String, first: Int): GroupPostConnection
+  privacy: GroupPrivacy!
+
+  """
+  Members only: notes shared to the group that the viewer may open, the most recently shared first
+  """
+  sharedNotes(after: String, first: Int): NoteConnection
+  type: GroupType!
+  viewerCan: GroupActions!
+
+  """The viewer's request to join, while it waits"""
+  viewerRequestId: UUID
+  viewerRole: GroupRole
+}
+
+"""
+What the viewer may do in the group, from the same rules the API applies
+"""
+type GroupActions {
+  delete: Boolean!
+  join: Boolean!
+  leave: Boolean!
+  manage: Boolean!
+  moderate: Boolean!
+  post: Boolean!
+  requestJoin: Boolean!
+  reviewRequests: Boolean!
+}
+
+input GroupIdInput {
+  groupId: UUID!
+}
+
+enum GroupJoinPolicy {
+  APPROVAL
+  OPEN
+}
+
+type GroupJoinRequest {
+  createdAt: DateTime!
+  id: UUID!
+  message: String
+  user: User!
+}
+
+type GroupMember {
+  joinedAt: DateTime!
+
+  """Muted members cannot post until then"""
+  mutedUntil: DateTime
+  role: GroupRole!
+  user: User!
+}
+
+input GroupMemberInput {
+  groupId: UUID!
+  userId: UUID!
+}
+
+type GroupPayload {
+  group: Group
+  userErrors: [UserError!]!
+}
+
+type GroupPost {
+  author: User!
+
+  """Rich text: a card's document"""
+  body: JSON!
+  createdAt: DateTime!
+  editedAt: DateTime
+  id: UUID!
+  pinned: Boolean!
+  viewerCan: GroupPostActions!
+}
+
+type GroupPostActions {
+  delete: Boolean!
+  edit: Boolean!
+  pin: Boolean!
+}
+
+type GroupPostConnection {
+  edges: [GroupPostEdge!]!
+  pageInfo: PageInfo!
+
+  """On the first page only"""
+  pinned: [GroupPost!]!
+}
+
+type GroupPostEdge {
+  cursor: String!
+  node: GroupPost!
+}
+
+input GroupPostIdInput {
+  postId: UUID!
+}
+
+type GroupPostPayload {
+  post: GroupPost
+  userErrors: [UserError!]!
+}
+
+enum GroupPrivacy {
+  PRIVATE
+  PUBLIC
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+  MENTOR
+  MODERATOR
+  OWNER
+}
+
+enum GroupType {
+  COMMUNITY
+  PROJECT
 }
 
 enum HighlightColor {
@@ -397,6 +564,15 @@ enum InstitutionalEmailStatus {
 }
 
 scalar JSON
+
+enum JoinDecision {
+  APPROVED
+  REJECTED
+}
+
+input JoinRequestIdInput {
+  requestId: UUID!
+}
 
 type LegacyCounts {
   completedTopics: Int!
@@ -596,6 +772,8 @@ type Mutation {
   """
   convertPdfToNote(input: ConvertPdfInput!): PdfConversionPayload!
   createFolder(input: CreateFolderInput!): FolderPayload!
+  createGroup(input: CreateGroupInput!): GroupPayload!
+  createGroupPost(input: CreateGroupPostInput!): GroupPostPayload!
   createNote(input: CreateNoteInput!): NotePayload!
   createUploadIntent(input: CreateUploadIntentInput!): UploadIntentPayload!
 
@@ -608,6 +786,12 @@ type Mutation {
   """Its notes and subfolders move up one level"""
   deleteFolder(input: IdInput!): OkPayload!
 
+  """The owner; the group is gone for everyone"""
+  deleteGroup(input: GroupIdInput!): OkPayload!
+
+  """Its author, or a moderator"""
+  deleteGroupPost(input: GroupPostIdInput!): GroupPayload!
+
   """Move to the trash, restorable for 30 days (§4.5)"""
   deleteNote(input: NoteIdInput!): NotePayload!
 
@@ -616,6 +800,7 @@ type Mutation {
 
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
+  editGroupPost(input: EditGroupPostInput!): GroupPostPayload!
   followUser(input: PersonInput!): PersonPayload!
 
   """
@@ -625,11 +810,19 @@ type Mutation {
 
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
+
+  """A public group with the OPEN policy"""
+  joinGroup(input: GroupIdInput!): GroupPayload!
+
+  """The owner hands the group over first"""
+  leaveGroup(input: GroupIdInput!): GroupPayload!
   markNotificationsRead(input: MarkNotificationsReadInput!): MarkNotificationsReadPayload!
 
   """A moderator's decision on a case (PLATFORM_ADMIN)"""
   moderateContent(input: ModerateContentInput!): OkPayload!
+  muteGroupMember(input: MuteGroupMemberInput!): GroupPayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
+  pinGroupPost(input: PinGroupPostInput!): GroupPostPayload!
   proposeTopic(input: ProposeTopicInput!): TopicPayload!
 
   """
@@ -641,6 +834,7 @@ type Mutation {
 
   """Stops someone following you; they are not told"""
   removeFollower(input: PersonInput!): PersonPayload!
+  removeGroupMember(input: GroupMemberInput!): GroupPayload!
   removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
@@ -661,6 +855,9 @@ type Mutation {
   """Always ok, whether or not an account exists"""
   requestPasswordReset(input: RequestPasswordResetInput!): OkPayload!
   requestTeacherVerification(input: RequestTeacherVerificationInput!): VerificationRequestPayload!
+
+  """Every other group: the admins accept or reject"""
+  requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
 
   """Sets the password and signs out every device"""
@@ -679,6 +876,7 @@ type Mutation {
   Their comments wait for your approval and they cause you no notifications; they are not told
   """
   restrictUser(input: PersonInput!): PersonPayload!
+  reviewGroupJoinRequest(input: ReviewGroupJoinRequestInput!): GroupPayload!
 
   """
   Teachers: requests addressed to them. Platform admins: all, including documents.
@@ -689,6 +887,7 @@ type Mutation {
   Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
   """
   setGlobalRole(input: SetGlobalRoleInput!): OkPayload!
+  setGroupRole(input: SetGroupRoleInput!): GroupPayload!
 
   """
   Adds or replaces the college or organisation email; a code is sent to it
@@ -707,6 +906,9 @@ type Mutation {
   Share with one person, or change their role; a PRIVATE note becomes SHARED
   """
   shareNote(input: ShareNoteInput!): NotePayload!
+
+  """Share your note with a group you are in; a PRIVATE note becomes SHARED"""
+  shareNoteToGroup(input: NoteGroupInput!): NotePayload!
   signIn(input: SignInInput!): AuthPayload!
   signInWithGoogle(input: SignInWithGoogleInput!): AuthPayload!
 
@@ -726,7 +928,11 @@ type Mutation {
   unfollowUser(input: PersonInput!): PersonPayload!
   unrestrictUser(input: PersonInput!): PersonPayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
+  unshareNoteFromGroup(input: NoteGroupInput!): NotePayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
+
+  """Admins: name, description, privacy, join policy"""
+  updateGroup(input: UpdateGroupInput!): GroupPayload!
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
   updatePdfHighlight(input: UpdatePdfHighlightInput!): PdfHighlightPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
@@ -736,7 +942,16 @@ type Mutation {
 
   """Returns the person who was asked"""
   withdrawConnectionRequest(input: ConnectionRequestInput!): PersonPayload!
+  withdrawGroupJoinRequest(input: JoinRequestIdInput!): GroupPayload!
   withdrawVerificationRequest(requestId: UUID!): OkPayload!
+}
+
+input MuteGroupMemberInput {
+  groupId: UUID!
+
+  """Null lifts the mute"""
+  until: DateTime
+  userId: UUID!
 }
 
 """
@@ -769,6 +984,9 @@ type Note {
   """Set on a copy of another note; it cannot be removed"""
   forkedFrom: ForkCredit
   forkingEnabled: Boolean!
+
+  """Owner only: the groups the note is shared to"""
+  groups: [Group!]
 
   """
   The owner's and editors' highlights, in page order (empty for readers); only those on one PDF with `fileId`
@@ -851,6 +1069,11 @@ input NoteFilter {
 
   """Notes in no folder"""
   unfiled: Boolean
+}
+
+input NoteGroupInput {
+  groupId: UUID!
+  noteId: UUID!
 }
 
 input NoteIdInput {
@@ -1005,9 +1228,14 @@ type Notification {
   createdAt: DateTime!
 
   """
-  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }
+  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }
   """
   data: JSON
+
+  """
+  The group it is about (JOIN_REQUEST, JOIN_DECISION); null when there is none or the viewer may no longer see it
+  """
+  group: Group
   id: UUID!
 
   """
@@ -1197,6 +1425,11 @@ type PersonPayload {
   userErrors: [UserError!]!
 }
 
+input PinGroupPostInput {
+  pinned: Boolean!
+  postId: UUID!
+}
+
 enum ProblemMark {
   REVISIT
   SOLVED
@@ -1219,6 +1452,9 @@ type Query {
   """
   coreProgress(subjectId: String!): CoreSubjectProgress!
 
+  """Public groups to join, by name"""
+  discoverGroups(first: Int, query: String): [Group!]!
+
   """
   Platform admins: institutional email domains waiting for review (ADR-0017)
   """
@@ -1226,6 +1462,11 @@ type Query {
 
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
+
+  """
+  A group the viewer may know about: public ones, and private ones they are in or asked to join
+  """
+  group(id: UUID!): Group
 
   """Open cases, oldest first (PLATFORM_ADMIN)"""
   moderationQueue(after: String, first: Int): ModerationCaseConnection!
@@ -1246,6 +1487,9 @@ type Query {
   """
   myFollowers(after: String, first: Int): PersonConnection!
   myFollowing(after: String, first: Int): PersonConnection!
+
+  """The viewer's groups, most recently active first"""
+  myGroups: [Group!]!
 
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
@@ -1406,6 +1650,13 @@ input RequestTeacherVerificationInput {
   teacherId: UUID!
 }
 
+input RequestToJoinGroupInput {
+  groupId: UUID!
+
+  """At most 500 characters, for the admins"""
+  message: String
+}
+
 input ResetPasswordInput {
   password: String!
   token: String!
@@ -1419,6 +1670,11 @@ input RespondToConnectionRequestInput {
 input RestoreNoteVersionInput {
   noteId: UUID!
   versionId: UUID!
+}
+
+input ReviewGroupJoinRequestInput {
+  decision: JoinDecision!
+  requestId: UUID!
 }
 
 input ReviewVerificationRequestInput {
@@ -1460,6 +1716,16 @@ type Session {
 
 input SetGlobalRoleInput {
   role: GlobalRole!
+  userId: UUID!
+}
+
+input SetGroupRoleInput {
+  groupId: UUID!
+
+  """
+  OWNER hands the group over (the owner only); otherwise a role below the viewer's own
+  """
+  role: GroupRole!
   userId: UUID!
 }
 
@@ -1719,6 +1985,14 @@ input UpdateFolderInput {
   id: UUID!
   name: String
   parentId: UUID
+}
+
+input UpdateGroupInput {
+  description: String
+  groupId: UUID!
+  joinPolicy: GroupJoinPolicy
+  name: String
+  privacy: GroupPrivacy
 }
 
 """

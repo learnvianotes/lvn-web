@@ -6,7 +6,7 @@ import { liveUrlFrom } from '@/lib/env'
 
 const t = createTranslator({ locale: 'en', messages, namespace: 'notifications' }) as unknown as (key: string, values?: Record<string, string | number>) => string
 const meera = { id: 'u1', displayName: 'Meera Iyer' }
-const say = (n: Partial<Parameters<typeof describeNotification>[0]>) => describeNotification({ category: 'SHARE', data: null, actor: null, note: null, ...n }, t)
+const say = (n: Partial<Parameters<typeof describeNotification>[0]>) => describeNotification({ category: 'SHARE', data: null, actor: null, note: null, group: null, ...n }, t)
 
 describe('notification sentences (lvn-backend ADR-0042)', () => {
   it('names who shared which note, and says so when the note is gone', () => {
@@ -30,6 +30,10 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'FOLLOW', actor: meera })).toBe('Meera Iyer started following you')
     expect(say({ category: 'CONNECTION', actor: meera, data: { kind: 'REQUESTED' } })).toBe('Meera Iyer wants to connect with you')
     expect(say({ category: 'CONNECTION', actor: meera, data: { kind: 'ACCEPTED' } })).toBe('Meera Iyer accepted your connection request')
+    const g = { id: 'g1', name: 'Algorithms study' }
+    expect(say({ category: 'JOIN_REQUEST', actor: meera, group: g })).toBe('Meera Iyer asked to join Algorithms study')
+    expect(say({ category: 'JOIN_DECISION', data: { decision: 'APPROVED' }, group: g })).toBe("You're in: Algorithms study accepted your request")
+    expect(say({ category: 'JOIN_DECISION', data: { decision: 'REJECTED' }, group: null })).toBe("a group didn't accept your request")
     expect(say({ category: 'COMMENT' })).toBe('Something new for you')
   })
 })
