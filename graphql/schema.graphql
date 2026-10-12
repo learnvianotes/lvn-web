@@ -219,6 +219,20 @@ enum CardType {
   video
 }
 
+type CategoryPreference {
+  category: NotificationCategory!
+
+  """Null when this category sends no email"""
+  email: Boolean
+  push: Boolean!
+}
+
+input CategoryPreferenceInput {
+  category: NotificationCategory!
+  email: Boolean
+  push: Boolean
+}
+
 input ChangeNoteVisibilityInput {
   noteId: UUID!
   visibility: Visibility!
@@ -579,6 +593,11 @@ input DecideDomainReviewInput {
   domain: String!
 }
 
+enum DevicePlatform {
+  ANDROID
+  IOS
+}
+
 type Discussion {
   """Comments and replies the viewer can see"""
   commentCount: Int!
@@ -678,6 +697,11 @@ input EditCommentInput {
 input EditGroupPostInput {
   body: JSON!
   postId: UUID!
+}
+
+enum EmailKind {
+  CLASSROOM_POST
+  DIGEST
 }
 
 """Fixed error vocabulary (§6.2)"""
@@ -1318,6 +1342,9 @@ type Mutation {
   publishNote(input: NoteIdInput!): NotePayload!
   react(input: ReactInput!): ReactPayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
+
+  """Phones: after sign-in and whenever the token changes"""
+  registerDevice(input: RegisterDeviceInput!): OkPayload!
   removeClassroomMember(input: ClassroomMemberInput!): ClassroomPayload!
   removeConnection(input: PersonInput!): PersonPayload!
 
@@ -1439,16 +1466,25 @@ type Mutation {
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
   unblockUser(input: PersonInput!): PersonPayload!
   unfollowUser(input: PersonInput!): PersonPayload!
+
+  """Phones: on sign-out"""
+  unregisterDevice(input: UnregisterDeviceInput!): OkPayload!
   unrestrictUser(input: PersonInput!): PersonPayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
   unshareNoteFromClassroom(input: NoteClassroomInput!): NotePayload!
   unshareNoteFromGroup(input: NoteGroupInput!): NotePayload!
+
+  """
+  No sign-in: the token in an email's unsubscribe link turns off that kind of email
+  """
+  unsubscribeEmail(input: UnsubscribeEmailInput!): UnsubscribePayload!
   updateClassroom(input: UpdateClassroomInput!): ClassroomPayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
 
   """Admins: name, description, privacy, join policy"""
   updateGroup(input: UpdateGroupInput!): GroupPayload!
   updateNoteDraft(input: UpdateNoteDraftInput!): UpdateNoteDraftPayload!
+  updateNotificationSettings(input: UpdateNotificationSettingsInput!): NotificationSettingsPayload!
   updatePdfHighlight(input: UpdatePdfHighlightInput!): PdfHighlightPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
@@ -1823,6 +1859,29 @@ type NotificationEdge {
   node: Notification!
 }
 
+type NotificationSettings {
+  categories: [CategoryPreference!]!
+
+  """Phones registered for push"""
+  devices: Int!
+
+  """The server can send push (it has FCM settings)"""
+  pushAvailable: Boolean!
+  quietEnd: String!
+
+  """Pushes wait out these hours (HH:MM, in timeZone)"""
+  quietStart: String!
+
+  """An IANA time zone, e.g. Asia/Kolkata"""
+  timeZone: String!
+  weeklyDigest: Boolean!
+}
+
+type NotificationSettingsPayload {
+  settings: NotificationSettings
+  userErrors: [UserError!]!
+}
+
 """
 Authorization Code + PKCE: the code from the provider's redirect and the verifier the client generated
 """
@@ -2084,6 +2143,7 @@ type Query {
 
   """Your latest imports, newest first"""
   noteImports: [NoteImport!]!
+  notificationSettings: NotificationSettings!
 
   """The viewer's notifications, newest first"""
   notifications(after: String, first: Int): NotificationConnection!
@@ -2190,6 +2250,13 @@ type Reactions {
 input RefreshSessionInput {
   """Mobile only; web sends the cookie"""
   refreshToken: String
+}
+
+input RegisterDeviceInput {
+  platform: DevicePlatform!
+
+  """The native FCM (or APNs) token"""
+  token: String!
 }
 
 """How the viewer stands with a person"""
@@ -2633,9 +2700,24 @@ type TopicPayload {
 
 scalar UUID
 
+input UnregisterDeviceInput {
+  token: String!
+}
+
 input UnshareNoteInput {
   noteId: UUID!
   userId: UUID!
+}
+
+input UnsubscribeEmailInput {
+  """From the link in the email"""
+  token: String!
+}
+
+type UnsubscribePayload {
+  """What was turned off"""
+  kind: EmailKind
+  userErrors: [UserError!]!
 }
 
 input UpdateClassroomInput {
@@ -2685,6 +2767,14 @@ type UpdateNoteDraftPayload {
   note: Note
   results: [CardOpResult!]!
   userErrors: [UserError!]!
+}
+
+input UpdateNotificationSettingsInput {
+  categories: [CategoryPreferenceInput!]
+  quietEnd: String
+  quietStart: String
+  timeZone: String
+  weeklyDigest: Boolean
 }
 
 input UpdatePdfHighlightInput {

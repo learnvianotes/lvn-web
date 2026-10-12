@@ -21,6 +21,10 @@ const answer = (query, variables) => {
     const { cards, ...rest } = n
     return { note: { ...rest, cards: { edges: cards.map((node) => ({ node })), pageInfo: { hasNextPage: false, endCursor: null } } } }
   }
+  // One-click unsubscribe (lvn-backend ADR-0050): the token "good" turns off class emails; anything else is refused.
+  if (query.includes('unsubscribeEmail(')) {
+    return { unsubscribeEmail: variables.token === 'good' ? { kind: 'CLASSROOM_POST', userErrors: [] } : { kind: null, userErrors: [{ message: 'This unsubscribe link is not valid.' }] } }
+  }
   return null
 }
 

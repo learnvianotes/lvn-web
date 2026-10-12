@@ -1,0 +1,42 @@
+# Notification preferences and email unsubscribe (lvn-backend ADR-0050).
+
+fragment NotificationSettingsFields on NotificationSettings {
+  quietStart
+  quietEnd
+  timeZone
+  weeklyDigest
+  pushAvailable
+  devices
+  categories {
+    category
+    push
+    email
+  }
+}
+
+query NotificationSettings {
+  notificationSettings {
+    ...NotificationSettingsFields
+  }
+}
+
+mutation UpdateNotificationSettings($input: UpdateNotificationSettingsInput!) {
+  updateNotificationSettings(input: $input) {
+    settings {
+      ...NotificationSettingsFields
+    }
+    userErrors {
+      message
+      field
+    }
+  }
+}
+
+mutation UnsubscribeEmail($token: String!) {
+  unsubscribeEmail(input: { token: $token }) {
+    kind
+    userErrors {
+      message
+    }
+  }
+}

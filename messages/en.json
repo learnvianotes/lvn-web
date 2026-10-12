@@ -198,7 +198,8 @@
     "people": "Followers, following and blocked people",
     "skills": "Your Skills tab",
     "groups": "Your groups",
-    "classes": "Your classes"
+    "classes": "Your classes",
+    "notificationSettings": "Notification settings"
   },
   "notes": {
     "pageTitle": "Note",
@@ -1278,5 +1279,51 @@
       "BLOG": "Blog",
       "POST": "Post"
     }
+  },
+  "settings": {
+    "title": "Notification settings",
+    "lead": "Everything also shows in your notifications on LearnViaNotes; these choose what reaches your phone and email.",
+    "loading": "Loading…",
+    "failed": "That did not work. Try again.",
+    "saved": "Saved.",
+    "kinds": "What reaches you",
+    "kind": "Kind",
+    "push": "Phone",
+    "email": "Email",
+    "pushFor": "Phone notifications for {kind}",
+    "emailFor": "Emails for {kind}",
+    "noEmail": "No email for this kind",
+    "pushOff": "Phone notifications aren't switched on for LearnViaNotes yet. Your choices are kept for when they are.",
+    "quiet": "Quiet hours",
+    "quietHint": "No phone notifications between these times. They still wait for you in the app.",
+    "from": "From",
+    "to": "To",
+    "timeZone": "Time zone",
+    "digest": "Weekly email",
+    "digestLabel": "A Monday email counting what you haven't read yet",
+    "devices": "{count, plural, =0 {No phone is signed in for notifications.} one {# phone gets notifications.} other {# phones get notifications.}}",
+    "category": {
+      "SHARE": "Notes shared with you",
+      "COMMENT": "Comments and replies",
+      "FOLLOW": "New followers",
+      "CONNECTION": "Connections",
+      "JOIN_REQUEST": "Requests to join your groups and classes",
+      "JOIN_DECISION": "Answers to your requests to join",
+      "CLASSROOM_INVITE": "Class invites",
+      "CLASSROOM_POST": "Class announcements",
+      "MENTOR_INVITE": "Invites to mentor",
+      "DOUBT": "Doubts",
+      "VERIFICATION": "Verification",
+      "DATA_EXPORT": "Data exports",
+      "NOTES_IMPORT": "Imports"
+    },
+    "unsubscribeTitle": "Stop these emails",
+    "unsubscribeLead": "Click below and we'll stop sending you this kind of email. Everything still shows in the app.",
+    "unsubscribe": "Stop these emails",
+    "unsubscribed": {
+      "CLASSROOM_POST": "Done. You won't get emails about class announcements.",
+      "DIGEST": "Done. You won't get the weekly email."
+    },
+    "allSettings": "All notification settings"
   }
 }
