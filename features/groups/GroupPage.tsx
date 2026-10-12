@@ -271,7 +271,7 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
         </span>
       </div>
       <ContentModeration entityType="GROUP_POST" item={post} onAppealed={onChanged} />
-      <RichDoc doc={post.body as Doc} className="text-sm" />
+      <RichDoc doc={post.body as Doc} className="text-sm" mentions />
       <PostComments type="GROUP_POST" id={post.id} count={post.discussion.commentCount} />
     </li>
   )

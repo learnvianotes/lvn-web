@@ -79,7 +79,7 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
                 </span>
               </div>
               <ContentModeration entityType="GROUP_POST" item={idea} onAppealed={() => void refetch()} />
-              <RichDoc doc={idea.body as Doc} className="text-sm" />
+              <RichDoc doc={idea.body as Doc} className="text-sm" mentions />
               <PostComments type="GROUP_POST" id={idea.id} count={idea.discussion.commentCount} />
             </li>
           ))}
