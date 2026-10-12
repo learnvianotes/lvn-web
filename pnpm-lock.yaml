@@ -65,6 +65,9 @@ importers:
       graphql:
         specifier: ^16.14.2
         version: 16.14.2
+      graphql-ws:
+        specifier: 6.3.0
+        version: 6.3.0(graphql@16.14.2)(ws@8.22.0)
       highlight.js:
         specifier: ^11.12.0
         version: 11.12.0

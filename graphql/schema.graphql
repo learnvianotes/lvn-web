@@ -421,6 +421,19 @@ enum LimitKey {
   STORAGE_BYTES
 }
 
+input MarkNotificationsReadInput {
+  all: Boolean
+
+  """These notifications; ignored when all is true"""
+  ids: [UUID!]
+}
+
+type MarkNotificationsReadPayload {
+  """What stays unread"""
+  unreadCount: Int!
+  userErrors: [UserError!]!
+}
+
 """
 A file a media card shows. The url works for 15 minutes (until expiresAt); load the card again for a new one.
 """
@@ -585,6 +598,7 @@ type Mutation {
 
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
+  markNotificationsRead(input: MarkNotificationsReadInput!): MarkNotificationsReadPayload!
 
   """A moderator's decision on a case (PLATFORM_ADMIN)"""
   moderateContent(input: ModerateContentInput!): OkPayload!
@@ -672,8 +686,7 @@ type Mutation {
 }
 
 """
-A note (§4.1). Load it in two steps (§6.3): these fields and the outline first, then `cards` page by page. Editors get
-the draft; readers get the published version. Notes the viewer cannot read are null, exactly as if they did not exist.
+A note, owned by the notes subgraph: null when the viewer can no longer read it
 """
 type Note {
   cardCount: Int!
@@ -914,6 +927,61 @@ enum NoteVersionKind {
 }
 
 """
+Something that happened for the viewer. Ids only: the client writes the sentence from the category, the actor and the
+note, which resolve through their own subgraphs with their own permission checks.
+"""
+type Notification {
+  """Who did it; null for the system, platform admins and deleted accounts"""
+  actor: User
+  category: NotificationCategory!
+  createdAt: DateTime!
+
+  """
+  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }
+  """
+  data: JSON
+  id: UUID!
+
+  """
+  The note it is about; null when there is none or the viewer can no longer read it
+  """
+  note: Note
+
+  """In-app path to open, the same on web and phone, e.g. /notes/<id>"""
+  path: String!
+  readAt: DateTime
+}
+
+enum NotificationCategory {
+  CLASSROOM_POST
+  COMMENT
+  CONNECTION
+  DATA_EXPORT
+  DOUBT
+  FOLLOW
+  FORK_PUBLISHED
+  JOIN_DECISION
+  JOIN_REQUEST
+  MENTOR_INVITE
+  NOTES_IMPORT
+  QUIZ_PUBLISHED
+  REVISION_REMINDER
+  SHARE
+  STREAK_AT_RISK
+  VERIFICATION
+}
+
+type NotificationConnection {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type NotificationEdge {
+  cursor: String!
+  node: Notification!
+}
+
+"""
 Authorization Code + PKCE: the code from the provider's redirect and the verifier the client generated
 """
 input OAuthExchangeInput {
@@ -1088,6 +1156,9 @@ type Query {
   """Your latest imports, newest first"""
   noteImports: [NoteImport!]!
 
+  """The viewer's notifications, newest first"""
+  notifications(after: String, first: Int): NotificationConnection!
+
   """A conversion the viewer asked for"""
   pdfConversion(id: UUID!): PdfConversion
   pdfPagesThisMonth: PdfPagesUsage!
@@ -1122,6 +1193,7 @@ type Query {
   Version of the Terms, Privacy Policy and public-content licence a new account accepts (§15.2)
   """
   termsVersion: String!
+  unreadNotificationCount: Int!
 
   """
   Platform admins only: a 15-minute link to one document; the view is written to the audit log

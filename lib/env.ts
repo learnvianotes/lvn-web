@@ -14,6 +14,8 @@ const schema = z.object({
   NEXT_PUBLIC_SITE_URL: z.url(),
   /** The GraphQL endpoint of lvn-backend (its gateway, `/graphql`). */
   NEXT_PUBLIC_API_URL: z.url(),
+  /** Live updates, lvn-backend's graphql-ws endpoint (ADR-0042); see `liveUrl` below. */
+  NEXT_PUBLIC_LIVE_URL: z.url().refine((u) => /^wss?:\/\//.test(u), 'must be a ws(s) URL').optional(),
   /** /core feedback reports (core-app/src/config.ts reads it directly); empty disables sending. */
   NEXT_PUBLIC_FEEDBACK_URL: z.union([z.url(), z.literal('')]).optional(),
   // Google sign-in through Firebase Authentication (lvn-backend ADR-0007). Public identifiers, not secrets.
@@ -37,6 +39,7 @@ const parsed = schema.safeParse(unsetIfEmpty({
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_LIVE_URL: process.env.NEXT_PUBLIC_LIVE_URL,
   NEXT_PUBLIC_FEEDBACK_URL: process.env.NEXT_PUBLIC_FEEDBACK_URL,
   NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -60,3 +63,14 @@ export const firebaseConfig =
   env.NEXT_PUBLIC_FIREBASE_API_KEY && env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN && env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && env.NEXT_PUBLIC_FIREBASE_APP_ID
     ? { apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY, authDomain: env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, appId: env.NEXT_PUBLIC_FIREBASE_APP_ID }
     : null
+
+/**
+ * Where live updates come from (lvn-backend ADR-0042): NEXT_PUBLIC_LIVE_URL, or in development the API's own
+ * `/graphql/live` next to NEXT_PUBLIC_API_URL. Null elsewhere without it: the app then simply has no live updates.
+ */
+export function liveUrlFrom(e: Pick<typeof env, 'NEXT_PUBLIC_APP_ENV' | 'NEXT_PUBLIC_API_URL' | 'NEXT_PUBLIC_LIVE_URL'>): string | null {
+  if (e.NEXT_PUBLIC_LIVE_URL) return e.NEXT_PUBLIC_LIVE_URL
+  if (e.NEXT_PUBLIC_APP_ENV !== 'development') return null
+  return `${e.NEXT_PUBLIC_API_URL.replace(/^http/, 'ws').replace(/\/$/, '')}/live`
+}
+export const liveUrl = liveUrlFrom(env)

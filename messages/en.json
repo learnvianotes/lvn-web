@@ -790,5 +790,25 @@
       "done": "Made {cards, plural, one {# card} other {# cards}} from {pages, plural, one {# page} other {# pages}}. Check them beside the PDF: each card’s page chip shows where it came from.",
       "dismiss": "Dismiss"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Notifications",
+    "bellUnread": "Notifications, {count} unread",
+    "markAll": "Mark all as read",
+    "empty": "Nothing here yet. When someone shares a note with you, or something you asked for is ready, you will see it here.",
+    "older": "Show older",
+    "unread": "Unread",
+    "someone": "Someone",
+    "untitled": "Untitled note",
+    "share": "{actor} shared “{note}” with you",
+    "shareGone": "{actor} shared a note with you that you can no longer open",
+    "verificationRequested": "{actor} asked you to verify their account",
+    "verificationApproved": "Your account is verified",
+    "verificationApprovedBy": "{actor} verified your account",
+    "verificationRejected": "Your verification was not accepted. You can try again from your profile.",
+    "dataExport": "Your data export is ready to download",
+    "notesImport": "Your import is done: {created, plural, one {# note} other {# notes}} added{skipped, plural, =0 {} other {, # skipped}}{failed, plural, =0 {} other {, # could not be read}}",
+    "other": "Something new for you"
   }
 }

@@ -1,0 +1,47 @@
+# In-app notifications (lvn-backend communication subgraph, ADR-0042). Live updates are a graphql-ws subscription at
+# NEXT_PUBLIC_LIVE_URL (features/notifications/live.ts), not part of this schema.
+
+fragment NotificationFields on Notification {
+  id
+  category
+  path
+  data
+  readAt
+  createdAt
+  actor {
+    id
+    displayName
+  }
+  note {
+    id
+    title
+  }
+}
+
+query UnreadNotificationCount {
+  unreadNotificationCount
+}
+
+query Notifications($first: Int, $after: String) {
+  notifications(first: $first, after: $after) {
+    edges {
+      node {
+        ...NotificationFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+  unreadNotificationCount
+}
+
+mutation MarkNotificationsRead($input: MarkNotificationsReadInput!) {
+  markNotificationsRead(input: $input) {
+    unreadCount
+    userErrors {
+      message
+    }
+  }
+}

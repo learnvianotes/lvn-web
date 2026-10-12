@@ -1,4 +1,5 @@
-import type { Page, Route } from '@playwright/test'
+import type { Page, Route, WebSocketRoute } from '@playwright/test'
+import { LIVE_URL } from './constants'
 
 /** The mocked API of the notes app's Playwright tests: a signed-in session and GraphQL answered by operation name. */
 
@@ -51,6 +52,8 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
       return route.fulfill({ json: { data: { refreshSession: { session: { accessToken: 'h.p.s', accessTokenExpiresAt: new Date(Date.now() + 900_000).toISOString() } } } } })
     }
     if (op === 'Viewer') return route.fulfill({ json: { data: { viewer: { __typename: 'User', id: USER, handle: 'asharao', displayName: 'Asha Rao', email: 'asha@example.com', emailVerified: true, registrationComplete: true, verified: true, verificationMethod: 'INSTITUTIONAL_EMAIL', globalRole: 'STUDENT', restrictedMinor: false, institutionalEmail: null, institutionalEmailStatus: 'NONE', institution: null, ...viewer } } } })
+    // The header's bell asks on every signed-in page (lvn-backend ADR-0042).
+    if (op === 'UnreadNotificationCount' && !handlers[op]) return route.fulfill({ json: { data: { unreadNotificationCount: 0 } } })
     if (op === 'TermsStatus' && !handlers[op]) return route.fulfill({ json: { data: { termsVersion: '2026-10-08', viewer: { __typename: 'User', id: USER, termsAccepted: true } } } })
     const handler = handlers[op]
     if (!handler) return route.fulfill({ status: 500, json: { errors: [{ message: `unmocked ${op}` }] } })
@@ -59,3 +62,30 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
   return calls
 }
 
+
+/**
+ * Live updates (lvn-backend ADR-0042) in place of the API's graphql-ws endpoint: acknowledges connections, records
+ * their `connection_init` payloads and subscriptions, and sends events to every subscription on demand.
+ */
+export async function mockLive(page: Page) {
+  const inits: Record<string, unknown>[] = []
+  const subscriptions: { ws: WebSocketRoute; id: string }[] = []
+  await page.routeWebSocket(LIVE_URL, (ws) => {
+    ws.onMessage((raw) => {
+      const msg = JSON.parse(String(raw)) as { type: string; id?: string; payload?: Record<string, unknown> }
+      if (msg.type === 'connection_init') {
+        inits.push(msg.payload ?? {})
+        ws.send(JSON.stringify({ type: 'connection_ack' }))
+      }
+      if (msg.type === 'ping') ws.send(JSON.stringify({ type: 'pong' }))
+      if (msg.type === 'subscribe' && msg.id) subscriptions.push({ ws, id: msg.id })
+    })
+  })
+  return {
+    inits,
+    subscriptions,
+    send(event: { kind: string; id: string }) {
+      for (const s of subscriptions) s.ws.send(JSON.stringify({ id: s.id, type: 'next', payload: { data: { live: { ...event, at: new Date().toISOString() } } } }))
+    },
+  }
+}
