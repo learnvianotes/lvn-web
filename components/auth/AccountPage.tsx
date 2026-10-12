@@ -23,6 +23,8 @@ import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
 import { AccountStanding } from '@/features/moderation/Standing'
+import { ReviewRequests } from '@/features/verification/ReviewRequests'
+import { VerifyAccount } from '@/features/verification/VerifyAccount'
 
 type Viewer = NonNullable<ViewerQuery['viewer']>
 const YEARS: YearOfStudy[] = ['YEAR_1', 'YEAR_2', 'YEAR_3', 'YEAR_4', 'YEAR_5', 'POSTGRADUATE', 'GRADUATED', 'SCHOOL', 'NOT_STUDYING']
@@ -46,6 +48,12 @@ export function AccountPage() {
         <SignOutButton />
       </header>
       <AccountStanding userId={viewer.id} />
+      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
+        <Link href="/admin/verification" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
+          {t('verificationQueue')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
       {viewer.globalRole === 'PLATFORM_ADMIN' ? (
         <Link href="/admin/moderation" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
           {t('moderationQueue')}
@@ -75,6 +83,7 @@ export function AccountPage() {
         </Link>
       ) : null}
       <Verification viewer={viewer} />
+      {viewer.globalRole === 'TEACHER' && viewer.verified ? <ReviewRequests /> : null}
       {viewer.restrictedMinor ? <Alert>{t('minor')}</Alert> : null}
       <InstitutionalEmail viewer={viewer} />
       <StudyDetails viewer={viewer} />
@@ -118,6 +127,8 @@ function Verification({ viewer }: { viewer: Viewer }) {
       </h2>
       {!viewer.verified ? <p className="text-sm text-muted">{t('verifyLead')}</p> : null}
       {!viewer.emailVerified ? <Alert>{t('emailUnverified')}</Alert> : null}
+      {/* Without a college email (ADR-0019): a teacher vouches, or our team checks proof of study. */}
+      {!viewer.verified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
     </section>
   )
 }
