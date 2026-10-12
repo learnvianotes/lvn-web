@@ -46,6 +46,13 @@ query ModerationQueue($after: String, $scope: ModerationScopeInput) {
           id
           name
         }
+        suspendedUntil
+        removedGroup {
+          id
+          name
+          reason
+          removedAt
+        }
         note {
           id
           title
@@ -93,5 +100,28 @@ mutation ModerateContent($input: ModerateContentInput!) {
     userErrors {
       ...Problems
     }
+  }
+}
+
+# Account standing (lvn-backend ADR-0053): the viewer's suspension and warnings; a group moderators removed, for its owner.
+query MyStanding {
+  myStanding {
+    suspendedUntil
+    suspensionReason
+    canAppeal
+    warnings {
+      reason
+      at
+    }
+  }
+}
+
+query RemovedGroup($id: UUID!) {
+  removedGroup(id: $id) {
+    id
+    name
+    reason
+    removedAt
+    canAppeal
   }
 }

@@ -162,7 +162,7 @@ test('staff let students in, invite a TA, and hand the class over only after con
 test('staff review the class’s reports; a teacher reads a warning on their announcement (ADR-0051)', async ({ page: p }) => {
   let open = true
   const item = {
-    __typename: 'ModerationCase', entityType: 'COMMENT', entityId: 'c1', scope: 'CLASSROOM', scopeId: CLASS, openedAt: new Date(Date.now() - 600_000).toISOString(), note: null, user: null, group: null, appeal: null,
+    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'COMMENT', entityId: 'c1', scope: 'CLASSROOM', scopeId: CLASS, openedAt: new Date(Date.now() - 600_000).toISOString(), note: null, user: null, group: null, appeal: null,
     content: { __typename: 'ModeratedContent', entityType: 'COMMENT', id: 'c1', excerpt: 'Buy followers here, cheap.', moderation: 'PENDING_REVIEW', moderationReason: 'A moderator will look at this before others see it.', deleted: false, path: `/classes/${CLASS}`, author: { __typename: 'User', id: PUPIL, displayName: 'Ravi Kumar', handle: 'ravi' } },
     reports: [{ __typename: 'ModerationReport', reason: 'SPAM', details: 'Held when posted: it contains words linked to spam.', createdAt: new Date().toISOString(), reporter: null }],
   }

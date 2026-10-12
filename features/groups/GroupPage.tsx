@@ -11,6 +11,7 @@ import { ago } from '@/features/notes/look'
 import { PostComments } from '@/features/discussion/PostComments'
 import { ContentModeration, ModerationBanner } from '@/features/moderation/ModerationBanner'
 import { ModerationQueue } from '@/features/moderation/ModerationQueue'
+import { RemovedGroupNotice } from '@/features/moderation/Standing'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { RichDoc } from '@/features/notes/render/RichText'
 import {
@@ -50,7 +51,8 @@ export function GroupPage({ id }: { id: string }) {
   const { data, loading, refetch } = useQuery(GroupDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [tab, setTab] = useState<Tab>('posts')
   const group = data?.group
-  if (!group) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
+  // A group platform moderators removed: its owner reads why there (ADR-0053); for everyone else it is not there.
+  if (!group) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <RemovedGroupNotice id={id} fallback={<p className="text-muted">{t('notFound')}</p>} />
   const member = !!group.viewerRole
   const project = group.type === 'PROJECT'
   const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.moderate ? (['reports'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []

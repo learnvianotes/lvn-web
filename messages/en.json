@@ -661,7 +661,8 @@
         "REMOVE": "Remove",
         "SUSPEND": "Suspend",
         "KEEP": "Keep the decision",
-        "RESTORE": "Put it back"
+        "RESTORE": "Put it back",
+        "LIFT": "Lift the suspension"
       },
       "failed": "That did not work. Try again.",
       "notAllowed": "Only moderators can see this page",
@@ -678,7 +679,26 @@
       "deleted": "The author has deleted it.",
       "open": "Open where it is",
       "muteDay": "Mute the author for a day",
-      "muted": "Muted for a day"
+      "muted": "Muted for a day",
+      "suspendFor": "Suspend for",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "suspendedUntil": "Suspended until {until}",
+      "removedReason": "Removed: {reason}"
+    },
+    "standing": {
+      "title": "Your account",
+      "suspended": "Your account is suspended until {until}.",
+      "suspendedLead": "Until then nothing you do reaches other people: no publishing, sharing, comments, posts, joining or following. You can still read, keep and write your own notes, take a note back to private, block, report and download your data.",
+      "warnings": "{count, plural, one {A warning from the moderators} other {# warnings from the moderators}}",
+      "appeal": "Appeal",
+      "appealMessage": "Tell the moderators why",
+      "appealOnce": "You can appeal once. A moderator reads it and decides.",
+      "sendAppeal": "Send appeal",
+      "cancel": "Cancel",
+      "appealed": "You have used your one appeal.",
+      "failed": "The appeal did not go through. Try again.",
+      "groupRemoved": "Moderators removed {name}",
+      "groupRemovedLead": "Its members can no longer open it. If moderators put it back, everything in it returns as it was."
     }
   },
   "publicNote": {
@@ -897,7 +917,10 @@
     "moderationWhatIn": "{thing} in {place}",
     "moderationWhatOn": "{thing} on “{note}”",
     "moderationWhatGroup": "your group {group}",
-    "moderationGroupRemoved": "Moderators removed {what}."
+    "moderationGroupRemoved": "Moderators removed {what}. Open it to see why.",
+    "moderationAccountWarned": "Moderators warned your account. Open your account to read why.",
+    "moderationAccountSuspended": "Moderators suspended your account. Open your account to see until when and why.",
+    "moderationAccountRestored": "Your account’s suspension has ended early."
   },
   "people": {
     "teacher": "Teacher",
