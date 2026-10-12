@@ -397,3 +397,68 @@ test('a learner starts a project workspace, a teacher mentors it and answers a d
   await page.getByRole('button', { name: 'Mark resolved' }).click()
   await expect(page.getByText('This doubt is resolved. Reopen it to answer again.')).toBeVisible()
 })
+
+test('a group’s owner hides a reported post from the Reports tab, and puts it back after the author’s appeal (lvn-backend ADR-0051)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify accounts')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const account = async (who: string, name: string) => {
+    const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '2000-01-01', acceptedTermsVersion: termsVersion },
+    })
+    sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
+    return up.signUp.session
+  }
+  const writer = await account('writer', 'Live Writer')
+  const reporter = await account('reporter', 'Live Reporter')
+
+  const email = `live-lead-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Lead')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+
+  await page.goto('/groups')
+  await page.getByRole('button', { name: 'New group' }).click()
+  const dialog = page.getByRole('dialog', { name: 'New group' })
+  await dialog.getByLabel('Name').fill(`Live club ${stamp}`)
+  await dialog.getByLabel('Public').check()
+  await dialog.getByLabel('Let people join without approval').check()
+  await dialog.getByRole('button', { name: 'Create group' }).click()
+  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]+$/)
+  const groupId = page.url().split('/').pop()!
+  for (const who of [writer, reporter]) await api('mutation ($id: UUID!) { joinGroup(input: { groupId: $id }) { group { id } } }', { id: groupId }, who.accessToken)
+  const doc = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'You are all hopeless at heaps.' }] }] }
+  const postId = (await api<{ createGroupPost: { post: { id: string } } }>('mutation ($input: CreateGroupPostInput!) { createGroupPost(input: $input) { post { id } } }', { input: { groupId, body: doc } }, writer.accessToken)).createGroupPost.post.id
+  await api('mutation ($input: ReportContentInput!) { reportContent(input: $input) { ok } }', { input: { entityType: 'GROUP_POST', entityId: postId, reason: 'HARASSMENT', details: 'Rude to everyone' } }, reporter.accessToken)
+
+  await page.reload()
+  await page.getByRole('tab', { name: 'Reports' }).click()
+  const card = page.getByRole('article', { name: 'Post' })
+  await expect(card.getByText('You are all hopeless at heaps.')).toBeVisible()
+  await expect(card.getByText('Rude to everyone')).toBeVisible()
+  await card.getByLabel(/^Reason/).fill('Be kind to the others.')
+  await card.getByRole('button', { name: 'Hide' }).click()
+  await expect(page.getByText('Nothing to review. Thank you!')).toBeVisible()
+
+  type Seen = { group: { posts: { edges: { node: { id: string; moderation: string; moderationReason: string | null } }[] } } }
+  const postsOf = async (token: string) => (await api<Seen>('query ($id: UUID!) { group(id: $id) { posts { edges { node { id moderation moderationReason } } } } }', { id: groupId }, token)).group.posts.edges.map((e) => e.node)
+  expect(await postsOf(writer.accessToken)).toEqual([{ id: postId, moderation: 'HIDDEN', moderationReason: 'Be kind to the others.' }])
+  expect(await postsOf(reporter.accessToken)).toEqual([])
+  await expect
+    .poll(async () => (await api<{ notifications: { edges: { node: { category: string; data: unknown } }[] } }>('{ notifications(first: 5) { edges { node { category data } } } }', {}, writer.accessToken)).notifications.edges.map((e) => e.node), { timeout: 30_000 })
+    .toContainEqual({ category: 'MODERATION', data: { kind: 'HIDDEN', entityType: 'GROUP_POST' } })
+
+  await api('mutation ($input: AppealModerationInput!) { appealModeration(input: $input) { ok } }', { input: { entityType: 'GROUP_POST', entityId: postId, message: 'I take it back, sorry.' } }, writer.accessToken)
+  await page.reload()
+  await page.getByRole('tab', { name: 'Reports' }).click()
+  await expect(card.getByText('I take it back, sorry.')).toBeVisible()
+  await card.getByRole('button', { name: 'Put it back' }).click()
+  await expect(page.getByText('Nothing to review. Thank you!')).toBeVisible()
+  expect(await postsOf(reporter.accessToken)).toEqual([{ id: postId, moderation: 'OK', moderationReason: null }])
+})
