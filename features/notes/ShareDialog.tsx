@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Check, Copy, CopyPlus, GitFork, Globe, Lock, UserPlus, Users, X } from 'lucide-react'
+import { Check, Copy, CopyPlus, GitFork, Globe, Handshake, Lock, UserPlus, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -15,6 +15,7 @@ import {
   ForkNoteDocument,
   NoteSharesDocument,
   SetNoteForkingDocument,
+  SetNoteSharedWithConnectionsDocument,
   ShareNoteDocument,
   UnshareNoteDocument,
   type NoteShareRole,
@@ -53,6 +54,9 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   const [share, sharing] = useMutation(ShareNoteDocument)
   const [unshare] = useMutation(UnshareNoteDocument)
   const [setForking, settingForking] = useMutation(SetNoteForkingDocument)
+  const [setConnections, settingConnections] = useMutation(SetNoteSharedWithConnectionsDocument)
+  const teacher = shares.data?.viewer?.globalRole === 'TEACHER'
+  const withConnections = shares.data?.note?.sharedWithConnections ?? false
   const [person, setPerson] = useState('')
   const [role, setRole] = useState<NoteShareRole>('VIEWER')
   const [error, setError] = useState<string | null>(null)
@@ -84,6 +88,17 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
     const { result, error } = await attempt(() => unshare({ variables: { noteId: meta.id, userId } }))
     setError(problemOf(error, result?.data?.unshareNote, t('failed')))
   }
+  /** Teachers share with all their connections at once, and new connections get it too (lvn-backend ADR-0044). */
+  const toggleConnections = async () => {
+    setError(null)
+    const { result, error } = await attempt(() => setConnections({ variables: { noteId: meta.id, shared: !withConnections } }))
+    const payload = result?.data?.setNoteSharedWithConnections
+    const problem = problemOf(error, payload, t('failed'))
+    if (problem) return setError(problem)
+    if (payload?.note) onSaved({ ...meta, visibility: payload.note.visibility })
+    await shares.refetch()
+  }
+
   const toggleForking = async () => {
     setError(null)
     const { result, error } = await attempt(() => setForking({ variables: { noteId: meta.id, enabled: !meta.forkingEnabled } }))
@@ -184,13 +199,17 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
                       <span className="truncate text-sm font-medium">{s.user.displayName}</span>
                       <span className="truncate text-xs text-muted">@{s.user.handle}</span>
                     </span>
-                    <label>
-                      <span className="sr-only">{t('roleFor', { name: s.user.displayName })}</span>
-                      <select className="h-9 rounded-lg border border-border bg-bg px-2 text-xs" value={s.role} onChange={(e) => void add(`@${s.user.handle}`, e.target.value as NoteShareRole)}>
-                        <option value="VIEWER">{t('role.VIEWER')}</option>
-                        <option value="EDITOR">{t('role.EDITOR')}</option>
-                      </select>
-                    </label>
+                    {s.source === 'CONNECTIONS' ? (
+                      <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">{t('viaConnections')}</span>
+                    ) : (
+                      <label>
+                        <span className="sr-only">{t('roleFor', { name: s.user.displayName })}</span>
+                        <select className="h-9 rounded-lg border border-border bg-bg px-2 text-xs" value={s.role} onChange={(e) => void add(`@${s.user.handle}`, e.target.value as NoteShareRole)}>
+                          <option value="VIEWER">{t('role.VIEWER')}</option>
+                          <option value="EDITOR">{t('role.EDITOR')}</option>
+                        </select>
+                      </label>
+                    )}
                     <button type="button" className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-fg" aria-label={t('remove', { name: s.user.displayName })} title={t('remove', { name: s.user.displayName })} onClick={() => void remove(s.user.id)}>
                       <X className="size-4" aria-hidden />
                     </button>
@@ -203,6 +222,18 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
           ) : null}
           {meta.visibility === 'PRIVATE' && people.length ? <p className="text-xs text-muted">{t('privateHidesShares')}</p> : null}
         </section>
+
+        {teacher ? (
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-surface p-3">
+            <Handshake className="mt-0.5 size-[1.125rem] shrink-0 text-muted" aria-hidden />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-sm font-semibold">{t('withConnections')}</span>
+              <span className="text-xs leading-5 text-muted">{t('withConnectionsHint')}</span>
+            </span>
+            <input type="checkbox" role="switch" className="peer sr-only" checked={withConnections} disabled={settingConnections.loading} onChange={() => void toggleConnections()} />
+            <span aria-hidden className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-surface-2 ring-1 ring-border transition after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition peer-checked:bg-accent peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
+          </label>
+        ) : null}
 
         <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-surface p-3">
           <GitFork className="mt-0.5 size-[1.125rem] shrink-0 text-muted" aria-hidden />

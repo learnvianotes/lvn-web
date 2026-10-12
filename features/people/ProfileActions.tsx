@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Ellipsis, UserCheck, UserPlus } from 'lucide-react'
+import { Ellipsis, Handshake, UserCheck, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -13,11 +13,15 @@ import {
   BlockUserDocument,
   FollowUserDocument,
   ProfileRelationDocument,
+  RemoveConnectionDocument,
   RemoveFollowerDocument,
+  RequestConnectionDocument,
+  RespondToConnectionRequestDocument,
   RestrictUserDocument,
   UnblockUserDocument,
   UnfollowUserDocument,
   UnrestrictUserDocument,
+  WithdrawConnectionRequestDocument,
 } from '@/graphql/generated/graphql'
 import { useSession } from '@/state/session'
 
@@ -34,7 +38,7 @@ export function ProfileActions(props: { id: string; handle: string }) {
   )
 }
 
-type Act = 'follow' | 'unfollow' | 'removeFollower' | 'block' | 'unblock' | 'restrict' | 'unrestrict'
+type Act = 'follow' | 'unfollow' | 'removeFollower' | 'block' | 'unblock' | 'restrict' | 'unrestrict' | 'connect' | 'disconnect'
 
 function Actions({ id, handle }: { id: string; handle: string }) {
   const t = useTranslations('people')
@@ -51,14 +55,19 @@ function Actions({ id, handle }: { id: string; handle: string }) {
   const [unblock] = useMutation(UnblockUserDocument)
   const [restrict] = useMutation(RestrictUserDocument)
   const [unrestrict] = useMutation(UnrestrictUserDocument)
-  const mutate: Record<Act, (o: { variables: { input: { userId: string } } }) => Promise<{ data?: unknown }>> = { follow: run, unfollow, removeFollower, block, unblock, restrict, unrestrict }
+  const [connect] = useMutation(RequestConnectionDocument)
+  const [disconnect] = useMutation(RemoveConnectionDocument)
+  const [respond] = useMutation(RespondToConnectionRequestDocument)
+  const [withdraw] = useMutation(WithdrawConnectionRequestDocument)
+  const mutate: Record<Act, (o: { variables: { input: { userId: string } } }) => Promise<{ data?: unknown }>> = { follow: run, unfollow, removeFollower, block, unblock, restrict, unrestrict, connect, disconnect }
 
-  const act = async (what: Act) => {
+  /** Runs one change and shows what went wrong in the API's words. */
+  const attempt = async (call: () => Promise<{ data?: unknown }>) => {
     setBusy(true)
     setError(null)
     setMenu(false)
     try {
-      const res = (await mutate[what]({ variables: { input: { userId: id } } })) as { data?: Record<string, { userErrors: { message: string }[] }> }
+      const res = (await call()) as { data?: Record<string, { userErrors: { message: string }[] }> }
       const problem = Object.values(res.data ?? {})[0]?.userErrors[0]?.message
       if (problem) setError(problem)
     } catch (e) {
@@ -67,6 +76,7 @@ function Actions({ id, handle }: { id: string; handle: string }) {
       setBusy(false)
     }
   }
+  const act = (what: Act) => attempt(() => mutate[what]({ variables: { input: { userId: id } } }))
 
   if (status === 'unknown') return null
   if (status !== 'signed-in') {
@@ -109,13 +119,40 @@ function Actions({ id, handle }: { id: string; handle: string }) {
             <UserCheck className="size-4" aria-hidden />
             {t('following')}
           </Button>
-        ) : r.viewerCan.follow ? (
+        ) : r.viewerCan.follow || (!data?.viewer?.verified && !r.blocked) ? (
+          // Unverified, Follow stays: pressing it says why it needs verification (ADR-0017).
           <Button disabled={busy} onClick={() => void act('follow')}>
             <UserPlus className="size-4" aria-hidden />
             {t('follow')}
           </Button>
         ) : null}
+        {/* Teachers connect with teachers (ADR-0013). */}
+        {r.connected ? (
+          <span className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-accent-soft px-3 text-sm font-semibold text-accent">
+            <Handshake className="size-4" aria-hidden />
+            {t('connected')}
+          </span>
+        ) : r.pendingConnection?.direction === 'INCOMING' ? (
+          <>
+            <Button disabled={busy} onClick={() => void attempt(() => respond({ variables: { input: { requestId: r.pendingConnection!.requestId, accept: true } } }))}>
+              {t('acceptConnection')}
+            </Button>
+            <Button variant="secondary" disabled={busy} onClick={() => void attempt(() => respond({ variables: { input: { requestId: r.pendingConnection!.requestId, accept: false } } }))}>
+              {t('decline')}
+            </Button>
+          </>
+        ) : r.pendingConnection?.direction === 'OUTGOING' ? (
+          <Button variant="secondary" disabled={busy} aria-label={t('requestedLabel')} onClick={() => void attempt(() => withdraw({ variables: { input: { requestId: r.pendingConnection!.requestId } } }))}>
+            {t('requested')}
+          </Button>
+        ) : r.viewerCan.requestConnection ? (
+          <Button variant="secondary" disabled={busy} onClick={() => void act('connect')}>
+            <Handshake className="size-4" aria-hidden />
+            {t('connect')}
+          </Button>
+        ) : null}
         <MoreMenu open={menu} onToggle={setMenu} label={t('more')}>
+          {r.viewerCan.removeConnection ? <MenuItem onClick={() => void act('disconnect')}>{t('removeConnection')}</MenuItem> : null}
           {r.viewerCan.removeFollower ? <MenuItem onClick={() => void act('removeFollower')}>{t('removeFollower')}</MenuItem> : null}
           {r.viewerCan.restrict ? <MenuItem onClick={() => void act('restrict')}>{t('restrict')}</MenuItem> : null}
           {r.viewerCan.unrestrict ? <MenuItem onClick={() => void act('unrestrict')}>{t('unrestrict')}</MenuItem> : null}

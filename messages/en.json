@@ -194,7 +194,8 @@
     "minor": "Some features stay off until a parent, guardian or your school confirms your account.",
     "unsavedDrafts": "Some note changes have not reached the server yet. Signing out deletes them from this browser. Sign out anyway?",
     "moderationQueue": "Moderation queue",
-    "people": "Followers, following and blocked people"
+    "people": "Followers, following and blocked people",
+    "skills": "Your Skills tab"
   },
   "notes": {
     "pageTitle": "Note",
@@ -292,7 +293,13 @@
       "readPdfUploading": "Uploading {name}…",
       "readPdfNotPdf": "Choose a PDF file.",
       "readPdfTooLarge": "PDFs can be up to {mb} MB.",
-      "readPdfFailed": "The PDF could not be uploaded. Check your connection and try again."
+      "readPdfFailed": "The PDF could not be uploaded. Check your connection and try again.",
+      "newKind": {
+        "label": "Start something else",
+        "PROJECT": "+ Project",
+        "BLOG": "+ Blog post",
+        "POST": "+ Post"
+      }
     },
     "editor": {
       "title": "Title",
@@ -544,7 +551,10 @@
       "copyFailed": "Could not make a copy. Try again.",
       "copiedFrom": "Copied from <title></title> by {name}",
       "copiedFromAuthor": "Copied from a note by {name}",
-      "offPublic": "Moderators took this note off the public pages. You can appeal from the note."
+      "offPublic": "Moderators took this note off the public pages. You can appeal from the note.",
+      "withConnections": "Share with all my connections",
+      "withConnectionsHint": "Teachers you are connected with can read it, and so will teachers you connect with later. Editing is still given person by person.",
+      "viaConnections": "Connection"
     }
   },
   "moderation": {
@@ -813,7 +823,9 @@
     "dataExport": "Your data export is ready to download",
     "notesImport": "Your import is done: {created, plural, one {# note} other {# notes}} added{skipped, plural, =0 {} other {, # skipped}}{failed, plural, =0 {} other {, # could not be read}}",
     "other": "Something new for you",
-    "follow": "{actor} started following you"
+    "follow": "{actor} started following you",
+    "connectionRequested": "{actor} wants to connect with you",
+    "connectionAccepted": "{actor} accepted your connection request"
   },
   "people": {
     "teacher": "Teacher",
@@ -864,7 +876,8 @@
         "BLOG": "No blog posts yet.",
         "PROJECT": "No projects yet.",
         "POST": "No posts yet."
-      }
+      },
+      "SKILLS": "Skills"
     },
     "lists": {
       "title": "Your people",
@@ -873,21 +886,64 @@
         "followers": "Followers",
         "following": "Following",
         "blocked": "Blocked",
-        "restricted": "Restricted"
+        "restricted": "Restricted",
+        "connections": "Connections",
+        "requests": "Requests"
       },
       "undo": {
         "followers": "Remove",
         "following": "Unfollow",
         "blocked": "Unblock",
-        "restricted": "Unrestrict"
+        "restricted": "Unrestrict",
+        "connections": "Remove"
       },
       "empty": {
         "followers": "Nobody follows you yet.",
         "following": "You don't follow anyone yet.",
         "blocked": "You haven't blocked anyone.",
-        "restricted": "You haven't restricted anyone."
+        "restricted": "You haven't restricted anyone.",
+        "connections": "You have no connections yet. Connect with teachers from their profiles.",
+        "requests": "No connection requests."
       },
-      "notNamed": "{count, plural, one {# more follower is} other {# more followers are}} not shown by name: young learners never appear in lists."
+      "notNamed": "{count, plural, one {# more follower is} other {# more followers are}} not shown by name: young learners never appear in lists.",
+      "accept": "Accept",
+      "decline": "Decline",
+      "withdraw": "Withdraw"
+    },
+    "connect": "Connect",
+    "connected": "Connected",
+    "requested": "Requested",
+    "requestedLabel": "Connection requested — select to withdraw",
+    "acceptConnection": "Accept",
+    "decline": "Decline",
+    "removeConnection": "Remove connection",
+    "skills": {
+      "empty": "Nothing here yet.",
+      "editTitle": "Your Skills tab",
+      "seeProfile": "See it on your profile",
+      "lead": "What students see on your profile: a headline, a few lines about you, and your qualifications, experience and skills.",
+      "loading": "Loading…",
+      "teachersOnly": "The Skills tab is for teachers.",
+      "headline": "Headline",
+      "headlineHint": "For example: Teaches algorithms to second-year students",
+      "bio": "About you",
+      "items": "Qualifications, experience and skills",
+      "item": "Item {n}",
+      "kindLabel": "Kind",
+      "name": "Name",
+      "detail": "Detail (optional)",
+      "up": "Move up",
+      "down": "Move down",
+      "remove": "Remove {name}",
+      "add": "Add an item",
+      "save": "Save",
+      "saved": "Saved.",
+      "failed": "That did not work. Try again.",
+      "kind": {
+        "QUALIFICATION": "Qualifications",
+        "EXPERIENCE": "Experience",
+        "SKILL": "Skills"
+      }
     }
   }
 }

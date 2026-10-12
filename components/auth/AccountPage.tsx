@@ -54,6 +54,12 @@ export function AccountPage() {
         {t('people')}
         <span aria-hidden>→</span>
       </Link>
+      {viewer.globalRole === 'TEACHER' ? (
+        <Link href="/profile/skills" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+          {t('skills')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
       <Verification viewer={viewer} />
       {viewer.restrictedMinor ? <Alert>{t('minor')}</Alert> : null}
       <InstitutionalEmail viewer={viewer} />

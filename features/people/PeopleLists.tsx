@@ -7,14 +7,17 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   MyPeopleDocument,
+  RemoveConnectionDocument,
   RemoveFollowerDocument,
+  RespondToConnectionRequestDocument,
   UnblockUserDocument,
   UnfollowUserDocument,
   UnrestrictUserDocument,
+  WithdrawConnectionRequestDocument,
   type PersonFieldsFragment,
 } from '@/graphql/generated/graphql'
 
-type Tab = 'followers' | 'following' | 'blocked' | 'restricted'
+type Tab = 'followers' | 'following' | 'connections' | 'requests' | 'blocked' | 'restricted'
 
 /**
  * The viewer's people (lvn-backend ADR-0043): who follows them (restricted minors counted, never named), whom they
@@ -28,22 +31,40 @@ export function PeopleLists() {
   const [unfollow] = useMutation(UnfollowUserDocument)
   const [unblock] = useMutation(UnblockUserDocument)
   const [unrestrict] = useMutation(UnrestrictUserDocument)
+  const [removeConnection] = useMutation(RemoveConnectionDocument)
+  const [respond] = useMutation(RespondToConnectionRequestDocument)
+  const [withdraw] = useMutation(WithdrawConnectionRequestDocument)
+  const requests = data?.myConnectionRequests ?? []
   const lists: Record<Tab, PersonFieldsFragment[]> = {
     followers: data?.myFollowers.edges.map((e) => e.node) ?? [],
     following: data?.myFollowing.edges.map((e) => e.node) ?? [],
+    connections: data?.myConnections.map((e) => e.node) ?? [],
+    requests: requests.map((r) => r.person),
     blocked: data?.myBlocked.map((e) => e.node) ?? [],
     restricted: data?.myRestricted.map((e) => e.node) ?? [],
   }
   const counts: Record<Tab, number> = {
     followers: data?.viewer?.followerCount ?? lists.followers.length,
     following: data?.viewer?.followingCount ?? lists.following.length,
+    connections: lists.connections.length,
+    requests: requests.length,
     blocked: lists.blocked.length,
     restricted: lists.restricted.length,
   }
+  // Connections are for teachers (ADR-0013); their tabs show for teachers, or when there is something in them.
+  const teacher = data?.viewer?.globalRole === 'TEACHER'
+  const tabs = (['followers', 'following', 'connections', 'requests', 'blocked', 'restricted'] as const).filter((k) => (k === 'connections' || k === 'requests' ? teacher || counts[k] > 0 : true))
+  const requestOf = (p: PersonFieldsFragment) => requests.find((r) => r.person.id === p.id)!
   const undo = async (p: PersonFieldsFragment) => {
     const variables = { input: { userId: p.id } }
     if (tab === 'followers') await removeFollower({ variables })
     if (tab === 'following') await unfollow({ variables })
+    if (tab === 'connections') await removeConnection({ variables })
+    if (tab === 'requests') {
+      const r = requestOf(p)
+      if (r.direction === 'OUTGOING') await withdraw({ variables: { input: { requestId: r.id } } })
+      else await respond({ variables: { input: { requestId: r.id, accept: false } } })
+    }
     if (tab === 'blocked') await unblock({ variables })
     if (tab === 'restricted') await unrestrict({ variables })
     await refetch()
@@ -60,7 +81,7 @@ export function PeopleLists() {
         ) : null}
       </header>
       <div role="tablist" aria-label={t('title')} className="flex gap-1 overflow-x-auto border-b border-border">
-        {(['followers', 'following', 'blocked', 'restricted'] as const).map((k) => (
+        {tabs.map((k) => (
           <button
             key={k}
             role="tab"
@@ -86,8 +107,13 @@ export function PeopleLists() {
                   <span className="truncate font-semibold">{p.displayName}</span>
                   <span className="truncate text-xs text-muted">@{p.handle}</span>
                 </Link>
+                {tab === 'requests' && requestOf(p).direction === 'INCOMING' ? (
+                  <Button size="sm" onClick={() => void respond({ variables: { input: { requestId: requestOf(p).id, accept: true } } }).then(() => refetch())}>
+                    {t('accept')}
+                  </Button>
+                ) : null}
                 <Button variant="secondary" size="sm" onClick={() => void undo(p)}>
-                  {t(`undo.${tab}`)}
+                  {tab === 'requests' ? t(requestOf(p).direction === 'OUTGOING' ? 'withdraw' : 'decline') : t(`undo.${tab}`)}
                 </Button>
               </li>
             ))}

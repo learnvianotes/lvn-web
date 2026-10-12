@@ -34,7 +34,7 @@ export async function ProfileView({ person }: { person: PublicProfile }) {
         </div>
         <ProfileActions id={person.id} handle={person.handle} />
       </header>
-      <ProfileTabs teacher={teacher} notes={person.notes} />
+      <ProfileTabs teacher={teacher} notes={person.notes} skills={person.teacherProfile} />
     </div>
   )
 }

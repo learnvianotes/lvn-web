@@ -18,6 +18,8 @@ export function describeNotification(n: Pick<NotificationFieldsFragment, 'catego
       return t('verificationRejected')
     case 'FOLLOW':
       return t('follow', { actor })
+    case 'CONNECTION':
+      return data.kind === 'ACCEPTED' ? t('connectionAccepted', { actor }) : t('connectionRequested', { actor })
     case 'DATA_EXPORT':
       return t('dataExport')
     case 'NOTES_IMPORT': {
