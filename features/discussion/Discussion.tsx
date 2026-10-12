@@ -74,7 +74,13 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
         <p className="text-sm text-muted">{t('none')}</p>
       )}
       {d.comments.pageInfo.hasNextPage ? (
-        <Button variant="secondary" size="sm" className="self-start" onClick={() => void fetchMore({ variables: { after: d.comments.pageInfo.endCursor } })}>
+        <Button variant="secondary" size="sm" className="self-start" onClick={() =>
+            void fetchMore({
+              variables: { after: d.comments.pageInfo.endCursor },
+              updateQuery: (prev, { fetchMoreResult }) =>
+                prev.discussion && fetchMoreResult.discussion ? { discussion: { ...fetchMoreResult.discussion, comments: { ...fetchMoreResult.discussion.comments, edges: [...prev.discussion.comments.edges, ...fetchMoreResult.discussion.comments.edges] } } } : fetchMoreResult,
+            })
+          }>
           {t('more')}
         </Button>
       ) : null}

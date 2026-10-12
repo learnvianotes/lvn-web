@@ -221,7 +221,13 @@ function Posts({ group }: { group: GroupDetailFragment }) {
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noPosts')}</p>
       ) : null}
       {posts?.pageInfo.hasNextPage ? (
-        <Button variant="secondary" className="self-center" onClick={() => void fetchMore({ variables: { after: posts.pageInfo.endCursor } })}>
+        <Button variant="secondary" className="self-center" onClick={() =>
+            void fetchMore({
+              variables: { after: posts.pageInfo.endCursor },
+              updateQuery: (prev, { fetchMoreResult }) =>
+                prev.group?.posts && fetchMoreResult.group?.posts ? { group: { ...fetchMoreResult.group, posts: { ...fetchMoreResult.group.posts, pinned: prev.group.posts.pinned, edges: [...prev.group.posts.edges, ...fetchMoreResult.group.posts.edges] } } } : fetchMoreResult,
+            })
+          }>
           {t('older')}
         </Button>
       ) : null}

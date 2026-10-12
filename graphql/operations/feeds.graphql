@@ -1,0 +1,73 @@
+# Feeds (lvn-backend ADR-0049): followed people's public notes, and the activity of one's groups and classes.
+
+query FollowingFeed($after: String) {
+  followingFeed(first: 20, after: $after) {
+    edges {
+      node {
+        id
+        title
+        slug
+        kind
+        publishedAt
+        owner {
+          id
+          displayName
+          handle
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query ActivityFeed($after: String) {
+  activityFeed(first: 20, after: $after) {
+    edges {
+      node {
+        key
+        kind
+        at
+        actor {
+          id
+          displayName
+          handle
+        }
+        group {
+          id
+          name
+        }
+        classroom {
+          id
+          name
+        }
+        post {
+          id
+          body
+          discussion {
+            commentCount
+          }
+        }
+        announcement {
+          id
+          body
+        }
+        doubt {
+          id
+          title
+          status
+        }
+        note {
+          id
+          title
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

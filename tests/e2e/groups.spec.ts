@@ -122,3 +122,17 @@ test('admins answer requests to join', async ({ page: p }) => {
   await expect(p.getByText('Meera Iyer')).toBeVisible()
   await expect(p.getByRole('button', { name: 'Remove' })).toHaveCount(0)
 })
+
+test('older posts are added below the newer ones, not swapped for them', async ({ page: p }) => {
+  const second = (nodes: unknown[], hasNextPage: boolean) => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned: [], edges: nodes.map((node) => ({ __typename: 'GroupPostEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage, endCursor: hasNextPage ? 'c1' : null } } } })
+  await mockApi(p, {
+    Group: () => ({ group: group({ viewerRole: 'MEMBER', viewerCan: can({ post: true, leave: true }) }) }),
+    GroupPosts: (v) => (v.after ? second([post('p2', 'Last week')], false) : second([post('p1', 'This week')], true)),
+  })
+  await p.goto(`/groups/${GROUP}`)
+  await expect(p.getByText('This week')).toBeVisible()
+  await p.getByRole('button', { name: 'Show older' }).click()
+  await expect(p.getByText('Last week')).toBeVisible()
+  await expect(p.getByText('This week')).toBeVisible()
+  await expect(p.getByRole('button', { name: 'Show older' })).toHaveCount(0)
+})
