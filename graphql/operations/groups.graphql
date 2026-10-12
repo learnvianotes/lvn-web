@@ -46,6 +46,9 @@ fragment GroupPostFields on GroupPost {
     delete
     pin
   }
+  discussion {
+    commentCount
+  }
 }
 
 query MyGroups {
