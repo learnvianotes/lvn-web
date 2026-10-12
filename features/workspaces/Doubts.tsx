@@ -22,6 +22,7 @@ export function StatusChip({ status }: { status: DoubtStatus }) {
 /** Doubts for the mentor and team (lvn-backend ADR-0048): ask one, filter by status, open one to answer. */
 export function Doubts({ group }: { group: GroupDetailFragment }) {
   const t = useTranslations('workspaces')
+  const m = useTranslations('moderation.queue')
   const router = useRouter()
   const [status, setStatus] = useState<DoubtStatus | null>(null)
   const { data } = useQuery(WorkspaceDoubtsDocument, { variables: { id: group.id, status }, fetchPolicy: 'cache-and-network' })
@@ -102,6 +103,7 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{d.title}</span>
                   <StatusChip status={d.status} />
+                  {d.moderation !== 'OK' ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">{m(`state.${d.moderation}`)}</span> : null}
                 </span>
                 <span className="flex flex-wrap items-center gap-2 text-xs text-muted">
                   {d.author.displayName} · {ago(d.createdAt)}

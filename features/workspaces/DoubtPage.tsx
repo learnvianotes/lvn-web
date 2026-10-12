@@ -9,6 +9,8 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
+import { ContentModeration } from '@/features/moderation/ModerationBanner'
+import { ReportButton } from '@/features/moderation/ReportDialog'
 import { RichDoc } from '@/features/notes/render/RichText'
 import { AnswerDoubtDocument, DeleteDoubtDocument, DoubtDocument, ReopenDoubtDocument, ResolveDoubtDocument } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
@@ -44,6 +46,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
             {d.author.displayName} · {ago(d.createdAt)}
           </span>
         </div>
+        <ContentModeration entityType="DOUBT" item={d} onAppealed={() => void refetch()} />
         <h1 className="text-2xl font-extrabold tracking-tight">{d.title}</h1>
         {d.repoRef ? <code className="w-fit rounded bg-surface-2 px-2 py-1 text-sm">{d.repoRef}</code> : null}
         <RichDoc doc={d.body as Doc} className="text-sm" />
@@ -58,6 +61,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
               {t('reopen')}
             </Button>
           ) : null}
+          <ReportButton entityType="DOUBT" entityId={d.id} authorId={d.author.id} className="order-last ml-auto" />
           {d.viewerCan.delete ? (
             <Button
               variant="ghost"

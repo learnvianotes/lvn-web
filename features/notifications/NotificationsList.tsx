@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BadgeCheck, Bell, CheckCheck, Download, DoorOpen, CircleHelp, FileInput, GraduationCap, Handshake, Megaphone, MessageSquare, School, Share2, UserPlus, Users } from 'lucide-react'
+import { BadgeCheck, Bell, CheckCheck, Download, DoorOpen, CircleHelp, FileInput, GraduationCap, Handshake, Megaphone, MessageSquare, School, Share2, ShieldAlert, UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -25,6 +25,7 @@ const ICONS: Partial<Record<NotificationFieldsFragment['category'], typeof Bell>
   COMMENT: MessageSquare,
   MENTOR_INVITE: School,
   DOUBT: CircleHelp,
+  MODERATION: ShieldAlert,
 }
 
 /** The viewer's notifications, newest first (lvn-backend ADR-0042); opening one marks it read. */

@@ -24,6 +24,7 @@ import {
   WithdrawConnectionRequestDocument,
 } from '@/graphql/generated/graphql'
 import { useSession } from '@/state/session'
+import { ReportDialog } from '@/features/moderation/ReportDialog'
 
 /**
  * The viewer's buttons on a profile (lvn-backend ADR-0043), loaded in the browser around the cached page: Follow, or
@@ -48,6 +49,7 @@ function Actions({ id, handle }: { id: string; handle: string }) {
   const [busy, setBusy] = useState(false)
   const [menu, setMenu] = useState(false)
   const [confirmBlock, setConfirmBlock] = useState(false)
+  const [reporting, setReporting] = useState(false)
   const [run] = useMutation(FollowUserDocument)
   const [unfollow] = useMutation(UnfollowUserDocument)
   const [removeFollower] = useMutation(RemoveFollowerDocument)
@@ -162,7 +164,9 @@ function Actions({ id, handle }: { id: string; handle: string }) {
             </MenuItem>
           ) : null}
           {r.viewerCan.unblock ? <MenuItem onClick={() => void act('unblock')}>{t('unblock')}</MenuItem> : null}
+          <MenuItem onClick={() => (setMenu(false), setReporting(true))}>{t('report')}</MenuItem>
         </MoreMenu>
+        <ReportDialog entityType="USER" entityId={person.id} open={reporting} onClose={() => setReporting(false)} />
       </div>
       {r.restricted ? <span className="text-xs text-muted">{t('restrictedNote')}</span> : null}
       {error ? (

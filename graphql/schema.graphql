@@ -329,6 +329,15 @@ type ClassroomPost {
   """
   discussion: Discussion!
   id: UUID!
+
+  """Not OK only for its author (ADR-0051)"""
+  moderation: ModerationState!
+
+  """
+  Its author may still appeal: hidden or removed by a moderator, and not appealed yet
+  """
+  moderationCanAppeal: Boolean!
+  moderationReason: String
   viewerCanDelete: Boolean!
 }
 
@@ -375,6 +384,19 @@ type Comment {
   createdAt: DateTime!
   editedAt: DateTime
   id: UUID!
+
+  """
+  Not OK only for its author: held, hidden or removed by moderation (ADR-0051)
+  """
+  moderation: ModerationState!
+
+  """
+  Its author may still appeal: hidden or removed by a moderator, and not appealed yet
+  """
+  moderationCanAppeal: Boolean!
+
+  """Why, for its author"""
+  moderationReason: String
 
   """
   Waiting for the owner's approval: seen by its author and the owner only
@@ -641,6 +663,15 @@ type Doubt {
   createdAt: DateTime!
   id: UUID!
 
+  """Not OK only for its author (ADR-0051)"""
+  moderation: ModerationState!
+
+  """
+  Its author may still appeal: hidden or removed by a moderator, and not appealed yet
+  """
+  moderationCanAppeal: Boolean!
+  moderationReason: String
+
   """A path, line or commit in the repository"""
   repoRef: String
   resolvedAt: DateTime
@@ -781,6 +812,11 @@ type Group {
 
   """Members only"""
   members: [GroupMember!]
+
+  """
+  Its owner only: the platform moderators' warning about the group from the last 30 days, if any (ADR-0051)
+  """
+  moderationWarning: String
   name: String!
   owner: User!
 
@@ -880,6 +916,15 @@ type GroupPost {
   editedAt: DateTime
   id: UUID!
   kind: GroupPostKind!
+
+  """Not OK only for its author (ADR-0051)"""
+  moderation: ModerationState!
+
+  """
+  Its author may still appeal: hidden or removed by a moderator, and not appealed yet
+  """
+  moderationCanAppeal: Boolean!
+  moderationReason: String
   pinned: Boolean!
   viewerCan: GroupPostActions!
 }
@@ -1144,6 +1189,24 @@ input ModerateContentInput {
   reason: String
 }
 
+"""
+A comment, post, announcement or doubt as its scope's moderators see it
+"""
+type ModeratedContent {
+  author: User!
+  deleted: Boolean!
+  entityType: ReportEntityType!
+
+  """The start of its text"""
+  excerpt: String!
+  id: UUID!
+  moderation: ModerationState!
+  moderationReason: String
+
+  """Where it is, in the app"""
+  path: String!
+}
+
 """A note as moderators see it: the published version readers would see"""
 type ModeratedNote {
   deleted: Boolean!
@@ -1175,13 +1238,23 @@ type ModerationAppeal {
 
 type ModerationCase {
   appeal: ModerationAppeal
+
+  """Set for COMMENT, GROUP_POST, CLASSROOM_POST and DOUBT cases"""
+  content: ModeratedContent
   entityId: UUID!
   entityType: ReportEntityType!
+
+  """Set for GROUP cases"""
+  group: Group
 
   """Set for NOTE cases"""
   note: ModeratedNote
   openedAt: DateTime!
   reports: [ModerationReport!]!
+  scope: ModerationScope!
+
+  """The group or class, for those scopes"""
+  scopeId: UUID
 
   """Set for USER cases"""
   user: User
@@ -1206,6 +1279,22 @@ type ModerationReport {
   reporter: User
 }
 
+"""Whose queue a case is in (ADR-0051)"""
+enum ModerationScope {
+  CLASSROOM
+  GROUP
+  PLATFORM
+}
+
+"""
+A group's or class's queue for its moderators; without it, platform admins see every case
+"""
+input ModerationScopeInput {
+  """The group or class"""
+  id: UUID
+  scope: ModerationScope!
+}
+
 enum ModerationState {
   HIDDEN
   OK
@@ -1226,7 +1315,9 @@ type Mutation {
   answerDoubt(input: AnswerDoubtInput!): DoubtPayload!
   answerMentorInvite(input: AnswerMentorInviteInput!): GroupPayload!
 
-  """The author's one appeal against hiding or removing their note"""
+  """
+  The author's one appeal against hiding or removing their note or content
+  """
   appealModeration(input: AppealModerationInput!): OkPayload!
   approveComment(input: CommentIdInput!): CommentPayload!
 
@@ -1329,7 +1420,9 @@ type Mutation {
   leaveGroup(input: GroupIdInput!): GroupPayload!
   markNotificationsRead(input: MarkNotificationsReadInput!): MarkNotificationsReadPayload!
 
-  """A moderator's decision on a case (PLATFORM_ADMIN)"""
+  """
+  A moderator's decision on a case: platform admins anywhere, group moderators and class staff in their scope
+  """
   moderateContent(input: ModerateContentInput!): OkPayload!
   muteGroupMember(input: MuteGroupMemberInput!): GroupPayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
@@ -1358,7 +1451,7 @@ type Mutation {
   reopenDoubt(input: DoubtIdInput!): DoubtPayload!
 
   """
-  Report a note or a person you can see; reporting again updates your report
+  Report what you can see (a note, a person, a comment, a post, an announcement, a doubt or a group); reporting again updates your report
   """
   reportContent(input: ReportContentInput!): OkPayload!
 
@@ -1809,7 +1902,7 @@ type Notification {
   createdAt: DateTime!
 
   """
-  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }, DOUBT { kind: ASKED | ANSWERED | RESOLVED, byMentor }
+  Facts of the category that are not user content: VERIFICATION { kind: REQUESTED | DECIDED, decision }, NOTES_IMPORT { created, skipped, failed }, CONNECTION { kind: REQUESTED | ACCEPTED }, JOIN_DECISION { decision: APPROVED | REJECTED }, COMMENT { kind: COMMENT | REPLY }, DOUBT { kind: ASKED | ANSWERED | RESOLVED, byMentor }, MODERATION { kind: HIDDEN | REMOVED | WARNED | RESTORED, entityType }
   """
   data: JSON
 
@@ -1841,6 +1934,7 @@ enum NotificationCategory {
   JOIN_DECISION
   JOIN_REQUEST
   MENTOR_INVITE
+  MODERATION
   NOTES_IMPORT
   QUIZ_PUBLISHED
   REVISION_REMINDER
@@ -2095,8 +2189,10 @@ type Query {
   """
   group(id: UUID!): Group
 
-  """Open cases, oldest first (PLATFORM_ADMIN)"""
-  moderationQueue(after: String, first: Int): ModerationCaseConnection!
+  """
+  Open cases, oldest first: a group's (its moderators and mentor) or a class's (its staff), or every case (PLATFORM_ADMIN)
+  """
+  moderationQueue(after: String, first: Int, scope: ModerationScopeInput): ModerationCaseConnection!
   myBlocked: [PersonEdge!]!
 
   """Invites waiting for the viewer's answer"""
@@ -2305,6 +2401,11 @@ input ReportContentInput {
 }
 
 enum ReportEntityType {
+  CLASSROOM_POST
+  COMMENT
+  DOUBT
+  GROUP
+  GROUP_POST
   NOTE
   USER
 }

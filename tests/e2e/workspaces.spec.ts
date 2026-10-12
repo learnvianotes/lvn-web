@@ -12,12 +12,12 @@ const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', conten
 const can = (over: Record<string, boolean> = {}) => ({ __typename: 'GroupActions', join: false, requestJoin: false, post: true, moderate: false, manage: false, delete: false, reviewRequests: false, leave: true, askDoubt: true, inviteMentor: false, acceptMentorInvite: false, ...over })
 const workspace = (over: Record<string, unknown> = {}) => ({
   __typename: 'Group', id: GROUP, type: 'PROJECT', name: 'Heap visualiser', description: 'Watch a heap grow', privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 4, viewerRole: 'MEMBER', createdAt: '2026-10-01T10:00:00.000Z',
-  viewerRequestId: null, viewerMentorInviteId: null, owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
+  viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null, owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
 })
 const repo = (over: Record<string, unknown> = {}) => ({ __typename: 'GroupRepository', provider: 'GITHUB', url: 'https://github.com/team/heap-viz', available: true, name: 'team/heap-viz', description: 'Watch a heap grow', language: 'TypeScript', stars: 42, pushedAt: '2026-10-10T09:00:00.000Z', ...over })
 const posts = () => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned: [], edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
-const idea = (id: string, text: string) => ({ __typename: 'GroupPost', id, kind: 'IDEA', body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: meera, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 } })
-const summary = (status: string) => ({ __typename: 'Doubt', id: DOUBT, title: 'Why does sift-down swap twice?', status, repoRef: 'src/heap.ts:42', createdAt: new Date().toISOString(), answerCount: status === 'OPEN' ? 0 : 1, author: asha })
+const idea = (id: string, text: string) => ({ __typename: 'GroupPost', id, kind: 'IDEA', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: meera, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 } })
+const summary = (status: string) => ({ __typename: 'Doubt', id: DOUBT, title: 'Why does sift-down swap twice?', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, status, repoRef: 'src/heap.ts:42', createdAt: new Date().toISOString(), answerCount: status === 'OPEN' ? 0 : 1, author: asha })
 
 test('a project workspace starts from the new group dialog', async ({ page }) => {
   const calls = await mockApi(page, {
@@ -37,7 +37,7 @@ test('a project workspace starts from the new group dialog', async ({ page }) =>
   await dialog.getByRole('button', { name: 'Create group' }).click()
   await expect(page).toHaveURL(new RegExp(`/groups/${GROUP}$`))
   expect(calls.find((c) => c.op === 'CreateGroup')?.variables).toMatchObject({ input: { name: 'Heap visualiser', type: 'PROJECT' } })
-  await expect(page.getByRole('tab')).toHaveText(['Posts', 'Ideas', 'Doubts', 'Notes', 'Members', 'Requests', 'Settings'])
+  await expect(page.getByRole('tab')).toHaveText(['Posts', 'Ideas', 'Doubts', 'Notes', 'Members', 'Requests', 'Reports', 'Settings'])
   await expect(page.getByText('No repository linked yet.')).toBeVisible()
 })
 

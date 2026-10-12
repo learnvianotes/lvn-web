@@ -8,6 +8,9 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PostComments } from '@/features/discussion/PostComments'
+import { ContentModeration } from '@/features/moderation/ModerationBanner'
+import { ModerationQueue } from '@/features/moderation/ModerationQueue'
+import { ReportButton } from '@/features/moderation/ReportDialog'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { RichDoc } from '@/features/notes/render/RichText'
@@ -33,7 +36,7 @@ import {
 } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
 
-type Tab = 'posts' | 'notes' | 'people' | 'requests' | 'settings'
+type Tab = 'posts' | 'notes' | 'people' | 'requests' | 'reports' | 'settings'
 type Run = () => Promise<{ data?: Record<string, { userErrors: { message: string }[] } | null> | null }>
 
 /** One class (lvn-backend ADR-0046): announcements and notes for its members; people, requests and settings for staff. */
@@ -44,7 +47,7 @@ export function ClassPage({ id }: { id: string }) {
   const classroom = data?.classroom
   if (!classroom) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
   const staff = classroom.viewerCan.review
-  const tabs: Tab[] = classroom.viewerRole ? ['posts', 'notes', ...(staff ? (['people', 'requests'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
+  const tabs: Tab[] = classroom.viewerRole ? ['posts', 'notes', ...(staff ? (['people', 'requests', 'reports'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header classroom={classroom} onChanged={() => void refetch()} />
@@ -62,6 +65,7 @@ export function ClassPage({ id }: { id: string }) {
             {tab === 'notes' ? <SharedNotes classroom={classroom} /> : null}
             {tab === 'people' ? <People classroom={classroom} onChanged={() => void refetch()} /> : null}
             {tab === 'requests' ? <Requests classroom={classroom} onChanged={() => void refetch()} /> : null}
+            {tab === 'reports' ? <ModerationQueue scope={{ scope: 'CLASSROOM', id: classroom.id }} /> : null}
             {tab === 'settings' ? <Settings classroom={classroom} onSaved={() => void refetch()} /> : null}
           </div>
         </>
@@ -201,12 +205,16 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
                   {p.author.displayName}
                 </Link>
                 <span className="text-xs text-muted">{ago(p.createdAt)}</span>
-                {p.viewerCanDelete ? (
-                  <button type="button" onClick={() => void act(() => remove({ variables: { postId: p.id } }))} aria-label={t('deletePost')} className="ml-auto rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
-                    <Trash2 className="size-4" aria-hidden />
-                  </button>
-                ) : null}
+                <span className="ml-auto flex gap-1">
+                  {p.viewerCanDelete ? (
+                    <button type="button" onClick={() => void act(() => remove({ variables: { postId: p.id } }))} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  ) : null}
+                  <ReportButton look="icon" entityType="CLASSROOM_POST" entityId={p.id} authorId={p.author.id} />
+                </span>
               </div>
+              <ContentModeration entityType="CLASSROOM_POST" item={p} onAppealed={() => void refetch()} />
               <RichDoc doc={p.body as Doc} className="text-sm" />
               <PostComments type="CLASSROOM_POST" id={p.id} count={p.discussion.commentCount} />
             </li>

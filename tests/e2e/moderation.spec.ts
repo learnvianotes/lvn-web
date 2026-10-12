@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { NOTE_ID, USER, cards, meta, mockApi, page1 } from './support/notes-api'
 
-/** Moderation on the web (lvn-backend §15.1, ADR-0037): reporting, what the owner is told, and the platform queue. */
+/** Moderation on the web (lvn-backend §15.1, ADR-0037, ADR-0051): reporting, what the owner is told, and the platform queue. */
 
 const ok = (name: string) => ({ [name]: { ok: true, userErrors: [] } })
 const ravi = { __typename: 'User', id: '01920000-0000-7000-8000-00000000bbbb', displayName: 'Ravi Kumar', handle: 'ravi' }
@@ -54,6 +54,10 @@ test('a platform admin works through the queue: reasons first, then the decision
     __typename: 'ModerationCase',
     entityType: 'NOTE',
     entityId: NOTE_ID,
+    scope: 'PLATFORM',
+    scopeId: null,
+    content: null,
+    group: null,
     openedAt: new Date(Date.now() - 3_600_000).toISOString(),
     note: { __typename: 'ModeratedNote', id: NOTE_ID, title: 'Free stuff', excerpt: 'Buy followers here, cheap.', visibility: 'PUBLIC', moderation: 'PENDING_REVIEW', moderationReason: 'Held', deleted: false, owner: ravi },
     user: null,
@@ -93,4 +97,40 @@ test('the queue is for platform admins only', async ({ page }) => {
   await mockApi(page, {})
   await page.goto('/admin/moderation')
   await expect(page.getByRole('heading', { name: 'Only moderators can see this page' })).toBeVisible()
+})
+
+test('platform admins see every scope: a group’s appealed post to put back or keep hidden, and a reported group (ADR-0051)', async ({ page }) => {
+  const GROUP = '01920000-0000-7000-8000-0000000a0001'
+  const at = new Date(Date.now() - 7_200_000).toISOString()
+  const appealed = {
+    __typename: 'ModerationCase', entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: at, note: null, user: null, group: null, reports: [],
+    content: { __typename: 'ModeratedContent', entityType: 'GROUP_POST', id: 'p2', excerpt: 'Idea: dark mode', moderation: 'HIDDEN', moderationReason: 'Off topic.', deleted: false, path: `/groups/${GROUP}`, author: ravi },
+    appeal: { __typename: 'ModerationAppeal', message: 'It is on topic: the app needs it.', createdAt: at },
+  }
+  const reported = {
+    __typename: 'ModerationCase', entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, appeal: null,
+    group: { __typename: 'Group', id: GROUP, name: 'Heaps club' },
+    reports: [{ __typename: 'ModerationReport', reason: 'HATE', details: 'The group name', createdAt: at, reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
+  }
+  const calls = await mockApi(
+    page,
+    {
+      ModerationQueue: () => ({ moderationQueue: { edges: [appealed, reported].map((node) => ({ __typename: 'ModerationCaseEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
+      ModerateContent: () => ok('moderateContent'),
+    },
+    { globalRole: 'PLATFORM_ADMIN' },
+  )
+  await page.goto('/admin/moderation')
+  const post = page.getByRole('article', { name: 'Post' })
+  await expect(post.getByText('In a group')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ModerationQueue')?.variables).not.toHaveProperty('scope')
+  await expect(post.getByText('It is on topic: the app needs it.')).toBeVisible()
+  await expect(post.getByRole('button', { name: 'Put it back' })).toBeVisible()
+  await expect(post.getByRole('button', { name: 'Keep the decision' })).toBeVisible()
+  await post.getByRole('button', { name: 'Put it back' }).click()
+  expect(calls.find((c) => c.op === 'ModerateContent')?.variables).toEqual({ input: { entityType: 'GROUP_POST', entityId: 'p2', action: 'APPROVE', reason: null } })
+
+  const group = page.getByRole('article', { name: 'Heaps club' })
+  await expect(group.getByRole('link', { name: 'Heaps club' })).toHaveAttribute('href', `/groups/${GROUP}`)
+  await expect(group.getByRole('button')).toHaveText(['Dismiss reports', 'Warn', 'Remove'])
 })

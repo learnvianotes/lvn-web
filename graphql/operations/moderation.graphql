@@ -1,4 +1,5 @@
-# Moderation (lvn-backend §15.1, ADR-0037): reports, appeals and the platform queue.
+# Moderation (lvn-backend §15.1, ADR-0037, ADR-0051): reports, appeals, and the queues of the platform, a group and a
+# class.
 
 mutation ReportContent($input: ReportContentInput!) {
   reportContent(input: $input) {
@@ -18,13 +19,33 @@ mutation AppealModeration($input: AppealModerationInput!) {
   }
 }
 
-query ModerationQueue($after: String) {
-  moderationQueue(first: 30, after: $after) {
+query ModerationQueue($after: String, $scope: ModerationScopeInput) {
+  moderationQueue(first: 30, after: $after, scope: $scope) {
     edges {
       node {
         entityType
         entityId
+        scope
+        scopeId
         openedAt
+        content {
+          entityType
+          id
+          excerpt
+          moderation
+          moderationReason
+          deleted
+          path
+          author {
+            id
+            displayName
+            handle
+          }
+        }
+        group {
+          id
+          name
+        }
         note {
           id
           title
