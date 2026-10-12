@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { PDF_TEXT, samplePdf } from './support/sample-pdf'
 
@@ -10,6 +11,9 @@ import { PDF_TEXT, samplePdf } from './support/sample-pdf'
  * Against the development servers, where the API has its own origin, also set E2E_API_URL (…:4000/graphql).
  *
  * Each run makes one account per browser, live-<time>-<project>@example.com, and leaves it in place.
+ *
+ * Tests that need a teacher also need E2E_VM, the local environment's vm.sh: roles are set in its database, as
+ * lvn-backend's lifecycle check does, since no API gives them.
  */
 test.skip(!process.env.E2E_LIVE || !process.env.E2E_BASE_URL, 'needs a deployed environment: E2E_LIVE=1 E2E_BASE_URL=<public url>')
 
@@ -251,4 +255,58 @@ test('the documents the web shows are the version the API asks people to accept'
   const { TERMS_VERSION } = await import('../../features/legal/documents')
   const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })
   expect(((await res.json()) as { data: { termsVersion: string } }).data.termsVersion).toBe(TERMS_VERSION)
+})
+
+/** The API as a teacher made for the test would call it; and SQL on the local environment's database (E2E_VM). */
+const apiUrl = () => process.env.E2E_API_URL ?? `${process.env.E2E_BASE_URL!.replace(/\/$/, '')}/graphql`
+async function api<T>(query: string, variables: Record<string, unknown> = {}, token?: string): Promise<T> {
+  const res = await fetch(apiUrl(), { method: 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ query, variables }) })
+  const body = (await res.json()) as { data?: T; errors?: { message: string }[] }
+  if (body.errors?.length) throw new Error(body.errors[0]!.message)
+  return body.data!
+}
+const sql = (statement: string) => execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -c "${statement.replace(/"/g, '\\"')}"`], { stdio: 'pipe' })
+
+test('a learner joins a class with its code, is let in, and reads the announcement (lvn-backend ADR-0046)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a teacher')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-teacher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Teacher', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const teacher = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
+  const made = await api<{ createClassroom: { classroom: { id: string; joinCode: string } } }>('mutation { createClassroom(input: { name: "Live physics" }) { classroom { id joinCode } } }', {}, teacher.accessToken)
+  const { id: classroomId, joinCode } = made.createClassroom.classroom
+
+  const email = `live-class-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Learner')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  // Asking to join needs a verified account (ADR-0017).
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+
+  await page.goto('/classes')
+  await page.getByLabel('Class code').fill(joinCode.toLowerCase())
+  await page.getByRole('button', { name: 'Find' }).click()
+  await expect(page.getByRole('heading', { name: 'Live physics' })).toBeVisible()
+  await expect(page.getByText('Teacher: Live Teacher')).toBeVisible()
+  await page.getByRole('button', { name: 'Ask to join' }).click()
+  await expect(page.getByText('Your request is waiting for your teacher.')).toBeVisible()
+
+  const asked = await api<{ classroom: { joinRequests: { id: string }[] } }>('query ($id: UUID!) { classroom(id: $id) { joinRequests { id } } }', { id: classroomId }, teacher.accessToken)
+  await api('mutation ($input: ReviewClassroomJoinRequestInput!) { reviewClassroomJoinRequest(input: $input) { classroom { id } } }', { input: { requestId: asked.classroom.joinRequests[0]!.id, decision: 'APPROVED' } }, teacher.accessToken)
+  await api('mutation ($input: CreateClassroomPostInput!) { createClassroomPost(input: $input) { classroom { id } } }', { input: { classroomId, body: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Live test on Friday' }] }] } } }, teacher.accessToken)
+  // Both reach the bell live: the answer, then the announcement.
+  await expect(page.getByRole('link', { name: 'Notifications, 2 unread' })).toBeVisible({ timeout: 60_000 })
+  await page.getByRole('link', { name: 'Notifications, 2 unread' }).click()
+  await page.getByRole('button', { name: /Live Teacher posted an announcement in Live physics/ }).click()
+  await expect(page).toHaveURL(new RegExp(`/classes/${classroomId}$`))
+  await expect(page.getByText('Live test on Friday')).toBeVisible()
+  await expect(page.getByTestId('class-code')).toHaveCount(0)
 })

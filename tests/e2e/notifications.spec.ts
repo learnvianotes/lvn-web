@@ -10,7 +10,7 @@ import { mockApi, mockLive, NOTE_ID, USER } from './support/notes-api'
 const TEACHER = '01920000-0000-7000-8000-00000000bbbb'
 const id = (n: number) => `01920000-0000-7000-8000-0000000f000${n}`
 const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString()
-const notification = (n: number, over: Record<string, unknown>) => ({ __typename: 'Notification', id: id(n), path: '/profile', data: null, readAt: null, createdAt: at(n * 5), actor: null, note: null, group: null, ...over })
+const notification = (n: number, over: Record<string, unknown>) => ({ __typename: 'Notification', id: id(n), path: '/profile', data: null, readAt: null, createdAt: at(n * 5), actor: null, note: null, group: null, classroom: null, ...over })
 const LIST = [
   notification(1, { category: 'SHARE', path: `/notes/${NOTE_ID}`, actor: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer' }, note: { __typename: 'Note', id: NOTE_ID, title: 'Binary heaps' } }),
   notification(2, { category: 'SHARE', path: '/notes/01920000-0000-7000-8000-00000000a0ff', actor: { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer' } }),
@@ -70,14 +70,17 @@ test('a live event refreshes the count, over a socket that sends the access toke
   await expect(page.getByRole('link', { name: 'Notifications, 3 unread' })).toBeVisible()
 })
 
-test('the signed-in header fits a phone, 360 pixels wide too, with a full badge', async ({ page }) => {
+test('the signed-in header fits a phone, 360 pixels wide too, with a full badge, and the widths where Groups and Classes appear', async ({ page }) => {
   await mockApi(page, { UnreadNotificationCount: () => ({ unreadNotificationCount: 150 }) })
-  for (const width of [360, 412]) {
+  for (const width of [360, 412, 768, 1024]) {
     await page.setViewportSize({ width, height: 800 })
     await page.goto('/notifications')
     await expect(page.getByRole('link', { name: 'Notifications, 150 unread' })).toContainText('99+')
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
+    // One row: the header does not wrap onto a second line.
+    expect((await page.locator('header').first().boundingBox())!.height).toBeLessThan(90)
   }
+  await expect(page.getByRole('link', { name: 'Classes', exact: true })).toBeVisible()
 })
 
 test('nothing for a visitor who is not signed in', async ({ page }) => {

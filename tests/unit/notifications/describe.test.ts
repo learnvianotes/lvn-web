@@ -6,7 +6,7 @@ import { liveUrlFrom } from '@/lib/env'
 
 const t = createTranslator({ locale: 'en', messages, namespace: 'notifications' }) as unknown as (key: string, values?: Record<string, string | number>) => string
 const meera = { id: 'u1', displayName: 'Meera Iyer' }
-const say = (n: Partial<Parameters<typeof describeNotification>[0]>) => describeNotification({ category: 'SHARE', data: null, actor: null, note: null, group: null, ...n }, t)
+const say = (n: Partial<Parameters<typeof describeNotification>[0]>) => describeNotification({ category: 'SHARE', path: '/notes/n1', data: null, actor: null, note: null, group: null, classroom: null, ...n }, t)
 
 describe('notification sentences (lvn-backend ADR-0042)', () => {
   it('names who shared which note, and says so when the note is gone', () => {
@@ -35,6 +35,18 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'APPROVED' }, group: g })).toBe("You're in: Algorithms study accepted your request")
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'REJECTED' }, group: null })).toBe("a group didn't accept your request")
     expect(say({ category: 'COMMENT' })).toBe('Something new for you')
+  })
+
+  it('names the class of a request, an answer, an invite or an announcement (lvn-backend ADR-0046)', () => {
+    const c = { id: 'c1', name: 'Physics 9A' }
+    const path = '/classes/c1'
+    expect(say({ category: 'JOIN_REQUEST', path, actor: meera, classroom: c })).toBe('Meera Iyer asked to join Physics 9A')
+    expect(say({ category: 'JOIN_DECISION', path, data: { decision: 'APPROVED' }, classroom: c })).toBe("You're in: Physics 9A accepted your request")
+    // A class you were not let into is no longer shown to you by name.
+    expect(say({ category: 'JOIN_DECISION', path, data: { decision: 'REJECTED' } })).toBe("Your request to join a class wasn't accepted")
+    expect(say({ category: 'CLASSROOM_INVITE', path, actor: meera, classroom: c })).toBe('Meera Iyer invited you to Physics 9A')
+    expect(say({ category: 'CLASSROOM_POST', path, actor: meera, classroom: c })).toBe('Meera Iyer posted an announcement in Physics 9A')
+    expect(say({ category: 'CLASSROOM_POST', path, actor: meera })).toBe('Meera Iyer posted an announcement in a class')
   })
 })
 
