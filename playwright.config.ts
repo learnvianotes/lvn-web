@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { E2E_REVALIDATE_SECRET } from './tests/e2e/support/constants'
+import { E2E_REVALIDATE_SECRET, LIVE_URL } from './tests/e2e/support/constants'
 
 const port = Number(process.env.PORT ?? 3100)
 const ssrApiPort = 3199
@@ -28,6 +28,8 @@ export default defineConfig({
           // only loaded on a click, which no test makes.
           env: {
             NEXT_DIST_DIR: '.next-e2e',
+            // Live updates go to an address nothing answers; tests that need a socket intercept it (tests/e2e/support).
+            NEXT_PUBLIC_LIVE_URL: LIVE_URL,
             NEXT_PUBLIC_FIREBASE_API_KEY: 'e2e-api-key',
             NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'lvn-e2e.firebaseapp.com',
             NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'lvn-e2e',
