@@ -575,3 +575,53 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   await expect(page.getByRole('heading', { name: /✓/ })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Ask a teacher' })).toHaveCount(0)
 })
+
+test('a learner searches: a typo still finds a public note, the Projects chip narrows, and Ctrl+K opens a group (lvn-backend ADR-0055, ADR-0056)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify the author')
+  const stamp = `${Date.now()}${info.project.name}`
+  const word = `zorbix${Date.now().toString(36)}${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } | null; userErrors: { message: string }[] } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } userErrors { message } } }', {
+    input: { email: `live-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+  })
+  if (!up.signUp.session) throw new Error(`sign-up refused: ${up.signUp.userErrors[0]?.message}`)
+  const author = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${author.user.id}'`)
+  const publish = async (title: string, kind: 'NOTE' | 'PROJECT') => {
+    const card = { id: crypto.randomUUID(), type: 'text', position: 'a0', content: { doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: `Kruskal joins the cheapest edges first. ${word}` }] }] } } }
+    const id = (await api<{ createNote: { note: { id: string } } }>('mutation ($input: CreateNoteInput!) { createNote(input: $input) { note { id } } }', { input: { title, kind, cards: [card] } }, author.accessToken)).createNote.note.id
+    await api('mutation ($input: NoteIdInput!) { publishNote(input: $input) { note { id } } }', { input: { noteId: id } }, author.accessToken)
+    await api('mutation ($input: ChangeNoteVisibilityInput!) { changeNoteVisibility(input: $input) { note { id } } }', { input: { noteId: id, visibility: 'PUBLIC' } }, author.accessToken)
+  }
+  await publish('Spanning trees', 'NOTE')
+  await publish('Spanning tree visualiser', 'PROJECT')
+  const group = `Live search circle ${stamp}`
+  const groupId = (await api<{ createGroup: { group: { id: string } } }>('mutation ($input: CreateGroupInput!) { createGroup(input: $input) { group { id } } }', { input: { name: group, privacy: 'PUBLIC', joinPolicy: 'OPEN' } }, author.accessToken)).createGroup.group.id
+  // The worker indexes within a second or two (the search outbox).
+  await expect.poll(async () => (await api<{ search: { notes: unknown[] } }>('query ($q: String!) { search(query: $q, scopes: [NOTES]) { notes { snippet } } }', { q: word })).search.notes.length, { timeout: 20_000 }).toBe(2)
+
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Searcher')
+  await page.getByLabel('Email', { exact: true }).fill(`live-searcher-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  // "kruskl" is a typo of a word in the notes, not their titles: only Typesense forgives that.
+  await page.goto(`/search?q=${encodeURIComponent(`kruskl ${word}`)}`)
+  await expect(page.getByRole('link', { name: /Spanning trees/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Spanning tree visualiser/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Spanning trees/ }).locator('mark').first()).toHaveText('Kruskal')
+  await page.getByRole('button', { name: 'Projects' }).click()
+  await expect(page.getByRole('link', { name: /Spanning tree visualiser/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Spanning trees(?! visualiser)/ })).toHaveCount(0)
+
+  await page.goto('/notes')
+  await page.getByRole('button', { name: 'Search' }).click()
+  const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
+  await palette.getByRole('combobox').fill(group)
+  await palette.getByRole('option', { name: new RegExp(`${group} · Group`) }).click()
+  await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
+})
