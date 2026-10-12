@@ -1090,6 +1090,8 @@
     "by": "by {name}",
     "noNotes": "No notes shared yet.",
     "roleFor": "Role of {name}",
+    "handOver": "Hand the group to {name}",
+    "handOverConfirm": "Hand the group to {name}? You'll stay on as an admin.",
     "remove": "Remove",
     "muted": "muted",
     "muteDay": "Mute for a day",

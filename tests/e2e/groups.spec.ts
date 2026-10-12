@@ -123,6 +123,40 @@ test('admins answer requests to join', async ({ page: p }) => {
   await expect(p.getByRole('button', { name: 'Remove' })).toHaveCount(0)
 })
 
+test('the owner hands the group over after confirming; a mentor has no role to change (ADR-0048)', async ({ page: p }) => {
+  const member = (id: string, displayName: string, role: string) => ({ __typename: 'GroupMember', role, joinedAt: '2026-10-01T10:00:00.000Z', mutedUntil: null, user: { __typename: 'User', id, displayName, handle: displayName.split(' ')[0]!.toLowerCase() } })
+  let roles: Record<string, string> = { [USER]: 'OWNER', u2: 'MEMBER', t1: 'MENTOR' }
+  const owner = () => group({ viewerRole: roles[USER], viewerCan: can({ post: true, moderate: true, manage: true, delete: roles[USER] === 'OWNER', reviewRequests: true, leave: roles[USER] !== 'OWNER' }) })
+  const calls = await mockApi(p, {
+    Group: () => ({ group: owner() }),
+    GroupPosts: () => page([], []),
+    GroupMembers: () => ({ group: { __typename: 'Group', id: GROUP, viewerRole: roles[USER], members: [member(USER, 'Asha Rao', roles[USER]!), member('u2', 'Ravi Kumar', roles.u2!), member('t1', 'Meera Iyer', roles.t1!)], joinRequests: [] } }),
+    SetGroupRole: (v) => {
+      if (v.role === 'OWNER') roles = { ...roles, [USER]: 'ADMIN', [String(v.userId)]: 'OWNER' }
+      return { setGroupRole: { __typename: 'GroupPayload', group: owner(), userErrors: [] } }
+    },
+  })
+  await p.goto(`/groups/${GROUP}`)
+  await p.getByRole('tab', { name: 'Members' }).click()
+  await expect(p.getByText('Meera Iyer')).toBeVisible()
+  await expect(p.getByRole('combobox', { name: 'Role of Meera Iyer' })).toHaveCount(0)
+  await expect(p.getByRole('button', { name: 'Remove' })).toHaveCount(2)
+  const ravi = p.getByRole('combobox', { name: 'Role of Ravi Kumar' })
+  // Declining the confirmation changes nothing.
+  p.once('dialog', (d) => void d.dismiss())
+  await ravi.selectOption({ label: 'Hand the group to Ravi Kumar' })
+  expect(calls.filter((c) => c.op === 'SetGroupRole')).toHaveLength(0)
+  p.once('dialog', (d) => {
+    expect(d.message()).toBe("Hand the group to Ravi Kumar? You'll stay on as an admin.")
+    void d.accept()
+  })
+  await ravi.selectOption({ label: 'Hand the group to Ravi Kumar' })
+  await expect(p.getByText('Admin', { exact: true }).first()).toBeVisible()
+  expect(calls.find((c) => c.op === 'SetGroupRole')?.variables).toEqual({ groupId: GROUP, userId: 'u2', role: 'OWNER' })
+  // Now an admin, the hand-over is no longer offered.
+  await expect(p.getByRole('option', { name: /Hand the group/ })).toHaveCount(0)
+})
+
 test('older posts are added below the newer ones, not swapped for them', async ({ page: p }) => {
   const second = (nodes: unknown[], hasNextPage: boolean) => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned: [], edges: nodes.map((node) => ({ __typename: 'GroupPostEdge', node })), pageInfo: { __typename: 'PageInfo', hasNextPage, endCursor: hasNextPage ? 'c1' : null } } } })
   await mockApi(p, {

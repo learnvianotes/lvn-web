@@ -378,16 +378,28 @@ function Members({ group }: { group: GroupDetailFragment }) {
               </Link>
               {group.viewerCan.manage && below ? (
                 <>
-                  <label>
-                    <span className="sr-only">{t('roleFor', { name: m.user.displayName })}</span>
-                    <select value={m.role} onChange={(e) => void act(() => setRole({ variables: { groupId: group.id, userId: m.user.id, role: e.target.value as (typeof ROLES)[number] } }))} className="h-9 rounded-lg border border-border bg-bg px-2 text-xs">
-                      {ROLES.filter((r) => rank[r] < mine || r === m.role).map((r) => (
-                        <option key={r} value={r}>
-                          {t(`role.${r}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {/* A mentor stays a mentor (ADR-0048): no role to change, nothing to hand over. */}
+                  {m.role !== 'MENTOR' ? (
+                    <label>
+                      <span className="sr-only">{t('roleFor', { name: m.user.displayName })}</span>
+                      <select
+                        value={m.role}
+                        onChange={(e) => {
+                          const role = e.target.value as (typeof ROLES)[number] | 'OWNER'
+                          if (role === 'OWNER' && !window.confirm(t('handOverConfirm', { name: m.user.displayName }))) return
+                          void act(() => setRole({ variables: { groupId: group.id, userId: m.user.id, role } }))
+                        }}
+                        className="h-9 rounded-lg border border-border bg-bg px-2 text-xs"
+                      >
+                        {ROLES.filter((r) => rank[r] < mine || r === m.role).map((r) => (
+                          <option key={r} value={r}>
+                            {t(`role.${r}`)}
+                          </option>
+                        ))}
+                        {group.viewerRole === 'OWNER' ? <option value="OWNER">{t('handOver', { name: m.user.displayName })}</option> : null}
+                      </select>
+                    </label>
+                  ) : null}
                   <Button variant="secondary" size="sm" onClick={() => void act(() => remove({ variables: { groupId: group.id, userId: m.user.id } }))}>
                     {t('remove')}
                   </Button>
