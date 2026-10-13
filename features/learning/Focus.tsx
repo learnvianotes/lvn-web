@@ -272,13 +272,28 @@ export function Buddies() {
   )
 }
 
-/** Whether the person's name and counted days show on their classes' Rhythm ring; off until they say so. */
+/**
+ * Whether the person's name and counted days show on their classes' Rhythm ring; off until they say so. The box moves
+ * at once; a refusal puts it back. Keyed by the saved value, so a new value from the API starts it again.
+ */
 export function ShareRhythm({ shared }: { shared: boolean }) {
   const t = useTranslations('buddies')
+  const [on, setOn] = useState(shared)
   const [set, setting] = useMutation(SetRhythmSharingDocument, { refetchQueries: [RhythmDocument] })
   return (
     <label className="flex items-start gap-3 text-sm">
-      <input type="checkbox" className="mt-1 size-4" checked={shared} disabled={setting.loading} onChange={(e) => void set({ variables: { input: { share: e.target.checked } } })} />
+      <input
+        type="checkbox"
+        className="mt-1 size-4"
+        checked={on}
+        disabled={setting.loading}
+        onChange={async (e) => {
+          const next = e.target.checked
+          setOn(next)
+          const res = await set({ variables: { input: { share: next } } }).catch(() => null)
+          if (!res?.data?.setRhythmSharing.ok) setOn(!next)
+        }}
+      />
       <span className="flex flex-col">
         <span className="font-medium">{t('share')}</span>
         <span className="text-muted">{t('shareHelp')}</span>

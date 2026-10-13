@@ -55,7 +55,7 @@ export function Rhythm() {
           <Buddies />
           <Plan r={r} />
           <Pauses r={r} />
-          <ShareRhythm shared={r.shareRhythm} />
+          <ShareRhythm key={String(r.shareRhythm)} shared={r.shareRhythm} />
           <p className="text-xs text-muted">{t('zone', { zone: r.timeZone })}</p>
         </>
       ) : null}

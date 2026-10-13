@@ -89,16 +89,23 @@ test('asks a buddy, answers an invite, and sees a buddy studying now with their 
 })
 
 test('turns on sharing Rhythm with classes', async ({ page }) => {
+  let shared = false
   const calls = await mockApi(page, {
-    Rhythm: () => ({ rhythm: rhythm() }),
+    Rhythm: () => ({ rhythm: rhythm(shared) }),
     RhythmBuddies: () => ({ rhythmBuddies: noBuddies }),
     Recommendations: () => ({ recommendations: [] }),
     FocusSession: () => ({ focusSession: null }),
-    SetRhythmSharing: () => ok('setRhythmSharing'),
+    SetRhythmSharing: (v) => {
+      shared = (v as { input: { share: boolean } }).input.share
+      return ok('setRhythmSharing')
+    },
   }, viewerExtras)
   await page.goto('/rhythm')
-  await page.getByLabel(/Show my name and days on my classes/).check()
+  const box = page.getByLabel(/Show my name and days on my classes/)
+  await expect(box).not.toBeChecked()
+  await box.check()
   await expect.poll(() => calls.find((c) => c.op === 'SetRhythmSharing')?.variables).toEqual({ input: { share: true } })
+  await expect(box).toBeChecked()
 })
 
 test('a class shows its Rhythm this week, and staff see performance and hard topics', async ({ page }) => {
@@ -132,5 +139,5 @@ test('a class shows its Rhythm this week, and staff see performance and hard top
   await expect(perf.getByRole('cell', { name: 'Kiran Das' })).toBeVisible()
   await expect(perf.getByRole('cell', { name: '75%' })).toBeVisible()
   await expect(perf.getByText('25% right of 8 answers')).toBeVisible()
-  await expect(perf.getByText('Hard')).toBeVisible()
+  await expect(perf.getByText('Hard', { exact: true })).toBeVisible()
 })
