@@ -703,3 +703,38 @@ test('a learner asks the real model about their note and gets an answer citing i
   await expect(card.getByText(/red/i).first()).toBeVisible()
   await expect(card.getByRole('region', { name: 'Sources' }).getByRole('link', { name: /Photosynthesis/ })).toBeVisible()
 })
+
+test('a public note gets its study aids from the real model, on its public page too (lvn-backend ADR-0061)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify the author')
+  const status = (await api<{ aiStatus: { available: boolean } }>('{ aiStatus { available } }')).aiStatus
+  test.skip(!status.available, 'AI is off in this environment')
+  // Five model calls, one at a time on the GPU, for each browser's note.
+  test.setTimeout(420_000)
+  const stamp = `${Date.now()}${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } | null; userErrors: { message: string }[] } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } userErrors { message } } }', {
+    input: { email: `live-aids-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Aids', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+  })
+  if (!up.signUp.session) throw new Error(`sign-up refused: ${up.signUp.userErrors[0]?.message}`)
+  const author = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${author.user.id}'`)
+  const card = { id: crypto.randomUUID(), type: 'text', position: 'a0', content: { doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Photosynthesis turns light into chemical energy in the chloroplast. Chlorophyll absorbs red and blue light; the light reactions split water and release oxygen; the Calvin cycle fixes carbon dioxide into sugar.' }] }] } } }
+  const created = await api<{ createNote: { note: { id: string; slug: string } } }>('mutation ($input: CreateNoteInput!) { createNote(input: $input) { note { id slug } } }', { input: { title: 'Photosynthesis', cards: [card] } }, author.accessToken)
+  const id = created.createNote.note.id
+  await api('mutation ($input: NoteIdInput!) { publishNote(input: $input) { note { id } } }', { input: { noteId: id } }, author.accessToken)
+  const made = await api<{ changeNoteVisibility: { note: { slug: string } } }>('mutation ($input: ChangeNoteVisibilityInput!) { changeNoteVisibility(input: $input) { note { slug } } }', { input: { noteId: id, visibility: 'PUBLIC' } }, author.accessToken)
+  // The owner follows the worker's progress.
+  await expect
+    .poll(async () => (await api<{ note: { noteProcessingStatus: { done: boolean } | null } }>('query ($id: UUID!) { note(id: $id) { noteProcessingStatus { done } } }', { id }, author.accessToken)).note.noteProcessingStatus?.done ?? false, { timeout: 400_000, intervals: [5_000] })
+    .toBe(true)
+  const aids = (await api<{ note: { aiInsights: { task: string; status: string }[] } }>('query ($id: UUID!) { note(id: $id) { aiInsights { task status } } }', { id })).note.aiInsights
+  expect(aids.filter((a) => a.status === 'READY').map((a) => a.task)).toEqual(expect.arrayContaining(['SUMMARIZE', 'QUIZ']))
+
+  // A visitor who is not signed in reads them on the public page, regenerated as each was made.
+  await page.goto(`/n/${made.changeNoteVisibility.note.slug}-${id}`)
+  const region = page.getByRole('region', { name: 'Study aids' })
+  await expect(region.getByRole('tab', { name: 'Summarise' })).toBeVisible({ timeout: 20_000 })
+  await expect(region.getByText(/chlorophyll|light/i).first()).toBeVisible()
+  await region.getByRole('tab', { name: 'Quiz' }).click()
+  await expect(region.getByRole('link', { name: 'Save these cards in your notes' })).toBeVisible()
+})

@@ -12,6 +12,7 @@ import { PublicMedia } from './PublicMedia'
 import { PublicReadAloud } from './PublicReadAloud'
 import { PublicDiscussion } from '@/features/discussion/PublicDiscussion'
 import { CreditsLine } from '@/features/workspaces/Credits'
+import { StudyAidsView } from '@/features/ai/StudyAids'
 
 /** A public note as anyone sees it (P2d): rendered on the server, cached, readable without an account. */
 export async function PublicNoteView({ note }: { note: PublicNote }) {
@@ -82,6 +83,8 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
           {!note.cards.length ? <p className="text-muted">{t('empty')}</p> : null}
         </article>
       </PublicMedia>
+      {/* Study aids made when it was published (lvn-backend ADR-0061); saving their cards happens in the app. */}
+      <StudyAidsView aids={note.aiInsights ?? []} keepHref={`/notes/${note.id}`} />
       <PublicDiscussion noteId={note.id} />
 
       <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">

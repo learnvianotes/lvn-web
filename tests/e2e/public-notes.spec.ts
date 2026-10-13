@@ -72,3 +72,15 @@ test('refreshes need the shared secret and known tags', async ({ request }) => {
   expect(ok.status()).toBe(200)
   expect(await ok.json()).toEqual({ revalidated: [`note:${note.id}`, 'public-notes'] })
 })
+
+test('a public note shows its study aids, rendered by the server; saving their cards leads into the app (lvn-backend ADR-0061)', async ({ page }) => {
+  await page.goto(path)
+  const aids = page.getByRole('region', { name: 'Study aids' })
+  await expect(aids.getByRole('tab', { name: 'Summarise' })).toHaveAttribute('aria-selected', 'true')
+  await expect(aids.locator('strong')).toHaveText('shortest paths')
+  await aids.getByRole('tab', { name: 'Flashcards' }).click()
+  await expect(aids.getByText('What must edge weights be?')).toBeVisible()
+  await expect(aids.getByRole('link', { name: 'Save these cards in your notes' })).toHaveAttribute('href', `/notes/${note.id}`)
+  // Server-rendered: the summary is in the page's HTML for readers and search engines.
+  expect(await (await page.request.get(path)).text()).toContain('shortest paths')
+})

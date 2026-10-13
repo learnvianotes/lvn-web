@@ -180,6 +180,26 @@ type AiCard {
   type: String!
 }
 
+"""
+A study aid made from a public note's published version: a summary, key concepts, practice questions, a quiz or flashcards
+"""
+type AiInsight {
+  cards: [AiCard!]
+
+  """Hidden by the owner: only they see it"""
+  hidden: Boolean!
+  id: UUID!
+
+  """Text aids, once READY"""
+  markdown: String
+  status: AiArtifactStatus!
+  task: AiTask!
+
+  """Card aids (quiz, flashcards), once READY: the title a kept note takes"""
+  title: String
+  versionId: UUID!
+}
+
 enum AiLanguage {
   ENGLISH
   HINDI
@@ -1741,6 +1761,9 @@ type Mutation {
   Queues a task; poll aiArtifact until it is READY or FAILED. RATE_LIMITED past the day's allowance, UNAVAILABLE when AI is off
   """
   runAiTask(input: RunAiTaskInput!): AiArtifactPayload!
+
+  """The note's owner only"""
+  setAiInsightHidden(hidden: Boolean!, id: UUID!): OkPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
 
   """
@@ -1843,6 +1866,11 @@ type Note {
   Signed-in: the viewer's own AI results for this note, newest first; empty signed out
   """
   aiArtifacts: [AiArtifact!]!
+
+  """
+  Readers (signed in or not, while they may read the note): the READY aids the owner has not hidden. The owner: every step
+  """
+  aiInsights: [AiInsight!]!
   cardCount: Int!
 
   """In order; at most 100 per page"""
@@ -1895,6 +1923,11 @@ type Note {
 
   """Owner only; null for everyone else"""
   moderation: NoteModeration
+
+  """
+  The owner's: the aids' progress; null for anyone else, or before any. Live NOTE_PROCESSING events say when a step ends
+  """
+  noteProcessingStatus: NoteProcessing
 
   """The headings, for navigation"""
   outline: [OutlineItem!]!
@@ -2062,6 +2095,19 @@ type NotePermissions {
   fork: Boolean!
   publish: Boolean!
   share: Boolean!
+}
+
+"""The study aids' progress for the note's current published version"""
+type NoteProcessing {
+  """Every step READY or FAILED"""
+  done: Boolean!
+  steps: [NoteProcessingStep!]!
+  versionId: UUID!
+}
+
+type NoteProcessingStep {
+  status: AiArtifactStatus!
+  task: AiTask!
 }
 
 type NoteSearchHit {
