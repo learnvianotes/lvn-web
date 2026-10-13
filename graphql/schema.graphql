@@ -197,6 +197,72 @@ type AiChange {
   cardId: UUID!
 }
 
+type AiConnection {
+  """null: the kind's own address"""
+  baseUrl: String
+  chatModel: String
+  embedMicroUsdPerMTok: Int!
+  embedModel: String
+  enabled: Boolean!
+
+  """A key is saved; it is never shown again"""
+  hasKey: Boolean!
+  id: UUID!
+
+  """
+  Prices of its default models in millionths of a dollar per million tokens; the monthly budget counts them
+  """
+  inputMicroUsdPerMTok: Int!
+
+  """The key's last four characters"""
+  keyHint: String
+  kind: AiProviderKind!
+  label: String!
+
+  """
+  §10.1's data-processing flag: notes that are not public may go to it (self-hosted, or a zero-retention agreement)
+  """
+  mayReceivePrivate: Boolean!
+  outputMicroUsdPerMTok: Int!
+  updatedAt: DateTime!
+}
+
+input AiConnectionIdInput {
+  id: UUID!
+}
+
+type AiConnectionPayload {
+  connection: AiConnection
+  userErrors: [UserError!]!
+}
+
+type AiConnectionTest {
+  latencyMs: Int!
+
+  """What happened; the provider's own words when it failed"""
+  message: String!
+
+  """Models the account lists; empty when the provider does not list them"""
+  models: [String!]!
+  ok: Boolean!
+}
+
+type AiConnectionTestPayload {
+  test: AiConnectionTest
+  userErrors: [UserError!]!
+}
+
+"""
+The environment's own provider (AI_PROVIDER), which answers when no connection is chosen
+"""
+type AiEnvironmentProvider {
+  chatModel: String
+  embedModel: String
+
+  """null: AI_PROVIDER is none"""
+  kind: AiProviderKind
+}
+
 """
 A study aid made from a public note's published version: a summary, key concepts, practice questions, a quiz or flashcards
 """
@@ -221,6 +287,71 @@ enum AiLanguage {
   ENGLISH
   HINDI
   TELUGU
+}
+
+"""Who answers AI calls"""
+enum AiProviderKind {
+  ANTHROPIC
+  GEMINI
+  OLLAMA
+  OPENAI
+
+  """
+  Any server that speaks OpenAI's API: a LiteLLM proxy, OpenRouter, vLLM…
+  """
+  OPENAI_COMPATIBLE
+}
+
+"""What a kind of provider is and can do"""
+type AiProviderPreset {
+  canEmbed: Boolean!
+
+  """Takes recordings (transcription)"""
+  canHear: Boolean!
+
+  """Hints; a connection test lists what the account has"""
+  chatModels: [String!]!
+
+  """null: the connection must give an address"""
+  defaultBaseUrl: String
+  embedModels: [String!]!
+  kind: AiProviderKind!
+  name: String!
+  needsKey: Boolean!
+
+  """
+  Private notes may go to it unless an admin says otherwise (a model on our own machine)
+  """
+  privateByDefault: Boolean!
+}
+
+type AiSettings {
+  """Answers chats; null: the environment's provider"""
+  chatConnectionId: UUID
+  connections: [AiConnection!]!
+
+  """
+  Makes embeddings (Ask AI, meaning search); null: the environment's provider
+  """
+  embedConnectionId: UUID
+  environment: AiEnvironmentProvider!
+
+  """AI_KEYS_SECRET is set, so keys can be saved"""
+  keysCanBeSaved: Boolean!
+
+  """null: no monthly cap"""
+  monthlyBudgetMicroUsd: Int
+  presets: [AiProviderPreset!]!
+  routes: [AiTaskRoute!]!
+  spentThisMonthMicroUsd: Int!
+
+  """Tasks a route can be set for"""
+  tasks: [String!]!
+}
+
+type AiSettingsPayload {
+  settings: AiSettings
+  userErrors: [UserError!]!
 }
 
 """A passage an answer cites, by its number in the answer ([1], [2] …)"""
@@ -273,6 +404,20 @@ enum AiTask {
   """One audio or video card (cardIds), as a text card to keep (ADR-0062)"""
   TRANSCRIBE
   TRANSLATE
+}
+
+"""A task sent to a connection and model instead of the default"""
+type AiTaskRoute {
+  """null: the default connection"""
+  connectionId: UUID
+  inputMicroUsdPerMTok: Int!
+  model: String!
+  outputMicroUsdPerMTok: Int!
+  task: String!
+}
+
+input AiTaskRouteInput {
+  task: String!
 }
 
 """Why AI is not answering"""
@@ -1780,6 +1925,10 @@ type Mutation {
   deleteAiAnswer(id: UUID!): OkPayload!
   deleteAiArtifact(id: UUID!): OkPayload!
 
+  """Routes through it then use the default connection"""
+  deleteAiConnection(input: AiConnectionIdInput!): AiSettingsPayload!
+  deleteAiTaskRoute(input: AiTaskRouteInput!): AiSettingsPayload!
+
   """Staff: moves the quiz to the trash; its attempts stay"""
   deleteClassQuiz(input: ClassQuizIdInput!): OkPayload!
   deleteClassroom(input: ClassroomIdInput!): OkPayload!
@@ -1933,6 +2082,11 @@ type Mutation {
   """
   runAiTask(input: RunAiTaskInput!): AiArtifactPayload!
 
+  """Platform admins only, as every mutation below"""
+  saveAiConnection(input: SaveAiConnectionInput!): AiConnectionPayload!
+  saveAiTaskRoute(input: SaveAiTaskRouteInput!): AiSettingsPayload!
+  setAiDefaults(input: SetAiDefaultsInput!): AiSettingsPayload!
+
   """The note's owner only"""
   setAiInsightHidden(hidden: Boolean!, id: UUID!): OkPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
@@ -1994,6 +2148,7 @@ type Mutation {
 
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
+  testAiConnection(input: AiConnectionIdInput!): AiConnectionTestPayload!
 
   """
   Signed in only. Clients send every 10 s or 20 events, and keep what they could not send
@@ -2665,6 +2820,9 @@ type Query {
   """
   aiArtifact(id: UUID!): AiArtifact
 
+  """Platform admins only"""
+  aiSettings: AiSettings!
+
   """Whether AI answers now; works signed out"""
   aiStatus: AiStatus!
 
@@ -3082,6 +3240,34 @@ input RunAiTaskInput {
   task: AiTask!
 }
 
+input SaveAiConnectionInput {
+  """Empty or absent: keep the saved key"""
+  apiKey: String
+  baseUrl: String
+  chatModel: String
+  clearApiKey: Boolean
+  embedMicroUsdPerMTok: Int
+  embedModel: String
+  enabled: Boolean!
+
+  """Absent: a new connection"""
+  id: UUID
+  inputMicroUsdPerMTok: Int
+  kind: AiProviderKind!
+  label: String!
+  mayReceivePrivate: Boolean!
+  outputMicroUsdPerMTok: Int
+}
+
+input SaveAiTaskRouteInput {
+  """Absent: the default connection"""
+  connectionId: UUID
+  inputMicroUsdPerMTok: Int
+  model: String!
+  outputMicroUsdPerMTok: Int
+  task: String!
+}
+
 """
 Narrows the notes found (and topics, by subject); never widens what the viewer may read
 """
@@ -3148,6 +3334,11 @@ type Session {
   """
   refreshToken: String
   user: User!
+}
+
+input SetAiDefaultsInput {
+  chatConnectionId: UUID
+  embedConnectionId: UUID
 }
 
 input SetClassroomRoleInput {
