@@ -1001,7 +1001,7 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await expect(week.getByRole('listitem', { name: /: today/ })).toHaveCount(1)
   await expect(page.getByRole('region', { name: 'Today' }).getByText(/more learning minutes, or 10 more reviews, and today counts\./)).toBeVisible()
 
-  // Six planned days: the week aims for six.
+  // Six planned days, from today on in a first week.
   const plan = page.getByRole('region', { name: 'Your planned days' })
   await plan.getByRole('button', { name: 'Wednesday' }).click()
   await plan.getByRole('button', { name: 'Friday' }).click()
