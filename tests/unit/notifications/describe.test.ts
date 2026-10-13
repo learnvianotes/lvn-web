@@ -30,6 +30,17 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'COMMENT', path: '/resources/r1', data: { kind: 'COMMENT' }, actor: meera })).toBe('Meera Iyer commented on your resource')
   })
 
+  it('says who asked to be Rhythm buddies, and who agreed (lvn-backend ADR-0072)', () => {
+    expect(say({ category: 'RHYTHM_BUDDY', path: '/rhythm', data: { kind: 'REQUESTED' }, actor: meera })).toBe('Meera Iyer asked you to be Rhythm buddies')
+    expect(say({ category: 'RHYTHM_BUDDY', path: '/rhythm', data: { kind: 'ACCEPTED' }, actor: meera })).toBe('Meera Iyer is now your Rhythm buddy')
+  })
+
+  it('names in settings every category people can set (lvn-backend preferences.service SETTABLE)', () => {
+    const settable = ['SHARE', 'COMMENT', 'FOLLOW', 'CONNECTION', 'JOIN_REQUEST', 'JOIN_DECISION', 'CLASSROOM_INVITE', 'CLASSROOM_POST', 'QUIZ_PUBLISHED', 'MENTOR_INVITE', 'DOUBT', 'MENTION', 'VERIFICATION', 'DATA_EXPORT', 'NOTES_IMPORT', 'REVISION_REMINDER', 'RHYTHM_BUDDY', 'RESOURCE']
+    const labels = messages.settings.category as Record<string, string>
+    expect(settable.filter((c) => !labels[c])).toEqual([])
+  })
+
   it('counts an import in words, leaving out what is zero', () => {
     expect(say({ category: 'NOTES_IMPORT', data: { created: 1, skipped: 0, failed: 0 } })).toBe('Your import is done: 1 note added')
     expect(say({ category: 'NOTES_IMPORT', data: { created: 4, skipped: 2, failed: 1 } })).toBe('Your import is done: 4 notes added, 2 skipped, 1 could not be read')

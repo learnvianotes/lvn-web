@@ -810,6 +810,7 @@
     "label": "Search notes, people, groups and topics",
     "placeholder": "Search notes, people, groups and topics…",
     "results": "Results",
+    "askAi": "Ask AI: “{query}”",
     "hint": "Type to search your notes, notes shared with you and public notes.",
     "nothing": "Nothing found for “{query}”.",
     "all": "All results for “{query}”",
@@ -1048,6 +1049,8 @@
     "resourceApproved": "Your resource is in the catalogue",
     "resourceRejected": "Moderators did not approve your resource",
     "resourceRecommended": "{actor} recommended a resource to you",
+    "rhythmBuddyRequested": "{actor} asked you to be Rhythm buddies",
+    "rhythmBuddyAccepted": "{actor} is now your Rhythm buddy",
     "commentOnResource": "{actor} commented on your resource"
   },
   "people": {
@@ -1593,7 +1596,9 @@
       "DATA_EXPORT": "Data exports",
       "NOTES_IMPORT": "Imports",
       "MENTION": "Mentions of you",
-      "REVISION_REMINDER": "Revision reminders for your exams"
+      "REVISION_REMINDER": "Revision reminders for your exams",
+      "RHYTHM_BUDDY": "Rhythm buddies",
+      "RESOURCE": "Resources: recommendations and decisions"
     },
     "unsubscribeTitle": "Stop these emails",
     "unsubscribeLead": "Click below and we'll stop sending you this kind of email. Everything still shows in the app.",

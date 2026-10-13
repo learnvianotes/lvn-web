@@ -80,7 +80,7 @@ export function Terms() {
       <h2>8. Law and contact</h2>
       <p>
         These terms are governed by the laws of India; courts in [city] have jurisdiction. Questions:{' '}
-        <a href="mailto:[contact email]">[contact email]</a>.
+        [contact email].
       </p>
     </>
   )

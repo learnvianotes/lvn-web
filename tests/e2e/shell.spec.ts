@@ -113,6 +113,19 @@ test('the search field opens the palette, and the avatar opens the account', asy
   await expect(page).toHaveURL(/\/profile$/)
 })
 
+test('“or ask AI”: the search field takes the words to Ask AI as a question, ready to send', async ({ page }) => {
+  const aiState = { aiStatus: { __typename: 'AiStatus', available: true, reason: null }, myAiAllowance: { __typename: 'AiAllowance', usedToday: 0, limitToday: 200_000, resetsAt: new Date(Date.now() + 3_600_000).toISOString() } }
+  const calls = await mockApi(page, { AiState: () => aiState, MyAiAnswers: () => ({ myAiAnswers: [] }) })
+  await page.goto('/home')
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await page.getByRole('combobox').fill('why is a heap a tree')
+  await page.getByRole('button', { name: 'Ask AI: “why is a heap a tree”' }).click()
+  await expect(page).toHaveURL(/\/ask\?q=why%20is%20a%20heap%20a%20tree$/)
+  await expect(page.getByLabel('Your question', { exact: true })).toHaveValue('why is a heap a tree')
+  // Nothing is asked until the person sends it: AI has a daily allowance.
+  expect(calls.filter((c) => c.op === 'AskAi')).toHaveLength(0)
+})
+
 test('the landing’s links all lead to pages that exist, and its sections are there', async ({ page }, info) => {
   await page.goto('/')
   const main = page.getByRole('main')

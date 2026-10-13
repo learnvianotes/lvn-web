@@ -1031,7 +1031,7 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await expect(page).toHaveURL(/\/profile$/)
 
   // An exam ten days away on a curated topic.
-  await page.getByRole('link', { name: /^Exams/ }).click()
+  await page.getByRole('main').getByRole('link', { name: /^Exams/ }).click()
   await page.getByRole('button', { name: 'Add an exam' }).click()
   const form = page.getByRole('region', { name: 'Add an exam' })
   await form.getByLabel('Exam').fill('Live midterm')

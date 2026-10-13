@@ -6,6 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('ai.ask'))('title'), robots: { index: false } }
 }
 
-export default function Ask() {
-  return <AskPage />
+export default async function Ask({ searchParams }: { searchParams: Promise<{ q?: string | string[] }> }) {
+  const { q } = await searchParams
+  return <AskPage question={typeof q === 'string' ? q.slice(0, 500) : undefined} />
 }

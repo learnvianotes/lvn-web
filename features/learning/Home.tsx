@@ -166,7 +166,8 @@ export function Home() {
           <h2 id="rooms" className="text-lg font-bold">
             {t('rooms')}
           </h2>
-          <Link href="/groups" className="text-sm font-semibold text-accent hover:underline">
+          {/* Groups when the person has any; a person only in classes sees their classes. */}
+          <Link href={!groups?.length && classes?.length ? '/classes' : '/groups'} className="text-sm font-semibold text-accent hover:underline">
             {t('seeAll')}
           </Link>
         </div>
