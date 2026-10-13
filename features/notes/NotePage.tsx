@@ -24,6 +24,7 @@ import { useLoadedNote } from './useLoadedNote'
 import { Discussion } from '@/features/discussion/Discussion'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
 import { StudyAids } from '@/features/ai/StudyAids'
+import { useLearningTime } from '@/features/learning/useLearningTime'
 
 /** A note: the editor for its owner and editors, the reader for everyone else (loading: ./useLoadedNote). */
 export function NotePage({ id }: { id: string }) {
@@ -45,6 +46,8 @@ export function NotePage({ id }: { id: string }) {
   const [notice, setNotice] = useState<string | null>(null)
 
   const reload = useCallback(() => setGeneration((g) => g + 1), [])
+  // Learning history (lvn-backend ADR-0067): the note opened, and the time it is read.
+  useLearningTime(loaded.state === 'ready' ? { entityType: 'NOTE', entityId: id, topicKeys: loaded.meta.topics?.map((t) => `topic:${t.id}`) } : null, 'NOTE_OPENED')
 
   const onNote = useCallback((meta: NoteMeta) => setLoaded((l) => (l.state === 'ready' ? { ...l, meta } : l)), [setLoaded])
   const send = useMemo(() => sendSave(client, onNote), [client, onNote])

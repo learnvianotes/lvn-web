@@ -3,6 +3,7 @@
 import { useQuery } from '@apollo/client/react'
 import { useEffect, useState } from 'react'
 import { SearchDocument, type NoteKind, type NoteSource, type SearchQuery, type SearchScope } from '@/graphql/generated/graphql'
+import { track } from '@/lib/learning'
 
 /** What narrows the notes found (lvn-backend ADR-0056); a topic alone lists its notes. */
 export interface SearchFilters {
@@ -15,7 +16,8 @@ const filtered = (f: SearchFilters) => !!(f.kinds?.length || f.sources?.length |
 
 /**
  * Search as you type: asks the API 200 ms after the last keystroke, from two characters on, or at once with filters
- * alone. `more` brings the next notes of the same search.
+ * alone. `more` brings the next notes of the same search. Words left in place for two seconds are a search made
+ * (SEARCH_PERFORMED, lvn-backend ADR-0067); the words themselves are not sent.
  */
 export function useSearch(query: string, first: number, filters: SearchFilters = {}, scopes?: SearchScope[]) {
   const [settled, setSettled] = useState(query)
@@ -23,6 +25,12 @@ export function useSearch(query: string, first: number, filters: SearchFilters =
     const timer = setTimeout(() => setSettled(query.trim()), 200)
     return () => clearTimeout(timer)
   }, [query])
+  useEffect(() => {
+    if (settled.length < 2) return
+    const timer = setTimeout(() => track('SEARCH_PERFORMED', { metadata: { scopes: scopes?.join(',') ?? 'ALL', words: settled.split(/\s+/).length } }), 2_000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settled])
   const ready = settled.length >= 2 || filtered(filters)
   const variables = { query: settled, first, ...(scopes ? { scopes } : {}), ...(filtered(filters) ? { filters: { kinds: filters.kinds?.length ? filters.kinds : null, sources: filters.sources?.length ? filters.sources : null, topicId: filters.topicId ?? null } } : {}) }
   const result = useQuery(SearchDocument, { variables, skip: !ready, fetchPolicy: 'cache-first' })

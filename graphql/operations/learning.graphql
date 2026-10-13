@@ -1,0 +1,16 @@
+# Learning events (lvn-backend ADR-0067): sent in batches by lib/learning.
+
+mutation TrackEvents($input: TrackEventsInput!) {
+  trackEvents(input: $input) {
+    accepted
+    duplicates
+    rejected {
+      index
+      message
+    }
+    userErrors {
+      message
+      code
+    }
+  }
+}

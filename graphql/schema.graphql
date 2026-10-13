@@ -1423,6 +1423,59 @@ enum KeepCardsInto {
   NOTE
 }
 
+input LearningEventInput {
+  """When it happened on the device; believed back at most 30 days"""
+  clientTs: DateTime!
+
+  """At most 4 hours"""
+  durationMs: Int
+  entityId: String
+
+  """NOTE, CARD, CORE_TOPIC, QUIZ…"""
+  entityType: String
+
+  """The client's UUIDv7: an event sent twice counts once"""
+  id: UUID!
+
+  """
+  At most 2 KB; TIME_SPENT takes { activity: FOCUS | REVIEW | QUIZ | READING }, QUIZ_COMPLETED { answered }
+  """
+  metadata: JSON
+  platform: Platform!
+  sessionId: String
+
+  """topic:<id> or core:<subject>/<topic>; at most 10"""
+  topicKeys: [String!]
+  type: LearningEventType!
+}
+
+"""
+§14.1's event types. Some are recorded by the server only: notes created, published or forked; exams; AI requests
+"""
+enum LearningEventType {
+  AI_REQUESTED
+  CARD_VIEWED
+  EXAM_CREATED
+  FLASHCARD_REVIEWED
+  NOTE_CREATED
+  NOTE_FORKED
+  NOTE_OPENED
+  NOTE_PUBLISHED
+  NOTE_SAVED
+  PROBLEM_MARKED
+  QUIZ_COMPLETED
+  QUIZ_STARTED
+  RESOURCE_SAVED
+  RESOURCE_VIEWED
+  SEARCH_PERFORMED
+  TIME_SPENT
+  TOPIC_COMPLETED
+  TOPIC_REVISITED
+  TOPIC_VIEWED
+  VIDEO_COMPLETED
+  VIDEO_STARTED
+}
+
 type LegacyCounts {
   completedTopics: Int!
   markedProblems: Int!
@@ -1941,6 +1994,11 @@ type Mutation {
 
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
+
+  """
+  Signed in only. Clients send every 10 s or 20 events, and keep what they could not send
+  """
+  trackEvents(input: TrackEventsInput!): TrackEventsPayload!
   unblockUser(input: PersonInput!): PersonPayload!
   unfollowUser(input: PersonInput!): PersonPayload!
 
@@ -2560,6 +2618,12 @@ input PinGroupPostInput {
   postId: UUID!
 }
 
+enum Platform {
+  ANDROID
+  IOS
+  WEB
+}
+
 enum ProblemMark {
   REVISIT
   SOLVED
@@ -2857,6 +2921,12 @@ input RegisterDeviceInput {
 
   """The native FCM (or APNs) token"""
   token: String!
+}
+
+type RejectedLearningEvent {
+  """Its place in the batch"""
+  index: Int!
+  message: String!
 }
 
 """How the viewer stands with a person"""
@@ -3375,6 +3445,28 @@ enum TopicOrigin {
 
 type TopicPayload {
   topic: Topic
+  userErrors: [UserError!]!
+}
+
+input TrackEventsInput {
+  """At most 100"""
+  events: [LearningEventInput!]!
+
+  """
+  The device's IANA time zone (Asia/Kolkata): days are counted in it, rolling over at 04:00
+  """
+  timeZone: String
+}
+
+type TrackEventsPayload {
+  """New events stored"""
+  accepted: Int!
+
+  """Events already received (a batch sent again)"""
+  duplicates: Int!
+
+  """Events refused one by one; the rest of the batch is kept"""
+  rejected: [RejectedLearningEvent!]!
   userErrors: [UserError!]!
 }
 

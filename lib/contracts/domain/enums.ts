@@ -161,6 +161,8 @@ export const AiTaskType = {
   TRANSCRIBE: 'TRANSCRIBE',
   /** Rough text and photos of one's own note, as a structured note (ADR-0062) */
   QUICK_NOTE: 'QUICK_NOTE',
+  /** What conversion broke in a note's text, mended card by card for the person to apply (ADR-0063) */
+  CLEAN_UP: 'CLEAN_UP',
 } as const
 export type AiTaskType = (typeof AiTaskType)[keyof typeof AiTaskType]
 export const DERIVATIVE_AI_TASKS: ReadonlySet<AiTaskType> = new Set([AiTaskType.CREATE_NOTES, AiTaskType.OUTLINE_TO_NOTE])
@@ -198,6 +200,24 @@ export const LearningEventType = {
   TOPIC_COMPLETED: 'TOPIC_COMPLETED', PROBLEM_MARKED: 'PROBLEM_MARKED',
 } as const
 export type LearningEventType = (typeof LearningEventType)[keyof typeof LearningEventType]
+
+/**
+ * Events the server records itself, from what it already knows (ADR-0067); `trackEvents` refuses them from clients so
+ * nobody can claim a note they never wrote or an exam they never planned. Searches are the apps' to send: the API sees
+ * every keystroke of a search box, the apps know when a search was made.
+ */
+export const SERVER_LEARNING_EVENTS: ReadonlySet<LearningEventType> = new Set([
+  LearningEventType.NOTE_CREATED, LearningEventType.NOTE_PUBLISHED, LearningEventType.NOTE_FORKED, LearningEventType.EXAM_CREATED,
+  LearningEventType.AI_REQUESTED,
+])
+
+/**
+ * What a `TIME_SPENT` event's time was (`metadata.activity`, ADR-0067). Only learning actions fill Rhythm (ADR-0030):
+ * focus sessions, reviews and quizzes; reading is history only, as passive reading never counts.
+ */
+export const TimeSpentActivity = { FOCUS: 'FOCUS', REVIEW: 'REVIEW', QUIZ: 'QUIZ', READING: 'READING' } as const
+export type TimeSpentActivity = (typeof TimeSpentActivity)[keyof typeof TimeSpentActivity]
+export const LEARNING_ACTIVITIES: ReadonlySet<TimeSpentActivity> = new Set([TimeSpentActivity.FOCUS, TimeSpentActivity.REVIEW, TimeSpentActivity.QUIZ])
 
 export const Platform = { WEB: 'WEB', ANDROID: 'ANDROID', IOS: 'IOS' } as const
 export type Platform = (typeof Platform)[keyof typeof Platform]
