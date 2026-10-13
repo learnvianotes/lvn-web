@@ -466,6 +466,8 @@ function ApplyChanges({ artifact: a, onChanged }: { artifact: Artifact; onChange
     )
     const payload = result?.data?.applyAiChanges
     if (payload && !payload.userErrors.length) {
+      // What was sent is settled: applied, or refused for a card edited since (sending it again changes nothing).
+      setChosen((s) => new Set([...s].filter((id) => !cardIds.includes(id))))
       const refused = cardIds.length - payload.applied.length
       setOutcome({ applied: payload.applied.length, refused })
       if (payload.applied.length) onChanged?.(payload.applied.length, refused)
