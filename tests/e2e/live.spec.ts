@@ -911,3 +911,33 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
     sql(`DELETE FROM ai."AiConnection" WHERE label = '${name}'`)
   }
 })
+
+test('a learner’s reading reaches the learning events: the note opened and the time read (lvn-backend ADR-0067)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to read the events')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const email = `live-events-${stamp}@example.com`
+  await page.clock.install()
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Reader')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.getByRole('link', { name: 'My notes' }).click()
+  await page.getByRole('button', { name: 'New note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  const noteId = page.url().split('/').at(-1)!
+  // Half a minute with the note open, then the tab goes to the background: the events go out.
+  await page.clock.runFor(30_000)
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  const events = () =>
+    execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT e.type FROM learning.\\"LearningEvent\\" e JOIN users.\\"User\\" u ON u.id = e.\\"userId\\" WHERE u.email = '${email}' ORDER BY e.\\"clientTs\\", e.type"`]).toString().trim().split('\n').filter(Boolean)
+  await expect.poll(events, { timeout: 30_000 }).toEqual(expect.arrayContaining(['NOTE_CREATED', 'NOTE_OPENED', 'TIME_SPENT']))
+  const opened = execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT e.\\"entityId\\" FROM learning.\\"LearningEvent\\" e JOIN users.\\"User\\" u ON u.id = e.\\"userId\\" WHERE u.email = '${email}' AND e.type = 'NOTE_OPENED'"`]).toString().trim()
+  expect(opened).toBe(noteId)
+})
