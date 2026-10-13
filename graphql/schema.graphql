@@ -2029,7 +2029,7 @@ type ModeratedNote {
 }
 
 """
-APPROVE frees a held note, puts back hidden or removed content and removed groups, and lifts a suspension; HIDE and REMOVE take it off for everyone but its author; DISMISS closes reports; WARN tells the author; SUSPEND (accounts only, platform admins, ADR-0053) stops an account reaching others for suspendDays
+APPROVE frees a held note, puts back hidden or removed content and removed groups, lifts a suspension, and approves a resource; HIDE and REMOVE take it off for everyone but its author (REMOVE rejects a resource, ADR-0074); DISMISS closes reports; WARN tells the author; SUSPEND (accounts only, platform admins, ADR-0053) stops an account reaching others for suspendDays
 """
 enum ModerationActionType {
   APPROVE
@@ -2063,6 +2063,9 @@ type ModerationCase {
   """GROUP cases of a group platform moderators removed (ADR-0053)"""
   removedGroup: RemovedGroup
   reports: [ModerationReport!]!
+
+  """Set for RESOURCE cases"""
+  resource: Resource
   scope: ModerationScope!
 
   """The group or class, for those scopes"""
@@ -2238,6 +2241,7 @@ type Mutation {
 
   """Delete a note in the trash now, for good"""
   deleteNoteForever(input: NoteIdInput!): OkPayload!
+  deleteResource(input: ResourceIdInput!): OkPayload!
 
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
@@ -2470,6 +2474,11 @@ type Mutation {
   """
   submitQuizAttempt(input: SubmitQuizAttemptInput!): QuizAttemptPayload!
 
+  """
+  Sends a resource to moderators (verified adults; 10 a day, 20 waiting at most)
+  """
+  submitResource(input: SubmitResourceInput!): ResourcePayload!
+
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
   testAiConnection(input: AiConnectionIdInput!): AiConnectionTestPayload!
@@ -2502,6 +2511,7 @@ type Mutation {
   updateNotificationSettings(input: UpdateNotificationSettingsInput!): NotificationSettingsPayload!
   updatePdfHighlight(input: UpdatePdfHighlightInput!): PdfHighlightPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
+  updateResource(input: UpdateResourceInput!): ResourcePayload!
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
@@ -2902,6 +2912,11 @@ enum NotificationCategory {
   MODERATION
   NOTES_IMPORT
   QUIZ_PUBLISHED
+
+  """
+  Moderators approved or rejected a resource the person submitted (ADR-0074)
+  """
+  RESOURCE
   REVISION_REMINDER
 
   """Someone asked the viewer to be Rhythm buddies, or accepted (ADR-0072)"""
@@ -3266,6 +3281,9 @@ type Query {
 
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
+
+  """The viewer's resources, newest first, whatever their state"""
+  myResources: [Resource!]!
   myRestricted: [PersonEdge!]!
 
   """
@@ -3311,6 +3329,19 @@ type Query {
   Its owner only: a group platform moderators removed, with why; null for anything else
   """
   removedGroup(id: UUID!): RemovedGroup
+
+  """
+  An approved resource, or one's own, or any for moderators; null otherwise
+  """
+  resource(id: UUID!): Resource
+
+  """Reads a link's page or looks a book up by ISBN (30 an hour)"""
+  resourcePreview(input: ResourcePreviewInput!): ResourcePreview!
+
+  """
+  Curated topics with every word of the query in their title, at most 20: a resource's topics come from these
+  """
+  resourceTopicOptions(query: String!): [ExamTopicOption!]!
 
   """Signed in only"""
   reviewQueue: ReviewQueue!
@@ -3563,6 +3594,7 @@ enum ReportEntityType {
   GROUP
   GROUP_POST
   NOTE
+  RESOURCE
   USER
 }
 
@@ -3613,6 +3645,116 @@ input RequestToJoinGroupInput {
 input ResetPasswordInput {
   password: String!
   token: String!
+}
+
+"""
+A resource of the catalogue: approved ones are everyone's, guests included
+"""
+type Resource {
+  """By: the author or maker"""
+  author: String
+
+  """A read URL for its cover picture, valid for 15 minutes"""
+  coverUrl: String
+  createdAt: DateTime!
+  decidedAt: DateTime
+  description: String
+
+  """The link's site without www., e.g. nptel.ac.in"""
+  host: String!
+  id: UUID!
+
+  """ISBN-13, for books"""
+  isbn: String
+
+  """
+  Why moderators rejected or removed it: its submitter and moderators only
+  """
+  reason: String
+  status: ResourceStatus!
+  submittedBy: User!
+  title: String!
+
+  """Curated topics; null for one the viewer may no longer see"""
+  topics: [Topic]!
+  type: ResourceType!
+
+  """
+  The link without tracking or affiliate parameters; the apps show it with rel="ugc nofollow noopener"
+  """
+  url: String!
+  viewerCan: ResourceActions!
+}
+
+type ResourceActions {
+  delete: Boolean!
+
+  """
+  Its submitter, until it is approved; saving a rejected one sends it to moderators again
+  """
+  edit: Boolean!
+  report: Boolean!
+}
+
+input ResourceIdInput {
+  id: UUID!
+}
+
+type ResourcePayload {
+  resource: Resource
+  userErrors: [UserError!]!
+}
+
+"""
+What a link's page or an ISBN's book says, for the person to edit before sending; nothing is kept
+"""
+type ResourcePreview {
+  author: String
+  description: String
+
+  """An approved resource with this link or ISBN already"""
+  existing: Resource
+
+  """The page or the book was read; false: fill in the details by hand"""
+  found: Boolean!
+
+  """
+  The page's picture on its own site: sent back with the resource, the server copies it into storage
+  """
+  imageUrl: String
+  isbn: String
+  siteName: String
+  title: String
+
+  """A guess from the page or the site; the person chooses"""
+  type: ResourceType
+
+  """The link as it would be kept, or the book's Open Library page"""
+  url: String
+}
+
+input ResourcePreviewInput {
+  """Looked up on Open Library instead of the link"""
+  isbn: String
+  url: String
+}
+
+"""
+PENDING: waiting for moderators (its submitter and moderators see it); APPROVED: public; REJECTED: rejected or removed, with a reason
+"""
+enum ResourceStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
+enum ResourceType {
+  BOOK
+  COURSE
+  HARDWARE
+  OTHER
+  SOFTWARE
+  TOOL
 }
 
 input RespondToConnectionRequestInput {
@@ -4153,6 +4295,26 @@ input SubmitQuizAttemptInput {
   quizId: UUID!
 }
 
+input SubmitResourceInput {
+  author: String
+
+  """An uploaded picture (purpose COVER)"""
+  coverFileId: UUID
+  description: String
+
+  """Else the preview's imageUrl, copied into storage"""
+  imageUrl: String
+
+  """Books only"""
+  isbn: String
+  title: String!
+
+  """1 to 5 curated topics"""
+  topicIds: [UUID!]!
+  type: ResourceType!
+  url: String!
+}
+
 input SyncOpInput {
   """CREATE_NOTE: the note's first cards"""
   cards: [CardInput!]
@@ -4449,6 +4611,22 @@ input UpdateProfileInput {
   interestTopicIds: [UUID!]
   showOnProfile: Boolean
   yearOfStudy: YearOfStudy
+}
+
+input UpdateResourceInput {
+  author: String
+  coverFileId: UUID
+  description: String
+  id: UUID!
+  imageUrl: String
+  isbn: String
+
+  """Take the cover away"""
+  removeCover: Boolean
+  title: String!
+  topicIds: [UUID!]!
+  type: ResourceType!
+  url: String!
 }
 
 """

@@ -1,0 +1,104 @@
+# Resources (lvn-backend ADR-0074): submitting with a preview, one's own, and a resource's page.
+
+fragment ResourceFields on Resource {
+  id
+  type
+  title
+  description
+  url
+  host
+  isbn
+  author
+  coverUrl
+  topics {
+    id
+    title
+  }
+  submittedBy {
+    id
+    displayName
+    handle
+  }
+  status
+  reason
+  decidedAt
+  createdAt
+  viewerCan {
+    edit
+    delete
+    report
+  }
+}
+
+query Resource($id: UUID!) {
+  resource(id: $id) {
+    ...ResourceFields
+  }
+}
+
+query MyResources {
+  myResources {
+    ...ResourceFields
+  }
+}
+
+query ResourceTopicOptions($query: String!) {
+  resourceTopicOptions(query: $query) {
+    id
+    title
+    subjectTitle
+  }
+}
+
+query ResourcePreview($input: ResourcePreviewInput!) {
+  resourcePreview(input: $input) {
+    url
+    title
+    description
+    author
+    isbn
+    type
+    siteName
+    imageUrl
+    found
+    existing {
+      id
+      title
+    }
+  }
+}
+
+mutation SubmitResource($input: SubmitResourceInput!) {
+  submitResource(input: $input) {
+    resource {
+      ...ResourceFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation UpdateResource($input: UpdateResourceInput!) {
+  updateResource(input: $input) {
+    resource {
+      ...ResourceFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation DeleteResource($input: ResourceIdInput!) {
+  deleteResource(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}

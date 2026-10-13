@@ -70,6 +70,9 @@ export function describeNotification(
     case 'REVISION_REMINDER':
       // An exam's revision task left today (lvn-backend ADR-0070): the exam is the viewer's own.
       return typeof data.examName === 'string' && data.examName ? t('revisionReminder', { exam: data.examName }) : t('revisionReminderAny')
+    case 'RESOURCE':
+      // Moderators decided on a resource the viewer sent (lvn-backend ADR-0074); the notification opens it.
+      return t(data.decision === 'APPROVED' ? 'resourceApproved' : 'resourceRejected')
     case 'DATA_EXPORT':
       return t('dataExport')
     case 'NOTES_IMPORT': {

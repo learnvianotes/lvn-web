@@ -23,6 +23,11 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'VERIFICATION', data: { kind: 'DECIDED', decision: 'REJECTED' } })).toMatch(/^Your verification was not accepted/)
   })
 
+  it('tells a submitter what moderators decided about their resource (lvn-backend ADR-0074)', () => {
+    expect(say({ category: 'RESOURCE', path: '/resources/r1', data: { decision: 'APPROVED' } })).toBe('Your resource is in the catalogue')
+    expect(say({ category: 'RESOURCE', path: '/resources/r1', data: { decision: 'REJECTED' } })).toBe('Moderators did not approve your resource')
+  })
+
   it('counts an import in words, leaving out what is zero', () => {
     expect(say({ category: 'NOTES_IMPORT', data: { created: 1, skipped: 0, failed: 0 } })).toBe('Your import is done: 1 note added')
     expect(say({ category: 'NOTES_IMPORT', data: { created: 4, skipped: 2, failed: 1 } })).toBe('Your import is done: 4 notes added, 2 skipped, 1 could not be read')

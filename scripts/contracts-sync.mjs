@@ -10,7 +10,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-const FILES = ['domain/enums.ts', 'validation/index.ts', 'validation/cards.ts', 'validation/rich-text.ts', 'validation/positions.ts', 'validation/notes.ts', 'validation/learning.ts', 'notifications/index.ts']
+const FILES = ['domain/enums.ts', 'validation/index.ts', 'validation/cards.ts', 'validation/rich-text.ts', 'validation/positions.ts', 'validation/notes.ts', 'validation/learning.ts', 'validation/resources.ts', 'notifications/index.ts']
 const root = path.resolve(import.meta.dirname, '..')
 const source = path.join(process.env.LVN_CONTRACTS ?? path.resolve(root, '../lvn-backend/contracts'), 'src')
 const target = path.join(root, 'lib/contracts')

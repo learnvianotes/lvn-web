@@ -234,7 +234,7 @@ export const ReportReason = {
 export type ReportReason = (typeof ReportReason)[keyof typeof ReportReason]
 
 /** What can be reported (ADR-0037, ADR-0051); each has a scope that decides whose queue it goes to. */
-export const ReportEntityType = { NOTE: 'NOTE', USER: 'USER', COMMENT: 'COMMENT', GROUP_POST: 'GROUP_POST', CLASSROOM_POST: 'CLASSROOM_POST', DOUBT: 'DOUBT', GROUP: 'GROUP' } as const
+export const ReportEntityType = { NOTE: 'NOTE', USER: 'USER', COMMENT: 'COMMENT', GROUP_POST: 'GROUP_POST', CLASSROOM_POST: 'CLASSROOM_POST', DOUBT: 'DOUBT', GROUP: 'GROUP', RESOURCE: 'RESOURCE' } as const
 export type ReportEntityType = (typeof ReportEntityType)[keyof typeof ReportEntityType]
 
 /** §15.1 actions, plus APPROVE: a held note goes (back) to the public (ADR-0037). */

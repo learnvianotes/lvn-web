@@ -1107,3 +1107,55 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   await page.goto('/teach')
   await expect(page.getByRole('heading', { name: 'You’re a verified teacher' })).toBeVisible()
 })
+
+test('a learner adds a book found on Open Library; it waits for moderators, and a guest reads it once approved (lvn-backend ADR-0074)', async ({ page, browser }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a platform admin')
+  test.setTimeout(120_000)
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-res-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const admin = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
+
+  const email = `live-res-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Reader')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+
+  await page.goto('/resources/new')
+  const form = page.getByRole('form', { name: 'Add a resource' })
+  // Each run's own book: one ISBN is one resource, and earlier runs' books may still be in the catalogue.
+  const books = ['9780132350884', '9780262033848', '9780201633610', '9780596007126', '9781491950357', '9780134685991']
+  const isbn = books[Math.floor(Date.now() / 1000) % books.length]!
+  await form.getByLabel('ISBN').fill(isbn)
+  await form.getByRole('button', { name: 'Look up the book' }).click()
+  await expect(form.getByLabel('Title', { exact: true })).not.toHaveValue('', { timeout: 30_000 })
+  await expect(form.getByRole('radio', { name: 'Book' })).toBeChecked()
+  const exists = await form.getByText('This is already in the catalogue:').isVisible()
+  test.skip(exists, 'this book is already in the catalogue from an earlier run')
+  await form.getByPlaceholder('Find a topic, e.g. arrays').fill('array')
+  await form.getByRole('button', { name: /^Add / }).first().click()
+  await form.getByRole('button', { name: 'Send to moderators' }).click()
+  await expect(page).toHaveURL(/\/resources\/[0-9a-f-]+$/, { timeout: 30_000 })
+  await expect(page.getByRole('note')).toContainText('Waiting for moderators')
+  const id = page.url().split('/').pop()!
+
+  const guest = await (await browser.newContext()).newPage()
+  await guest.goto(`/resources/${id}`)
+  await expect(guest.getByRole('heading', { name: 'This resource is not here.' })).toBeVisible()
+  const decided = await api<{ moderateContent: { ok: boolean } }>('mutation ($input: ModerateContentInput!) { moderateContent(input: $input) { ok } }', { input: { entityType: 'RESOURCE', entityId: id, action: 'APPROVE' } }, admin.accessToken)
+  expect(decided.moderateContent.ok).toBe(true)
+  await guest.reload()
+  await expect(guest.locator('#resource-title')).toBeVisible()
+  await expect(guest.getByRole('link', { name: /^Open / })).toHaveAttribute('rel', 'ugc nofollow noopener')
+  // Clean up, so the book can be added again by a later run.
+  await api('mutation ($input: ResourceIdInput!) { deleteResource(input: $input) { ok } }', { input: { id } }, admin.accessToken)
+})

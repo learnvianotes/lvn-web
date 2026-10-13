@@ -211,7 +211,7 @@ test('a member reports someone else’s post, and sees why their own was hidden,
 test('group moderators work through the group’s reports: open it, mute the author, hide with a reason (ADR-0051)', async ({ page: p }) => {
   let open = true
   const item = {
-    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: new Date(Date.now() - 3_600_000).toISOString(), note: null, user: null, group: null, appeal: null,
+    __typename: 'ModerationCase', resource: null, suspendedUntil: null, removedGroup: null, entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: new Date(Date.now() - 3_600_000).toISOString(), note: null, user: null, group: null, appeal: null,
     content: { __typename: 'ModeratedContent', entityType: 'GROUP_POST', id: 'p2', excerpt: 'You are all hopeless at heaps.', moderation: 'OK', moderationReason: null, deleted: false, path: `/groups/${GROUP}`, author: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer', handle: 'meera' } },
     reports: [{ __typename: 'ModerationReport', reason: 'HARASSMENT', details: 'Rude to everyone', createdAt: new Date().toISOString(), reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
   }
