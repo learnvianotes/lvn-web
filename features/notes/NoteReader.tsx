@@ -16,6 +16,7 @@ import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
 import { Discussion } from '@/features/discussion/Discussion'
 import { NoteCredits } from '@/features/workspaces/Credits'
+import { AiButton, AiPanel } from '@/features/ai/AiPanel'
 
 /** A note the viewer can read but not edit: its published version, with an outline and read aloud. */
 export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[] }) {
@@ -28,6 +29,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
   const minutes = readingMinutes(cards.map((c) => cardPlainText(c.type, c.content)).join(' '))
   const accent = accentOf(meta.id)
   const [progress, setProgress] = useState(0)
+  const [aiOpen, setAiOpen] = useState(false)
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight
@@ -75,6 +77,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
           <div className="flex flex-wrap items-center gap-2">
             <ReadAloudControls reader={reader} />
             {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
+            <AiButton onClick={() => setAiOpen(true)} />
             <ReportButton entityType="NOTE" entityId={meta.id} className="ml-auto" />
           </div>
           {copy.copyError ? (
@@ -90,6 +93,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
         </div>
         <Discussion target={{ type: 'NOTE', id: meta.id }} />
       </article>
+      <AiPanel noteId={meta.id} open={aiOpen} onClose={() => setAiOpen(false)} canEdit={false} canFork={meta.viewerCan.fork} hasCode={cards.some((c) => c.type === 'code')} />
     </div>
   )
 }

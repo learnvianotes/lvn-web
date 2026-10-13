@@ -98,6 +98,111 @@ input AddPdfHighlightInput {
   rects: [[Float!]!]!
 }
 
+"""
+The viewer's AI tokens today (UTC) against their plan's daily limit (§10.1, ADR-0024)
+"""
+type AiAllowance {
+  """null: the plan sets no limit"""
+  limitToday: Int
+  resetsAt: DateTime!
+  usedToday: Int!
+}
+
+"""
+What a task made for the viewer from a note (ADR-0059). Only its maker sees it, while they can read the note
+"""
+type AiArtifact {
+  """Card tasks, once READY: the cards to choose from"""
+  cards: [AiCard!]
+  createdAt: DateTime!
+
+  """FAILED: why, in words for the person"""
+  error: String
+
+  """
+  Made from the published version (the viewer is a reader) rather than the draft
+  """
+  fromPublishedVersion: Boolean!
+  id: UUID!
+  keptAt: DateTime
+  language: AiLanguage!
+
+  """Text tasks, once READY: the result as Markdown"""
+  markdown: String
+  note: Note!
+  status: AiArtifactStatus!
+  task: AiTask!
+
+  """Card tasks, once READY: the title a new note would take"""
+  title: String
+
+  """The note was longer than a task reads; its start was used"""
+  truncated: Boolean!
+}
+
+type AiArtifactPayload {
+  artifact: AiArtifact
+  userErrors: [UserError!]!
+}
+
+enum AiArtifactStatus {
+  FAILED
+  QUEUED
+  READY
+  RUNNING
+}
+
+"""
+A card a task made, exactly as it would be kept: `type` and `content` as in the notes subgraph's Card
+"""
+type AiCard {
+  content: JSON!
+  type: String!
+}
+
+enum AiLanguage {
+  ENGLISH
+  HINDI
+  TELUGU
+}
+
+type AiStatus {
+  available: Boolean!
+  reason: AiUnavailableReason
+}
+
+enum AiTask {
+  """Needs the right to copy the note (ADR-0025)"""
+  CREATE_NOTES
+
+  """On the note's code cards"""
+  EXPLAIN_CODE
+  EXPLAIN_SIMPLY
+  FIND_MISTAKES
+  FLASHCARDS
+  KEY_CONCEPTS
+
+  """Needs the right to copy the note (ADR-0025)"""
+  OUTLINE_TO_NOTE
+  PRACTICE_QUESTIONS
+  QUIZ
+  REVISION_SHEET
+  SUMMARIZE
+  TRANSLATE
+}
+
+"""Why AI is not answering"""
+enum AiUnavailableReason {
+  """This month's AI budget is used up; it resumes next month"""
+  BUDGET
+
+  """Not switched on in this environment"""
+  NOT_CONFIGURED
+
+  """The model failed several times in a row; it is tried again shortly"""
+  PROVIDER_DOWN
+}
+
 input AnswerClassroomInviteInput {
   accept: Boolean!
   inviteId: UUID!
@@ -764,6 +869,7 @@ enum ErrorCode {
   NOT_FOUND
   RATE_LIMITED
   UNAUTHENTICATED
+  UNAVAILABLE
   VALIDATION
 }
 
@@ -1108,6 +1214,28 @@ enum JoinVia {
   LINK
 }
 
+input KeepAiCardsInput {
+  artifactId: UUID!
+
+  """Indexes into the artifact's cards"""
+  cardIndexes: [Int!]!
+  into: KeepCardsInto!
+}
+
+type KeepAiCardsPayload {
+  """The note the cards went into"""
+  noteId: UUID
+  userErrors: [UserError!]!
+}
+
+enum KeepCardsInto {
+  """A new private note of the viewer's"""
+  NEW_NOTE
+
+  """The note itself (only for people who can edit it)"""
+  NOTE
+}
+
 type LegacyCounts {
   completedTopics: Int!
   markedProblems: Int!
@@ -1394,6 +1522,7 @@ type Mutation {
 
   """Decline the old site's data, or remove it after it was attached"""
   declineLegacyData: OkPayload!
+  deleteAiArtifact(id: UUID!): OkPayload!
   deleteClassroom(input: ClassroomIdInput!): OkPayload!
   deleteClassroomPost(input: ClassroomPostIdInput!): ClassroomPayload!
 
@@ -1444,6 +1573,7 @@ type Mutation {
 
   """A public group with the OPEN policy"""
   joinGroup(input: GroupIdInput!): GroupPayload!
+  keepAiCards(input: KeepAiCardsInput!): KeepAiCardsPayload!
   leaveClassroom(input: ClassroomIdInput!): ClassroomPayload!
 
   """The owner hands the group over first"""
@@ -1533,6 +1663,11 @@ type Mutation {
   Teachers: requests addressed to them. Platform admins: all, including documents.
   """
   reviewVerificationRequest(input: ReviewVerificationRequestInput!): VerificationRequestPayload!
+
+  """
+  Queues a task; poll aiArtifact until it is READY or FAILED. RATE_LIMITED past the day's allowance, UNAVAILABLE when AI is off
+  """
+  runAiTask(input: RunAiTaskInput!): AiArtifactPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
 
   """
@@ -1629,10 +1764,12 @@ input MuteGroupMemberInput {
   userId: UUID!
 }
 
-"""
-A note, owned by the notes subgraph: null when the viewer can no longer read it
-"""
+"""A note, owned by the notes subgraph; ai adds the viewer's AI results"""
 type Note {
+  """
+  Signed-in: the viewer's own AI results for this note, newest first; empty signed out
+  """
+  aiArtifacts: [AiArtifact!]!
   cardCount: Int!
 
   """In order; at most 100 per page"""
@@ -2193,6 +2330,14 @@ type Query {
   What happened in the viewer's groups and classes, newest first; their own doing left out
   """
   activityFeed(after: String, first: Int): ActivityConnection!
+
+  """
+  One of the viewer's AI results; null when it is not theirs or they can no longer read the note
+  """
+  aiArtifact(id: UUID!): AiArtifact
+
+  """Whether AI answers now; works signed out"""
+  aiStatus: AiStatus!
   classroom(id: UUID!): Classroom
 
   """The class a code names; at most 20 codes an hour"""
@@ -2236,6 +2381,9 @@ type Query {
   Open cases, oldest first: a group's (its moderators and mentor) or a class's (its staff), or every case (PLATFORM_ADMIN)
   """
   moderationQueue(after: String, first: Int, scope: ModerationScopeInput): ModerationCaseConnection!
+
+  """Signed in only"""
+  myAiAllowance: AiAllowance!
   myBlocked: [PersonEdge!]!
 
   """Invites waiting for the viewer's answer"""
@@ -2551,6 +2699,16 @@ input ReviewVerificationRequestInput {
   """Required when rejecting"""
   reason: String
   requestId: UUID!
+}
+
+input RunAiTaskInput {
+  """Only these cards (default: the whole note)"""
+  cardIds: [UUID!]
+
+  """Default ENGLISH; TRANSLATE translates into it"""
+  language: AiLanguage
+  noteId: UUID!
+  task: AiTask!
 }
 
 """

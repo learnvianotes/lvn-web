@@ -1477,5 +1477,82 @@
       "reject": "Decline",
       "failed": "That did not work. Try again."
     }
+  },
+  "ai": {
+    "button": "AI",
+    "title": "AI tasks",
+    "lead": "Ask AI about this note. Results stay beside it and only you see them; the note itself is never changed.",
+    "tasks": "Tasks",
+    "task": {
+      "SUMMARIZE": "Summarise",
+      "KEY_CONCEPTS": "Key concepts",
+      "EXPLAIN_SIMPLY": "Explain simply",
+      "PRACTICE_QUESTIONS": "Practice questions",
+      "TRANSLATE": "Translate",
+      "FIND_MISTAKES": "Find mistakes",
+      "EXPLAIN_CODE": "Explain the code",
+      "FLASHCARDS": "Flashcards",
+      "QUIZ": "Quiz",
+      "REVISION_SHEET": "Revision sheet",
+      "CREATE_NOTES": "Make notes",
+      "OUTLINE_TO_NOTE": "Outline → note"
+    },
+    "hint": {
+      "SUMMARIZE": "The note in a few lines, with its key points",
+      "KEY_CONCEPTS": "The terms that matter, each explained",
+      "EXPLAIN_SIMPLY": "The note in plain words, for a first read",
+      "PRACTICE_QUESTIONS": "Questions to test yourself, with answers",
+      "TRANSLATE": "Into Hindi, Telugu or English",
+      "FIND_MISTAKES": "Errors of fact, and how to fix them",
+      "EXPLAIN_CODE": "What the code cards do, step by step",
+      "FLASHCARDS": "Cards to revise with, ready to keep",
+      "QUIZ": "Multiple-choice questions, ready to keep",
+      "REVISION_SHEET": "The note on one page, for the night before",
+      "CREATE_NOTES": "Fresh study notes from this one, as your own",
+      "OUTLINE_TO_NOTE": "Turn this outline into full notes, as your own"
+    },
+    "translateInto": "Translate into",
+    "translate": "Translate",
+    "translatedInto": "Translated into {language}",
+    "language": {
+      "ENGLISH": "English",
+      "HINDI": "Hindi",
+      "TELUGU": "Telugu"
+    },
+    "unavailable": {
+      "NOT_CONFIGURED": "AI isn't switched on here yet.",
+      "BUDGET": "AI is resting until next month: this month's AI budget is used up.",
+      "PROVIDER_DOWN": "The AI model isn't answering right now. Try again in a minute."
+    },
+    "allowanceLabel": "Today's AI allowance",
+    "allowance": "Today's AI allowance: {percent}% used",
+    "allowanceSpent": "You've used today's AI allowance. It comes back at {time}.",
+    "allowanceResets": "Resets at {time}",
+    "noLimit": "Your plan has no daily AI limit.",
+    "results": "Your results",
+    "loading": "Loading…",
+    "noResults": "Nothing yet. Pick a task above; results take a few seconds.",
+    "status": {
+      "QUEUED": "Waiting its turn…",
+      "RUNNING": "Working on it…"
+    },
+    "runFailed": "That didn't start. Try again.",
+    "retry": "Try again",
+    "delete": "Delete this result",
+    "copy": "Copy",
+    "copied": "Copied",
+    "kept": "Kept",
+    "truncated": "This note is long, so only its start was read.",
+    "fromPublished": "Made from the published version.",
+    "keepLead": "Untick what you don't want, then keep the rest.",
+    "keepAsCopyLead": "Untick what you don't want; the rest becomes a new private note of yours, crediting this one.",
+    "pick": "Keep card {n}",
+    "addToNote": "Add {n, plural, one {# card} other {# cards}} to this note",
+    "saveAsNote": "Save {n, plural, one {# card} other {# cards}} as my note",
+    "addedToNote": "Added to this note.",
+    "savedAsNote": "Saved as a new private note.",
+    "openNote": "Open it",
+    "nothingUsable": "Nothing usable came back. Try again.",
+    "keepFailed": "Those cards weren't kept. Try again."
   }
 }

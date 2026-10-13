@@ -35,6 +35,43 @@ export type AddPdfHighlightInput = {
   rects: Array<Array<number>>;
 };
 
+export type AiArtifactStatus =
+  | 'FAILED'
+  | 'QUEUED'
+  | 'READY'
+  | 'RUNNING';
+
+export type AiLanguage =
+  | 'ENGLISH'
+  | 'HINDI'
+  | 'TELUGU';
+
+export type AiTask =
+  /** Needs the right to copy the note (ADR-0025) */
+  | 'CREATE_NOTES'
+  /** On the note's code cards */
+  | 'EXPLAIN_CODE'
+  | 'EXPLAIN_SIMPLY'
+  | 'FIND_MISTAKES'
+  | 'FLASHCARDS'
+  | 'KEY_CONCEPTS'
+  /** Needs the right to copy the note (ADR-0025) */
+  | 'OUTLINE_TO_NOTE'
+  | 'PRACTICE_QUESTIONS'
+  | 'QUIZ'
+  | 'REVISION_SHEET'
+  | 'SUMMARIZE'
+  | 'TRANSLATE';
+
+/** Why AI is not answering */
+export type AiUnavailableReason =
+  /** This month's AI budget is used up; it resumes next month */
+  | 'BUDGET'
+  /** Not switched on in this environment */
+  | 'NOT_CONFIGURED'
+  /** The model failed several times in a row; it is tried again shortly */
+  | 'PROVIDER_DOWN';
+
 export type AppealModerationInput = {
   entityId: string;
   entityType: ReportEntityType;
@@ -204,6 +241,7 @@ export type ErrorCode =
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'UNAUTHENTICATED'
+  | 'UNAVAILABLE'
   | 'VALIDATION';
 
 /** What an upload is for: AVATAR, VERIFICATION_DOCUMENT, and ATTACHMENT (a picture, video, audio or PDF for a note you can edit, given as parentId). Other purposes arrive with their features. */
@@ -274,6 +312,19 @@ export type JoinDecision =
 export type JoinVia =
   | 'CODE'
   | 'LINK';
+
+export type KeepAiCardsInput = {
+  artifactId: string;
+  /** Indexes into the artifact's cards */
+  cardIndexes: Array<number>;
+  into: KeepCardsInto;
+};
+
+export type KeepCardsInto =
+  /** A new private note of the viewer's */
+  | 'NEW_NOTE'
+  /** The note itself (only for people who can edit it) */
+  | 'NOTE';
 
 export type LegacyImportStatus =
   | 'AVAILABLE'
@@ -499,6 +550,15 @@ export type ReviewVerificationRequestInput = {
   requestId: string;
 };
 
+export type RunAiTaskInput = {
+  /** Only these cards (default: the whole note) */
+  cardIds?: Array<string> | null | undefined;
+  /** Default ENGLISH; TRANSLATE translates into it */
+  language?: AiLanguage | null | undefined;
+  noteId: string;
+  task: AiTask;
+};
+
 /** Narrows the notes found (and topics, by subject); never widens what the viewer may read */
 export type SearchFilters = {
   /** Notes by this person */
@@ -650,6 +710,48 @@ export type YearOfStudy =
   | 'YEAR_3'
   | 'YEAR_4'
   | 'YEAR_5';
+
+export type AiStateQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AiStateQuery = { aiStatus: { available: boolean, reason: AiUnavailableReason | null }, myAiAllowance: { usedToday: number, limitToday: number | null, resetsAt: string } };
+
+export type AiArtifactFieldsFragment = { id: string, task: AiTask, status: AiArtifactStatus, language: AiLanguage, markdown: string | null, title: string | null, error: string | null, fromPublishedVersion: boolean, truncated: boolean, keptAt: string | null, createdAt: string, cards: Array<{ type: string, content: unknown }> | null };
+
+export type NoteAiArtifactsQueryVariables = Exact<{
+  noteId: string;
+}>;
+
+
+export type NoteAiArtifactsQuery = { note: { id: string, aiArtifacts: Array<{ id: string, task: AiTask, status: AiArtifactStatus, language: AiLanguage, markdown: string | null, title: string | null, error: string | null, fromPublishedVersion: boolean, truncated: boolean, keptAt: string | null, createdAt: string, cards: Array<{ type: string, content: unknown }> | null }> } | null };
+
+export type AiArtifactQueryVariables = Exact<{
+  id: string;
+}>;
+
+
+export type AiArtifactQuery = { aiArtifact: { id: string, task: AiTask, status: AiArtifactStatus, language: AiLanguage, markdown: string | null, title: string | null, error: string | null, fromPublishedVersion: boolean, truncated: boolean, keptAt: string | null, createdAt: string, cards: Array<{ type: string, content: unknown }> | null } | null };
+
+export type RunAiTaskMutationVariables = Exact<{
+  input: RunAiTaskInput;
+}>;
+
+
+export type RunAiTaskMutation = { runAiTask: { artifact: { id: string, task: AiTask, status: AiArtifactStatus, language: AiLanguage, markdown: string | null, title: string | null, error: string | null, fromPublishedVersion: boolean, truncated: boolean, keptAt: string | null, createdAt: string, cards: Array<{ type: string, content: unknown }> | null } | null, userErrors: Array<{ field: Array<string> | null, message: string, code: ErrorCode }> } };
+
+export type KeepAiCardsMutationVariables = Exact<{
+  input: KeepAiCardsInput;
+}>;
+
+
+export type KeepAiCardsMutation = { keepAiCards: { noteId: string | null, userErrors: Array<{ field: Array<string> | null, message: string, code: ErrorCode }> } };
+
+export type DeleteAiArtifactMutationVariables = Exact<{
+  id: string;
+}>;
+
+
+export type DeleteAiArtifactMutation = { deleteAiArtifact: { ok: boolean, userErrors: Array<{ message: string }> } };
 
 export type ViewerFieldsFragment = { id: string, handle: string, displayName: string, email: string | null, emailVerified: boolean, registrationComplete: boolean, verified: boolean, verificationMethod: VerificationMethod | null, globalRole: GlobalRole, restrictedMinor: boolean | null, institutionalEmail: string | null, institutionalEmailStatus: InstitutionalEmailStatus | null, institution: { name: string, verified: boolean } | null };
 
@@ -1886,6 +1988,7 @@ export type SetProjectShowcaseMutationVariables = Exact<{
 
 export type SetProjectShowcaseMutation = { setProjectShowcase: { group: { id: string } | null, userErrors: Array<{ message: string }> } };
 
+export const AiArtifactFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AiArtifactFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AiArtifact"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"task"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"language"}},{"kind":"Field","name":{"kind":"Name","value":"markdown"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"cards"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"fromPublishedVersion"}},{"kind":"Field","name":{"kind":"Name","value":"truncated"}},{"kind":"Field","name":{"kind":"Name","value":"keptAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<AiArtifactFieldsFragment, unknown>;
 export const ViewerFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"emailVerified"}},{"kind":"Field","name":{"kind":"Name","value":"registrationComplete"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"verificationMethod"}},{"kind":"Field","name":{"kind":"Name","value":"globalRole"}},{"kind":"Field","name":{"kind":"Name","value":"restrictedMinor"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmail"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmailStatus"}},{"kind":"Field","name":{"kind":"Name","value":"institution"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}}]}}]}}]} as unknown as DocumentNode<ViewerFieldsFragment, unknown>;
 export const SessionFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SessionFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"accessTokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"emailVerified"}},{"kind":"Field","name":{"kind":"Name","value":"registrationComplete"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"verificationMethod"}},{"kind":"Field","name":{"kind":"Name","value":"globalRole"}},{"kind":"Field","name":{"kind":"Name","value":"restrictedMinor"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmail"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmailStatus"}},{"kind":"Field","name":{"kind":"Name","value":"institution"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}}]}}]}}]} as unknown as DocumentNode<SessionFieldsFragment, unknown>;
 export const ProblemsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Problems"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UserError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]} as unknown as DocumentNode<ProblemsFragment, unknown>;
@@ -1916,6 +2019,12 @@ export const VerificationRequestFieldsFragmentDoc = {"kind":"Document","definiti
 export const RepositoryCardFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"RepositoryCard"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"GroupRepository"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"provider"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"available"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"language"}},{"kind":"Field","name":{"kind":"Name","value":"stars"}},{"kind":"Field","name":{"kind":"Name","value":"pushedAt"}}]}}]} as unknown as DocumentNode<RepositoryCardFragment, unknown>;
 export const DoubtSummaryFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DoubtSummary"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Doubt"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"repoRef"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"answerCount"}},{"kind":"Field","name":{"kind":"Name","value":"moderation"}},{"kind":"Field","name":{"kind":"Name","value":"moderationReason"}},{"kind":"Field","name":{"kind":"Name","value":"moderationCanAppeal"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}}]}}]}}]} as unknown as DocumentNode<DoubtSummaryFragment, unknown>;
 export const DoubtDetailFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DoubtDetail"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Doubt"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"DoubtSummary"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"resolvedAt"}},{"kind":"Field","name":{"kind":"Name","value":"viewerCan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"answer"}},{"kind":"Field","name":{"kind":"Name","value":"resolve"}},{"kind":"Field","name":{"kind":"Name","value":"reopen"}},{"kind":"Field","name":{"kind":"Name","value":"delete"}}]}},{"kind":"Field","name":{"kind":"Name","value":"answers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"byMentor"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DoubtSummary"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Doubt"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"repoRef"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"answerCount"}},{"kind":"Field","name":{"kind":"Name","value":"moderation"}},{"kind":"Field","name":{"kind":"Name","value":"moderationReason"}},{"kind":"Field","name":{"kind":"Name","value":"moderationCanAppeal"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}}]}}]}}]} as unknown as DocumentNode<DoubtDetailFragment, unknown>;
+export const AiStateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AiState"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"aiStatus"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"available"}},{"kind":"Field","name":{"kind":"Name","value":"reason"}}]}},{"kind":"Field","name":{"kind":"Name","value":"myAiAllowance"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"usedToday"}},{"kind":"Field","name":{"kind":"Name","value":"limitToday"}},{"kind":"Field","name":{"kind":"Name","value":"resetsAt"}}]}}]}}]} as unknown as DocumentNode<AiStateQuery, AiStateQueryVariables>;
+export const NoteAiArtifactsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"NoteAiArtifacts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"noteId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"note"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"noteId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"aiArtifacts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AiArtifactFields"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AiArtifactFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AiArtifact"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"task"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"language"}},{"kind":"Field","name":{"kind":"Name","value":"markdown"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"cards"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"fromPublishedVersion"}},{"kind":"Field","name":{"kind":"Name","value":"truncated"}},{"kind":"Field","name":{"kind":"Name","value":"keptAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<NoteAiArtifactsQuery, NoteAiArtifactsQueryVariables>;
+export const AiArtifactDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AiArtifact"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"aiArtifact"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AiArtifactFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AiArtifactFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AiArtifact"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"task"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"language"}},{"kind":"Field","name":{"kind":"Name","value":"markdown"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"cards"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"fromPublishedVersion"}},{"kind":"Field","name":{"kind":"Name","value":"truncated"}},{"kind":"Field","name":{"kind":"Name","value":"keptAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<AiArtifactQuery, AiArtifactQueryVariables>;
+export const RunAiTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RunAiTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RunAiTaskInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"runAiTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artifact"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AiArtifactFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"userErrors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AiArtifactFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AiArtifact"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"task"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"language"}},{"kind":"Field","name":{"kind":"Name","value":"markdown"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"cards"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"fromPublishedVersion"}},{"kind":"Field","name":{"kind":"Name","value":"truncated"}},{"kind":"Field","name":{"kind":"Name","value":"keptAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<RunAiTaskMutation, RunAiTaskMutationVariables>;
+export const KeepAiCardsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"KeepAiCards"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"KeepAiCardsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"keepAiCards"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"noteId"}},{"kind":"Field","name":{"kind":"Name","value":"userErrors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]}}]}}]} as unknown as DocumentNode<KeepAiCardsMutation, KeepAiCardsMutationVariables>;
+export const DeleteAiArtifactDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteAiArtifact"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteAiArtifact"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ok"}},{"kind":"Field","name":{"kind":"Name","value":"userErrors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<DeleteAiArtifactMutation, DeleteAiArtifactMutationVariables>;
 export const ViewerDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Viewer"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"viewer"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerFields"}},{"kind":"Field","name":{"kind":"Name","value":"profile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"department"}},{"kind":"Field","name":{"kind":"Name","value":"yearOfStudy"}},{"kind":"Field","name":{"kind":"Name","value":"showOnProfile"}}]}},{"kind":"Field","name":{"kind":"Name","value":"legacyImport"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"claimedAt"}},{"kind":"Field","name":{"kind":"Name","value":"counts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"completedTopics"}},{"kind":"Field","name":{"kind":"Name","value":"markedProblems"}},{"kind":"Field","name":{"kind":"Name","value":"studyDays"}},{"kind":"Field","name":{"kind":"Name","value":"studyMinutes"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"emailVerified"}},{"kind":"Field","name":{"kind":"Name","value":"registrationComplete"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"verificationMethod"}},{"kind":"Field","name":{"kind":"Name","value":"globalRole"}},{"kind":"Field","name":{"kind":"Name","value":"restrictedMinor"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmail"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmailStatus"}},{"kind":"Field","name":{"kind":"Name","value":"institution"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}}]}}]}}]} as unknown as DocumentNode<ViewerQuery, ViewerQueryVariables>;
 export const SignInOptionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SignInOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signInOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"emailPassword"}},{"kind":"Field","name":{"kind":"Name","value":"google"}},{"kind":"Field","name":{"kind":"Name","value":"github"}},{"kind":"Field","name":{"kind":"Name","value":"linkedin"}}]}},{"kind":"Field","name":{"kind":"Name","value":"termsVersion"}}]}}]} as unknown as DocumentNode<SignInOptionsQuery, SignInOptionsQueryVariables>;
 export const SignUpDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SignUp"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SignUpInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signUp"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"session"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SessionFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"userErrors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"Problems"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"handle"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"emailVerified"}},{"kind":"Field","name":{"kind":"Name","value":"registrationComplete"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"verificationMethod"}},{"kind":"Field","name":{"kind":"Name","value":"globalRole"}},{"kind":"Field","name":{"kind":"Name","value":"restrictedMinor"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmail"}},{"kind":"Field","name":{"kind":"Name","value":"institutionalEmailStatus"}},{"kind":"Field","name":{"kind":"Name","value":"institution"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SessionFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"accessTokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Problems"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UserError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]} as unknown as DocumentNode<SignUpMutation, SignUpMutationVariables>;

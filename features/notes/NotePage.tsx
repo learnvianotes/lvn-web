@@ -22,10 +22,12 @@ import { cardsToDoc } from './model/doc'
 import { savedStateOf } from './model/save'
 import { useLoadedNote } from './useLoadedNote'
 import { Discussion } from '@/features/discussion/Discussion'
+import { AiButton, AiPanel } from '@/features/ai/AiPanel'
 
 /** A note: the editor for its owner and editors, the reader for everyone else (loading: ./useLoadedNote). */
 export function NotePage({ id }: { id: string }) {
   const t = useTranslations('notes')
+  const tAi = useTranslations('ai')
   const client = useApolloClient()
   const router = useRouter()
   const viewer = useQuery(ViewerDocument)
@@ -35,6 +37,7 @@ export function NotePage({ id }: { id: string }) {
   const [versionsOpen, setVersionsOpen] = useState<{ open: boolean; versionId?: string }>({ open: false })
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
   const copy = useMakeCopy(id)
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
@@ -102,6 +105,7 @@ export function NotePage({ id }: { id: string }) {
         <History className="size-4" aria-hidden />
         {t('versions.button')}
       </Button>
+      <AiButton onClick={() => setAiOpen(true)} />
       {meta.viewerAccess === 'OWNER' ? (
         <Button variant="secondary" size="sm" className="gap-1.5" aria-label={t('share.button')} onClick={() => setShareOpen(true)}>
           <Share2 className="size-4" aria-hidden />
@@ -207,6 +211,19 @@ export function NotePage({ id }: { id: string }) {
           onClose={() => setVersionsOpen({ open: false })}
           onRestored={() => {
             setVersionsOpen({ open: false })
+            reload()
+          }}
+        />
+        <AiPanel
+          noteId={id}
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          canEdit={meta.viewerCan.edit}
+          canFork={meta.viewerCan.fork}
+          onAddedToNote={() => {
+            // The cards are in the draft now: show them (reloading closes the panel).
+            setAiOpen(false)
+            setNotice(tAi('addedToNote'))
             reload()
           }}
         />
