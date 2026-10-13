@@ -996,7 +996,8 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await page.getByRole('link', { name: /^Rhythm/ }).click()
   await expect(page).toHaveURL(/\/rhythm$/)
   const week = page.getByRole('region', { name: 'This week' })
-  await expect(week.getByText('0 of 4 days this week')).toBeVisible()
+  // A new account's first week aims only for the planned days from today on (lvn-backend ADR-0069).
+  await expect(week.getByText(/^0 of \d days this week$/)).toBeVisible()
   await expect(week.getByRole('listitem', { name: /: today/ })).toHaveCount(1)
   await expect(page.getByRole('region', { name: 'Today' }).getByText(/more learning minutes, or 10 more reviews, and today counts\./)).toBeVisible()
 
@@ -1005,7 +1006,7 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await plan.getByRole('button', { name: 'Wednesday' }).click()
   await plan.getByRole('button', { name: 'Friday' }).click()
   await plan.getByRole('button', { name: 'Save days' }).click()
-  await expect(plan.getByRole('status')).toHaveText('Saved. This week now aims for 6 days.')
+  await expect(plan.getByRole('status')).toHaveText(/^Saved\. This week now aims for \d days\.$/)
 
   // A pause for exams from today, then cancelled: its days come back.
   const pauses = page.getByRole('region', { name: 'Pauses' })
