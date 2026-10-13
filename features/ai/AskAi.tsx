@@ -37,7 +37,8 @@ function Follow({ id }: { id: string }) {
 }
 
 /** A question box; `onAsked` gets the queued answer. */
-export function AskForm({ scope, noteId, doubtId, onAsked, compact }: { scope: AskAiScope; noteId?: string; doubtId?: string; onAsked?: (answer: Answer) => void; compact?: boolean }) {
+/** `offNotice` false: the surrounding panel already says AI is off. */
+export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = true }: { scope: AskAiScope; noteId?: string; doubtId?: string; onAsked?: (answer: Answer) => void; compact?: boolean; offNotice?: boolean }) {
   const t = useTranslations('ai.ask')
   const state = useQuery(AiStateDocument, { fetchPolicy: 'cache-and-network' })
   const [askAi, asking] = useMutation(AskAiDocument, { refetchQueries: ['MyAiAnswers'] })
@@ -105,7 +106,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact }: { scope: A
           {busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : t('ask')}
         </Button>
       </div>
-      {off ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
+      {off && offNotice ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}

@@ -149,7 +149,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
         {allowance && !off ? <Allowance used={allowance.usedToday} limit={allowance.limitToday} resetsAt={allowance.resetsAt} /> : null}
 
         <section aria-label={t('askTitle')} className="flex flex-col gap-3">
-          <AskForm scope="THIS_NOTE" noteId={noteId} compact />
+          <AskForm scope="THIS_NOTE" noteId={noteId} compact offNotice={false} />
           <AnswerList noteId={noteId} compact />
         </section>
 
