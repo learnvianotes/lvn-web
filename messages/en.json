@@ -203,7 +203,8 @@
     "notificationSettings": "Notification settings",
     "verificationQueue": "Proof of study to review",
     "aiProviders": "AI providers",
-    "history": "Learning history"
+    "history": "Learning history",
+    "review": "Review flashcards"
   },
   "notes": {
     "pageTitle": "Note",
@@ -1820,5 +1821,34 @@
     "changeZone": "Change",
     "zoneLabel": "Time zone",
     "saveZone": "Save"
+  },
+  "review": {
+    "title": "Review",
+    "session": "Review session",
+    "loading": "Loading your cards…",
+    "failed": "Your cards could not load. Try again.",
+    "nothingTitle": "Nothing to review",
+    "nothing": "Add flashcards to your notes, or study the cards of a note you read, and they come back here when it is time.",
+    "toNotes": "Go to your notes",
+    "doneTitle": "Done for today",
+    "done": "{count, plural, one {# card reviewed.} other {# cards reviewed.}}",
+    "later": "{count, plural, one {# more card waits for the next days.} other {# more cards wait for the next days.}}",
+    "waitingToSend": "{count, plural, one {# grade waits to be sent.} other {# grades wait to be sent.}}",
+    "progress": "{n} of {total}",
+    "untitled": "Untitled",
+    "card": "Flashcard",
+    "front": "Front",
+    "back": "Back",
+    "show": "Show the answer",
+    "howWell": "How well did you know it?",
+    "rating": {
+      "AGAIN": "Again",
+      "HARD": "Hard",
+      "GOOD": "Good",
+      "EASY": "Easy"
+    },
+    "study": "Study these cards",
+    "studying": "Studying these cards",
+    "stopStudying": "Stop studying"
   }
 }

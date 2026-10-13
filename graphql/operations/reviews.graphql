@@ -1,0 +1,59 @@
+# Flashcard reviews (lvn-backend ADR-0068).
+
+query ReviewQueue {
+  reviewQueue {
+    due
+    new
+    doneToday
+    waiting
+    cards {
+      cardId
+      noteId
+      noteTitle
+      front
+      back
+      state
+      due
+    }
+  }
+}
+
+mutation ReviewCard($input: ReviewCardInput!) {
+  reviewCard(input: $input) {
+    review {
+      cardId
+      due
+      state
+      intervalDays
+    }
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation StudyNoteCards($input: StudyNoteInput!) {
+  studyNoteCards(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation StopStudyingNoteCards($input: StudyNoteInput!) {
+  stopStudyingNoteCards(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+query NoteStudying($id: UUID!) {
+  note(id: $id) {
+    id
+    viewerStudying
+  }
+}

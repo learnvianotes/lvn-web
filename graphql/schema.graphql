@@ -541,6 +541,10 @@ type CardEdge {
   node: Card!
 }
 
+input CardIdInput {
+  cardId: UUID!
+}
+
 """
 A card as the client has it. Ids are UUIDs the client makes, so cards created offline keep their id.
 """
@@ -593,6 +597,13 @@ enum CardOpStatus {
   Not applied: the card was deleted, or changed elsewhere before this delete
   """
   REJECTED
+}
+
+type CardReviewResult {
+  cardId: UUID!
+  due: DateTime!
+  intervalDays: Int!
+  state: ReviewState!
 }
 
 """
@@ -2096,6 +2107,9 @@ type Mutation {
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
 
+  """The card starts again as new"""
+  resetCardReview(input: CardIdInput!): OkPayload!
+
   """Sets the password and signs out every device"""
   resetPassword(input: ResetPasswordInput!): OkPayload!
 
@@ -2115,6 +2129,9 @@ type Mutation {
   Their comments wait for your approval and they cause you no notifications; they are not told
   """
   restrictUser(input: PersonInput!): PersonPayload!
+
+  """Signed in only, as every mutation below"""
+  reviewCard(input: ReviewCardInput!): ReviewCardPayload!
   reviewClassroomJoinRequest(input: ReviewClassroomJoinRequestInput!): ClassroomPayload!
   reviewGroupJoinRequest(input: ReviewGroupJoinRequestInput!): GroupPayload!
 
@@ -2185,6 +2202,10 @@ type Mutation {
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+  stopStudyingNoteCards(input: StudyNoteInput!): OkPayload!
+
+  """Adds a readable note's flashcards to the viewer's reviews"""
+  studyNoteCards(input: StudyNoteInput!): OkPayload!
 
   """
   Start notes of your own on a PDF of a note you can read (the rule for copies): a new PRIVATE note with the PDF in a
@@ -2353,6 +2374,11 @@ type Note {
   versions(after: String, first: Int): NoteVersionConnection
   viewerAccess: NoteAccess!
   viewerCan: NotePermissions!
+
+  """
+  Signed in: whether the viewer studies this note's flashcards (their own notes' always count)
+  """
+  viewerStudying: Boolean
   visibility: Visibility!
 }
 
@@ -3005,6 +3031,9 @@ type Query {
   """
   removedGroup(id: UUID!): RemovedGroup
 
+  """Signed in only"""
+  reviewQueue: ReviewQueue!
+
   """
   At most 100 characters; `first` per kind, 1 to 20 (default 5). With filters the words may be left out: the notes
   the filters allow come newest first. `after` continues the notes of the same search; a continued page has notes
@@ -3268,6 +3297,41 @@ input RestoreNoteVersionInput {
   versionId: UUID!
 }
 
+"""A flashcard to review, as the person reads its note now"""
+type ReviewCard {
+  """Rich text"""
+  back: JSON!
+  cardId: UUID!
+
+  """null for a new card"""
+  due: DateTime
+
+  """Rich text"""
+  front: JSON!
+  noteId: UUID!
+  noteTitle: String!
+  state: ReviewState!
+}
+
+input ReviewCardInput {
+  cardId: UUID!
+
+  """The device's id for this grade: sent twice, it counts once"""
+  clientOpId: UUID!
+  durationMs: Int
+  rating: ReviewRating!
+
+  """
+  When it was graded on the device; now when absent; believed back at most 30 days
+  """
+  reviewedAt: DateTime
+}
+
+type ReviewCardPayload {
+  review: CardReviewResult
+  userErrors: [UserError!]!
+}
+
 input ReviewClassroomJoinRequestInput {
   decision: JoinDecision!
   requestId: UUID!
@@ -3276,6 +3340,37 @@ input ReviewClassroomJoinRequestInput {
 input ReviewGroupJoinRequestInput {
   decision: JoinDecision!
   requestId: UUID!
+}
+
+type ReviewQueue {
+  """
+  Today's cards: due first (most overdue first), then new; 20 a day, at most 10 new
+  """
+  cards: [ReviewCard!]!
+  doneToday: Int!
+
+  """Cards due by the end of today, in the whole deck"""
+  due: Int!
+
+  """Cards never reviewed, in the whole deck"""
+  new: Int!
+
+  """Cards past today's cap: they wait for the next days"""
+  waiting: Int!
+}
+
+enum ReviewRating {
+  AGAIN
+  EASY
+  GOOD
+  HARD
+}
+
+enum ReviewState {
+  LEARNING
+  NEW
+  RELEARNING
+  REVIEW
 }
 
 input ReviewVerificationRequestInput {
@@ -3515,6 +3610,10 @@ type StudentProfile {
   interestTopicIds: [UUID!]
   showOnProfile: Boolean!
   yearOfStudy: YearOfStudy
+}
+
+input StudyNoteInput {
+  noteId: UUID!
 }
 
 input StudyPdfInput {
