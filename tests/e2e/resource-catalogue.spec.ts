@@ -106,9 +106,12 @@ test('⌘K finds resources beside notes and people', async ({ page }) => {
     Resource: () => ({ resource: resource() }),
     Discussion: () => ({ discussion: null }),
     SavedResources: () => ({ savedResources: page1([]) }),
+    SavedNotes: () => ({ savedNotes: page1([]) }),
   })
+  // Old links to saved resources land on Bookmarks (ADR-0076).
   await page.goto('/resources/saved')
-  await expect(page.getByRole('heading', { name: 'Your saved resources' })).toBeVisible()
+  await expect(page).toHaveURL(/\/saved$/)
+  await expect(page.getByRole('heading', { name: 'Bookmarks', level: 1 })).toBeVisible()
   await page.keyboard.press('Control+k')
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await palette.getByRole('combobox').fill('data structures')

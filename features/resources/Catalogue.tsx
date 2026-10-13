@@ -47,7 +47,7 @@ function Inner() {
         <div className="flex flex-wrap gap-2">
           {status === 'signed-in' ? (
             <Button asChild variant="secondary" size="sm">
-              <Link href="/resources/saved">{t('saved')}</Link>
+              <Link href="/saved">{t('saved')}</Link>
             </Button>
           ) : null}
           <Button asChild size="sm" className="gap-1.5">

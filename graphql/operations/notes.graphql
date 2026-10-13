@@ -506,3 +506,60 @@ mutation CompleteNoteUpload($fileId: UUID!) {
     }
   }
 }
+
+# Saved notes (lvn-backend ADR-0076): Save on a note, and the viewer's list.
+query NoteSaved($id: UUID!) {
+  note(id: $id) {
+    id
+    viewerSaved
+  }
+}
+
+mutation SaveNote($noteId: UUID!) {
+  saveNote(input: { noteId: $noteId }) {
+    note {
+      id
+      viewerSaved
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation UnsaveNote($noteId: UUID!) {
+  unsaveNote(input: { noteId: $noteId }) {
+    note {
+      id
+      viewerSaved
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+query SavedNotes($first: Int, $after: String) {
+  savedNotes(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        title
+        excerpt
+        kind
+        slug
+        visibility
+        publishedAt
+        owner {
+          id
+          displayName
+          handle
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

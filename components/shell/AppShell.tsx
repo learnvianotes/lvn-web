@@ -48,10 +48,10 @@ const ENTRIES: Entry[] = [
   { href: '/classes', key: 'classes', icon: GraduationCap },
   { href: '/exams', key: 'exams', icon: CalendarDays },
   { href: '/rhythm', key: 'rhythm', icon: Activity },
-  { href: '/resources', key: 'resources', icon: Library, match: /^\/resources(?!\/saved)(\/|$)/ },
+  { href: '/resources', key: 'resources', icon: Library },
   { href: '/community', key: 'community', icon: MessagesSquare },
   { href: '/ask', key: 'ask', icon: Sparkles },
-  { href: '/resources/saved', key: 'saved', icon: Bookmark },
+  { href: '/saved', key: 'saved', icon: Bookmark },
 ]
 
 /**

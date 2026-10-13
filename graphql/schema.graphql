@@ -2398,6 +2398,11 @@ type Mutation {
   """Platform admins only, as every mutation below"""
   saveAiConnection(input: SaveAiConnectionInput!): AiConnectionPayload!
   saveAiTaskRoute(input: SaveAiTaskRouteInput!): AiSettingsPayload!
+
+  """
+  Saves a note the viewer can read to their saved notes (ADR-0076); saving it again changes nothing
+  """
+  saveNote(input: NoteIdInput!): NotePayload!
   saveResource(input: ResourceIdInput!): ResourcePayload!
   setAiDefaults(input: SetAiDefaultsInput!): AiSettingsPayload!
 
@@ -2501,6 +2506,9 @@ type Mutation {
   """Phones: on sign-out"""
   unregisterDevice(input: UnregisterDeviceInput!): OkPayload!
   unrestrictUser(input: PersonInput!): PersonPayload!
+
+  """Takes a note off the viewer's saved notes"""
+  unsaveNote(input: NoteIdInput!): NotePayload!
   unsaveResource(input: ResourceIdInput!): ResourcePayload!
   unshareNote(input: UnshareNoteInput!): NotePayload!
   unshareNoteFromClassroom(input: NoteClassroomInput!): NotePayload!
@@ -2646,6 +2654,11 @@ type Note {
   versions(after: String, first: Int): NoteVersionConnection
   viewerAccess: NoteAccess!
   viewerCan: NotePermissions!
+
+  """
+  The viewer saved it to come back to (ADR-0076); private to them. False for visitors
+  """
+  viewerSaved: Boolean!
 
   """
   Signed in: whether the viewer studies this note's flashcards (their own notes' always count)
@@ -3368,6 +3381,11 @@ type Query {
 
   """Signed in only"""
   rhythmBuddies: RhythmBuddies!
+
+  """
+  Notes the viewer saved and can still read, newest saved first (ADR-0076); a page can be shorter than asked
+  """
+  savedNotes(after: String, first: Int): NoteConnection!
 
   """The viewer's Saved list, newest first"""
   savedResources(after: String, first: Int): ResourceConnection!

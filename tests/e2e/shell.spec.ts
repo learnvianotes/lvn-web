@@ -19,7 +19,7 @@ const ENTRIES: [name: string, href: string][] = [
   ['Resources', '/resources'],
   ['Community', '/community'],
   ['AI Assistant', '/ask'],
-  ['Bookmarks', '/resources/saved'],
+  ['Bookmarks', '/saved'],
 ]
 const noProblems = { userErrors: [] }
 
@@ -45,9 +45,9 @@ test('every sidebar entry leads to a page that exists, and the page it opens is 
   await expect(page).toHaveURL(/\/exams$/)
   await expect(nav.getByRole('link', { name: 'Exams' })).toHaveAttribute('aria-current', 'page')
   await expect(nav.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page')
-  // Bookmarks is not Resources, though both live under /resources.
+  // Bookmarks holds saved notes and resources (ADR-0076).
   await nav.getByRole('link', { name: 'Bookmarks' }).click()
-  await expect(page).toHaveURL(/\/resources\/saved$/)
+  await expect(page).toHaveURL(/\/saved$/)
   await expect(nav.getByRole('link', { name: 'Bookmarks' })).toHaveAttribute('aria-current', 'page')
   await expect(nav.getByRole('link', { name: 'Resources' })).not.toHaveAttribute('aria-current', 'page')
 })
