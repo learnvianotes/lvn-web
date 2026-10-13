@@ -31,7 +31,8 @@ const quiz = (attempts: Attempt[], over: Record<string, unknown> = {}) => {
     myAttempts: attempts.map((a) => ({ __typename: 'QuizAttempt', submittedAt: '2026-10-13T10:00:00.000Z', ...a, answers: a.answers.map((x) => ({ __typename: 'QuizAnswer', ...x })) })),
     questions: [
       { __typename: 'ClassQuizQuestion', id: Q1, position: 0, question: doc('What makes most of the ATP?'), choices: [{ __typename: 'ClassQuizChoice', id: 'c1', content: inline('Mitochondria') }, { __typename: 'ClassQuizChoice', id: 'c2', content: inline('Ribosomes') }], multiple: false, correct: shown ? ['c1'] : null, explanation: shown ? doc('Respiration happens there.') : null },
-      { __typename: 'ClassQuizQuestion', id: Q2, position: 1, question: doc('Which are products?'), choices: [{ __typename: 'ClassQuizChoice', id: 'a', content: inline('Water') }, { __typename: 'ClassQuizChoice', id: 'b', content: inline('Oxygen') }, { __typename: 'ClassQuizChoice', id: 'c', content: inline('Carbon dioxide') }], multiple: true, correct: shown ? ['a', 'c'] : null, explanation: null },
+      // Choice ids repeat across questions, as in quizzes made with AI: each question shows its own choices.
+      { __typename: 'ClassQuizQuestion', id: Q2, position: 1, question: doc('Which are products?'), choices: [{ __typename: 'ClassQuizChoice', id: 'c1', content: inline('Water') }, { __typename: 'ClassQuizChoice', id: 'c2', content: inline('Oxygen') }, { __typename: 'ClassQuizChoice', id: 'c3', content: inline('Carbon dioxide') }], multiple: true, correct: shown ? ['c1', 'c3'] : null, explanation: null },
     ],
     ...over,
   }
@@ -95,7 +96,7 @@ test('a student takes a quiz without its answers, is scored, reads them, and pra
     ClassQuiz: () => ({ classQuiz: quiz(attempts) }),
     SubmitQuizAttempt: (v) => {
       const answers = (v.input as { answers: { questionId: string; choiceIds: string[] }[] }).answers
-      const right = (id: string, chosen: string[]) => (id === Q1 ? chosen.join() === 'c1' : [...chosen].sort().join() === 'a,c')
+      const right = (id: string, chosen: string[]) => (id === Q1 ? chosen.join() === 'c1' : [...chosen].sort().join() === 'c1,c3')
       const attempt = { id: `att${attempts.length + 1}`, score: answers.filter((a) => right(a.questionId, a.choiceIds)).length, total: 2, answers: answers.map((a) => ({ ...a, correct: right(a.questionId, a.choiceIds) })) }
       attempts = [attempt, ...attempts]
       return { submitQuizAttempt: { __typename: 'QuizAttemptPayload', attempt: { __typename: 'QuizAttempt', id: attempt.id, score: attempt.score, total: attempt.total }, quiz: quiz(attempts), userErrors: [] } }
@@ -132,7 +133,7 @@ test('a student takes a quiz without its answers, is scored, reads them, and pra
   expect(sent).toHaveLength(2)
   const [lost, kept] = sent.map((c) => c.variables.input as { clientOpId: string; answers: unknown })
   expect(kept!.clientOpId).toBe(lost!.clientOpId)
-  expect(kept!.answers).toEqual([{ questionId: Q1, choiceIds: ['c1'] }, { questionId: Q2, choiceIds: ['a'] }])
+  expect(kept!.answers).toEqual([{ questionId: Q1, choiceIds: ['c1'] }, { questionId: Q2, choiceIds: ['c1'] }])
   // The answers and the explanation, once submitted.
   const first = page.getByRole('listitem', { name: 'Question 1' })
   await expect(first.getByText('Right')).toBeVisible()
