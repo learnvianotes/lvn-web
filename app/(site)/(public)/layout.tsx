@@ -1,12 +1,10 @@
-import { getTranslations } from 'next-intl/server'
 import { PublicFrame } from '@/components/shell/PublicFrame'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 
-export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations('site')
+export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PublicFrame skip={t('skip')} header={<SiteHeader />} footer={<SiteFooter />}>
+    <PublicFrame header={<SiteHeader />} footer={<SiteFooter />}>
       {children}
     </PublicFrame>
   )
