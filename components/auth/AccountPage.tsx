@@ -61,6 +61,12 @@ export function AccountPage() {
           <span aria-hidden>→</span>
         </Link>
       ) : null}
+      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
+        <Link href="/admin/ai" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
+          {t('aiProviders')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
       <Link href="/classes" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('classes')}
         <span aria-hidden>→</span>
