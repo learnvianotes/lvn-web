@@ -5,7 +5,7 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { BookOpen, Globe, LoaderCircle, MessageCircleQuestion, NotebookPen, Sparkles, Trash2, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { AiAnswerDocument, AiStateDocument, AskAiAboutDoubtDocument, AskAiDocument, DeleteAiAnswerDocument, MyAiAnswersDocument, type AiAnswerFieldsFragment, type AskAiScope } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
@@ -40,6 +40,7 @@ function Follow({ id }: { id: string }) {
 /** `offNotice` false: the surrounding panel already says AI is off. */
 export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = true, initialQuestion = '' }: { scope: AskAiScope; noteId?: string; doubtId?: string; onAsked?: (answer: Answer) => void; compact?: boolean; offNotice?: boolean; initialQuestion?: string }) {
   const t = useTranslations('ai.ask')
+  const inputId = useId()
   const state = useQuery(AiStateDocument, { fetchPolicy: 'cache-and-network' })
   const [askAi, asking] = useMutation(AskAiDocument, { refetchQueries: ['MyAiAnswers'] })
   const [askDoubt, askingDoubt] = useMutation(AskAiAboutDoubtDocument, { refetchQueries: ['MyAiAnswers'] })
@@ -82,12 +83,12 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
   }
   return (
     <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-2">
-      <label htmlFor={`ask-${scope}-${noteId ?? ''}`} className={cn('font-semibold', compact ? 'text-sm' : 'text-base')}>
+      <label htmlFor={inputId} className={cn('font-semibold', compact ? 'text-sm' : 'text-base')}>
         {t(scope === 'THIS_NOTE' ? 'aboutNote' : 'label')}
       </label>
       <div className="flex gap-2">
         <textarea
-          id={`ask-${scope}-${noteId ?? ''}`}
+          id={inputId}
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => {

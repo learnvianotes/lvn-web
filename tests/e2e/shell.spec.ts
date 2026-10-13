@@ -169,3 +169,17 @@ test('the landing’s links all lead to pages that exist, and its sections are t
   await header.getByRole('link', { name: 'Get Started' }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 })
+
+test('a public page keeps what happened on it when the app’s frame arrives with the session', async ({ page }) => {
+  await mockApi(page, { UnsubscribeEmail: () => ({ unsubscribeEmail: { __typename: 'UnsubscribePayload', kind: 'DIGEST', userErrors: [] } }) })
+  // The session is restored a moment after the page is used (a slow network, as on the live environment).
+  await page.route('**/graphql', async (route) => {
+    if ((route.request().postData() ?? '').includes('refreshSession')) await new Promise((r) => setTimeout(r, 1500))
+    return route.fallback()
+  })
+  await page.goto('/unsubscribe?t=good')
+  await page.getByRole('button', { name: 'Stop these emails' }).click()
+  await expect(page.getByRole('status')).toHaveText("Done. You won't get the weekly email.")
+  await expect(page.getByRole('link', { name: 'Your account' })).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Done.' })).toHaveText("Done. You won't get the weekly email.")
+})

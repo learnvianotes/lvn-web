@@ -164,14 +164,24 @@ function AtomCard({ label, selected, children }: { label: string; selected: bool
   )
 }
 
+/**
+ * A card's data as it is in the document now. A view renders with the node it was last given, so two quick edits in a
+ * row (the front, then the back) would otherwise write the first one's old value back over it.
+ */
+export function latestOf<T>({ editor, getPos, node }: Pick<ReactNodeViewProps, 'editor' | 'getPos' | 'node'>): T {
+  const pos = getPos()
+  const now = typeof pos === 'number' ? editor.state.doc.nodeAt(pos) : null
+  return (now?.type === node.type ? now.attrs.data : node.attrs.data) as T
+}
+
 type TableData = { hasHeaderRow: boolean; rows: Inline[][] }
 
-export function TableView({ node, updateAttributes, selected }: ReactNodeViewProps) {
+export function TableView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as TableData
-  const set = (next: TableData) => updateAttributes({ data: next })
+  const update = (change: (d: TableData) => TableData) => updateAttributes({ data: change(latestOf<TableData>({ editor, getPos, node })) })
   const columns = data.rows[0]?.length ?? 1
-  const setCell = (r: number, c: number, value: string) => set({ ...data, rows: data.rows.map((row, i) => (i === r ? row.map((cell, j) => (j === c ? textToInline(value) : cell)) : row)) })
+  const setCell = (r: number, c: number, value: string) => update((d) => ({ ...d, rows: d.rows.map((row, i) => (i === r ? row.map((cell, j) => (j === c ? textToInline(value) : cell)) : row)) }))
   return (
     <AtomCard label={t('cards.table')} selected={selected}>
       <div className="overflow-x-auto">
@@ -195,20 +205,20 @@ export function TableView({ node, updateAttributes, selected }: ReactNodeViewPro
         </table>
       </div>
       <div className="flex flex-wrap gap-2 text-xs">
-        <button type="button" className={control} onClick={() => set({ ...data, rows: [...data.rows, Array.from({ length: columns }, () => [])] })} disabled={data.rows.length >= 200}>
+        <button type="button" className={control} onClick={() => update((d) => ({ ...d, rows: [...d.rows, Array.from({ length: d.rows[0]?.length ?? 1 }, () => [])] }))} disabled={data.rows.length >= 200}>
           {t('addRow')}
         </button>
-        <button type="button" className={control} onClick={() => set({ ...data, rows: data.rows.map((row) => [...row, []]) })} disabled={columns >= 20}>
+        <button type="button" className={control} onClick={() => update((d) => ({ ...d, rows: d.rows.map((row) => [...row, []]) }))} disabled={columns >= 20}>
           {t('addColumn')}
         </button>
-        <button type="button" className={control} onClick={() => set({ ...data, rows: data.rows.slice(0, -1) })} disabled={data.rows.length <= 1}>
+        <button type="button" className={control} onClick={() => update((d) => ({ ...d, rows: d.rows.slice(0, -1) }))} disabled={data.rows.length <= 1}>
           {t('removeRow')}
         </button>
-        <button type="button" className={control} onClick={() => set({ ...data, rows: data.rows.map((row) => row.slice(0, -1)) })} disabled={columns <= 1}>
+        <button type="button" className={control} onClick={() => update((d) => ({ ...d, rows: d.rows.map((row) => row.slice(0, -1)) }))} disabled={columns <= 1}>
           {t('removeColumn')}
         </button>
         <label className="flex items-center gap-1.5">
-          <input type="checkbox" checked={data.hasHeaderRow} onChange={(e) => set({ ...data, hasHeaderRow: e.target.checked })} />
+          <input type="checkbox" checked={data.hasHeaderRow} onChange={(e) => update((d) => ({ ...d, hasHeaderRow: e.target.checked }))} />
           {t('headerRow')}
         </label>
       </div>
@@ -218,10 +228,10 @@ export function TableView({ node, updateAttributes, selected }: ReactNodeViewPro
 
 type QuestionData = { prompt: Doc; answer: Doc; hint?: Doc }
 
-export function QuestionView({ node, updateAttributes, selected }: ReactNodeViewProps) {
+export function QuestionView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as QuestionData
-  const set = (patch: Partial<QuestionData>) => updateAttributes({ data: { ...data, ...patch } })
+  const set = (patch: Partial<QuestionData>) => updateAttributes({ data: { ...latestOf<QuestionData>({ editor, getPos, node }), ...patch } })
   return (
     <AtomCard label={t('cards.question')} selected={selected}>
       <Field label={t('prompt')} value={docText(data.prompt)} onChange={(v) => set({ prompt: textToDoc(v) })} />
@@ -233,19 +243,20 @@ export function QuestionView({ node, updateAttributes, selected }: ReactNodeView
 
 type QuizData = { question: Doc; choices: { id: string; content: Inline }[]; correct: string[]; multiple: boolean; explanation?: Doc }
 
-export function QuizView({ node, updateAttributes, selected }: ReactNodeViewProps) {
+export function QuizView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as QuizData
   const group = useId()
-  const set = (next: QuizData) => updateAttributes({ data: next })
-  const toggle = (id: string, on: boolean) => {
-    const correct = data.multiple ? (on ? [...data.correct, id] : data.correct.filter((c) => c !== id)) : [id]
-    set({ ...data, correct: correct.length ? correct : data.correct })
-  }
-  const nextId = () => 'abcdefgh'.split('').find((l) => !data.choices.some((c) => c.id === l)) ?? newCardId().slice(-8)
+  const update = (change: (d: QuizData) => QuizData) => updateAttributes({ data: change(latestOf<QuizData>({ editor, getPos, node })) })
+  const toggle = (id: string, on: boolean) =>
+    update((d) => {
+      const correct = d.multiple ? (on ? [...d.correct, id] : d.correct.filter((c) => c !== id)) : [id]
+      return { ...d, correct: correct.length ? correct : d.correct }
+    })
+  const nextId = (d: QuizData) => 'abcdefgh'.split('').find((l) => !d.choices.some((c) => c.id === l)) ?? newCardId().slice(-8)
   return (
     <AtomCard label={t('cards.quiz')} selected={selected}>
-      <Field label={t('question')} value={docText(data.question)} onChange={(v) => set({ ...data, question: textToDoc(v) })} />
+      <Field label={t('question')} value={docText(data.question)} onChange={(v) => update((d) => ({ ...d, question: textToDoc(v) }))} />
       <fieldset className="flex flex-col gap-1.5">
         <legend className="mb-1">
           <Label>{t('choices')}</Label>
@@ -259,17 +270,19 @@ export function QuizView({ node, updateAttributes, selected }: ReactNodeViewProp
               checked={data.correct.includes(choice.id)}
               onChange={(e) => toggle(choice.id, e.target.checked)}
             />
-            <input className={cn(control, 'min-w-0 flex-1')} aria-label={t('choice', { n: i + 1 })} value={inlineText(choice.content)} onChange={(e) => set({ ...data, choices: data.choices.map((c) => (c.id === choice.id ? { ...c, content: textToInline(e.target.value) } : c)) })} />
+            <input className={cn(control, 'min-w-0 flex-1')} aria-label={t('choice', { n: i + 1 })} value={inlineText(choice.content)} onChange={(e) => update((d) => ({ ...d, choices: d.choices.map((c) => (c.id === choice.id ? { ...c, content: textToInline(e.target.value) } : c)) }))} />
             <button
               type="button"
               className="text-xs text-muted hover:text-fg disabled:opacity-40"
               disabled={data.choices.length <= 2}
               aria-label={t('removeChoice', { n: i + 1 })}
-              onClick={() => {
-                const choices = data.choices.filter((c) => c.id !== choice.id)
-                const correct = data.correct.filter((c) => c !== choice.id)
-                set({ ...data, choices, correct: correct.length ? correct : [choices[0]!.id] })
-              }}
+              onClick={() =>
+                update((d) => {
+                  const choices = d.choices.filter((c) => c.id !== choice.id)
+                  const correct = d.correct.filter((c) => c !== choice.id)
+                  return { ...d, choices, correct: correct.length ? correct : [choices[0]!.id] }
+                })
+              }
             >
               ✕
             </button>
@@ -277,29 +290,29 @@ export function QuizView({ node, updateAttributes, selected }: ReactNodeViewProp
         ))}
       </fieldset>
       <div className="flex flex-wrap items-center gap-3 text-xs">
-        <button type="button" className={control} disabled={data.choices.length >= 8} onClick={() => set({ ...data, choices: [...data.choices, { id: nextId(), content: [] }] })}>
+        <button type="button" className={control} disabled={data.choices.length >= 8} onClick={() => update((d) => ({ ...d, choices: [...d.choices, { id: nextId(d), content: [] }] }))}>
           {t('addChoice')}
         </button>
         <label className="flex items-center gap-1.5">
-          <input type="checkbox" checked={data.multiple} onChange={(e) => set({ ...data, multiple: e.target.checked, correct: e.target.checked ? data.correct : data.correct.slice(0, 1) })} />
+          <input type="checkbox" checked={data.multiple} onChange={(e) => update((d) => ({ ...d, multiple: e.target.checked, correct: e.target.checked ? d.correct : d.correct.slice(0, 1) }))} />
           {t('multipleAnswers')}
         </label>
       </div>
-      <Field label={t('explanation')} value={data.explanation ? docText(data.explanation) : ''} onChange={(v) => set({ ...data, explanation: v ? textToDoc(v) : undefined })} rows={1} />
+      <Field label={t('explanation')} value={data.explanation ? docText(data.explanation) : ''} onChange={(v) => update((d) => ({ ...d, explanation: v ? textToDoc(v) : undefined }))} rows={1} />
     </AtomCard>
   )
 }
 
 type FlashcardData = { front: Doc; back: Doc }
 
-export function FlashcardView({ node, updateAttributes, selected }: ReactNodeViewProps) {
+export function FlashcardView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as FlashcardData
   return (
     <AtomCard label={t('cards.flashcard')} selected={selected}>
       <div className="grid gap-2 sm:grid-cols-2">
-        <Field label={t('front')} value={docText(data.front)} onChange={(v) => updateAttributes({ data: { ...data, front: textToDoc(v) } })} rows={3} />
-        <Field label={t('back')} value={docText(data.back)} onChange={(v) => updateAttributes({ data: { ...data, back: textToDoc(v) } })} rows={3} />
+        <Field label={t('front')} value={docText(data.front)} onChange={(v) => updateAttributes({ data: { ...latestOf<FlashcardData>({ editor, getPos, node }), front: textToDoc(v) } })} rows={3} />
+        <Field label={t('back')} value={docText(data.back)} onChange={(v) => updateAttributes({ data: { ...latestOf<FlashcardData>({ editor, getPos, node }), back: textToDoc(v) } })} rows={3} />
       </div>
     </AtomCard>
   )

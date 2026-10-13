@@ -25,6 +25,7 @@ import { AnchorChips } from './anchors'
 import { ReadingHighlight, setReadingCard } from './reading'
 import { CARD_MENU, SlashMenu } from './slash'
 import { RecordDialog } from './Recorder'
+import { CardRail } from '../view/CardRail'
 
 export interface NoteEditorProps {
   noteId: string
@@ -46,6 +47,14 @@ export interface NoteEditorProps {
   onEditor?: (editor: Editor | null) => void
   /** Beside a PDF: no outline column or focus mode, a smaller title */
   compact?: boolean
+  /** Under the title: the note's tabs (lvn-backend ADR-0076) */
+  tabs?: React.ReactNode
+  /** Another tab's panel: shown instead of the cards, which stay mounted (autosave, undo) */
+  panel?: React.ReactNode
+  /** The cards' tab panel ids, when there are tabs */
+  contentPanel?: { id: string; labelledBy: string }
+  /** Beside the note from 1280 px: Ask AI (ADR-0076) */
+  aside?: React.ReactNode
 }
 
 const SAFE_LINK = /^(https?:\/\/|mailto:)/i
@@ -56,7 +65,7 @@ const SAFE_LINK = /^(https?:\/\/|mailto:)/i
  * beside the note on wide screens and in a sheet on phones; autosave reports itself in a pill; focus mode hides
  * everything but the writing; read aloud highlights the card being read.
  */
-export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion, onAnchor, onEditor, compact = false }: NoteEditorProps) {
+export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion, onAnchor, onEditor, compact = false, tabs, panel, contentPanel, aside }: NoteEditorProps) {
   const t = useTranslations('notes.editor')
   const anchorRef = useRef(onAnchor)
   anchorRef.current = onAnchor
@@ -128,15 +137,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
     return () => window.removeEventListener('keydown', exit)
   }, [focus])
 
+  // Focus mode is the writing alone: no tabs, rail or dock, and the cards even if another tab was open.
+  const showPanel = !!panel && !focus
+  const wide = !focus && !compact
   return (
-    <div className={cn('grid gap-6', !focus && !compact && 'lg:grid-cols-[13rem_minmax(0,1fr)]')}>
-      {!focus && !compact ? (
-        <nav aria-label={t('outline')} className="hidden lg:block">
-          <div className="sticky top-20">
-            <Outline editor={editor} />
-          </div>
-        </nav>
-      ) : null}
+    <div className={cn('grid gap-6', wide && aside && 'xl:grid-cols-[minmax(0,1fr)_19rem]')}>
       <div className={cn('flex min-w-0 flex-col gap-4', focus && 'mx-auto w-full max-w-3xl')}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
@@ -207,15 +212,21 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
           {meta}
         </div>
 
-        <Toolbar editor={editor} sticky={compact ? 'top-0' : 'top-14'} />
-        <div className={cn('lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
-          {editor ? <CardHandle editor={editor} /> : null}
-          {editor ? <SelectionMenu editor={editor} /> : null}
-          <EditorContent editor={editor} />
+        {!focus ? tabs : null}
+        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel} className={showPanel ? 'hidden' : 'flex flex-col gap-4'}>
+          {wide ? <EditorRail editor={editor} /> : null}
+          <Toolbar editor={editor} sticky={compact ? 'top-0' : 'top-14'} />
+          <div className={cn('lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
+            {editor ? <CardHandle editor={editor} /> : null}
+            {editor ? <SelectionMenu editor={editor} /> : null}
+            <EditorContent editor={editor} />
+          </div>
+          <AddCardMenu editor={editor} />
+          <p className="text-xs text-muted">{t('shortcuts')}</p>
         </div>
-        <AddCardMenu editor={editor} />
-        <p className="text-xs text-muted">{t('shortcuts')}</p>
+        {showPanel ? panel : null}
       </div>
+      {wide && aside ? aside : null}
 
       <Dialog open={contentsOpen} onClose={() => setContentsOpen(false)} title={t('contents')}>
         <Outline editor={editor} onPick={() => setContentsOpen(false)} />
@@ -566,5 +577,29 @@ function Outline({ editor, onPick }: { editor: Editor | null; onPick?: () => voi
         <p className="px-2 text-sm text-muted">{t('outlineEmpty')}</p>
       )}
     </div>
+  )
+}
+
+/** The note's sections as board A's card rail (ADR-0076): each heading card, and Previous and Next between them. */
+function EditorRail({ editor }: { editor: Editor | null }) {
+  const headings = useEditorState({
+    editor,
+    selector: ({ editor: e }) => {
+      const list: { pos: number; text: string }[] = []
+      e?.state.doc.forEach((node, offset) => {
+        if (node.type.name === 'headingCard') list.push({ pos: offset, text: node.textContent })
+      })
+      return list
+    },
+  })
+  return (
+    <CardRail
+      sections={(headings ?? []).map((h) => ({ key: h.pos, text: h.text }))}
+      onGo={(i) => {
+        const h = headings?.[i]
+        if (!h || !editor) return
+        ;(editor.view.nodeDOM(h.pos) as HTMLElement | null)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }}
+    />
   )
 }

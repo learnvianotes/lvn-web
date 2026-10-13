@@ -77,6 +77,8 @@ test('a reader adds a note’s flashcards to their reviews, and can stop', async
     StopStudyingNoteCards: () => ((studying = false), { stopStudyingNoteCards: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
   }, viewerExtras)
   await page.goto(`/notes/${NOTE_ID}`)
+  // A note's flashcards are studied from its Flashcards tab (ADR-0076).
+  await page.getByRole('tablist', { name: 'Note sections' }).getByRole('tab', { name: 'Flashcards' }).click()
   await page.getByRole('button', { name: 'Study these cards' }).click()
   await expect(page.getByRole('link', { name: 'Studying these cards' })).toHaveAttribute('href', '/review')
   expect(calls.find((c) => c.op === 'StudyNoteCards')!.variables).toEqual({ input: { noteId: NOTE_ID } })

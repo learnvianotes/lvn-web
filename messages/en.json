@@ -609,8 +609,8 @@
       "copied": "Link copied",
       "done": "Done",
       "failed": "That did not work. Try again.",
-      "makeCopy": "Make a copy",
-      "makeCopyHint": "A private copy for you to change, credited to the author",
+      "makeCopy": "Fork",
+      "makeCopyHint": "Fork: a private copy for you to change, credited to the author",
       "copyFailed": "Could not make a copy. Try again.",
       "copiedFrom": "Copied from <title></title> by {name}",
       "copiedFromAuthor": "Copied from a note by {name}",
@@ -632,6 +632,62 @@
       "add": "Add to the note",
       "denied": "The browser was not allowed to use the microphone. Allow it in the site's settings and try again.",
       "unsupported": "This browser cannot record audio."
+    },
+    "view": {
+      "tabs": {
+        "label": "Note sections",
+        "content": "Content",
+        "summary": "AI Summary",
+        "flashcards": "Flashcards",
+        "quiz": "Quiz",
+        "discussions": "Discussions"
+      },
+      "breadcrumb": "Breadcrumb",
+      "myNotes": "My notes",
+      "share": "Share",
+      "shareHint": "Copy a link to this note",
+      "linkCopied": "Link copied",
+      "summary": {
+        "none": "No summary yet.",
+        "make": "Summarise with AI",
+        "aiOff": "AI is off, so no summary can be made now."
+      },
+      "flashcards": {
+        "none": "No flashcards in this note yet.",
+        "make": "Make flashcards with AI",
+        "add": "Add a flashcard",
+        "inNote": "In this note",
+        "review": "Review your cards"
+      },
+      "quiz": {
+        "none": "No quiz in this note yet.",
+        "make": "Make a quiz with AI",
+        "add": "Add a quiz",
+        "inNote": "In this note"
+      },
+      "yourResults": "Made for you with AI",
+      "pager": {
+        "label": "Sections",
+        "previous": "Previous section",
+        "next": "Next section",
+        "position": "Section {n} of {total}"
+      },
+      "dock": {
+        "title": "Ask AI about this note",
+        "lead": "One tap, or ask anything. Only you see what AI makes.",
+        "chips": {
+          "EXPLAIN_SIMPLY": "Explain this in simple words",
+          "PRACTICE_QUESTIONS": "Generate practice questions",
+          "FLASHCARDS": "Generate flashcards",
+          "FIND_MISTAKES": "Find common mistakes",
+          "SUMMARIZE": "Summarize this note",
+          "QUIZ": "Generate quiz",
+          "QUICK_NOTE": "Create quick notes",
+          "CREATE_NOTES": "Create quick notes",
+          "EXPLAIN_CODE": "Explain the code"
+        },
+        "results": "Your results"
+      }
     }
   },
   "moderation": {

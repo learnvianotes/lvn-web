@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Check, Copy, CopyPlus, GitFork, Globe, Handshake, Lock, UserPlus, Users, X } from 'lucide-react'
+import { Check, Copy, GitFork, Globe, Handshake, Lock, Share2, UserPlus, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -285,7 +285,7 @@ export function MakeCopyButton({ copy, className }: { copy: ReturnType<typeof us
   const t = useTranslations('notes.share')
   return (
     <Button variant="secondary" size="sm" className={cn('gap-1.5', className)} disabled={copy.copying} title={t('makeCopyHint')} onClick={() => void copy.makeCopy()}>
-      <CopyPlus className="size-4" aria-hidden />
+      <GitFork className="size-4" aria-hidden />
       {t('makeCopy')}
     </Button>
   )
@@ -322,5 +322,37 @@ export function VisibilityBadge({ visibility }: { visibility: Visibility }) {
       <Icon className="size-3" aria-hidden />
       {t(`visibility.${visibility}`)}
     </span>
+  )
+}
+
+/**
+ * Share for someone who reads a note (board A's header, lvn-backend ADR-0076): copies its link — the public page of a
+ * public note, else the note in the app, which opens for whoever it is shared with.
+ */
+export function CopyLinkButton({ note }: { note: Pick<NoteMeta, 'id' | 'slug' | 'visibility'> }) {
+  const t = useTranslations('notes.view')
+  const [copied, setCopied] = useState(false)
+  const copyLink = async () => {
+    const link = `${window.location.origin}${note.visibility === 'PUBLIC' ? publicNotePath(note) : `/notes/${note.id}`}`
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      window.prompt(t('shareHint'), link)
+    }
+  }
+  return (
+    <>
+      <Button variant="secondary" size="sm" className="gap-1.5" title={t('shareHint')} onClick={() => void copyLink()}>
+        <Share2 className="size-4" aria-hidden />
+        {t('share')}
+      </Button>
+      {copied ? (
+        <span role="status" className="text-xs font-medium text-accent">
+          {t('linkCopied')}
+        </span>
+      ) : null}
+    </>
   )
 }

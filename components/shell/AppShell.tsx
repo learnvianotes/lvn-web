@@ -54,9 +54,15 @@ const ENTRIES: Entry[] = [
   { href: '/resources/saved', key: 'saved', icon: Bookmark },
 ]
 
-/** The signed-in app's frame: the sidebar from 1024 px (a drawer below), and the top bar with search, bell and avatar. */
-export function AppShell({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
+/**
+ * The signed-in app's frame: the sidebar from 1024 px (a drawer below), and the top bar with search, bell and avatar.
+ * With `visitor` (a public page before or without a session) it is the visitor's header instead; the page sits at the
+ * same place in both, so switching once the session is known never mounts it again (a page's state, such as an
+ * unsubscribe link's answer, survives).
+ */
+export function AppShell({ children, footer, visitor }: { children: ReactNode; footer?: ReactNode; visitor?: ReactNode }) {
   const t = useTranslations('shell')
+  const app = !visitor
   const [open, setOpen] = useState(false)
   const path = usePathname()
   useEffect(() => setOpen(false), [path])
@@ -67,22 +73,24 @@ export function AppShell({ children, footer }: { children: ReactNode; footer?: R
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+    <div className={cn('min-h-dvh', app && 'lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]')}>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2">
         {t('skip')}
       </a>
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-3 py-4 lg:flex">
-        <Brand />
-        <Nav />
-      </aside>
+      {app ? (
+        <aside className="sticky top-0 hidden h-dvh flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-3 py-4 lg:flex">
+          <Brand />
+          <Nav />
+        </aside>
+      ) : null}
       <div className="flex min-w-0 flex-col">
-        <TopBar onMenu={() => setOpen(true)} />
-        <main id="main" className="mx-auto min-h-[70dvh] w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
+        {app ? <TopBar onMenu={() => setOpen(true)} /> : visitor}
+        <main id="main" className={app ? 'mx-auto min-h-[70dvh] w-full max-w-6xl flex-1 px-4 py-6 sm:py-8' : 'min-h-[70dvh]'}>
           {children}
         </main>
         {footer}
       </div>
-      {open ? (
+      {app && open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('menu')}>
           <button type="button" aria-label={t('close')} className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-2xl">

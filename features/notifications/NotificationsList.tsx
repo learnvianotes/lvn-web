@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { MarkNotificationsReadDocument, NotificationsDocument, type NotificationFieldsFragment } from '@/graphql/generated/graphql'
 import { ago } from '@/features/notes/look'
-import { describeNotification } from './describe'
+import { describeNotification, notificationHref } from './describe'
 
 const PAGE = 20
 
@@ -57,7 +57,7 @@ export function NotificationsList() {
 
   const open = (n: NotificationFieldsFragment) => {
     if (!n.readAt) void markRead({ ids: [n.id] })
-    router.push(n.path)
+    router.push(notificationHref(n))
   }
 
   const older = async () => {
