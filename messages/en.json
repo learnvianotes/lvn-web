@@ -212,7 +212,8 @@
     "home": "Home",
     "exams": "Exams",
     "rhythm": "Rhythm",
-    "review": "Review flashcards"
+    "review": "Review flashcards",
+    "resources": "Your resources"
   },
   "notes": {
     "pageTitle": "Note",
@@ -599,7 +600,8 @@
         "GROUP_POST": "Report this post",
         "CLASSROOM_POST": "Report this announcement",
         "DOUBT": "Report this doubt",
-        "GROUP": "Report this group"
+        "GROUP": "Report this group",
+        "RESOURCE": "Report this resource"
       },
       "lead": "What is wrong with it? Moderators look at every report; the author is not told who sent it.",
       "reasons": {
@@ -666,7 +668,8 @@
         "GROUP_POST": "Post",
         "CLASSROOM_POST": "Announcement",
         "DOUBT": "Doubt",
-        "GROUP": "Group"
+        "GROUP": "Group",
+        "RESOURCE": "Resource"
       },
       "state": {
         "OK": "Public",
@@ -690,7 +693,8 @@
         "SUSPEND": "Suspend",
         "KEEP": "Keep the decision",
         "RESTORE": "Put it back",
-        "LIFT": "Lift the suspension"
+        "LIFT": "Lift the suspension",
+        "REJECT": "Reject"
       },
       "failed": "That did not work. Try again.",
       "notAllowed": "Only moderators can see this page",
@@ -711,7 +715,13 @@
       "suspendFor": "Suspend for",
       "days": "{count, plural, one {# day} other {# days}}",
       "suspendedUntil": "Suspended until {until}",
-      "removedReason": "Removed: {reason}"
+      "removedReason": "Removed: {reason}",
+      "resourceState": {
+        "PENDING": "Waiting",
+        "APPROVED": "In the catalogue",
+        "REJECTED": "Rejected"
+      },
+      "resourceLead": "Approve it if it helps learners and the link is what it says; reject it with a reason the person can act on."
     },
     "standing": {
       "title": "Your account",
@@ -989,7 +999,9 @@
     "revisionReminder": "Today’s revision for {exam} is waiting",
     "revisionReminderAny": "Today’s revision is waiting",
     "teacherApproved": "You’re a verified teacher now: your classes can take students",
-    "teacherDeclined": "Your application to teach wasn’t approved; see why on Teach"
+    "teacherDeclined": "Your application to teach wasn’t approved; see why on Teach",
+    "resourceApproved": "Your resource is in the catalogue",
+    "resourceRejected": "Moderators did not approve your resource"
   },
   "people": {
     "teacher": "Teacher",
@@ -2088,5 +2100,71 @@
     "accountPending": "Teacher application: being reviewed",
     "accountDeclined": "Teacher application: not approved — apply again",
     "classBanner": "Students can join this class once you are verified as a teacher. Until then, set it up: announcements, quizzes and notes are ready for them."
+  },
+  "resources": {
+    "title": "Your resources",
+    "lead": "Books, courses, tools, software and hardware you sent to the catalogue. Moderators look at each one before it is public.",
+    "add": "Add a resource",
+    "none": "You have not added a resource yet.",
+    "status": {
+      "PENDING": "Waiting for moderators",
+      "APPROVED": "In the catalogue",
+      "REJECTED": "Not approved"
+    },
+    "type": {
+      "BOOK": "Book",
+      "COURSE": "Course",
+      "TOOL": "Tool",
+      "SOFTWARE": "Software",
+      "HARDWARE": "Hardware",
+      "OTHER": "Other"
+    },
+    "by": "by {author}",
+    "submittedBy": "Added by {name}",
+    "reasonTitle": "Why moderators did not approve it",
+    "editAgain": "Edit and send again",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this resource? This cannot be undone.",
+    "deleted": "Deleted.",
+    "open": "Open {host}",
+    "pendingNote": "Waiting for moderators: only you can see it until they approve it.",
+    "notFound": "This resource is not here.",
+    "notFoundLead": "It may be waiting for moderators, or it was removed.",
+    "form": {
+      "title": "Add a resource",
+      "editTitle": "Edit your resource",
+      "lead": "Share something that helped you learn: a book, a course, a tool. Moderators look at it before anyone else can see it. No shop links: the catalogue has no prices.",
+      "link": "Link",
+      "linkHint": "The page of the book, course or tool",
+      "isbn": "ISBN",
+      "isbnHint": "For a book: we look it up on Open Library",
+      "lookUp": "Fill in from the page",
+      "lookUpIsbn": "Look up the book",
+      "lookingUp": "Reading the page…",
+      "notFound": "We could not read that page. Fill in the details yourself.",
+      "exists": "This is already in the catalogue:",
+      "type": "What is it?",
+      "name": "Title",
+      "author": "By (author or maker, optional)",
+      "description": "Why it helps (optional)",
+      "descriptionHint": "What it covers, and who it is for",
+      "topics": "Topics",
+      "findTopic": "Find a topic, e.g. arrays",
+      "findTopicHelp": "Choose 1 to 5 topics from LearnViaNotes’ list.",
+      "noTopicFound": "No topic has those words.",
+      "addTopic": "Add {title}",
+      "removeTopic": "Remove {title}",
+      "cover": "Picture (optional)",
+      "useFound": "Use the picture from the page",
+      "upload": "Upload a picture",
+      "removeCover": "No picture",
+      "send": "Send to moderators",
+      "save": "Save",
+      "saveAgain": "Save and send again",
+      "cancel": "Cancel",
+      "failed": "That did not work. Try again.",
+      "sent": "Sent. You will be told when moderators decide."
+    }
   }
 }

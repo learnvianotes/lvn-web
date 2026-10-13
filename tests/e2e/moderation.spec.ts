@@ -51,7 +51,7 @@ test('the owner of a hidden note sees why, cannot make it public, and appeals on
 test('a platform admin works through the queue: reasons first, then the decision', async ({ page }) => {
   let open = true
   const item = {
-    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null,
+    __typename: 'ModerationCase', resource: null, suspendedUntil: null, removedGroup: null,
     entityType: 'NOTE',
     entityId: NOTE_ID,
     scope: 'PLATFORM',
@@ -103,12 +103,12 @@ test('platform admins see every scope: a group’s appealed post to put back or 
   const GROUP = '01920000-0000-7000-8000-0000000a0001'
   const at = new Date(Date.now() - 7_200_000).toISOString()
   const appealed = {
-    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: at, note: null, user: null, group: null, reports: [],
+    __typename: 'ModerationCase', resource: null, suspendedUntil: null, removedGroup: null, entityType: 'GROUP_POST', entityId: 'p2', scope: 'GROUP', scopeId: GROUP, openedAt: at, note: null, user: null, group: null, reports: [],
     content: { __typename: 'ModeratedContent', entityType: 'GROUP_POST', id: 'p2', excerpt: 'Idea: dark mode', moderation: 'HIDDEN', moderationReason: 'Off topic.', deleted: false, path: `/groups/${GROUP}`, author: ravi },
     appeal: { __typename: 'ModerationAppeal', message: 'It is on topic: the app needs it.', createdAt: at },
   }
   const reported = {
-    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, appeal: null,
+    __typename: 'ModerationCase', resource: null, suspendedUntil: null, removedGroup: null, entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, appeal: null,
     group: { __typename: 'Group', id: GROUP, name: 'Heaps club' },
     reports: [{ __typename: 'ModerationReport', reason: 'HATE', details: 'The group name', createdAt: at, reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
   }
@@ -139,7 +139,7 @@ test('platform admins suspend an account for some days, and lift a suspension af
   const DEV = '01920000-0000-7000-8000-00000000dddd'
   const at = new Date(Date.now() - 3_600_000).toISOString()
   const reportedPerson = {
-    __typename: 'ModerationCase', suspendedUntil: null, removedGroup: null, entityType: 'USER', entityId: ravi.id, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, content: null, group: null, appeal: null,
+    __typename: 'ModerationCase', resource: null, suspendedUntil: null, removedGroup: null, entityType: 'USER', entityId: ravi.id, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, content: null, group: null, appeal: null,
     user: ravi,
     reports: [{ __typename: 'ModerationReport', reason: 'SPAM', details: 'The same link everywhere', createdAt: at, reporter: { __typename: 'User', id: USER, displayName: 'Asha Rao' } }],
   }
@@ -179,7 +179,7 @@ test('a removed group’s appeal: platform admins read why it went and put it ba
   const GROUP = '01920000-0000-7000-8000-0000000a0001'
   const at = new Date(Date.now() - 3_600_000).toISOString()
   const removed = {
-    __typename: 'ModerationCase', suspendedUntil: null, entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, group: null, reports: [],
+    __typename: 'ModerationCase', resource: null, suspendedUntil: null, entityType: 'GROUP', entityId: GROUP, scope: 'PLATFORM', scopeId: null, openedAt: at, note: null, user: null, content: null, group: null, reports: [],
     removedGroup: { __typename: 'RemovedGroup', id: GROUP, name: 'Exam leaks', reason: 'Shares exam papers.', removedAt: at },
     appeal: { __typename: 'ModerationAppeal', message: 'Last year’s papers, shared by the teacher.', createdAt: at },
   }

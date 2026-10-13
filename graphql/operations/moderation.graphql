@@ -72,6 +72,9 @@ query ModerationQueue($after: String, $scope: ModerationScopeInput) {
           displayName
           handle
         }
+        resource {
+          ...ResourceFields
+        }
         reports {
           reason
           details

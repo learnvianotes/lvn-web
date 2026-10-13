@@ -93,6 +93,8 @@ function choicesFor(c: Case): Choice[] {
   const hide: Choice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
   const remove: Choice = { action: 'REMOVE', label: 'REMOVE', icon: Trash2, tone: 'text-red-600 dark:text-red-400' }
   const approve: Choice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
+  // A new resource is approved or rejected (ADR-0074); people's reports on one in the catalogue are dismissed, or it is removed.
+  if (c.entityType === 'RESOURCE') return c.reports.some((x) => x.reporter) ? [dismiss, remove] : [approve, { ...remove, label: 'REJECT' }]
   // Accounts are warned or suspended; a suspension is lifted or kept (ADR-0053).
   if (c.entityType === 'USER') return c.suspendedUntil ? [{ action: 'APPROVE', label: 'LIFT', icon: Check, tone: '' }, { ...dismiss, label: c.appeal ? 'KEEP' : 'DISMISS' }, warn] : [dismiss, warn, { action: 'SUSPEND', label: 'SUSPEND', icon: Ban, tone: 'text-red-600 dark:text-red-400' }]
   // A removed group is put back or stays removed.
@@ -141,7 +143,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
     }
   }
 
-  const title = c.note ? c.note.title || t('untitled') : c.group ? c.group.name : c.removedGroup ? c.removedGroup.name : c.user ? c.user.displayName : t(`entity.${c.entityType}`)
+  const title = c.note ? c.note.title || t('untitled') : c.resource ? c.resource.title : c.group ? c.group.name : c.removedGroup ? c.removedGroup.name : c.user ? c.user.displayName : t(`entity.${c.entityType}`)
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5" aria-label={title}>
       <header className="flex flex-wrap items-start justify-between gap-2">
@@ -167,11 +169,20 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
               {c.user.displayName} <span className="text-sm font-normal text-muted">@{c.user.handle}</span>
             </h2>
           ) : null}
+          {c.resource ? (
+            <h2 className="text-lg font-bold">
+              <Link href={`/resources/${c.resource.id}`} className="hover:text-accent">
+                {c.resource.title}
+              </Link>
+            </h2>
+          ) : null}
           {author ? <p className="text-sm text-muted">{t('by', { name: author.displayName, handle: author.handle })}</p> : null}
+          {c.resource ? <p className="text-sm text-muted">{t('by', { name: c.resource.submittedBy.displayName, handle: c.resource.submittedBy.handle })}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {platform && c.scope !== 'PLATFORM' ? <span className="rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
           {state ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`state.${state}`)}</span> : null}
+          {c.resource ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`resourceState.${c.resource.status}`)}</span> : null}
           {c.suspendedUntil ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
           {c.removedGroup ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t(`state.REMOVED`)}</span> : null}
           <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('opened', { when: ago(c.openedAt) })}</span>
@@ -179,6 +190,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
       </header>
       {c.note?.excerpt ? <p className="line-clamp-6 whitespace-pre-line rounded-xl bg-surface-2 px-3 py-2 text-sm">{c.note.excerpt}</p> : null}
       {c.removedGroup ? <p className="rounded-xl bg-surface-2 px-3 py-2 text-sm">{t('removedReason', { reason: c.removedGroup.reason })}</p> : null}
+      {c.resource ? <ResourceCase resource={c.resource} /> : null}
       {c.content ? (
         <div className="flex flex-col gap-1 rounded-xl bg-surface-2 px-3 py-2 text-sm">
           <p className="line-clamp-6 whitespace-pre-line">{c.content.deleted ? <em className="text-muted">{t('deleted')}</em> : c.content.excerpt}</p>
@@ -244,5 +256,26 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
         ) : null}
       </div>
     </article>
+  )
+}
+
+/** What moderators judge a resource by (ADR-0074): what it is, where its link goes, and what the person said about it. */
+function ResourceCase({ resource: r }: { resource: NonNullable<Case['resource']> }) {
+  const t = useTranslations('moderation.queue')
+  const types = useTranslations('resources.type')
+  return (
+    <div className="flex flex-col gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
+      <p className="text-muted">{t('resourceLead')}</p>
+      <p>
+        <strong className="font-semibold">{types(r.type)}</strong>
+        {r.author ? ` · ${r.author}` : ''}
+        {r.isbn ? ` · ISBN ${r.isbn}` : ''}
+      </p>
+      <a href={r.url} rel="ugc nofollow noopener" target="_blank" className="break-all font-semibold text-accent hover:underline">
+        {r.url}
+      </a>
+      {r.description ? <p className="line-clamp-6 whitespace-pre-line">{r.description}</p> : null}
+      {r.topics.length ? <p className="text-xs text-muted">{r.topics.flatMap((x) => (x ? [x.title] : [])).join(' · ')}</p> : null}
+    </div>
   )
 }
