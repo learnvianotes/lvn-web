@@ -1,0 +1,41 @@
+# Study aids for public notes (lvn-backend ADR-0061): made when a note is published PUBLIC.
+
+fragment AiInsightFields on AiInsight {
+  id
+  task
+  status
+  markdown
+  title
+  cards {
+    type
+    content
+  }
+  hidden
+  versionId
+}
+
+query NoteInsights($id: UUID!) {
+  note(id: $id) {
+    id
+    aiInsights {
+      ...AiInsightFields
+    }
+    noteProcessingStatus {
+      versionId
+      done
+      steps {
+        task
+        status
+      }
+    }
+  }
+}
+
+mutation SetAiInsightHidden($id: UUID!, $hidden: Boolean!) {
+  setAiInsightHidden(id: $id, hidden: $hidden) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}

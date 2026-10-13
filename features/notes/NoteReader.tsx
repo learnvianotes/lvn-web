@@ -17,6 +17,7 @@ import { CardView } from './render/CardView'
 import { Discussion } from '@/features/discussion/Discussion'
 import { NoteCredits } from '@/features/workspaces/Credits'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
+import { StudyAids } from '@/features/ai/StudyAids'
 
 /** A note the viewer can read but not edit: its published version, with an outline and read aloud. */
 export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[] }) {
@@ -91,6 +92,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
             <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
           ))}
         </div>
+        <StudyAids noteId={meta.id} />
         <Discussion target={{ type: 'NOTE', id: meta.id }} />
       </article>
       <AiPanel noteId={meta.id} open={aiOpen} onClose={() => setAiOpen(false)} canEdit={false} canFork={meta.viewerCan.fork} hasCode={cards.some((c) => c.type === 'code')} />

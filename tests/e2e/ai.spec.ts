@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { NOTE_ID, cards, meta, mockApi, p, page1, type Handler } from './support/notes-api'
+import { NOTE_ID, cards, meta, mockApi, mockLive, p, page1, type Handler } from './support/notes-api'
 
 /**
  * AI tasks on a note (lvn-backend ADR-0059) against a mocked API: running a task and waiting for it, Markdown results,
@@ -217,4 +217,58 @@ test("the account page shows today's AI allowance, or why AI is off", async ({ p
   state = aiState({ available: false, reason: 'BUDGET' })
   await page.reload()
   await expect(page.getByRole('region', { name: 'AI' }).getByText("AI is resting until next month: this month's AI budget is used up.")).toBeVisible()
+})
+
+const insight = (task: string, over: Record<string, unknown> = {}) => ({ __typename: 'AiInsight', id: `01920000-0000-7000-8000-0000000a70${task.length.toString().padStart(2, '0')}`, task, status: 'READY', markdown: null, title: null, cards: null, hidden: false, versionId: '01920000-0000-7000-8000-0000000e0001', ...over })
+const quizCard = aiCard('quiz', { question: { type: 'doc', content: [p('Its running time?')] }, choices: [{ id: 'c1', content: [{ type: 'text', text: 'O(n)' }] }, { id: 'c2', content: [{ type: 'text', text: 'O(log n)' }] }], correct: ['c2'], multiple: false })
+
+test('a reader of a public note tries its study aids and keeps the quiz as their own note (lvn-backend ADR-0061)', async ({ page }) => {
+  const calls = await mockApi(page, {
+    ...reader(true, {}),
+    NoteInsights: () => ({ note: { __typename: 'Note', id: NOTE_ID, noteProcessingStatus: null, aiInsights: [insight('SUMMARIZE', { markdown: 'Binary search **halves** the range.' }), insight('QUIZ', { title: 'Quiz — Searching', cards: [quizCard] })] } }),
+    KeepAiCards: () => ({ keepAiCards: { __typename: 'KeepAiCardsPayload', noteId: NEW_NOTE, userErrors: [] } }),
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  const aids = page.getByRole('region', { name: 'Study aids' })
+  await expect(aids.locator('strong')).toHaveText('halves')
+  await expect(aids.getByRole('button', { name: /Hide from readers/ })).toHaveCount(0)
+  await aids.getByRole('tab', { name: 'Quiz' }).click()
+  await aids.getByRole('radio', { name: 'O(log n)' }).click()
+  await aids.getByRole('button', { name: 'Check' }).click()
+  await expect(aids.getByText('Correct!')).toBeVisible()
+  await aids.getByRole('button', { name: 'Save as my note' }).click()
+  await expect(aids.getByRole('link', { name: 'Open it' })).toHaveAttribute('href', `/notes/${NEW_NOTE}`)
+  expect(calls.find((c) => c.op === 'KeepAiCards')?.variables).toEqual({ input: { artifactId: insight('QUIZ').id, cardIndexes: [0], into: 'NEW_NOTE' } })
+})
+
+test('the owner watches the study aids being made, live, and hides one from readers', async ({ page }) => {
+  const live = await mockLive(page)
+  let stage: 'making' | 'done' = 'making'
+  let hidden = false
+  const answer = () => ({
+    note: {
+      __typename: 'Note',
+      id: NOTE_ID,
+      noteProcessingStatus: { __typename: 'NoteProcessing', versionId: insight('SUMMARIZE').versionId, done: stage === 'done', steps: [] },
+      aiInsights: [insight('SUMMARIZE', { markdown: 'Binary search halves the range.', hidden }), insight('FLASHCARDS', stage === 'done' ? { cards: [aiCard('flashcard', { front: { type: 'doc', content: [p('Halve what?')] }, back: { type: 'doc', content: [p('The range')] } })] } : { status: 'RUNNING' })],
+    },
+  })
+  const calls = await mockApi(page, {
+    NoteToEdit: () => ({ note: { ...meta({ publishedAt: new Date().toISOString(), publishedVersion: { __typename: 'NoteVersion', id: insight('SUMMARIZE').versionId, number: 1, createdAt: new Date().toISOString() } }), cards: page1(cards) } }),
+    NoteInsights: answer,
+    SetAiInsightHidden: (v) => ((hidden = v.hidden as boolean), { setAiInsightHidden: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
+  })
+  await page.goto(`/notes/${NOTE_ID}`)
+  const aids = page.getByRole('region', { name: 'Study aids' })
+  await expect(aids.getByText('Made by AI from your published note for its readers.', { exact: false })).toBeVisible()
+  await aids.getByRole('tab', { name: 'Flashcards' }).click()
+  await expect(aids.getByRole('status')).toHaveText('Being made…')
+  stage = 'done'
+  await expect.poll(() => live.subscriptions.length).toBeGreaterThan(0)
+  live.send({ kind: 'NOTE_PROCESSING', id: NOTE_ID })
+  await expect(aids.getByText('Halve what?')).toBeVisible({ timeout: 2500 })
+  await aids.getByRole('tab', { name: 'Summarise' }).click()
+  await aids.getByRole('button', { name: 'Hide from readers' }).click()
+  await expect(aids.getByText('Hidden from readers', { exact: true })).toBeVisible()
+  expect(calls.find((c) => c.op === 'SetAiInsightHidden')?.variables).toEqual({ id: insight('SUMMARIZE').id, hidden: true })
 })

@@ -22,6 +22,8 @@ export interface PublicNote {
   /** A project workspace's showcase: who it credits (lvn-backend ADR-0048) */
   contributors?: { role: 'CONTRIBUTOR' | 'MENTOR'; user: { id: string; displayName: string; handle: string } }[]
   cards: { id: string; type: CardType; content: unknown; hasMedia: boolean }[]
+  /** Study aids made when it was published (lvn-backend ADR-0061): the READY ones its owner has not hidden */
+  aiInsights?: { id: string; task: string; status: string; markdown: string | null; title: string | null; cards: { type: string; content: unknown }[] | null }[]
 }
 
 async function query<T>(source: string, variables: Record<string, unknown>, tags: string[]): Promise<T> {
@@ -46,6 +48,7 @@ const NOTE = `query PublicNote($id: UUID!, $after: String) {
     topics { id title subject { title } }
     forkedFrom { title author { displayName } }
     contributors { role user { id displayName handle } }
+    aiInsights { id task status markdown title cards { type content } }
     cards(first: 100, after: $after) { edges { node { id type content media { id } } } pageInfo { hasNextPage endCursor } }
   }
 }`

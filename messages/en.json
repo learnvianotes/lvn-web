@@ -1598,6 +1598,27 @@
       "draft": "draft",
       "history": "Your questions",
       "none": "No questions yet."
+    },
+    "aids": {
+      "title": "Study aids",
+      "lead": "Made by AI from this note: a summary, key concepts, questions to practise with, a quiz and flashcards.",
+      "leadOwner": "Made by AI from your published note for its readers. Hide any you don't want them to see.",
+      "making": "Being made…",
+      "failed": "This one could not be made.",
+      "status": {
+        "QUEUED": "Waiting its turn",
+        "RUNNING": "Being made",
+        "READY": "Ready",
+        "FAILED": "Could not be made"
+      },
+      "hide": "Hide from readers",
+      "show": "Show to readers",
+      "hiddenChip": "Hidden from readers",
+      "keep": "Save as my note",
+      "keepInApp": "Save these cards in your notes",
+      "saved": "Saved as a new private note.",
+      "openNote": "Open it",
+      "keepFailed": "Those cards weren't saved. Try again."
     }
   }
 }

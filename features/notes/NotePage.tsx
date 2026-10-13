@@ -23,6 +23,7 @@ import { savedStateOf } from './model/save'
 import { useLoadedNote } from './useLoadedNote'
 import { Discussion } from '@/features/discussion/Discussion'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
+import { StudyAids } from '@/features/ai/StudyAids'
 
 /** A note: the editor for its owner and editors, the reader for everyone else (loading: ./useLoadedNote). */
 export function NotePage({ id }: { id: string }) {
@@ -202,6 +203,8 @@ export function NotePage({ id }: { id: string }) {
           onOpenVersion={(versionId) => setVersionsOpen({ open: true, versionId })}
           onAnchor={(anchor, cardId) => router.push(`/notes/${id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)}
         />
+        {/* A public note's study aids (lvn-backend ADR-0061): their progress, and hiding them, for the owner. */}
+        {meta.publishedVersion ? <StudyAids noteId={id} /> : null}
         {/* What readers said about the published note (lvn-backend ADR-0047). */}
         {meta.publishedVersion ? <Discussion target={{ type: 'NOTE', id }} /> : null}
         <VersionsDialog
