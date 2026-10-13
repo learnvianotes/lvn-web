@@ -1207,3 +1207,45 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   // Clean up: the submitter deletes it.
   await api('mutation ($input: ResourceIdInput!) { deleteResource(input: $input) { ok } }', { input: { id } }, author.accessToken)
 })
+
+test('a new learner opens every sidebar entry: each page answers with its heading, and no query fails (lvn-backend ADR-0076)', async ({ page }, info) => {
+  const stamp = `${Date.now()}-${info.project.name}`
+  const failures: string[] = []
+  page.on('pageerror', (e) => failures.push(`page error: ${e.message}`))
+  page.on('response', async (res) => {
+    if (!res.url().endsWith('/graphql') || res.request().method() !== 'POST') return
+    const sent = res.request().postDataJSON() as { operationName?: string; query?: string } | null
+    // A visitor's first page asks to refresh a session there is none of: that answer is expected.
+    if (sent?.query?.includes('refreshSession')) return
+    const op = sent?.operationName ?? '?'
+    const body = (await res.json().catch(() => null)) as { errors?: { message: string }[] } | null
+    if (res.status() >= 500 || body?.errors?.length) failures.push(`${op}: ${res.status()} ${body?.errors?.map((e) => e.message).join('; ') ?? ''}`)
+  })
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Shell')
+  await page.getByLabel('Email', { exact: true }).fill(`live-shell-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  const entries: [string, RegExp][] = [
+    ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
+    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/resources\/saved$/], ['Subjects', /\/core$/],
+  ]
+  for (const [name, url] of entries) {
+    if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name, exact: true }).click()
+    await expect(page, name).toHaveURL(url)
+    await expect(page.getByRole('heading', { level: 1 }).first(), name).toBeVisible()
+    await expect(page.getByText('Something went wrong'), name).toHaveCount(0)
+  }
+  // The top bar: the avatar opens the account, and Create Note makes a note that opens.
+  await page.goto('/home')
+  await page.getByRole('link', { name: 'Your account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Create Note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  expect(failures).toEqual([])
+})

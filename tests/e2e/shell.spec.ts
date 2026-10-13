@@ -70,6 +70,24 @@ test('on a phone the menu holds the same entries; choosing one goes there and cl
   await expect(menu).toHaveCount(0)
 })
 
+test('public pages keep a signed-in learner in the app’s frame; a visitor gets the visitor’s header', async ({ page, browser }, info) => {
+  await mockApi(page, { Resources: () => ({ resources: { __typename: 'ResourceConnection', edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }) })
+  await page.goto('/resources')
+  if (info.project.name === 'phone') {
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Resources' })).toHaveAttribute('aria-current', 'page')
+  } else await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Resources' })).toHaveAttribute('aria-current', 'page')
+  // The landing stays the way in, even signed in.
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Menu' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Open your home' })).toBeVisible()
+  const visitor = await browser.newPage()
+  await visitor.goto('/resources')
+  await expect(visitor.getByRole('link', { name: 'Sign in' }).first()).toBeVisible()
+  await expect(visitor.getByRole('button', { name: 'Create Note' })).toHaveCount(0)
+  await visitor.close()
+})
+
 test('Create Note makes a note and opens it', async ({ page }, info) => {
   const calls = await mockApi(page, { CreateNote: () => ({ createNote: { note: { __typename: 'Note', id: NOTE_ID }, ...noProblems } }) })
   await page.goto('/home')

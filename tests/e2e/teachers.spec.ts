@@ -54,7 +54,7 @@ test('an incoming request: Accept, then Connected', async ({ page }) => {
 })
 
 test('an unverified viewer still sees Follow, and learns why it needs verification', async ({ page }) => {
-  await mockApi(page, { ProfileRelation: () => profileRelation(relation({}, { follow: false }), USER, MEERA, false) })
+  await mockApi(page, { ProfileRelation: () => profileRelation(relation({}, { follow: false }), USER, MEERA, false) }, { verified: false })
   await page.route('**/graphql', async (route, request) => {
     if ((request.postDataJSON() as { operationName?: string }).operationName === 'FollowUser') return route.fulfill({ json: { data: null, errors: [{ message: 'Verify your account to follow people.', extensions: { code: 'FORBIDDEN' } }] } })
     return route.fallback()
