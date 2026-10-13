@@ -92,6 +92,18 @@ test.describe('sign up', () => {
     expect(input).toMatchObject({ acceptedTermsVersion: '2026-10-08', dateOfBirth: '2004-05-01', institutionalEmail: null })
   })
 
+  test('someone who teaches picks Teach, and goes on to apply (lvn-backend ADR-0073)', async ({ page }) => {
+    await mockApi(page, { SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: session(), userErrors: [] } }), Viewer: () => ({ viewer: viewer() }), MyTeacherApplication: () => ({ myTeacherApplication: null }) })
+    await page.goto('/sign-up')
+    await fillSignUp(page)
+    await page.getByText('Teach', { exact: true }).click()
+    await expect(page.getByRole('radio', { name: 'Teach' })).toBeChecked()
+    await expect(page.getByText('After sign-up, tell us where you teach.', { exact: false })).toBeVisible()
+    await page.getByRole('button', { name: 'Create account' }).click()
+    await expect(page).toHaveURL(/\/teach$/)
+    await expect(page.getByRole('form', { name: 'Apply to teach' })).toBeVisible()
+  })
+
   test('goes to the code screen when a college email was given', async ({ page }) => {
     await mockApi(page, {
       SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: session(viewer({ institutionalEmail: 'asha@iitb.ac.in', institutionalEmailStatus: 'CODE_SENT' })), userErrors: [] } }),

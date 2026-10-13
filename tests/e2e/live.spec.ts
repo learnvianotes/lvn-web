@@ -1059,3 +1059,51 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('article', { name: 'Live midterm' })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Today' })).toBeVisible()
 })
+
+test('a new teacher signs up to teach, sets up a class while waiting, and takes students once an admin approves (lvn-backend ADR-0073)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a platform admin')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-teach-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const admin = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
+
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill(`Live New Teacher ${stamp}`)
+  await page.getByLabel('Email', { exact: true }).fill(`live-new-teacher-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('1988-01-01')
+  await page.getByText('Teach', { exact: true }).click()
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/teach$/)
+  const form = page.getByRole('form', { name: 'Apply to teach' })
+  await form.getByLabel('Where you teach').fill('Govt. Junior College, Guntur')
+  await form.getByLabel('What you teach (optional)').fill('Physics')
+  await form.getByRole('button', { name: 'Apply to teach' }).click()
+  await expect(page.getByRole('heading', { name: 'Your application is being reviewed' })).toBeVisible()
+
+  // While waiting: a class, with no way in for students yet.
+  await page.getByRole('link', { name: /Set up a class/ }).click()
+  await page.getByRole('button', { name: 'New class' }).click()
+  const dialog = page.getByRole('dialog', { name: 'New class' })
+  await dialog.getByLabel('Name').fill('Live physics 11A')
+  await dialog.getByRole('button', { name: 'Create class' }).click()
+  await expect(page).toHaveURL(/\/classes\/[0-9a-f-]+$/)
+  await expect(page.getByRole('note')).toContainText('Students can join this class once you are verified as a teacher.')
+  await expect(page.getByRole('tab', { name: 'Requests' })).toHaveCount(0)
+
+  const queue = await api<{ verificationRequestsToReview: { id: string; purpose: string; institution: string | null; requester: { displayName: string } }[] }>('{ verificationRequestsToReview { id purpose institution requester { displayName } } }', {}, admin.accessToken)
+  const mine = queue.verificationRequestsToReview.find((r) => r.requester.displayName === `Live New Teacher ${stamp}`)
+  expect(mine).toMatchObject({ purpose: 'TEACHER_ROLE', institution: 'Govt. Junior College, Guntur' })
+  await api('mutation ($input: ReviewVerificationRequestInput!) { reviewVerificationRequest(input: $input) { request { status } } }', { input: { requestId: mine!.id, approve: true } }, admin.accessToken)
+
+  // Approved: the class takes students.
+  await page.reload()
+  await expect(page.getByRole('tab', { name: 'Requests' })).toBeVisible()
+  await expect(page.getByRole('note')).toHaveCount(0)
+  await page.goto('/teach')
+  await expect(page.getByRole('heading', { name: 'You’re a verified teacher' })).toBeVisible()
+})
