@@ -91,7 +91,7 @@ function Ring({ share, comeback }: { share: number; comeback: boolean }) {
   )
 }
 
-function Today({ r }: { r: R }) {
+export function Today({ r }: { r: R }) {
   const t = useTranslations('rhythm')
   const today = r.today
   const minutesLeft = Math.max(Math.ceil((BAR_SECONDS - today.learningSeconds) / 60), 0)
@@ -140,7 +140,7 @@ function Today({ r }: { r: R }) {
   )
 }
 
-function Week({ r }: { r: R }) {
+export function Week({ r }: { r: R }) {
   const t = useTranslations('rhythm')
   const format = useFormatter()
   return (

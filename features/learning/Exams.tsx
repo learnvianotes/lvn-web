@@ -71,7 +71,7 @@ export function ReadinessBar({ readiness, targetToday }: { readiness: number; ta
   )
 }
 
-function ExamCard({ exam }: { exam: Exam }) {
+export function ExamCard({ exam }: { exam: Exam }) {
   const t = useTranslations('exams')
   const format = useFormatter()
   const today = exam.tasks.filter((x) => x.today)

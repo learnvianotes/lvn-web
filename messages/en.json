@@ -53,7 +53,8 @@
       "legal": "By continuing, you agree to our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
       "signedInTitle": "You are signed in",
       "signedInLead": "Pick up where you left off.",
-      "account": "Go to your account"
+      "account": "Go to your account",
+      "home": "Open your home"
     },
     "signIn": {
       "title": "Sign in",
@@ -204,6 +205,7 @@
     "verificationQueue": "Proof of study to review",
     "aiProviders": "AI providers",
     "history": "Learning history",
+    "home": "Home",
     "exams": "Exams",
     "rhythm": "Rhythm",
     "review": "Review flashcards"
@@ -2040,5 +2042,18 @@
     "hard": "Hard",
     "topicLine": "{value}% right of {answers} answers",
     "noTopics": "Quizzes made from notes with topics show which topics are hard."
+  },
+  "homeDashboard": {
+    "title": "Home",
+    "greeting": "Good to see you, {name}",
+    "greetingAnon": "Good to see you",
+    "lead": "Today’s ring, your week, and what to do next.",
+    "openRhythm": "Open Rhythm",
+    "continue": "Continue learning",
+    "untitled": "Untitled",
+    "nextExam": "Next exam",
+    "allExams": "All exams",
+    "addExam": "Add an exam",
+    "noExam": "No exam coming up. Add one, and LearnViaNotes plans your revision back from the day."
   }
 }
