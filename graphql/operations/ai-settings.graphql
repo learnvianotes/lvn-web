@@ -1,0 +1,132 @@
+# The AI providers page (lvn-backend ADR-0065): platform admins choose who answers AI requests.
+
+fragment AiConnectionFields on AiConnection {
+  id
+  kind
+  label
+  baseUrl
+  hasKey
+  keyHint
+  mayReceivePrivate
+  enabled
+  chatModel
+  embedModel
+  inputMicroUsdPerMTok
+  outputMicroUsdPerMTok
+  embedMicroUsdPerMTok
+  updatedAt
+}
+
+fragment AiSettingsFields on AiSettings {
+  connections {
+    ...AiConnectionFields
+  }
+  chatConnectionId
+  embedConnectionId
+  environment {
+    kind
+    chatModel
+    embedModel
+  }
+  routes {
+    task
+    connectionId
+    model
+    inputMicroUsdPerMTok
+    outputMicroUsdPerMTok
+  }
+  tasks
+  presets {
+    kind
+    name
+    defaultBaseUrl
+    needsKey
+    canEmbed
+    canHear
+    privateByDefault
+    chatModels
+    embedModels
+  }
+  keysCanBeSaved
+  spentThisMonthMicroUsd
+  monthlyBudgetMicroUsd
+}
+
+query AiSettings {
+  aiSettings {
+    ...AiSettingsFields
+  }
+}
+
+mutation SaveAiConnection($input: SaveAiConnectionInput!) {
+  saveAiConnection(input: $input) {
+    connection {
+      ...AiConnectionFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation DeleteAiConnection($input: AiConnectionIdInput!) {
+  deleteAiConnection(input: $input) {
+    settings {
+      ...AiSettingsFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetAiDefaults($input: SetAiDefaultsInput!) {
+  setAiDefaults(input: $input) {
+    settings {
+      ...AiSettingsFields
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+
+mutation TestAiConnection($input: AiConnectionIdInput!) {
+  testAiConnection(input: $input) {
+    test {
+      ok
+      message
+      latencyMs
+      models
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SaveAiTaskRoute($input: SaveAiTaskRouteInput!) {
+  saveAiTaskRoute(input: $input) {
+    settings {
+      ...AiSettingsFields
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+
+mutation DeleteAiTaskRoute($input: AiTaskRouteInput!) {
+  deleteAiTaskRoute(input: $input) {
+    settings {
+      ...AiSettingsFields
+    }
+    userErrors {
+      message
+    }
+  }
+}

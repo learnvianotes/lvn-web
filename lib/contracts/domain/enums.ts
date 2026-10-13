@@ -161,6 +161,8 @@ export const AiTaskType = {
   TRANSCRIBE: 'TRANSCRIBE',
   /** Rough text and photos of one's own note, as a structured note (ADR-0062) */
   QUICK_NOTE: 'QUICK_NOTE',
+  /** What conversion broke in a note's text, mended card by card for the person to apply (ADR-0063) */
+  CLEAN_UP: 'CLEAN_UP',
 } as const
 export type AiTaskType = (typeof AiTaskType)[keyof typeof AiTaskType]
 export const DERIVATIVE_AI_TASKS: ReadonlySet<AiTaskType> = new Set([AiTaskType.CREATE_NOTES, AiTaskType.OUTLINE_TO_NOTE])

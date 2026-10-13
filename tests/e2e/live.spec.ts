@@ -853,3 +853,61 @@ test('a teacher makes a class quiz from a note with the real model and publishes
   await page.getByRole('tab', { name: 'Quizzes' }).click()
   await expect(page.getByText('1 student has submitted')).toBeVisible()
 })
+
+test('a platform admin adds a custom OpenAI-compatible provider, tests it, and it answers a task for real (lvn-backend ADR-0065)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a platform admin')
+  // One admin changes who answers at a time: the phone's run would race the desktop's for the default.
+  test.skip(info.project.name !== 'desktop', 'run once')
+  const ollamaV1 = process.env.E2E_OPENAI_COMPATIBLE_URL ?? 'http://10.0.2.2:11434/v1'
+  test.setTimeout(300_000)
+  const stamp = `${Date.now()}-${info.project.name}`
+  const email = `live-ai-admin-${stamp}@example.com`
+  const password = `live passphrase ${stamp}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email, password, displayName: 'Live AI Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const admin = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
+  const name = `Ollama through its OpenAI API ${stamp}`
+  try {
+    await page.goto('/sign-in')
+    await page.getByLabel('Email').fill(email)
+    await page.getByLabel('Password').fill(password)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page).toHaveURL(/\/profile$/)
+    await page.getByRole('link', { name: /AI providers/ }).click()
+    await expect(page.getByRole('heading', { name: 'AI providers' })).toBeVisible()
+
+    await page.getByRole('button', { name: /^Custom \(OpenAI-compatible/ }).click()
+    const dialog = page.getByRole('dialog', { name: /^Add Custom/ })
+    await dialog.getByLabel('Name').fill(name)
+    await dialog.getByLabel('Address').fill(ollamaV1)
+    await dialog.getByLabel('Chat model').fill('gemma4')
+    await dialog.getByLabel('Embedding model').fill('embeddinggemma')
+    // A model on this machine: private notes may go to it.
+    await dialog.getByLabel(/Private notes may go to it/).check()
+    await dialog.getByRole('button', { name: 'Save' }).click()
+    await expect(dialog).toBeHidden()
+
+    const card = page.getByRole('article', { name })
+    await card.getByRole('button', { name: 'Test' }).click()
+    await expect(card.getByRole('status')).toContainText('embeddinggemma gave 768 numbers', { timeout: 180_000 })
+    await expect(card.getByRole('status')).toContainText(/models? listed: .*gemma4/)
+
+    await page.getByLabel(/Chats, tasks and Ask AI/).selectOption({ label: `${name} · gemma4` })
+    await expect(card.getByText('Answers chats')).toBeVisible()
+
+    // A task now goes through the connection: the usage row says who answered.
+    const created = await api<{ createNote: { note: { id: string } } }>('mutation ($input: CreateNoteInput!) { createNote(input: $input) { note { id } } }', { input: { title: 'Heaps', cards: [{ id: crypto.randomUUID(), type: 'text', position: 'a0', content: { doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'A min-heap keeps the smallest item at the root; insert and extract-min take O(log n).' }] }] } } }] } }, admin.accessToken)
+    const run = await api<{ runAiTask: { artifact: { id: string } | null; userErrors: { message: string }[] } }>('mutation ($input: RunAiTaskInput!) { runAiTask(input: $input) { artifact { id } userErrors { message } } }', { input: { noteId: created.createNote.note.id, task: 'SUMMARIZE' } }, admin.accessToken)
+    expect(run.runAiTask.userErrors).toEqual([])
+    await expect.poll(async () => (await api<{ aiArtifact: { status: string } }>('query ($id: UUID!) { aiArtifact(id: $id) { status } }', { id: run.runAiTask.artifact!.id }, admin.accessToken)).aiArtifact.status, { timeout: 180_000, intervals: [2_000] }).toBe('READY')
+    const answered = execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT provider || ' ' || (\\"connectionId\\" IS NOT NULL) FROM ai.\\"AiUsage\\" WHERE \\"userId\\" = '${admin.user.id}' AND task = 'SUMMARIZE' ORDER BY \\"createdAt\\" DESC LIMIT 1"`]).toString().trim()
+    expect(answered).toBe('OPENAI_COMPATIBLE true')
+  } finally {
+    // The environment's own model answers again, for every other test and for people.
+    sql(`UPDATE ai."AiSettings" SET "chatConnectionId" = NULL, "embedConnectionId" = NULL`)
+    sql(`DELETE FROM ai."AiConnection" WHERE label = '${name}'`)
+  }
+})
