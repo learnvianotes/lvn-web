@@ -3,6 +3,9 @@
 
 fragment VerificationRequestFields on VerificationRequest {
   id
+  purpose
+  institution
+  subjects
   method
   status
   message
@@ -95,6 +98,25 @@ mutation ReviewVerificationRequest($input: ReviewVerificationRequestInput!) {
     }
     userErrors {
       ...Problems
+    }
+  }
+}
+
+# Becoming a teacher (lvn-backend ADR-0073): apply, and see where the application stands.
+query MyTeacherApplication {
+  myTeacherApplication {
+    ...VerificationRequestFields
+  }
+}
+
+mutation ApplyToTeach($input: ApplyToTeachInput!) {
+  applyToTeach(input: $input) {
+    request {
+      ...VerificationRequestFields
+    }
+    userErrors {
+      message
+      code
     }
   }
 }

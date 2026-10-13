@@ -47,6 +47,7 @@ type Run = () => Promise<{ data?: Record<string, { userErrors: { message: string
  */
 export function ClassPage({ id }: { id: string }) {
   const t = useTranslations('classes')
+  const tt = useTranslations('teach')
   const { data, loading, refetch } = useQuery(ClassroomDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [tab, setTab] = useState<Tab>('posts')
   const classroom = data?.classroom
@@ -56,6 +57,14 @@ export function ClassPage({ id }: { id: string }) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header classroom={classroom} onChanged={() => void refetch()} />
+      {classroom.viewerRole === 'TEACHER' && !classroom.viewerCan.review ? (
+        <p role="note" className="rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+          {tt('classBanner')}{' '}
+          <Link href="/teach" className="font-semibold text-accent hover:underline">
+            {tt('pendingTitle')}
+          </Link>
+        </p>
+      ) : null}
       {tabs.length ? (
         <>
           <div role="tablist" aria-label={t('sections')} className="flex gap-1 overflow-x-auto border-b border-border">

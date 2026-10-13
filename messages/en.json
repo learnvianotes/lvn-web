@@ -81,7 +81,11 @@
       "termsRequired": "Accept the terms to continue.",
       "submit": "Create account",
       "haveAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "iAm": "I’m here to",
+      "learner": "Learn",
+      "teacher": "Teach",
+      "teacherHint": "After sign-up, tell us where you teach. You can set up classes at once; students can join once we verify you."
     },
     "details": {
       "title": "Almost there",
@@ -983,7 +987,9 @@
     },
     "mentionGone": "{actor} mentioned you somewhere you can no longer open",
     "revisionReminder": "Today’s revision for {exam} is waiting",
-    "revisionReminderAny": "Today’s revision is waiting"
+    "revisionReminderAny": "Today’s revision is waiting",
+    "teacherApproved": "You’re a verified teacher now: your classes can take students",
+    "teacherDeclined": "Your application to teach wasn’t approved; see why on Teach"
   },
   "people": {
     "teacher": "Teacher",
@@ -1571,7 +1577,9 @@
       "reasonNeeded": "Tell the student why, so they can try again.",
       "approve": "Verify",
       "reject": "Decline",
-      "failed": "That did not work. Try again."
+      "failed": "That did not work. Try again.",
+      "teacherApplication": "Applies to teach",
+      "teaches": "Teaches at {institution}"
     }
   },
   "ai": {
@@ -2055,5 +2063,30 @@
     "allExams": "All exams",
     "addExam": "Add an exam",
     "noExam": "No exam coming up. Add one, and LearnViaNotes plans your revision back from the day."
+  },
+  "teach": {
+    "title": "Teach on LearnViaNotes",
+    "lead": "Tell us where you teach. You can set up classes and write announcements and quizzes at once; students can join once a LearnViaNotes admin verifies you, usually within a day or two.",
+    "institution": "Where you teach",
+    "institutionHint": "College, school or organisation",
+    "subjects": "What you teach (optional)",
+    "message": "Anything that helps us verify you (optional)",
+    "proof": "Proof (optional): a staff ID, an appointment letter, or a page that lists you",
+    "chooseProof": "Add a file",
+    "removeProof": "Remove {name}",
+    "submit": "Apply to teach",
+    "failed": "Your application could not be sent. Try again.",
+    "pendingTitle": "Your application is being reviewed",
+    "pendingLead": "Sent {when}. You can set up classes now; students can join once you are verified.",
+    "newClass": "Set up a class",
+    "verifiedTitle": "You’re a verified teacher",
+    "verifiedLead": "Your classes can take students, and your teacher profile is public.",
+    "declinedTitle": "Your last application wasn’t approved",
+    "declinedLead": "{reason} You can apply again.",
+    "minor": "Teacher accounts are for adults.",
+    "accountCard": "Teach on LearnViaNotes",
+    "accountPending": "Teacher application: being reviewed",
+    "accountDeclined": "Teacher application: not approved — apply again",
+    "classBanner": "Students can join this class once you are verified as a teacher. Until then, set it up: announcements, quizzes and notes are ready for them."
   }
 }

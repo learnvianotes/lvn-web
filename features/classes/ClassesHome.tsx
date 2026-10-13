@@ -21,7 +21,8 @@ export function ClassesHome() {
   const [creating, setCreating] = useState(false)
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const teacher = viewer.data?.viewer?.globalRole === 'TEACHER'
+  // Verified teachers, and teacher applicants who prepare classes while they wait (lvn-backend ADR-0073).
+  const teacher = viewer.data?.viewer?.globalRole === 'TEACHER' || viewer.data?.viewer?.teacherStatus === 'PENDING'
   const reply = async (inviteId: string, accept: boolean) => {
     setError(await attempt(() => answer({ variables: { inviteId, accept } }), t('failed')))
     await refetch()

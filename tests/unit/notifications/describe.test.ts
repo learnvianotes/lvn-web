@@ -38,6 +38,9 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'REVISION_REMINDER', data: { examName: 'Operating Systems', topics: 'Paging' } })).toBe('Today’s revision for Operating Systems is waiting')
     expect(say({ category: 'REVISION_REMINDER' })).toBe('Today’s revision is waiting')
     expect(say({ category: 'STREAK_AT_RISK' })).toBe('Something new for you')
+    // An application to teach decided (lvn-backend ADR-0073).
+    expect(say({ category: 'VERIFICATION', data: { kind: 'DECIDED', decision: 'APPROVED', purpose: 'TEACHER_ROLE' } })).toBe('You’re a verified teacher now: your classes can take students')
+    expect(say({ category: 'VERIFICATION', data: { kind: 'DECIDED', decision: 'REJECTED', purpose: 'TEACHER_ROLE' } })).toBe('Your application to teach wasn’t approved; see why on Teach')
   })
 
   it('says who commented or replied, and on what (lvn-backend ADR-0047)', () => {

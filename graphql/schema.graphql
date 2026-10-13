@@ -473,6 +473,17 @@ type ApplyAiChangesPayload {
   userErrors: [UserError!]!
 }
 
+"""
+An application to teach (ADR-0073). fileIds: 0–3 proof files uploaded with createUploadIntent(purpose:
+VERIFICATION_DOCUMENT), seen by platform admins only, deleted 30 days after the decision
+"""
+input ApplyToTeachInput {
+  fileIds: [UUID!]
+  institution: String!
+  message: String
+  subjects: String
+}
+
 input AskAiInput {
   """THIS_NOTE: the note"""
   noteId: UUID
@@ -2129,6 +2140,11 @@ type Mutation {
   Applies chosen changes of a CLEAN_UP result to the note, through the normal save (ADR-0063)
   """
   applyAiChanges(input: ApplyAiChangesInput!): ApplyAiChangesPayload!
+
+  """
+  Signed in, not a teacher yet, not a child account: apply to teach (ADR-0073); a teacher applicant until reviewed
+  """
+  applyToTeach(input: ApplyToTeachInput!): VerificationRequestPayload!
   approveComment(input: CommentIdInput!): CommentPayload!
 
   """
@@ -3257,6 +3273,9 @@ type Query {
   """
   myStanding: AccountStanding!
   myTags: [Tag!]!
+
+  """Signed in: the viewer's latest application to teach (ADR-0073)"""
+  myTeacherApplication: VerificationRequest
   myVerificationRequests: [VerificationRequest!]!
 
   """
@@ -4270,6 +4289,19 @@ enum TeacherSkillSource {
   MANUAL
 }
 
+"""Where the viewer stands as a teacher (ADR-0073)"""
+enum TeacherStatus {
+  """The latest application was declined; may apply again"""
+  DECLINED
+  NONE
+
+  """Applied and waiting: may prepare classes, admits no one yet"""
+  PENDING
+
+  """The TEACHER role"""
+  VERIFIED
+}
+
 """A topic of the notes subgraph"""
 type Topic {
   children: [Topic!]!
@@ -4510,6 +4542,9 @@ type User {
   """The Skills tab, for anyone; null for people who are not teachers"""
   teacherProfile: TeacherProfile
 
+  """Viewer only (ADR-0073)"""
+  teacherStatus: TeacherStatus
+
   """
   The viewer's own: whether they accepted the current version (Query.termsVersion); false means ask again. null for others.
   """
@@ -4545,6 +4580,14 @@ enum VerificationMethod {
 }
 
 """
+ACCOUNT: have the account verified (ADR-0019). TEACHER_ROLE: an application to teach (ADR-0073)
+"""
+enum VerificationPurpose {
+  ACCOUNT
+  TEACHER_ROLE
+}
+
+"""
 Shown to the requester, the addressed teacher and platform admins. Documents are listed for platform admins only.
 """
 type VerificationRequest {
@@ -4556,11 +4599,16 @@ type VerificationRequest {
   """
   documents: [VerificationDocument!]!
   id: UUID!
+
+  """TEACHER_ROLE: where and what they teach"""
+  institution: String
   message: String
   method: VerificationMethod!
+  purpose: VerificationPurpose!
   reason: String
   requester: User!
   status: VerificationRequestStatus!
+  subjects: String
 
   """TEACHER method: the teacher asked to vouch"""
   teacher: User
