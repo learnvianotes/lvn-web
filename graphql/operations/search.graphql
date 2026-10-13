@@ -45,5 +45,13 @@ query Search($query: String!, $first: Int, $scopes: [SearchScope!], $filters: Se
       name
       memberCount
     }
+    resources {
+      id
+      type
+      title
+      host
+      author
+      saveCount
+    }
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, CornerDownLeft, FileText, GraduationCap, Search, UserRound, Users } from 'lucide-react'
+import { BookMarked, CornerDownLeft, FileText, GraduationCap, Library, Search, UserRound, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -23,12 +23,13 @@ export function SearchPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
-  const { notes, people, topics, groups, classrooms, searched, settled } = useSearch(open ? query : '', 8)
+  const { notes, people, topics, groups, classrooms, resources, searched, settled } = useSearch(open ? query : '', 8)
   const items = [
     ...notes.map((n) => ({ kind: 'note' as const, id: n.note.id, n })),
     ...people.slice(0, 4).map((person) => ({ kind: 'person' as const, id: person.id, person })),
     ...groups.slice(0, 3).map((group) => ({ kind: 'group' as const, id: group.id, group })),
     ...classrooms.slice(0, 3).map((classroom) => ({ kind: 'classroom' as const, id: classroom.id, classroom })),
+    ...resources.slice(0, 3).map((resource) => ({ kind: 'resource' as const, id: resource.id, resource })),
     ...topics.slice(0, 4).map((topic) => ({ kind: 'topic' as const, id: topic.id, topic })),
   ]
 
@@ -77,6 +78,8 @@ export function SearchPalette() {
           ? `/groups/${item.id}`
           : item.kind === 'classroom'
             ? `/classes/${item.id}`
+            : item.kind === 'resource'
+              ? `/resources/${item.id}`
             : item.kind === 'topic'
               ? `/search?${new URLSearchParams({ topic: item.id, topicTitle: item.topic.title }).toString()}`
               : `/notes/${item.id}`
@@ -153,6 +156,13 @@ export function SearchPalette() {
                       <GraduationCap className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                       <span className="text-sm">
                         {item.classroom.name} <span className="text-muted">· {t('classroom')}</span>
+                      </span>
+                    </>
+                  ) : item.kind === 'resource' ? (
+                    <>
+                      <Library className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+                      <span className="text-sm">
+                        {item.resource.title} <span className="text-muted">· {item.resource.host}</span>
                       </span>
                     </>
                   ) : (

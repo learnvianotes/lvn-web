@@ -40,6 +40,7 @@ export function describeNotification(
       const reply = data.kind === 'REPLY'
       if (n.note) return t(reply ? 'replyOnNote' : 'commentOnNote', { actor, note: n.note.title || t('untitled') })
       if (place) return t(reply ? 'replyIn' : 'commentIn', { actor, place })
+      if (!reply && n.path.startsWith('/resources/')) return t('commentOnResource', { actor })
       return t('commentGone', { actor })
     }
     case 'MENTION': {
@@ -71,7 +72,8 @@ export function describeNotification(
       // An exam's revision task left today (lvn-backend ADR-0070): the exam is the viewer's own.
       return typeof data.examName === 'string' && data.examName ? t('revisionReminder', { exam: data.examName }) : t('revisionReminderAny')
     case 'RESOURCE':
-      // Moderators decided on a resource the viewer sent (lvn-backend ADR-0074); the notification opens it.
+      // Someone recommended one to the viewer (ADR-0075), or moderators decided on one they sent (ADR-0074).
+      if (data.kind === 'RECOMMENDED') return t('resourceRecommended', { actor })
       return t(data.decision === 'APPROVED' ? 'resourceApproved' : 'resourceRejected')
     case 'DATA_EXPORT':
       return t('dataExport')

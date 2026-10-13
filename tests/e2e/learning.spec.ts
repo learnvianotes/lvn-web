@@ -54,7 +54,7 @@ test('a search left in place is recorded, without its words', async ({ page }) =
   const calls = await mockApi(page, {
     Organise: () => ({ myFolders: [], myTags: [] }),
     MyNotes: () => ({ myNotes: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
-    Search: () => ({ search: { __typename: 'SearchResults', notes: [], notesCursor: null, people: [], topics: [], groups: [], classrooms: [] } }),
+    Search: () => ({ search: { __typename: 'SearchResults', notes: [], notesCursor: null, people: [], topics: [], groups: [], classrooms: [], resources: [] } }),
     TrackEvents: (v) => ({ trackEvents: { __typename: 'TrackEventsPayload', accepted: (v.input as { events: unknown[] }).events.length, duplicates: 0, rejected: [], userErrors: [] } }),
   })
   await page.clock.install()

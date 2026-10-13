@@ -14,7 +14,7 @@ const rhythm = {
   today: { __typename: 'RhythmToday', day: '2026-10-15', learningSeconds: 0, reviews: 0, counted: false, comeback: false, cameBack: false, items: [] },
   weeksThisTerm: 0, weeksAllTime: 0, countedDaysAllTime: 1, pauses: [], pauseDaysLeft: 14, suggestion: null, shareRhythm: false,
 }
-const rec = (over: Record<string, unknown>) => ({ __typename: 'Recommendation', score: 50, noteTitle: null, topicKey: null, topicTitle: null, note: null, topic: null, ...over })
+const rec = (over: Record<string, unknown>) => ({ __typename: 'Recommendation', resource: null, score: 50, noteTitle: null, topicKey: null, topicTitle: null, note: null, topic: null, ...over })
 
 test('shows recommendations with why, leading to the note or the topic’s notes, and sets one aside', async ({ page }) => {
   let items = [

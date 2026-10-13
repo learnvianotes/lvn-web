@@ -37,7 +37,7 @@ test('a project workspace starts from the new group dialog', async ({ page }) =>
   await dialog.getByRole('button', { name: 'Create group' }).click()
   await expect(page).toHaveURL(new RegExp(`/groups/${GROUP}$`))
   expect(calls.find((c) => c.op === 'CreateGroup')?.variables).toMatchObject({ input: { name: 'Heap visualiser', type: 'PROJECT' } })
-  await expect(page.getByRole('tab')).toHaveText(['Posts', 'Ideas', 'Doubts', 'Notes', 'Members', 'Requests', 'Reports', 'Settings'])
+  await expect(page.getByRole('tab')).toHaveText(['Posts', 'Ideas', 'Doubts', 'Notes', 'Resources', 'Members', 'Requests', 'Reports', 'Settings'])
   await expect(page.getByText('No repository linked yet.')).toBeVisible()
 })
 

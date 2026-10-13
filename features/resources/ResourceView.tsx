@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Send } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -9,9 +9,12 @@ import { useState } from 'react'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Discussion } from '@/features/discussion/Discussion'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { DeleteResourceDocument, MyResourcesDocument, ResourceDocument, type ResourceFieldsFragment } from '@/graphql/generated/graphql'
 import { useSession } from '@/state/session'
+import { SaveButton } from './Catalogue'
+import { RecommendDialog } from './RecommendDialog'
 
 /** A resource's page (lvn-backend ADR-0074): public once approved; its submitter sees it while it waits, with why if rejected. */
 export function ResourcePage({ id }: { id: string }) {
@@ -37,8 +40,9 @@ function Page({ id }: { id: string }) {
     )
   }
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
       <ResourceDetails resource={resource} />
+      {resource.status === 'APPROVED' ? <ResourceDiscussion id={resource.id} /> : null}
     </div>
   )
 }
@@ -48,6 +52,8 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
   const router = useRouter()
   const [remove, removing] = useMutation(DeleteResourceDocument, { refetchQueries: [MyResourcesDocument] })
   const [error, setError] = useState<string | null>(null)
+  const [recommending, setRecommending] = useState(false)
+  const signedIn = useSession((s) => s.status) === 'signed-in'
   return (
     <article className="flex flex-col gap-5" aria-labelledby="resource-title">
       {r.status !== 'APPROVED' ? (
@@ -92,6 +98,19 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
         </Link>
       </p>
       {error ? <Alert tone="error">{error}</Alert> : null}
+      {r.status === 'APPROVED' ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <SaveButton resource={r} size="md" />
+          <span className="text-sm text-muted">{t('saves', { count: r.saveCount })}</span>
+          {signedIn ? (
+            <Button variant="secondary" className="gap-1.5" onClick={() => setRecommending(true)}>
+              <Send className="size-4" aria-hidden />
+              {t('recommendButton')}
+            </Button>
+          ) : null}
+          <RecommendDialog resourceId={r.id} open={recommending} onClose={() => setRecommending(false)} />
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {r.viewerCan.edit ? (
           <Button asChild variant="secondary" size="sm">
@@ -117,5 +136,20 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
         {r.viewerCan.report ? <ReportButton entityType="RESOURCE" entityId={r.id} look="text" /> : null}
       </div>
     </article>
+  )
+}
+
+/** An approved resource's discussion (ADR-0075): for signed-in readers; visitors are asked to sign in. */
+function ResourceDiscussion({ id }: { id: string }) {
+  const t = useTranslations('discussion')
+  const status = useSession((s) => s.status)
+  if (status === 'signed-in') return <Discussion target={{ type: 'RESOURCE', id }} />
+  if (status !== 'signed-out') return null
+  return (
+    <p className="rounded-3xl border border-border bg-surface px-5 py-4 text-sm text-muted">
+      <Link href={`/sign-in?next=${encodeURIComponent(`/resources/${id}`)}`} className="font-semibold text-accent hover:underline">
+        {t('signIn')}
+      </Link>
+    </p>
   )
 }

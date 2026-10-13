@@ -28,6 +28,8 @@ fragment ResourceFields on Resource {
     delete
     report
   }
+  saveCount
+  viewerSaved
 }
 
 query Resource($id: UUID!) {
@@ -96,6 +98,107 @@ mutation UpdateResource($input: UpdateResourceInput!) {
 
 mutation DeleteResource($input: ResourceIdInput!) {
   deleteResource(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+# Finding resources (lvn-backend ADR-0075): the catalogue, saves, recommendations.
+
+query Resources($filter: ResourceFilter, $sort: ResourceSort, $first: Int, $after: String) {
+  resources(filter: $filter, sort: $sort, first: $first, after: $after) {
+    edges {
+      node {
+        ...ResourceFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query SavedResources($first: Int, $after: String) {
+  savedResources(first: $first, after: $after) {
+    edges {
+      node {
+        ...ResourceFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query ResourceRecommendations($to: RecommendationPlaceInput!, $first: Int, $after: String) {
+  resourceRecommendations(to: $to, first: $first, after: $after) {
+    edges {
+      node {
+        id
+        reason
+        createdAt
+        viewerCanRemove
+        from {
+          id
+          displayName
+          handle
+        }
+        resource {
+          ...ResourceFields
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation SaveResource($input: ResourceIdInput!) {
+  saveResource(input: $input) {
+    resource {
+      id
+      saveCount
+      viewerSaved
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation UnsaveResource($input: ResourceIdInput!) {
+  unsaveResource(input: $input) {
+    resource {
+      id
+      saveCount
+      viewerSaved
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RecommendResource($input: RecommendResourceInput!) {
+  recommendResource(input: $input) {
+    ok
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation RemoveResourceRecommendation($input: ResourceRecommendationIdInput!) {
+  removeResourceRecommendation(input: $input) {
     ok
     userErrors {
       message

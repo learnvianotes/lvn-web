@@ -27,6 +27,8 @@ const resource = (over: Record<string, unknown> = {}) => ({
   decidedAt: null,
   createdAt: new Date().toISOString(),
   viewerCan: { __typename: 'ResourceActions', edit: true, delete: true, report: false },
+  saveCount: 0,
+  viewerSaved: false,
   ...over,
 })
 const preview = {

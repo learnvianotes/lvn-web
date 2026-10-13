@@ -244,7 +244,7 @@ export type ModerationActionType = (typeof ModerationActionType)[keyof typeof Mo
 export const enumValues = values
 
 /** What a comment is on (ADR-0047): a note (optionally one of its cards), a group post or a class announcement. */
-export const CommentTargetType = { NOTE: 'NOTE', GROUP_POST: 'GROUP_POST', CLASSROOM_POST: 'CLASSROOM_POST' } as const
+export const CommentTargetType = { NOTE: 'NOTE', GROUP_POST: 'GROUP_POST', CLASSROOM_POST: 'CLASSROOM_POST', RESOURCE: 'RESOURCE' } as const
 export type CommentTargetType = (typeof CommentTargetType)[keyof typeof CommentTargetType]
 
 /** What a reaction is on (ADR-0047). */

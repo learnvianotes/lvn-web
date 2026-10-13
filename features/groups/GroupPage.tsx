@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { ago } from '@/features/notes/look'
 import { PostComments } from '@/features/discussion/PostComments'
 import { ContentModeration, ModerationBanner } from '@/features/moderation/ModerationBanner'
+import { PlaceResources } from '@/features/resources/PlaceResources'
 import { ModerationQueue } from '@/features/moderation/ModerationQueue'
 import { RemovedGroupNotice } from '@/features/moderation/Standing'
 import { ReportButton } from '@/features/moderation/ReportDialog'
@@ -43,7 +44,7 @@ import { Ideas } from '@/features/workspaces/Ideas'
 import { InviteMentor, ShowcaseSetting, WorkspaceHeader } from '@/features/workspaces/Workspace'
 import { attempt, textToDoc } from './shared'
 
-type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'members' | 'requests' | 'reports' | 'settings'
+type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'resources' | 'members' | 'requests' | 'reports' | 'settings'
 
 /** One group (lvn-backend ADR-0045): who it is for and how to get in; inside, posts, shared notes and members. */
 export function GroupPage({ id }: { id: string }) {
@@ -55,7 +56,7 @@ export function GroupPage({ id }: { id: string }) {
   if (!group) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <RemovedGroupNotice id={id} fallback={<p className="text-muted">{t('notFound')}</p>} />
   const member = !!group.viewerRole
   const project = group.type === 'PROJECT'
-  const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.moderate ? (['reports'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
+  const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'resources', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.moderate ? (['reports'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header group={group} onChanged={() => void refetch()} />
@@ -73,6 +74,7 @@ export function GroupPage({ id }: { id: string }) {
             {tab === 'ideas' ? <Ideas group={group} /> : null}
             {tab === 'doubts' ? <Doubts group={group} /> : null}
             {tab === 'notes' ? <SharedNotes group={group} /> : null}
+            {tab === 'resources' ? <PlaceResources to={{ groupId: group.id }} /> : null}
             {tab === 'members' ? (
               <div className="flex flex-col gap-4">
                 {group.viewerCan.inviteMentor ? <InviteMentor groupId={group.id} /> : null}
