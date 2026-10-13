@@ -1159,3 +1159,51 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   // Clean up, so the book can be added again by a later run.
   await api('mutation ($input: ResourceIdInput!) { deleteResource(input: $input) { ok } }', { input: { id } }, admin.accessToken)
 })
+
+test('a learner finds an approved resource in the catalogue, saves it and discusses it (lvn-backend ADR-0075)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a platform admin')
+  test.setTimeout(120_000)
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const signUp = async (who: string, name: string) =>
+    (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    })).signUp.session
+  const admin = await signUp('cat-admin', 'Live Admin')
+  const author = await signUp('cat-author', 'Live Author')
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${author.user.id}'`)
+  const topic = (await api<{ resourceTopicOptions: { id: string }[] }>('query { resourceTopicOptions(query: "array") { id } }', {}, author.accessToken)).resourceTopicOptions[0]!
+  const title = `Live course ${stamp}`
+  const sent = await api<{ submitResource: { resource: { id: string } } }>('mutation ($input: SubmitResourceInput!) { submitResource(input: $input) { resource { id } } }', { input: { type: 'COURSE', title, url: `https://nptel.ac.in/courses/${stamp}`, topicIds: [topic.id] } }, author.accessToken)
+  const id = sent.submitResource.resource.id
+  await api('mutation ($input: ModerateContentInput!) { moderateContent(input: $input) { ok } }', { input: { entityType: 'RESOURCE', entityId: id, action: 'APPROVE' } }, admin.accessToken)
+
+  const email = `live-cat-${stamp}@example.com`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Catalogue Reader')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
+
+  await page.goto('/resources')
+  await page.getByLabel('Search resources').fill(stamp)
+  const card = page.getByRole('article', { name: title })
+  await expect(card).toBeVisible({ timeout: 20_000 })
+  await card.getByRole('button', { name: 'Save' }).click()
+  await expect(card.getByRole('button', { name: 'Saved' })).toBeVisible()
+  await expect(card).toContainText('Saved by 1 person')
+  await card.getByRole('link').first().click()
+  await expect(page).toHaveURL(new RegExp(`/resources/${id}$`))
+  await page.getByLabel('Write a comment').fill('Week 2 has the clearest explanation of arrays.')
+  await page.getByRole('button', { name: 'Comment', exact: true }).last().click()
+  await expect(page.getByText('Week 2 has the clearest explanation of arrays.')).toBeVisible()
+  await page.goto('/resources/saved')
+  await expect(page.getByRole('article', { name: title })).toBeVisible()
+  // Clean up: the submitter deletes it.
+  await api('mutation ($input: ResourceIdInput!) { deleteResource(input: $input) { ok } }', { input: { id } }, author.accessToken)
+})

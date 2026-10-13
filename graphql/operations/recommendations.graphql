@@ -14,6 +14,12 @@ query Recommendations($limit: Int) {
     topic {
       id
     }
+    resource {
+      id
+      title
+      type
+      host
+    }
   }
 }
 

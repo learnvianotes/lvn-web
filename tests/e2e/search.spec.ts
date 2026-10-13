@@ -17,7 +17,7 @@ const topic = { __typename: 'Topic', id: '01920000-0000-7000-8000-00000000e101',
 const group = { __typename: 'Group', id: '01920000-0000-7000-8000-00000000f101', name: 'Graph theory circle', type: 'COMMUNITY', privacy: 'PUBLIC', memberCount: 12 }
 const workspace = { __typename: 'Group', id: '01920000-0000-7000-8000-00000000f102', name: 'Graph visualiser', type: 'PROJECT', privacy: 'PRIVATE', memberCount: 3 }
 const classroom = { __typename: 'Classroom', id: '01920000-0000-7000-8000-00000000f201', name: 'Graph algorithms, section B', memberCount: 40 }
-const results = (over: Record<string, unknown> = {}) => ({ search: { __typename: 'SearchResults', notes: [hit], notesCursor: null, people: [], topics: [topic], groups: [], classrooms: [], ...over } })
+const results = (over: Record<string, unknown> = {}) => ({ search: { __typename: 'SearchResults', resources: [], notes: [hit], notesCursor: null, people: [], topics: [topic], groups: [], classrooms: [], ...over } })
 const nothing = results({ notes: [], topics: [] })
 const answer = (v: Record<string, unknown>) => (String(v.query).startsWith('nothing') ? nothing : results())
 const empty = { Organise: () => ({ myFolders: [], myTags: [] }), MyNotes: () => ({ myNotes: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }) }

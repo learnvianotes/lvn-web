@@ -27,6 +27,10 @@ export async function SiteHeader() {
             <BookOpen className="size-4 sm:hidden" aria-hidden />
             <span className="hidden sm:inline">{t('nav.notes')}</span>
           </Link>
+          {/* From laptops up; narrower screens reach the catalogue from the account page (until the app's side menu). */}
+          <Link href="/resources" className="hidden items-center rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg lg:inline-flex">
+            {t('nav.resources')}
+          </Link>
           <SearchButton label={t('nav.search')} />
           <NotificationBell />
           <AccountLink labels={{ signIn: ta('signIn'), account: ta('account'), notes: ta('myNotes'), community: ta('community'), askAi: ta('askAi') }} />

@@ -12,7 +12,7 @@ const rhythm = {
   weeksThisTerm: 2, weeksAllTime: 5, countedDaysAllTime: 30, pauses: [], pauseDaysLeft: 14, suggestion: null, shareRhythm: false,
 }
 const exam = { __typename: 'Exam', id: EXAM, name: 'Operating Systems', date: '2026-10-25', daysLeft: 10, past: false, readiness: 34, target: 80, targetToday: 40, topics: [], tasks: [] }
-const continueRec = { __typename: 'Recommendation', kind: 'CONTINUE_NOTE', score: 55, reason: 'You were reading this on Monday, 12 October', noteTitle: 'Dijkstra', topicKey: null, topicTitle: null, note: { __typename: 'Note', id: NOTE }, topic: null }
+const continueRec = { __typename: 'Recommendation', resource: null, kind: 'CONTINUE_NOTE', score: 55, reason: 'You were reading this on Monday, 12 October', noteTitle: 'Dijkstra', topicKey: null, topicTitle: null, note: { __typename: 'Note', id: NOTE }, topic: null }
 
 test('Home greets the learner and shows today, the week, the note to continue, the next exam and recommendations', async ({ page }) => {
   await mockApi(page, { Rhythm: () => ({ rhythm }), Exams: () => ({ exams: [exam] }), Recommendations: () => ({ recommendations: [continueRec] }) }, viewerExtras)

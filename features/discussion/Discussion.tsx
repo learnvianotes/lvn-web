@@ -21,7 +21,7 @@ type Run = () => Promise<{ data?: Record<string, { userErrors: { message: string
 const plain = (doc: unknown) => ((doc as Doc | null)?.content ?? []).map((p) => ((p as { content?: { text?: string }[] }).content ?? []).map((n) => n.text ?? '').join('')).join('\n')
 
 /**
- * The discussion of a note, group post or class announcement (lvn-backend ADR-0047): reactions, comments with one
+ * The discussion of a note, group post, class announcement or resource (lvn-backend ADR-0047, ADR-0075): reactions, comments with one
  * level of replies, and what the viewer may do with each. Read with its own query, so threads stay in the depth limit.
  */
 export function Discussion({ target, title, compact }: { target: { type: CommentTargetType; id: string }; title?: string; compact?: boolean }) {
@@ -40,10 +40,12 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
     refresh()
   }
   const comments = d.comments.edges.map((e) => e.node)
+  // Resources are saved rather than liked (lvn-backend ADR-0075): their discussion has comments only.
+  const reactionTarget = target.type === 'RESOURCE' ? null : { type: target.type, id: target.id }
   return (
     <section aria-label={title ?? t('title')} className={`flex flex-col gap-4 ${compact ? '' : 'rounded-3xl border border-border bg-surface p-5'}`}>
       {compact ? (
-        <ReactionBar target={target} reactions={d.reactions} disabled={!d.viewerCanComment} onChanged={refresh} size="sm" />
+        reactionTarget ? <ReactionBar target={reactionTarget} reactions={d.reactions} disabled={!d.viewerCanComment} onChanged={refresh} size="sm" /> : null
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 text-lg font-bold">
@@ -51,7 +53,7 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
             {title ?? t('title')}
             <span className="text-sm font-normal text-muted">{t('count', { count: d.commentCount })}</span>
           </h2>
-          <ReactionBar target={target} reactions={d.reactions} disabled={!d.viewerCanComment} onChanged={refresh} />
+          {reactionTarget ? <ReactionBar target={reactionTarget} reactions={d.reactions} disabled={!d.viewerCanComment} onChanged={refresh} /> : null}
         </div>
       )}
       {comments.length ? (

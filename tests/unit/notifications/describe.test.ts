@@ -26,6 +26,8 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
   it('tells a submitter what moderators decided about their resource (lvn-backend ADR-0074)', () => {
     expect(say({ category: 'RESOURCE', path: '/resources/r1', data: { decision: 'APPROVED' } })).toBe('Your resource is in the catalogue')
     expect(say({ category: 'RESOURCE', path: '/resources/r1', data: { decision: 'REJECTED' } })).toBe('Moderators did not approve your resource')
+    expect(say({ category: 'RESOURCE', path: '/resources/r1', data: { kind: 'RECOMMENDED' }, actor: meera })).toBe('Meera Iyer recommended a resource to you')
+    expect(say({ category: 'COMMENT', path: '/resources/r1', data: { kind: 'COMMENT' }, actor: meera })).toBe('Meera Iyer commented on your resource')
   })
 
   it('counts an import in words, leaving out what is zero', () => {

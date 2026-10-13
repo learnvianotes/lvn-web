@@ -58,6 +58,7 @@ export function useSearch(query: string, first: number, filters: SearchFilters =
     topics: data?.topics ?? [],
     groups: data?.groups ?? [],
     classrooms: data?.classrooms ?? [],
+    resources: data?.resources ?? [],
     hasMore: !!data?.notesCursor,
     more,
     loadingMore,

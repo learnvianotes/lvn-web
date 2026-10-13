@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, FileText, Globe, GraduationCap, Lock, Search, Users, X } from 'lucide-react'
+import { BookMarked, FileText, Globe, GraduationCap, Library, Lock, Search, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -30,7 +30,7 @@ export function SearchPage() {
   const [kinds, setKinds] = useState(listParam(params.get('kind'), KINDS))
   const [sources, setSources] = useState(listParam(params.get('from'), SOURCES))
   const [topic, setTopic] = useState(params.get('topic') ? { id: params.get('topic')!, title: params.get('topicTitle') ?? '' } : null)
-  const { notes, people, topics, groups, classrooms, hasMore, more, loadingMore, loading, searched, settled } = useSearch(query, 20, { kinds, sources, topicId: topic?.id })
+  const { notes, people, topics, groups, classrooms, resources, hasMore, more, loadingMore, loading, searched, settled } = useSearch(query, 20, { kinds, sources, topicId: topic?.id })
 
   const go = (next: { q?: string; kinds?: NoteKind[]; sources?: NoteSource[]; topic?: { id: string; title: string } | null }) => {
     const q = next.q ?? query
@@ -168,6 +168,29 @@ export function SearchPage() {
                     <span className="truncate font-medium">{c.name}</span>
                     <span className="text-xs text-muted">
                       {t('classroom')} · {t('members', { count: c.memberCount })}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {resources.length ? (
+        <section aria-labelledby="resources-heading" className="flex flex-col gap-2">
+          <h2 id="resources-heading" className="text-sm font-semibold text-muted">
+            {t('resources')}
+          </h2>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {resources.map((r) => (
+              <li key={r.id}>
+                <Link href={`/resources/${r.id}`} className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 hover:border-accent/40">
+                  <Library className="size-4 shrink-0 text-accent" aria-hidden />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate font-medium">{r.title}</span>
+                    <span className="text-xs text-muted">
+                      {r.author ? `${r.author} · ` : ''}
+                      {r.host}
                     </span>
                   </span>
                 </Link>

@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PostComments } from '@/features/discussion/PostComments'
 import { ContentModeration } from '@/features/moderation/ModerationBanner'
+import { PlaceResources } from '@/features/resources/PlaceResources'
 import { ModerationQueue } from '@/features/moderation/ModerationQueue'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { attempt, textToDoc } from '@/features/groups/shared'
@@ -38,7 +39,7 @@ import type { Doc } from '@/lib/contracts/validation'
 import { ClassQuizzes } from './quizzes/ClassQuizzes'
 import { ClassPerformance, ClassRhythm } from './ClassInsights'
 
-type Tab = 'posts' | 'quizzes' | 'notes' | 'rhythm' | 'performance' | 'people' | 'requests' | 'reports' | 'settings'
+type Tab = 'posts' | 'quizzes' | 'notes' | 'resources' | 'rhythm' | 'performance' | 'people' | 'requests' | 'reports' | 'settings'
 type Run = () => Promise<{ data?: Record<string, { userErrors: { message: string }[] } | null> | null }>
 
 /**
@@ -53,7 +54,7 @@ export function ClassPage({ id }: { id: string }) {
   const classroom = data?.classroom
   if (!classroom) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
   const staff = classroom.viewerCan.review
-  const tabs: Tab[] = classroom.viewerRole ? ['posts', 'quizzes', 'notes', 'rhythm', ...(staff ? (['performance', 'people', 'requests', 'reports'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
+  const tabs: Tab[] = classroom.viewerRole ? ['posts', 'quizzes', 'notes', 'resources', 'rhythm', ...(staff ? (['performance', 'people', 'requests', 'reports'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header classroom={classroom} onChanged={() => void refetch()} />
@@ -78,6 +79,7 @@ export function ClassPage({ id }: { id: string }) {
             {tab === 'posts' ? <Posts classroom={classroom} /> : null}
             {tab === 'quizzes' ? <ClassQuizzes classroom={classroom} /> : null}
             {tab === 'notes' ? <SharedNotes classroom={classroom} /> : null}
+            {tab === 'resources' ? <PlaceResources to={{ classroomId: classroom.id }} /> : null}
             {tab === 'rhythm' ? <ClassRhythm classroomId={classroom.id} /> : null}
             {tab === 'performance' ? <ClassPerformance classroomId={classroom.id} /> : null}
             {tab === 'people' ? <People classroom={classroom} onChanged={() => void refetch()} /> : null}

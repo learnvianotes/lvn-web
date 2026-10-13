@@ -12,6 +12,10 @@ export const RESOURCE_LIMITS = {
   /** Submissions a person makes in a day, and how many may wait at once */
   perDay: 10,
   waiting: 20,
+  /** A recommendation's reason (ADR-0075) */
+  reason: 280,
+  /** Recommendations a person sends in an hour */
+  recommendationsPerHour: 30,
   /** Previews a person asks for in an hour */
   previewsPerHour: 30,
 } as const
