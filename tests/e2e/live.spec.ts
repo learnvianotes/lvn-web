@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { PDF_TEXT, samplePdf } from './support/sample-pdf'
 
 /**
@@ -18,14 +18,21 @@ import { PDF_TEXT, samplePdf } from './support/sample-pdf'
  */
 test.skip(!process.env.E2E_LIVE || !process.env.E2E_BASE_URL, 'needs a deployed environment: E2E_LIVE=1 E2E_BASE_URL=<public url>')
 
+/** Opens a sidebar entry: the sidebar from 1024 px, the menu below (lvn-backend ADR-0076). */
+async function fromSidebar(page: Page, name: string) {
+  const menu = page.getByRole('button', { name: 'Menu' })
+  if (await menu.isVisible()) await menu.click()
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name, exact: true }).click()
+}
+
 test('a new learner signs up with email, keeps the session across a reload, signs out and signs in again', async ({ page }, info) => {
   const email = `live-${Date.now()}-${info.project.name}@example.com`
   const password = `live passphrase ${Date.now()}`
 
   await page.goto('/')
   const main = page.getByRole('main')
-  await expect(main.getByRole('heading', { name: 'Start learning in seconds' })).toBeVisible()
-  await main.getByRole('link', { name: 'Sign up with email' }).click()
+  await expect(main.getByRole('heading', { name: 'Your Learning Community for a Brighter Tomorrow' })).toBeVisible()
+  await main.getByRole('link', { name: 'Get Started Free' }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
   await page.getByLabel('Your name').fill('Live Test')
@@ -72,7 +79,7 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Stacks and queues')
@@ -642,7 +649,7 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Binary heaps')
@@ -686,7 +693,7 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Photosynthesis')
@@ -753,7 +760,7 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByRole('textbox', { name: 'Note content' }).click()
@@ -783,7 +790,7 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByRole('textbox', { name: 'Note content' }).click()
@@ -925,7 +932,7 @@ test('a learner’s reading reaches the learning events: the note opened and the
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   const noteId = page.url().split('/').at(-1)!
@@ -952,7 +959,7 @@ test('a learner reviews the flashcard of their note, and the day shows in their 
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Live deck')
@@ -993,7 +1000,7 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
-  await page.getByRole('link', { name: /^Rhythm/ }).click()
+  await page.getByRole('main').getByRole('link', { name: /^Rhythm/ }).click()
   await expect(page).toHaveURL(/\/rhythm$/)
   const week = page.getByRole('region', { name: 'This week' })
   // A new account's first week aims only for the planned days from today on (lvn-backend ADR-0069).
@@ -1031,7 +1038,7 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await expect(page).toHaveURL(/\/profile$/)
 
   // An exam ten days away on a curated topic.
-  await page.getByRole('link', { name: /^Exams/ }).click()
+  await page.getByRole('main').getByRole('link', { name: /^Exams/ }).click()
   await page.getByRole('button', { name: 'Add an exam' }).click()
   const form = page.getByRole('region', { name: 'Add an exam' })
   await form.getByLabel('Exam').fill('Live midterm')
@@ -1055,8 +1062,8 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
 
   // Home brings it together: the greeting, today, and the next exam (P6h).
   await page.goto('/home')
-  await expect(page.getByRole('heading', { name: 'Good to see you, Live' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('article', { name: 'Live midterm' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Live!/ })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Next exam' }).getByText('Live midterm')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Today' })).toBeVisible()
 })
 
@@ -1206,4 +1213,46 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   await expect(page.getByRole('article', { name: title })).toBeVisible()
   // Clean up: the submitter deletes it.
   await api('mutation ($input: ResourceIdInput!) { deleteResource(input: $input) { ok } }', { input: { id } }, author.accessToken)
+})
+
+test('a new learner opens every sidebar entry: each page answers with its heading, and no query fails (lvn-backend ADR-0076)', async ({ page }, info) => {
+  const stamp = `${Date.now()}-${info.project.name}`
+  const failures: string[] = []
+  page.on('pageerror', (e) => failures.push(`page error: ${e.message}`))
+  page.on('response', async (res) => {
+    if (!res.url().endsWith('/graphql') || res.request().method() !== 'POST') return
+    const sent = res.request().postDataJSON() as { operationName?: string; query?: string } | null
+    // A visitor's first page asks to refresh a session there is none of: that answer is expected.
+    if (sent?.query?.includes('refreshSession')) return
+    const op = sent?.operationName ?? '?'
+    const body = (await res.json().catch(() => null)) as { errors?: { message: string }[] } | null
+    if (res.status() >= 500 || body?.errors?.length) failures.push(`${op}: ${res.status()} ${body?.errors?.map((e) => e.message).join('; ') ?? ''}`)
+  })
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Shell')
+  await page.getByLabel('Email', { exact: true }).fill(`live-shell-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  const entries: [string, RegExp][] = [
+    ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
+    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/resources\/saved$/], ['Subjects', /\/core$/],
+  ]
+  for (const [name, url] of entries) {
+    if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name, exact: true }).click()
+    await expect(page, name).toHaveURL(url)
+    await expect(page.getByRole('heading', { level: 1 }).first(), name).toBeVisible()
+    await expect(page.getByText('Something went wrong'), name).toHaveCount(0)
+  }
+  // The top bar: the avatar opens the account, and Create Note makes a note that opens.
+  await page.goto('/home')
+  await page.getByRole('link', { name: 'Your account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Create Note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  expect(failures).toEqual([])
 })

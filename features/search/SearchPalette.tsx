@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, CornerDownLeft, FileText, GraduationCap, Library, Search, UserRound, Users } from 'lucide-react'
+import { BookMarked, CornerDownLeft, FileText, GraduationCap, Library, Search, Sparkles, UserRound, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -13,7 +13,7 @@ export const OPEN_SEARCH_EVENT = 'lvn:open-search'
 /**
  * Ctrl/⌘+K (§12.2): search from anywhere in the app — notes, people, groups, classes and topics (lvn-backend ADR-0056).
  * Enter opens what is chosen; a topic lists its notes on /search. The header's search button opens it too
- * (OPEN_SEARCH_EVENT); "All results" goes to /search.
+ * (OPEN_SEARCH_EVENT); "All results" goes to /search, and "Ask AI" takes the words to Ask AI as a question.
  */
 export function SearchPalette() {
   const t = useTranslations('search')
@@ -183,6 +183,19 @@ export function SearchPalette() {
           {query.trim().length >= 2 ? (
             <button type="button" onClick={() => go(undefined)} className="border-t border-border px-5 py-3 text-left text-sm font-medium text-accent hover:bg-surface-2">
               {t('all', { query: query.trim() })}
+            </button>
+          ) : null}
+          {query.trim().length >= 3 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                router.push(`/ask?q=${encodeURIComponent(query.trim())}`)
+              }}
+              className="flex items-center gap-2 border-t border-border px-5 py-3 text-left text-sm font-medium text-accent hover:bg-surface-2"
+            >
+              <Sparkles className="size-4 shrink-0" aria-hidden />
+              {t('askAi', { query: query.trim() })}
             </button>
           ) : null}
         </div>

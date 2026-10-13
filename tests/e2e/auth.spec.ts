@@ -191,26 +191,24 @@ test.describe('links from emails', () => {
 test.describe('Google first', () => {
   const offered = { withGoogle: () => null }
 
-  test('the landing page puts Continue with Google first, then email sign-up and sign-in', async ({ page }) => {
+  test('the landing page offers Get Started Free and Continue with Google side by side, then sign-in (board A)', async ({ page }) => {
     await mockApi(page, offered)
     await page.goto('/')
     const main = page.getByRole('main')
-    await expect(main.getByRole('heading', { name: 'Start learning in seconds' })).toBeVisible()
+    await expect(main.getByRole('heading', { level: 1 })).toHaveText('Your Learning Community for a Brighter Tomorrow')
+    await expect(main.getByRole('link', { name: 'Get Started Free' })).toHaveAttribute('href', '/sign-up')
     await expect(main.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
-    const google = await main.getByRole('button', { name: 'Continue with Google' }).boundingBox()
-    const email = await main.getByRole('link', { name: 'Sign up with email' }).boundingBox()
-    expect(google!.y).toBeLessThan(email!.y)
     await main.getByRole('link', { name: 'Sign in', exact: true }).click()
     await expect(page).toHaveURL(/\/sign-in$/)
     await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
   })
 
-  test('without Google, email sign-up is the way in', async ({ page }) => {
+  test('without Google, Get Started Free is the way in', async ({ page }) => {
     await mockApi(page, {})
     await page.goto('/')
-    await expect(page.getByRole('link', { name: 'Sign up with email' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Continue with Google' })).toHaveCount(0)
-    await page.getByRole('link', { name: 'Sign up with email' }).click()
+    const main = page.getByRole('main')
+    await expect(main.getByRole('button', { name: 'Continue with Google' })).toHaveCount(0)
+    await main.getByRole('link', { name: 'Get Started Free' }).click()
     await expect(page).toHaveURL(/\/sign-up$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Create your account')
   })
@@ -218,9 +216,10 @@ test.describe('Google first', () => {
   test('someone signed in is offered their account instead', async ({ page }) => {
     await mockApi(page, { Viewer: () => ({ viewer: viewer() }) }, 'signed-in')
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'You are signed in' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Sign up with email' })).toHaveCount(0)
-    await page.getByRole('link', { name: 'Go to your account' }).click()
+    const main = page.getByRole('main')
+    await expect(main.getByRole('link', { name: 'Open your home' })).toHaveAttribute('href', '/home')
+    await expect(main.getByRole('link', { name: 'Get Started Free' })).toHaveCount(0)
+    await main.getByRole('link', { name: 'Your account' }).click()
     await expect(page).toHaveURL(/\/profile$/)
   })
 })

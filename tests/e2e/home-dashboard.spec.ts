@@ -17,12 +17,17 @@ const continueRec = { __typename: 'Recommendation', resource: null, kind: 'CONTI
 test('Home greets the learner and shows today, the week, the note to continue, the next exam and recommendations', async ({ page }) => {
   await mockApi(page, { Rhythm: () => ({ rhythm }), Exams: () => ({ exams: [exam] }), Recommendations: () => ({ recommendations: [continueRec] }) }, viewerExtras)
   await page.goto('/home')
-  await expect(page.getByRole('heading', { name: 'Good to see you, Asha' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Asha!/ })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Today' }).getByRole('img', { name: /50% of the way/ })).toBeVisible()
+  // One region per name: Today and This week are Rhythm's own (no wrapper named Today around them).
+  await expect(page.getByRole('region', { name: 'Today', exact: true })).toHaveCount(1)
   await expect(page.getByRole('region', { name: 'This week' }).getByText('1 of 4 days this week')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Continue learning' }).getByRole('link', { name: /Dijkstra/ })).toHaveAttribute('href', `/notes/${NOTE}`)
-  await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('article', { name: 'Operating Systems' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Recommended for you' }).getByText('You were reading this on Monday, 12 October')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Continue learning' }).getByText('You were reading this on Monday, 12 October')).toBeVisible()
+  const nextExam = page.getByRole('region', { name: 'Next exam' })
+  await expect(nextExam.getByText('Operating Systems')).toBeVisible()
+  await expect(nextExam.getByRole('link', { name: 'View Plan' })).toHaveAttribute('href', `/exams/${exam.id}`)
+  await expect(page.getByRole('region', { name: 'Weekly goal' }).getByText('1 / 4 days')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Open Rhythm' })).toHaveAttribute('href', '/rhythm')
 })
 

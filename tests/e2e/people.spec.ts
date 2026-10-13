@@ -88,7 +88,8 @@ test('a refusal is shown in the API’s words', async ({ page }) => {
 })
 
 test('on one’s own profile: exact counts and the way to edit it', async ({ page }) => {
-  await mockApi(page, { ProfileRelation: () => profileRelation(null, MEERA) })
+  // The signed-in viewer is Meera herself, in the app's frame as in the profile's own question.
+  await mockApi(page, { ProfileRelation: () => profileRelation(null, MEERA) }, { id: MEERA, handle: 'meera', displayName: 'Meera Iyer' })
   await page.goto('/u/meera')
   await expect(page.getByRole('link', { name: '12 followers · 3 following' })).toHaveAttribute('href', '/profile/people')
   await expect(page.getByRole('link', { name: 'Edit your profile' })).toBeVisible()

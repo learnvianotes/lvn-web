@@ -95,15 +95,12 @@ export const ProblemCard = memo(function ProblemCard({ problem: p, index, status
               LeetCode <ExternalLink size={14} aria-hidden />
             </a>
           )}
+          {/* Only a video that exists is shown: no greyed-out button waiting for one. */}
           {p.youtubeUrl ? (
             <a className="icon-btn" href={p.youtubeUrl} target="_blank" rel="noopener noreferrer" aria-label="Video explanation on YouTube">
               <Youtube size={18} />
             </a>
-          ) : (
-            <span className="icon-btn is-disabled" title="Video explanation coming soon" aria-label="Video explanation coming soon">
-              <Youtube size={18} />
-            </span>
-          )}
+          ) : null}
         </div>
       </header>
 

@@ -78,7 +78,7 @@ export function Privacy() {
       <h2>9. Changes and contact</h2>
       <p>
         We update the version above when this policy changes and ask you to accept important changes. Grievance officer:
-        [name], <a href="mailto:[grievance email]">[grievance email]</a>. See also the <Link href="/legal/terms">Terms of Service</Link>.
+        [name], [grievance email]. See also the <Link href="/legal/terms">Terms of Service</Link>.
       </p>
     </>
   )

@@ -54,7 +54,7 @@ test('an incoming request: Accept, then Connected', async ({ page }) => {
 })
 
 test('an unverified viewer still sees Follow, and learns why it needs verification', async ({ page }) => {
-  await mockApi(page, { ProfileRelation: () => profileRelation(relation({}, { follow: false }), USER, MEERA, false) })
+  await mockApi(page, { ProfileRelation: () => profileRelation(relation({}, { follow: false }), USER, MEERA, false) }, { verified: false })
   await page.route('**/graphql', async (route, request) => {
     if ((request.postDataJSON() as { operationName?: string }).operationName === 'FollowUser') return route.fulfill({ json: { data: null, errors: [{ message: 'Verify your account to follow people.', extensions: { code: 'FORBIDDEN' } }] } })
     return route.fallback()
@@ -68,7 +68,7 @@ test('a teacher edits the Skills tab: adds, orders and saves in one go', async (
   const calls = await mockApi(page, {
     MyTeacherProfile: () => ({ viewer: { __typename: 'User', id: USER, handle: 'asharao', globalRole: 'TEACHER', teacherProfile: { __typename: 'TeacherProfile', headline: 'Teaches graphs', bio: null, skills: [{ __typename: 'TeacherSkill', id: 's1', kind: 'SKILL', name: 'Graphs', detail: null }] } } }),
     UpdateTeacherProfile: (v) => ({ updateTeacherProfile: { __typename: 'TeacherProfilePayload', profile: { __typename: 'TeacherProfile', headline: 'x', bio: null, skills: [] }, userErrors: [] }, _v: v }),
-  })
+  }, { globalRole: 'TEACHER' })
   await page.goto('/profile/skills')
   await expect(page.getByLabel('Headline')).toHaveValue('Teaches graphs')
   await page.getByRole('button', { name: 'Add an item' }).click()

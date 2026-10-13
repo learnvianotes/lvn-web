@@ -38,12 +38,12 @@ function Follow({ id }: { id: string }) {
 
 /** A question box; `onAsked` gets the queued answer. */
 /** `offNotice` false: the surrounding panel already says AI is off. */
-export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = true }: { scope: AskAiScope; noteId?: string; doubtId?: string; onAsked?: (answer: Answer) => void; compact?: boolean; offNotice?: boolean }) {
+export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = true, initialQuestion = '' }: { scope: AskAiScope; noteId?: string; doubtId?: string; onAsked?: (answer: Answer) => void; compact?: boolean; offNotice?: boolean; initialQuestion?: string }) {
   const t = useTranslations('ai.ask')
   const state = useQuery(AiStateDocument, { fetchPolicy: 'cache-and-network' })
   const [askAi, asking] = useMutation(AskAiDocument, { refetchQueries: ['MyAiAnswers'] })
   const [askDoubt, askingDoubt] = useMutation(AskAiAboutDoubtDocument, { refetchQueries: ['MyAiAnswers'] })
-  const [question, setQuestion] = useState('')
+  const [question, setQuestion] = useState(initialQuestion)
   const [error, setError] = useState<string | null>(null)
   const status = state.data?.aiStatus
   const off = status ? !status.available : false
@@ -211,7 +211,8 @@ const SCOPES: { scope: AskAiScope; icon: LucideIcon }[] = [
 ]
 
 /** /ask: questions over the asker's notes, their groups' and classes', or public notes. */
-export function AskPage() {
+/** `question`: one brought from the search field ("…or ask AI"), filled in for the person to send. */
+export function AskPage({ question }: { question?: string } = {}) {
   const t = useTranslations('ai.ask')
   const [scope, setScope] = useState<AskAiScope>('MY_NOTES')
   return (
@@ -239,7 +240,7 @@ export function AskPage() {
         ))}
       </div>
       <p className="-mt-3 text-xs text-muted">{t(`scopeHint.${scope}`)}</p>
-      <AskForm scope={scope} />
+      <AskForm scope={scope} initialQuestion={question} />
       <section aria-label={t('history')} className="flex flex-col gap-3">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('history')}</h2>
         <AnswerList emptyText={t('none')} />

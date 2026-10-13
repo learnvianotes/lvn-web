@@ -33,7 +33,7 @@ const weakTopics = [
 test('lists exams with Readiness against today’s target, today’s revision, and the weak topics', async ({ page }) => {
   await mockApi(page, { Exams: () => ({ exams: [exam()] }), WeakTopics: () => ({ weakTopics }) }, viewerExtras)
   await page.goto('/profile')
-  await page.getByRole('link', { name: /^Exams/ }).click()
+  await page.getByRole('main').getByRole('link', { name: /^Exams/ }).click()
   await expect(page).toHaveURL(/\/exams$/)
   const card = page.getByRole('article', { name: 'Operating Systems' })
   await expect(card.getByText('Readiness 34%')).toBeVisible()

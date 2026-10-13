@@ -47,7 +47,7 @@ test('the activity of your groups and classes, in words, page by page', async ({
   await expect(feed.getByRole('article')).toHaveCount(4)
   await expect(feed.getByText('2 comments')).toBeVisible()
   expect(calls.filter((c) => c.op === 'ActivityFeed').map((c) => c.variables)).toEqual([{}, { after: 'c1' }])
-  await expect(p.getByRole('link', { name: 'Groups' })).toHaveAttribute('href', '/groups')
+  await expect(p.getByRole('main').getByRole('link', { name: 'Groups' })).toHaveAttribute('href', '/groups')
   await expect(p.getByRole('link', { name: 'Classes' })).toHaveAttribute('href', '/classes')
 })
 
