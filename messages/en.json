@@ -204,6 +204,7 @@
     "verificationQueue": "Proof of study to review",
     "aiProviders": "AI providers",
     "history": "Learning history",
+    "rhythm": "Rhythm",
     "review": "Review flashcards"
   },
   "notes": {
@@ -1850,5 +1851,63 @@
     "study": "Study these cards",
     "studying": "Studying these cards",
     "stopStudying": "Stop studying"
+  },
+  "rhythm": {
+    "title": "Rhythm",
+    "lead": "A weekly habit, not a streak: learn on your planned days, and rest on the others. A day counts at 10 learning minutes or 10 reviews, and nothing is ever lost.",
+    "loading": "Loading…",
+    "failed": "Your Rhythm could not load. Try again.",
+    "zone": "Days are counted in {zone} and start at 4 in the morning.",
+    "today": "Today",
+    "counted": "Today counts",
+    "toGo": "{minutes} more learning {minutes, plural, one {minute} other {minutes}}, or {reviews} more {reviews, plural, one {review} other {reviews}}, and today counts.",
+    "comeback": "Comeback day: the same 10 minutes put you back on rhythm.",
+    "cameBack": "Back on rhythm.",
+    "ring": "Today’s ring: {percent}% of the way to a counted day",
+    "item": {
+      "REVIEWS": "Reviews: {done} of {total}"
+    },
+    "reviewNow": "Review now",
+    "week": "This week",
+    "weekSummary": "{counted} of {target} days this week",
+    "met": "Week met",
+    "status": {
+      "COUNTED": "counted",
+      "MISSED": "planned, not counted",
+      "REST": "rest day",
+      "PAUSED": "paused",
+      "TODAY": "today",
+      "AHEAD": "to come"
+    },
+    "plannedTag": "planned",
+    "dayLabel": "{day}: {status}",
+    "counters": "Counters",
+    "weeksThisTerm": "Rhythm weeks this term",
+    "weeksAllTime": "Rhythm weeks all time",
+    "daysAllTime": "Days counted all time",
+    "plan": "Your planned days",
+    "planHelp": "Pick 3 to 6 days. A change applies from this week on.",
+    "savePlan": "Save days",
+    "planSaved": "Saved. This week now aims for {target} days.",
+    "pauses": "Pauses",
+    "pauseHelp": "Exams, illness, a festival or travel: pause Rhythm, and paused days are neither missed nor needed. {left} of 14 pause days left this term.",
+    "pause": "Pause Rhythm",
+    "from": "From",
+    "to": "To",
+    "reason": "Why",
+    "reasons": {
+      "EXAMS": "Exams",
+      "ILLNESS": "Illness",
+      "FESTIVAL": "Festival",
+      "TRAVEL": "Travel",
+      "OTHER": "Something else"
+    },
+    "startPause": "Pause",
+    "cancel": "Cancel",
+    "pauseRange": "{reason}: {from} to {to}",
+    "pausedNow": "Paused now",
+    "endPause": "End the pause",
+    "dropPause": "Cancel the pause",
+    "noPauses": "No pauses."
   }
 }
