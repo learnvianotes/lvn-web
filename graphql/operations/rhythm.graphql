@@ -25,6 +25,8 @@ query Rhythm {
         kind
         done
         total
+        title
+        topicKey
       }
     }
     weeksThisTerm
@@ -38,6 +40,13 @@ query Rhythm {
       active
     }
     pauseDaysLeft
+    shareRhythm
+    suggestion {
+      plannedDays
+      examId
+      examName
+      daysLeft
+    }
   }
 }
 

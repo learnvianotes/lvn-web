@@ -34,7 +34,10 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'JOIN_REQUEST', actor: meera, group: g })).toBe('Meera Iyer asked to join Algorithms study')
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'APPROVED' }, group: g })).toBe("You're in: Algorithms study accepted your request")
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'REJECTED' }, group: null })).toBe("a group didn't accept your request")
-    expect(say({ category: 'REVISION_REMINDER' })).toBe('Something new for you')
+    // An exam's revision task left today (lvn-backend ADR-0070); a category this build does not know says little.
+    expect(say({ category: 'REVISION_REMINDER', data: { examName: 'Operating Systems', topics: 'Paging' } })).toBe('Today’s revision for Operating Systems is waiting')
+    expect(say({ category: 'REVISION_REMINDER' })).toBe('Today’s revision is waiting')
+    expect(say({ category: 'STREAK_AT_RISK' })).toBe('Something new for you')
   })
 
   it('says who commented or replied, and on what (lvn-backend ADR-0047)', () => {

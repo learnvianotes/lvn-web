@@ -8,6 +8,8 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { EndRhythmPauseDocument, PauseRhythmDocument, RhythmDocument, SetRhythmPlanDocument, type RhythmPauseReason, type RhythmQuery } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { Buddies, FocusMode, ShareRhythm } from './Focus'
+import { Recommendations } from './Recommendations'
 
 type R = RhythmQuery['rhythm']
 
@@ -38,10 +40,22 @@ export function Rhythm() {
       {r ? (
         <>
           <Today r={r} />
+          {r.suggestion ? (
+            <p role="note" className="rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+              {t('suggestion', { exam: r.suggestion.examName, days: r.suggestion.daysLeft, planned: r.suggestion.plannedDays })}{' '}
+              <a href="#rhythm-plan" className="font-semibold text-accent hover:underline">
+                {t('suggestionAction')}
+              </a>
+            </p>
+          ) : null}
           <Week r={r} />
           <Counters r={r} />
+          <FocusMode />
+          <Recommendations />
+          <Buddies />
           <Plan r={r} />
           <Pauses r={r} />
+          <ShareRhythm key={String(r.shareRhythm)} shared={r.shareRhythm} />
           <p className="text-xs text-muted">{t('zone', { zone: r.timeZone })}</p>
         </>
       ) : null}
@@ -77,7 +91,7 @@ function Ring({ share, comeback }: { share: number; comeback: boolean }) {
   )
 }
 
-function Today({ r }: { r: R }) {
+export function Today({ r }: { r: R }) {
   const t = useTranslations('rhythm')
   const today = r.today
   const minutesLeft = Math.max(Math.ceil((BAR_SECONDS - today.learningSeconds) / 60), 0)
@@ -98,12 +112,23 @@ function Today({ r }: { r: R }) {
           {!today.counted ? <p className="text-muted">{t('toGo', { minutes: minutesLeft, reviews: reviewsLeft })}</p> : null}
           <ul className="flex flex-col gap-1">
             {today.items.map((item) => (
-              <li key={item.kind} className="flex items-center gap-2">
+              <li key={item.kind} className="flex flex-wrap items-center gap-2">
                 <span aria-hidden className={cn('size-2 rounded-full', item.total && item.done >= item.total ? 'bg-accent' : 'bg-border')} />
-                {item.kind === 'REVIEWS' ? t('item.REVIEWS', { done: item.done, total: item.total }) : item.kind}
+                {item.kind === 'REVIEWS'
+                  ? t('item.REVIEWS', { done: item.done, total: item.total })
+                  : item.kind === 'PLAN_TASK'
+                    ? t('item.PLAN_TASK', { title: item.title ?? '', done: item.done, total: item.total })
+                    : item.kind === 'WEAK_TOPIC'
+                      ? t('item.WEAK_TOPIC', { title: item.title ?? item.topicKey ?? '' })
+                      : item.kind}
                 {item.kind === 'REVIEWS' && item.done < item.total ? (
                   <Link href="/review" className="font-medium text-accent hover:underline">
                     {t('reviewNow')}
+                  </Link>
+                ) : null}
+                {item.kind === 'PLAN_TASK' && item.done < item.total ? (
+                  <Link href="/exams" className="font-medium text-accent hover:underline">
+                    {t('examsLink')}
                   </Link>
                 ) : null}
               </li>
@@ -115,7 +140,7 @@ function Today({ r }: { r: R }) {
   )
 }
 
-function Week({ r }: { r: R }) {
+export function Week({ r }: { r: R }) {
   const t = useTranslations('rhythm')
   const format = useFormatter()
   return (

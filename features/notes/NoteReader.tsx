@@ -14,6 +14,7 @@ import { ForkCredit, MakeCopyButton, useMakeCopy } from './ShareDialog'
 import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
+import { QuizTopicsProvider } from './render/interactive'
 import { Discussion } from '@/features/discussion/Discussion'
 import { NoteCredits } from '@/features/workspaces/Credits'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
@@ -89,11 +90,13 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
             </p>
           ) : null}
         </header>
-        <div className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
-          {cards.map((c) => (
-            <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
-          ))}
-        </div>
+        <QuizTopicsProvider topicKeys={(meta.topics ?? []).map((t) => `topic:${t.id}`)}>
+          <div className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
+            {cards.map((c) => (
+              <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
+            ))}
+          </div>
+        </QuizTopicsProvider>
         <StudyAids noteId={meta.id} />
         <Discussion target={{ type: 'NOTE', id: meta.id }} />
       </article>

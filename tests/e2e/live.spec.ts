@@ -1018,3 +1018,44 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await expect(pauses.getByText('No pauses.')).toBeVisible()
   await expect(pauses.getByText(/14 of 14 pause days left this term/)).toBeVisible()
 })
+
+test('a learner adds an exam on a topic found by name, is recommended its topic, and focuses for a while (lvn-backend ADR-0070, ADR-0071, ADR-0072)', async ({ page }, info) => {
+  const stamp = `${Date.now()}-${info.project.name}`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Exams')
+  await page.getByLabel('Email', { exact: true }).fill(`live-exams-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  // An exam ten days away on a curated topic.
+  await page.getByRole('link', { name: /^Exams/ }).click()
+  await page.getByRole('button', { name: 'Add an exam' }).click()
+  const form = page.getByRole('region', { name: 'Add an exam' })
+  await form.getByLabel('Exam').fill('Live midterm')
+  await form.getByLabel('Date').fill(new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10))
+  await form.getByLabel('Find a topic').fill('arrays & hash')
+  await form.getByRole('button', { name: 'Add Arrays & Hashing' }).click()
+  await form.getByRole('button', { name: 'Add the exam' }).click()
+  const card = page.getByRole('article', { name: 'Live midterm' })
+  await expect(card.getByText('Readiness 0%')).toBeVisible()
+  await card.getByRole('link', { name: 'Live midterm' }).click()
+  await expect(page.getByRole('region', { name: 'Revision plan' }).getByRole('listitem').first()).toBeVisible()
+
+  // The exam's topic is recommended, with why; a focus session starts and ends.
+  await page.goto('/rhythm')
+  await expect(page.getByRole('region', { name: 'Recommended for you' }).getByText(/^On your plan for Live midterm, in (9|10) days$/)).toBeVisible()
+  const focus = page.getByRole('region', { name: 'Focus' })
+  await focus.getByRole('button', { name: 'Start focusing' }).click()
+  await expect(focus.getByRole('timer')).toHaveText(/^2[45]:\d\d$/)
+  await focus.getByRole('button', { name: 'End the session' }).click()
+  await expect(focus.getByRole('status')).toHaveText(/minutes? counted\.$/)
+
+  // Home brings it together: the greeting, today, and the next exam (P6h).
+  await page.goto('/home')
+  await expect(page.getByRole('heading', { name: 'Good to see you, Live' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('article', { name: 'Live midterm' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Today' })).toBeVisible()
+})

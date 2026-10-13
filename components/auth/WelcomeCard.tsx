@@ -26,7 +26,10 @@ export function WelcomeCard() {
       <div className={card}>
         <h2 className="text-xl font-bold tracking-tight">{t('signedInTitle')}</h2>
         <p className="text-sm text-muted">{t('signedInLead')}</p>
-        <Link href="/profile" className="mt-1 inline-flex h-12 items-center justify-center rounded-full bg-accent text-[15px] font-semibold text-accent-fg hover:opacity-90">
+        <Link href="/home" className="mt-1 inline-flex h-12 items-center justify-center rounded-full bg-accent text-[15px] font-semibold text-accent-fg hover:opacity-90">
+          {t('home')}
+        </Link>
+        <Link href="/profile" className="inline-flex h-11 items-center justify-center rounded-full border border-border text-sm font-semibold hover:bg-surface-2">
           {t('account')}
         </Link>
       </div>

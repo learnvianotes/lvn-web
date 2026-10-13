@@ -447,6 +447,11 @@ input AnswerMentorInviteInput {
   inviteId: UUID!
 }
 
+input AnswerRhythmBuddyInput {
+  accept: Boolean!
+  id: UUID!
+}
+
 input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
@@ -647,6 +652,14 @@ input ChangeNoteVisibilityInput {
   visibility: Visibility!
 }
 
+type ClassPerformance {
+  quizzes: Int!
+  students: [ClassStudentPerformance!]!
+
+  """Hardest first"""
+  topics: [ClassTopicPerformance!]!
+}
+
 type ClassQuiz {
   author: User!
   classroomId: UUID!
@@ -701,6 +714,37 @@ type ClassQuizQuestion {
   question: JSON!
 }
 
+type ClassQuizScore {
+  quizId: UUID!
+  quizTitle: String!
+
+  """The student's first attempt"""
+  score: Int!
+  submittedAt: DateTime!
+  total: Int!
+}
+
+type ClassStudentPerformance {
+  """Right over asked across the scores, 0–1; null before a first quiz"""
+  average: Float
+  name: String!
+  scores: [ClassQuizScore!]!
+  submitted: Int!
+  user: User!
+}
+
+type ClassTopicPerformance {
+  """Right over answers on the topic in first attempts, 0–1"""
+  accuracy: Float!
+  answers: Int!
+
+  """Under 60 %"""
+  hard: Boolean!
+  key: String!
+  title: String!
+  topic: Topic
+}
+
 """
 A class, owned by the core subgraph: null when the viewer may no longer see it
 """
@@ -720,11 +764,19 @@ type Classroom {
   members: [ClassroomMember!]
   name: String!
 
+  """
+  Staff only: each student's first score on each quiz, and the topics the class finds hard
+  """
+  performance: ClassPerformance
+
   """Members only: announcements, newest first"""
   posts(after: String, first: Int): ClassroomPostConnection
 
   """Members only: published quizzes, newest first"""
   quizzes(first: Int): [ClassQuiz!]
+
+  """Members only: this week's Rhythm across the class"""
+  rhythmRing: ClassroomRhythm
 
   """
   Members only: notes shared to the class that the viewer may open, the most recently shared first
@@ -833,6 +885,31 @@ type ClassroomPreview {
   teacher: User!
   viewerRequestId: UUID
   viewerRole: ClassroomRole
+}
+
+"""This week across a class's students"""
+type ClassroomRhythm {
+  countedDays: Int!
+
+  """Students whose week is met"""
+  metCount: Int!
+
+  """Only students who share their Rhythm with their classes"""
+  people: [ClassroomRhythmPerson!]!
+  students: Int!
+
+  """The sum of the students' targets"""
+  targetDays: Int!
+}
+
+type ClassroomRhythmPerson {
+  countedDays: Int!
+  met: Boolean!
+
+  """A child account's first name only"""
+  name: String!
+  target: Int!
+  user: User!
 }
 
 enum ClassroomRole {
@@ -997,6 +1074,17 @@ input CreateClassroomPostInput {
   classroomId: UUID!
 }
 
+input CreateExamInput {
+  """YYYY-MM-DD, today or later, at most two years away"""
+  date: String!
+
+  """1–100 characters"""
+  name: String!
+
+  """1–20 notes topics the viewer may use"""
+  topicIds: [UUID!]!
+}
+
 input CreateFolderInput {
   name: String!
   parentId: UUID
@@ -1102,6 +1190,12 @@ type Discussion {
 
   """Why the viewer may not comment or react, in words"""
   whyNot: String
+}
+
+input DismissRecommendationInput {
+  """The note id or the topic key"""
+  entityId: String!
+  kind: RecommendationKind!
 }
 
 type DomainReview {
@@ -1216,6 +1310,86 @@ enum ErrorCode {
   VALIDATION
 }
 
+type Exam {
+  """YYYY-MM-DD, a learning day in the learner's zone"""
+  date: String!
+
+  """0 on the exam's day"""
+  daysLeft: Int!
+  id: UUID!
+  name: String!
+  past: Boolean!
+
+  """Exam Readiness, 0–100: the mean mastery of the topics"""
+  readiness: Int!
+
+  """Where the target line ends on the exam's day, in %"""
+  target: Int!
+
+  """Where the target line is today, in %"""
+  targetToday: Int!
+
+  """Oldest day first"""
+  tasks: [ExamPlanTask!]!
+  topics: [ExamTopic!]!
+}
+
+input ExamIdInput {
+  id: UUID!
+}
+
+type ExamPayload {
+  exam: Exam
+  userErrors: [UserError!]!
+}
+
+"""One revision session of an exam's plan"""
+type ExamPlanTask {
+  """YYYY-MM-DD, a learning day in the learner's zone"""
+  day: String!
+
+  """10 minutes on its topics that day, or a quiz answered on them"""
+  done: Boolean!
+  id: UUID!
+  today: Boolean!
+  topics: [ExamPlanTopic!]!
+}
+
+type ExamPlanTopic {
+  key: String!
+  title: String!
+}
+
+type ExamTopic {
+  """
+  Right answers in the topic's last 3 quiz results, 0–1; null without results
+  """
+  accuracy: Float
+
+  """topic:<id>, as learning events name it"""
+  key: String!
+
+  """0.6 × recall + 0.4 × accuracy, or the one there is; 0 with neither"""
+  mastery: Float!
+
+  """
+  Mean chance of recalling the topic's studied cards now, 0–1; null without studied cards
+  """
+  recall: Float
+  title: String!
+
+  """The notes topic, when the viewer may still use it"""
+  topic: Topic
+}
+
+"""A topic an exam can be set on"""
+type ExamTopicOption {
+  id: UUID!
+  key: String!
+  subjectTitle: String!
+  title: String!
+}
+
 """
 What an upload is for: AVATAR, VERIFICATION_DOCUMENT, and ATTACHMENT (a picture, video, audio or PDF for a note you can edit, given as parentId). Other purposes arrive with their features.
 """
@@ -1227,6 +1401,31 @@ enum FilePurpose {
   IMPORT
   VERIFICATION_DOCUMENT
   VOICE_NOTE
+}
+
+type FocusSession {
+  breakMinutes: Int!
+  endedAt: DateTime
+
+  """Counted when it ended: the time since it started, at most the plan"""
+  focusedSeconds: Int!
+  id: UUID!
+  meetUrl: String
+  note: Note
+  plannedMinutes: Int!
+  startedAt: DateTime!
+
+  """topic:<id> or core:<subject>/<topic>"""
+  topicKey: String
+}
+
+input FocusSessionIdInput {
+  id: UUID!
+}
+
+type FocusSessionPayload {
+  session: FocusSession
+  userErrors: [UserError!]!
 }
 
 """The viewer's folder; nested up to 5 levels"""
@@ -1529,6 +1728,11 @@ input InviteMentorInput {
 
   """A teacher's handle or email"""
   person: String!
+}
+
+input InviteRhythmBuddyInput {
+  """Someone the viewer follows or is connected with"""
+  handle: String!
 }
 
 input InviteToClassroomInput {
@@ -1914,6 +2118,7 @@ type Mutation {
   """The team and the mentor"""
   answerDoubt(input: AnswerDoubtInput!): DoubtPayload!
   answerMentorInvite(input: AnswerMentorInviteInput!): GroupPayload!
+  answerRhythmBuddy(input: AnswerRhythmBuddyInput!): OkPayload!
 
   """
   The author's one appeal against hiding or removing their note or content, a group's owner's against its removal, or a suspended person's against the suspension
@@ -1968,6 +2173,9 @@ type Mutation {
 
   """Staff: an announcement every member reads"""
   createClassroomPost(input: CreateClassroomPostInput!): ClassroomPayload!
+
+  """Signed in only, as every mutation below; at most 10 upcoming exams"""
+  createExam(input: CreateExamInput!): ExamPayload!
   createFolder(input: CreateFolderInput!): FolderPayload!
   createGroup(input: CreateGroupInput!): GroupPayload!
   createGroupPost(input: CreateGroupPostInput!): GroupPostPayload!
@@ -1998,6 +2206,7 @@ type Mutation {
 
   """The asker or a moderator"""
   deleteDoubt(input: DoubtIdInput!): GroupPayload!
+  deleteExam(input: ExamIdInput!): OkPayload!
 
   """Its notes and subfolders move up one level"""
   deleteFolder(input: IdInput!): OkPayload!
@@ -2017,9 +2226,13 @@ type Mutation {
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
 
+  """Signed in only: not shown again for 30 days"""
+  dismissRecommendation(input: DismissRecommendationInput!): OkPayload!
+
   """Its author"""
   editComment(input: EditCommentInput!): CommentPayload!
   editGroupPost(input: EditGroupPostInput!): GroupPostPayload!
+  endFocusSession(input: FocusSessionIdInput!): FocusSessionPayload!
 
   """
   Ends a pause early (or drops one not started); its unused days come back
@@ -2037,6 +2250,7 @@ type Mutation {
 
   """Admins and the Owner invite a teacher; the invite lasts 14 days"""
   inviteMentor(input: InviteMentorInput!): GroupPayload!
+  inviteRhythmBuddy(input: InviteRhythmBuddyInput!): OkPayload!
 
   """Staff; the invited person accepts within 14 days"""
   inviteToClassroom(input: InviteToClassroomInput!): ClassroomPayload!
@@ -2081,6 +2295,9 @@ type Mutation {
   removeFollower(input: PersonInput!): PersonPayload!
   removeGroupMember(input: GroupMemberInput!): GroupPayload!
   removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
+
+  """Ends a buddy link, or takes back an invite"""
+  removeRhythmBuddy(input: RhythmBuddyIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
   """The asker or the mentor"""
@@ -2194,6 +2411,11 @@ type Mutation {
   setRhythmPlan(input: SetRhythmPlanInput!): OkPayload!
 
   """
+  Shows, or stops showing, the viewer's name and counted days on their classes' Rhythm ring
+  """
+  setRhythmSharing(input: SetRhythmSharingInput!): OkPayload!
+
+  """
   Share with one person, or change their role; a PRIVATE note becomes SHARED
   """
   shareNote(input: ShareNoteInput!): NotePayload!
@@ -2211,6 +2433,11 @@ type Mutation {
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+
+  """
+  Signed in only, as every mutation below. A session already open ends first
+  """
+  startFocusSession(input: StartFocusSessionInput!): FocusSessionPayload!
   stopStudyingNoteCards(input: StudyNoteInput!): OkPayload!
 
   """Adds a readable note's flashcards to the viewer's reviews"""
@@ -2250,6 +2477,7 @@ type Mutation {
   """
   unsubscribeEmail(input: UnsubscribeEmailInput!): UnsubscribePayload!
   updateClassroom(input: UpdateClassroomInput!): ClassroomPayload!
+  updateExam(input: UpdateExamInput!): ExamPayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
 
   """Admins: name, description, privacy, join policy"""
@@ -2659,6 +2887,9 @@ enum NotificationCategory {
   NOTES_IMPORT
   QUIZ_PUBLISHED
   REVISION_REMINDER
+
+  """Someone asked the viewer to be Rhythm buddies, or accepted (ADR-0072)"""
+  RHYTHM_BUDDY
   SHARE
   STREAK_AT_RISK
   VERIFICATION
@@ -2946,9 +3177,21 @@ type Query {
 
   """A doubt the viewer's workspace holds"""
   doubt(id: UUID!): Doubt
+  exam(id: UUID!): Exam
+
+  """
+  Signed in only: topics to set an exam on, by words of their titles (at most 20)
+  """
+  examTopicOptions(query: String!): [ExamTopicOption!]!
+
+  """Signed in only: the viewer's exams from a week ago on, soonest first"""
+  exams: [Exam!]!
 
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
+
+  """Signed in only: the viewer's open focus session"""
+  focusSession: FocusSession
 
   """
   The Following feed (ADR-0049): PUBLIC notes and publications of the people the viewer follows, newest first
@@ -3042,6 +3285,9 @@ type Query {
   """
   publicNotes(after: String, first: Int): NoteConnection!
 
+  """Signed in only: best first, at most 20 (default 10)"""
+  recommendations(limit: Int): [Recommendation!]!
+
   """
   Its owner only: a group platform moderators removed, with why; null for anything else
   """
@@ -3052,6 +3298,9 @@ type Query {
 
   """Signed in only"""
   rhythm: Rhythm!
+
+  """Signed in only"""
+  rhythmBuddies: RhythmBuddies!
 
   """
   At most 100 characters; `first` per kind, 1 to 20 (default 5). With filters the words may be left out: the notes
@@ -3099,6 +3348,9 @@ type Query {
 
   """The signed-in user, null for anonymous visitors"""
   viewer: User
+
+  """Signed in only: weak topics, each with why; an upcoming exam's first"""
+  weakTopics: [WeakTopic!]!
 }
 
 type QuizAnswer {
@@ -3171,6 +3423,44 @@ enum ReactionTargetType {
 type Reactions {
   counts: [ReactionCount!]!
   viewerReaction: ReactionKind
+}
+
+type Recommendation {
+  kind: RecommendationKind!
+
+  """The note, for CONTINUE_NOTE, QUIZ_ON_TOPIC and POPULAR_NOTE"""
+  note: Note
+
+  """Its title as the viewer sees it"""
+  noteTitle: String
+
+  """Why, in words"""
+  reason: String!
+
+  """Higher first; each kind has its band"""
+  score: Float!
+  topic: Topic
+
+  """The topic key, for EXAM_TOPIC and REVISE_TOPIC"""
+  topicKey: String
+  topicTitle: String
+}
+
+enum RecommendationKind {
+  """A note opened in the last 14 days, not today"""
+  CONTINUE_NOTE
+
+  """A topic of an exam in the next 14 days"""
+  EXAM_TOPIC
+
+  """A public note on the learner's topics that many people read"""
+  POPULAR_NOTE
+
+  """A public note with a quiz on a topic read this week"""
+  QUIZ_ON_TOPIC
+
+  """A weak topic"""
+  REVISE_TOPIC
 }
 
 input RefreshSessionInput {
@@ -3414,6 +3704,12 @@ type Rhythm {
   """ISO weekdays, 1 Monday … 7 Sunday"""
   plannedDays: [Int!]!
 
+  """
+  Their name and counted days show on their classes' Rhythm ring (ADR-0072); off by default
+  """
+  shareRhythm: Boolean!
+  suggestion: RhythmSuggestion
+
   """Planned days less paused ones, at least 1"""
   target: Int!
   timeZone: String!
@@ -3423,6 +3719,45 @@ type Rhythm {
   week: [RhythmDay!]!
   weeksAllTime: Int!
   weeksThisTerm: Int!
+}
+
+type RhythmBuddies {
+  """At most five"""
+  buddies: [RhythmBuddy!]!
+  invites: [RhythmBuddyInvite!]!
+  sent: [RhythmBuddyInvite!]!
+}
+
+"""
+What a buddy may see of the other: studying now, and this week's counted days
+"""
+type RhythmBuddy {
+  countedDays: Int!
+
+  """The link's id: end it with removeRhythmBuddy"""
+  id: UUID!
+  meetUrl: String
+  met: Boolean!
+  since: DateTime!
+  studyingNow: Boolean!
+  studyingSince: DateTime
+  target: Int!
+
+  """The session's topic, when it has one the viewer may see"""
+  topicTitle: String
+  user: User!
+}
+
+input RhythmBuddyIdInput {
+  id: UUID!
+}
+
+type RhythmBuddyInvite {
+  at: DateTime!
+  id: UUID!
+
+  """Who asked (invites), or who was asked (sent)"""
+  user: User!
 }
 
 type RhythmDay {
@@ -3454,8 +3789,18 @@ enum RhythmDayStatus {
 type RhythmItem {
   done: Int!
 
-  """REVIEWS now; PLAN_TASK and WEAK_TOPIC with the exam planner"""
+  """
+  REVIEWS, PLAN_TASK (today's exam-plan tasks) or WEAK_TOPIC (one weak topic, done at 10 minutes on it today)
+  """
   kind: String!
+
+  """
+  The exams of today's tasks, or the weak topic's title (null for a /core topic)
+  """
+  title: String
+
+  """The weak topic's key"""
+  topicKey: String
   total: Int!
 }
 
@@ -3477,6 +3822,16 @@ enum RhythmPauseReason {
   ILLNESS
   OTHER
   TRAVEL
+}
+
+"""
+Three weeks before an exam, one more planned day a week; nothing changes until the learner sets it
+"""
+type RhythmSuggestion {
+  daysLeft: Int!
+  examId: UUID!
+  examName: String!
+  plannedDays: Int!
 }
 
 type RhythmToday {
@@ -3670,6 +4025,10 @@ input SetRhythmPlanInput {
   plannedDays: [Int!]!
 }
 
+input SetRhythmSharingInput {
+  share: Boolean!
+}
+
 input ShareNoteInput {
   noteId: UUID!
 
@@ -3714,6 +4073,23 @@ input SignUpInput {
 type SignedUrl {
   expiresAt: DateTime!
   url: String!
+}
+
+input StartFocusSessionInput {
+  """0–30, 5 by default"""
+  breakMinutes: Int
+
+  """
+  https://meet.google.com/abc-defg-hij; buddies see it during the session
+  """
+  meetUrl: String
+
+  """5–90, 25 by default"""
+  minutes: Int
+
+  """A note the viewer can read"""
+  noteId: UUID
+  topicKey: String
 }
 
 """
@@ -3968,6 +4344,15 @@ input UpdateClassroomInput {
   newCode: Boolean
 }
 
+input UpdateExamInput {
+  date: String
+  id: UUID!
+  name: String
+
+  """Replaces the topics; the plan is made again from today"""
+  topicIds: [UUID!]
+}
+
 """
 Omitted fields stay as they are; `parentId: null` moves the folder to the top level
 """
@@ -4206,6 +4591,31 @@ enum Visibility {
   PRIVATE
   PUBLIC
   SHARED
+}
+
+type WeakTopic {
+  accuracy: Float
+  daysLeft: Int
+
+  """The soonest exam it is a topic of, if any"""
+  examId: UUID
+  examName: String
+  key: String!
+  reason: WeakTopicReason!
+
+  """Null for a /core topic: show its key"""
+  title: String
+  topic: Topic
+}
+
+enum WeakTopicReason {
+  """Under 60 % right over the topic's last 3 quiz results"""
+  LOW_ACCURACY
+
+  """
+  A topic of an exam in the next 14 days with no time on it in the last 14
+  """
+  NOT_REVISITED
 }
 
 enum YearOfStudy {

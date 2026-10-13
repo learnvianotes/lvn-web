@@ -6,6 +6,7 @@ import { cardPlainText } from '@/lib/contracts/validation'
 import { env } from '@/lib/env'
 import { accentOf, readingMinutes } from '@/features/notes/look'
 import { CardView } from '@/features/notes/render/CardView'
+import { QuizTopicsProvider } from '@/features/notes/render/interactive'
 import type { PublicNote } from './data'
 import { publicNotePath } from './paths'
 import { PublicMedia } from './PublicMedia'
@@ -76,12 +77,14 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
       </header>
 
       <PublicMedia noteId={note.id} hasMedia={note.cards.some((c) => c.hasMedia)}>
-        <article className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
-          {note.cards.map((c) => (
-            <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
-          ))}
-          {!note.cards.length ? <p className="text-muted">{t('empty')}</p> : null}
-        </article>
+        <QuizTopicsProvider topicKeys={note.topics.map((topic) => `topic:${topic.id}`)}>
+          <article className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
+            {note.cards.map((c) => (
+              <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
+            ))}
+            {!note.cards.length ? <p className="text-muted">{t('empty')}</p> : null}
+          </article>
+        </QuizTopicsProvider>
       </PublicMedia>
       {/* Study aids made when it was published (lvn-backend ADR-0061); saving their cards happens in the app. */}
       <StudyAidsView aids={note.aiInsights ?? []} keepHref={`/notes/${note.id}`} />

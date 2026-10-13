@@ -18,12 +18,13 @@ const rhythm = (over: Record<string, unknown> = {}, today: Record<string, unknow
   countedDays: 1,
   met: false,
   week: statuses.map((status, i) => ({ __typename: 'RhythmDay', day: `2026-10-${String(12 + i).padStart(2, '0')}`, weekday: i + 1, planned: plan.includes(i + 1), counted: status === 'COUNTED', status })),
-  today: { __typename: 'RhythmToday', day: '2026-10-15', learningSeconds: 240, reviews: 3, counted: false, comeback: true, cameBack: false, items: [{ __typename: 'RhythmItem', kind: 'REVIEWS', done: 3, total: 8 }], ...today },
+  today: { __typename: 'RhythmToday', day: '2026-10-15', learningSeconds: 240, reviews: 3, counted: false, comeback: true, cameBack: false, items: [{ __typename: 'RhythmItem', kind: 'REVIEWS', done: 3, total: 8, title: null, topicKey: null }], ...today },
   weeksThisTerm: 9,
   weeksAllTime: 23,
   countedDaysAllTime: 140,
   pauses: [],
   pauseDaysLeft: 14,
+  suggestion: null, shareRhythm: false,
   ...over,
 })
 const ok = (name: string, userErrors: unknown[] = []) => ({ [name]: { __typename: 'OkPayload', ok: !userErrors.length, userErrors } })

@@ -53,7 +53,8 @@
       "legal": "By continuing, you agree to our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
       "signedInTitle": "You are signed in",
       "signedInLead": "Pick up where you left off.",
-      "account": "Go to your account"
+      "account": "Go to your account",
+      "home": "Open your home"
     },
     "signIn": {
       "title": "Sign in",
@@ -204,6 +205,8 @@
     "verificationQueue": "Proof of study to review",
     "aiProviders": "AI providers",
     "history": "Learning history",
+    "home": "Home",
+    "exams": "Exams",
     "rhythm": "Rhythm",
     "review": "Review flashcards"
   },
@@ -978,7 +981,9 @@
       "COMMENT": "a comment",
       "GROUP_POST": "a post"
     },
-    "mentionGone": "{actor} mentioned you somewhere you can no longer open"
+    "mentionGone": "{actor} mentioned you somewhere you can no longer open",
+    "revisionReminder": "Today’s revision for {exam} is waiting",
+    "revisionReminderAny": "Today’s revision is waiting"
   },
   "people": {
     "teacher": "Teacher",
@@ -1239,6 +1244,8 @@
     "tab": {
       "posts": "Announcements",
       "notes": "Notes",
+      "rhythm": "Rhythm",
+      "performance": "Performance",
       "people": "People",
       "requests": "Requests",
       "settings": "Settings",
@@ -1518,7 +1525,8 @@
       "VERIFICATION": "Verification",
       "DATA_EXPORT": "Data exports",
       "NOTES_IMPORT": "Imports",
-      "MENTION": "Mentions of you"
+      "MENTION": "Mentions of you",
+      "REVISION_REMINDER": "Revision reminders for your exams"
     },
     "unsubscribeTitle": "Stop these emails",
     "unsubscribeLead": "Click below and we'll stop sending you this kind of email. Everything still shows in the app.",
@@ -1865,7 +1873,9 @@
     "cameBack": "Back on rhythm.",
     "ring": "Today’s ring: {percent}% of the way to a counted day",
     "item": {
-      "REVIEWS": "Reviews: {done} of {total}"
+      "REVIEWS": "Reviews: {done} of {total}",
+      "PLAN_TASK": "Revision for {title}: {done} of {total}",
+      "WEAK_TOPIC": "Weak topic: {title}"
     },
     "reviewNow": "Review now",
     "week": "This week",
@@ -1908,6 +1918,142 @@
     "pausedNow": "Paused now",
     "endPause": "End the pause",
     "dropPause": "Cancel the pause",
-    "noPauses": "No pauses."
+    "noPauses": "No pauses.",
+    "examsLink": "Plan",
+    "suggestion": "{exam} is in {days, plural, one {# day} other {# days}}: try {planned} planned days a week until then.",
+    "suggestionAction": "Choose the days"
+  },
+  "exams": {
+    "title": "Exams",
+    "lead": "Add an exam and its topics: LearnViaNotes spreads revision sessions back from the day, and Readiness shows how well you know the topics now.",
+    "loading": "Loading…",
+    "failed": "Your exams could not load. Try again.",
+    "none": "No exams yet. Add one and its plan appears here.",
+    "add": "Add an exam",
+    "name": "Exam",
+    "namePlaceholder": "e.g. Operating Systems midterm",
+    "date": "Date",
+    "topics": "Topics",
+    "findTopic": "Find a topic",
+    "findTopicHelp": "Type a few letters of a topic’s name.",
+    "noTopicFound": "No topic matches.",
+    "addTopic": "Add {title}",
+    "removeTopic": "Remove {title}",
+    "save": "Save",
+    "create": "Add the exam",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete the exam",
+    "confirmDelete": "Delete {name} and its plan?",
+    "daysLeft": "{days, plural, =0 {Today} one {Tomorrow} other {In # days}}",
+    "past": "Done",
+    "readiness": "Readiness {value}%",
+    "readinessLabel": "Readiness: {value}%, target today {target}%",
+    "onTrack": "On track",
+    "behind": "{points} points below today’s target",
+    "todayTask": "Today: {topics}",
+    "todayDone": "Today’s revision is done",
+    "open": "Open",
+    "back": "All exams",
+    "plan": "Revision plan",
+    "planHelp": "A session is done by 10 minutes on its topics that day, or a quiz on them.",
+    "noPlan": "No sessions: the exam is today.",
+    "taskDone": "done",
+    "taskToday": "today",
+    "taskAhead": "to come",
+    "taskLeft": "not done",
+    "taskLabel": "{day}: {topics}, {status}",
+    "mastery": "Topics",
+    "masteryHelp": "Recall is how likely you are to remember a topic’s flashcards now; accuracy is your last quiz answers on it.",
+    "recall": "Recall {value}%",
+    "accuracy": "Accuracy {value}%",
+    "noData": "No flashcards or quizzes yet",
+    "weak": "Weak topics",
+    "weakHelp": "Topics to revise first.",
+    "noWeak": "No weak topics. Well done.",
+    "reason": {
+      "LOW_ACCURACY": "Under 60% right in your last quizzes ({value}%)",
+      "NOT_REVISITED": "Not revised in 14 days, before {exam}"
+    },
+    "aTopic": "A topic"
+  },
+  "recommendations": {
+    "title": "Recommended for you",
+    "none": "Nothing to recommend yet. Read a few notes, add an exam or take a quiz, and suggestions appear here.",
+    "dismiss": "Not now: {title}",
+    "untitled": "Untitled"
+  },
+  "focus": {
+    "title": "Focus",
+    "lead": "Work for a set time, then rest. Ten minutes on a topic make the day count for your Rhythm.",
+    "minutes": "Work",
+    "breakMinutes": "Rest",
+    "minutesOption": "{minutes} min",
+    "topic": "Topic (optional)",
+    "topicPlaceholder": "Find a topic",
+    "pickTopic": "Focus on {title}",
+    "onTopic": "On {title}",
+    "noTopic": "Any topic",
+    "meet": "Google Meet link (optional; your buddies can join)",
+    "start": "Start focusing",
+    "end": "End the session",
+    "focusing": "Focusing: {minutes} minutes, then a rest.",
+    "resting": "Rest: stretch, drink some water.",
+    "done": "Done. End the session to count it.",
+    "openMeet": "Open the Meet call",
+    "counted": "{minutes, plural, =0 {Under a minute counted.} one {# minute counted.} other {# minutes counted.}}"
+  },
+  "buddies": {
+    "title": "Rhythm buddies",
+    "lead": "Up to five people you follow or are connected with. You see when each other is studying, and each other's week; nothing else.",
+    "none": "No buddies yet.",
+    "invited": "{name} asked you to be Rhythm buddies.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "studyingNow": "Studying now",
+    "onTopic": "On {title}",
+    "week": "{counted} of {target} days this week",
+    "join": "Join",
+    "remove": "Stop being buddies with {name}",
+    "waiting": "Waiting for {name} to answer.",
+    "takeBack": "Take back",
+    "handle": "Ask someone by their handle",
+    "invite": "Ask",
+    "share": "Show my name and days on my classes' Rhythm ring",
+    "shareHelp": "Your classmates and teachers see your first name and how many days counted this week. Off unless you turn it on."
+  },
+  "classRhythm": {
+    "title": "Rhythm this week",
+    "summary": "{met} of {students} students met their week · {counted} of {target} days counted",
+    "people": "Sharing their Rhythm",
+    "nobody": "No one in this class shares their Rhythm yet.",
+    "person": "{counted} of {target} days"
+  },
+  "classPerformance": {
+    "title": "Class performance",
+    "lead": "Each student's first score on each quiz, and the topics the class finds hard.",
+    "noQuizzes": "No quizzes yet. Publish one and results appear here.",
+    "student": "Student",
+    "average": "Average",
+    "submitted": "Quizzes taken",
+    "averageValue": "{value}%",
+    "noAverage": "—",
+    "topics": "Topics",
+    "hard": "Hard",
+    "topicLine": "{value}% right of {answers} answers",
+    "noTopics": "Quizzes made from notes with topics show which topics are hard."
+  },
+  "homeDashboard": {
+    "title": "Home",
+    "greeting": "Good to see you, {name}",
+    "greetingAnon": "Good to see you",
+    "lead": "Today’s ring, your week, and what to do next.",
+    "openRhythm": "Open Rhythm",
+    "continue": "Continue learning",
+    "untitled": "Untitled",
+    "nextExam": "Next exam",
+    "allExams": "All exams",
+    "addExam": "Add an exam",
+    "noExam": "No exam coming up. Add one, and LearnViaNotes plans your revision back from the day."
   }
 }

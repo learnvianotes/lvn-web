@@ -65,6 +65,9 @@ export function describeNotification(
     }
     case 'CONNECTION':
       return data.kind === 'ACCEPTED' ? t('connectionAccepted', { actor }) : t('connectionRequested', { actor })
+    case 'REVISION_REMINDER':
+      // An exam's revision task left today (lvn-backend ADR-0070): the exam is the viewer's own.
+      return typeof data.examName === 'string' && data.examName ? t('revisionReminder', { exam: data.examName }) : t('revisionReminderAny')
     case 'DATA_EXPORT':
       return t('dataExport')
     case 'NOTES_IMPORT': {
