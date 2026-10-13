@@ -982,3 +982,38 @@ test('a learner reviews the flashcard of their note, and the day shows in their 
   await page.goto('/review')
   await expect(page.getByRole('heading', { name: 'Nothing to review' })).toBeVisible()
 })
+
+test('a learner sees this week on their Rhythm, plans six days and pauses for exams (lvn-backend ADR-0069)', async ({ page }, info) => {
+  const stamp = `${Date.now()}-${info.project.name}`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Rhythm')
+  await page.getByLabel('Email', { exact: true }).fill(`live-rhythm-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.getByRole('link', { name: /^Rhythm/ }).click()
+  await expect(page).toHaveURL(/\/rhythm$/)
+  const week = page.getByRole('region', { name: 'This week' })
+  await expect(week.getByText('0 of 4 days this week')).toBeVisible()
+  await expect(week.getByRole('listitem', { name: /: today/ })).toHaveCount(1)
+  await expect(page.getByRole('region', { name: 'Today' }).getByText(/more learning minutes, or 10 more reviews, and today counts\./)).toBeVisible()
+
+  // Six planned days: the week aims for six.
+  const plan = page.getByRole('region', { name: 'Your planned days' })
+  await plan.getByRole('button', { name: 'Wednesday' }).click()
+  await plan.getByRole('button', { name: 'Friday' }).click()
+  await plan.getByRole('button', { name: 'Save days' }).click()
+  await expect(plan.getByRole('status')).toHaveText('Saved. This week now aims for 6 days.')
+
+  // A pause for exams from today, then cancelled: its days come back.
+  const pauses = page.getByRole('region', { name: 'Pauses' })
+  await pauses.getByRole('button', { name: 'Pause Rhythm' }).click()
+  await pauses.getByRole('button', { name: 'Pause', exact: true }).click()
+  await expect(pauses.getByText('Paused now')).toBeVisible()
+  await expect(pauses.getByText(/11 of 14 pause days left this term/)).toBeVisible()
+  await pauses.getByRole('button', { name: 'Cancel the pause' }).click()
+  await expect(pauses.getByText('No pauses.')).toBeVisible()
+  await expect(pauses.getByText(/14 of 14 pause days left this term/)).toBeVisible()
+})

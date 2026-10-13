@@ -1,0 +1,72 @@
+# Rhythm (lvn-backend ADR-0030, ADR-0069).
+
+query Rhythm {
+  rhythm {
+    timeZone
+    plannedDays
+    target
+    countedDays
+    met
+    week {
+      day
+      weekday
+      planned
+      counted
+      status
+    }
+    today {
+      day
+      learningSeconds
+      reviews
+      counted
+      comeback
+      cameBack
+      items {
+        kind
+        done
+        total
+      }
+    }
+    weeksThisTerm
+    weeksAllTime
+    countedDaysAllTime
+    pauses {
+      id
+      from
+      to
+      reason
+      active
+    }
+    pauseDaysLeft
+  }
+}
+
+mutation SetRhythmPlan($input: SetRhythmPlanInput!) {
+  setRhythmPlan(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation PauseRhythm($input: PauseRhythmInput!) {
+  pauseRhythm(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation EndRhythmPause($input: RhythmPauseIdInput!) {
+  endRhythmPause(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}

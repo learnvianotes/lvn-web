@@ -2020,6 +2020,11 @@ type Mutation {
   """Its author"""
   editComment(input: EditCommentInput!): CommentPayload!
   editGroupPost(input: EditGroupPostInput!): GroupPostPayload!
+
+  """
+  Ends a pause early (or drops one not started); its unused days come back
+  """
+  endRhythmPause(input: RhythmPauseIdInput!): OkPayload!
   followUser(input: PersonInput!): PersonPayload!
 
   """
@@ -2051,6 +2056,7 @@ type Mutation {
   moderateContent(input: ModerateContentInput!): OkPayload!
   muteGroupMember(input: MuteGroupMemberInput!): GroupPayload!
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
+  pauseRhythm(input: PauseRhythmInput!): OkPayload!
   pinGroupPost(input: PinGroupPostInput!): GroupPostPayload!
   proposeTopic(input: ProposeTopicInput!): TopicPayload!
 
@@ -2183,6 +2189,9 @@ type Mutation {
 
   """Admins and the Owner"""
   setProjectShowcase(input: SetProjectShowcaseInput!): GroupPayload!
+
+  """Signed in only, as every mutation below"""
+  setRhythmPlan(input: SetRhythmPlanInput!): OkPayload!
 
   """
   Share with one person, or change their role; a PRIVATE note becomes SHARED
@@ -2722,6 +2731,13 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+input PauseRhythmInput {
+  """YYYY-MM-DD, today or later"""
+  from: String!
+  reason: RhythmPauseReason!
+  to: String!
+}
+
 type PdfConversion {
   """
   Pages the vision model read again where the OCR was unsure or met maths (ADR-0063)
@@ -3033,6 +3049,9 @@ type Query {
 
   """Signed in only"""
   reviewQueue: ReviewQueue!
+
+  """Signed in only"""
+  rhythm: Rhythm!
 
   """
   At most 100 characters; `first` per kind, 1 to 20 (default 5). With filters the words may be left out: the notes
@@ -3381,6 +3400,100 @@ input ReviewVerificationRequestInput {
   requestId: UUID!
 }
 
+type Rhythm {
+  countedDays: Int!
+  countedDaysAllTime: Int!
+  met: Boolean!
+
+  """Of the 14 a term"""
+  pauseDaysLeft: Int!
+
+  """Current and coming pauses"""
+  pauses: [RhythmPause!]!
+
+  """ISO weekdays, 1 Monday … 7 Sunday"""
+  plannedDays: [Int!]!
+
+  """Planned days less paused ones, at least 1"""
+  target: Int!
+  timeZone: String!
+  today: RhythmToday!
+
+  """Monday to Sunday"""
+  week: [RhythmDay!]!
+  weeksAllTime: Int!
+  weeksThisTerm: Int!
+}
+
+type RhythmDay {
+  counted: Boolean!
+
+  """YYYY-MM-DD, a learning day in the learner's zone"""
+  day: String!
+  planned: Boolean!
+  status: RhythmDayStatus!
+
+  """1 Monday … 7 Sunday"""
+  weekday: Int!
+}
+
+enum RhythmDayStatus {
+  AHEAD
+  COUNTED
+
+  """A planned day that ended uncounted, and was not paused"""
+  MISSED
+  PAUSED
+
+  """An unplanned day that ended uncounted: rest, never a miss"""
+  REST
+  TODAY
+}
+
+"""One part of today's ring"""
+type RhythmItem {
+  done: Int!
+
+  """REVIEWS now; PLAN_TASK and WEAK_TOPIC with the exam planner"""
+  kind: String!
+  total: Int!
+}
+
+type RhythmPause {
+  active: Boolean!
+  from: String!
+  id: UUID!
+  reason: RhythmPauseReason!
+  to: String!
+}
+
+input RhythmPauseIdInput {
+  id: UUID!
+}
+
+enum RhythmPauseReason {
+  EXAMS
+  FESTIVAL
+  ILLNESS
+  OTHER
+  TRAVEL
+}
+
+type RhythmToday {
+  """Today followed a missed planned day and counted: back on rhythm"""
+  cameBack: Boolean!
+
+  """The day after a missed planned day, until a day counts"""
+  comeback: Boolean!
+
+  """10 learning minutes or 10 reviews"""
+  counted: Boolean!
+  day: String!
+  items: [RhythmItem!]!
+  learningSeconds: Int!
+  reviews: Int!
+}
+
 input RunAiTaskInput {
   """Only these cards (default: the whole note)"""
   cardIds: [UUID!]
@@ -3550,6 +3663,11 @@ input SetProjectShowcaseInput {
 
   """A PUBLIC project note shared to the workspace; null clears it"""
   noteId: UUID
+}
+
+input SetRhythmPlanInput {
+  """3 to 6 weekdays, 1 Monday … 7 Sunday"""
+  plannedDays: [Int!]!
 }
 
 input ShareNoteInput {
