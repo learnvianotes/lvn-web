@@ -941,3 +941,44 @@ test('a learner’s reading reaches the learning events: the note opened and the
   const opened = execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT e.\\"entityId\\" FROM learning.\\"LearningEvent\\" e JOIN users.\\"User\\" u ON u.id = e.\\"userId\\" WHERE u.email = '${email}' AND e.type = 'NOTE_OPENED'"`]).toString().trim()
   expect(opened).toBe(noteId)
 })
+
+test('a learner reviews the flashcard of their note, and the day shows in their history (lvn-backend ADR-0068)', async ({ page }, info) => {
+  const stamp = `${Date.now()}-${info.project.name}`
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Reviewer')
+  await page.getByLabel('Email', { exact: true }).fill(`live-review-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.getByRole('link', { name: 'My notes' }).click()
+  await page.getByRole('button', { name: 'New note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  await page.getByLabel('Title').fill('Live deck')
+  await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+  await page.getByRole('button', { name: /^Flashcard/ }).click()
+  await page.getByLabel('Front').fill('FIFO')
+  const backSaved = page.waitForResponse((r) => r.url().endsWith('/graphql') && /UpdateNoteDraft/.test(r.request().postData() ?? '') && (r.request().postData() ?? '').includes('First in, first out'), { timeout: 15_000 })
+  await page.getByLabel('Back').fill('First in, first out: a queue')
+  await backSaved
+
+  // An owner's flashcards are in their reviews at once: graded Easy, the session is done.
+  await page.goto('/review')
+  const session = page.getByRole('region', { name: 'Review session' })
+  await expect(session.getByText('FIFO')).toBeVisible()
+  await expect(session.getByText('1 of 1')).toBeVisible()
+  await session.getByRole('button', { name: 'Show the answer' }).click()
+  await expect(session.getByText('First in, first out: a queue')).toBeVisible()
+  await session.getByRole('button', { name: 'Easy' }).click()
+  await expect(page.getByText('1 card reviewed.')).toBeVisible()
+  await expect(page.getByText(/grades? waits? to be sent/)).toHaveCount(0)
+
+  // The server recorded the review on today's learning day.
+  await expect(async () => {
+    await page.goto('/history')
+    await expect(page.getByRole('article').first().getByText(/1 card reviewed/)).toBeVisible({ timeout: 2_000 })
+  }).toPass({ timeout: 30_000 })
+  await page.goto('/review')
+  await expect(page.getByRole('heading', { name: 'Nothing to review' })).toBeVisible()
+})
