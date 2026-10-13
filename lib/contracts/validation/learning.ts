@@ -53,3 +53,13 @@ export function isTimeZone(zone: string): boolean {
     return false
   }
 }
+
+/** Flashcard reviews (§14.2, ADR-0068, ADR-0030): FSRS's settings and today's cap. */
+export const REVIEW_LIMITS = {
+  /** FSRS requested retention */
+  retention: 0.9,
+  maxIntervalDays: 365,
+  /** Cards a day, of which new at most `dailyNew` (ADR-0030: about 20 cards or 15 minutes) */
+  dailyCards: 20,
+  dailyNew: 10,
+} as const

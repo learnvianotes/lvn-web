@@ -202,7 +202,9 @@
     "classes": "Your classes",
     "notificationSettings": "Notification settings",
     "verificationQueue": "Proof of study to review",
-    "aiProviders": "AI providers"
+    "aiProviders": "AI providers",
+    "history": "Learning history",
+    "review": "Review flashcards"
   },
   "notes": {
     "pageTitle": "Note",
@@ -1796,5 +1798,57 @@
     "connection": "Connection",
     "model": "Model",
     "addRoute": "Send this task there"
+  },
+  "history": {
+    "title": "Learning history",
+    "lead": "Your days, newest first: the time you learned and read, the topics and the notes you opened. Days that count for your Rhythm say so.",
+    "loading": "Loading…",
+    "failed": "Your history could not load. Try again.",
+    "empty": "Nothing here yet. Read a note, review some cards or take a quiz, and your days show up here.",
+    "older": "Older days",
+    "counted": "Counts for your Rhythm",
+    "learning": "Learning {minutes} min",
+    "reading": "Reading {minutes} min",
+    "reviews": "{count, plural, one {# card reviewed} other {# cards reviewed}}",
+    "quizAnswers": "{count, plural, one {# quiz answer} other {# quiz answers}}",
+    "activity": "Notes made or shared",
+    "topics": "Topics",
+    "notes": "Notes opened",
+    "aTopic": "A topic",
+    "minutesShort": "{minutes} min",
+    "untitled": "Untitled",
+    "zone": "Days are counted in {zone} and start at 4 in the morning.",
+    "changeZone": "Change",
+    "zoneLabel": "Time zone",
+    "saveZone": "Save"
+  },
+  "review": {
+    "title": "Review",
+    "session": "Review session",
+    "loading": "Loading your cards…",
+    "failed": "Your cards could not load. Try again.",
+    "nothingTitle": "Nothing to review",
+    "nothing": "Add flashcards to your notes, or study the cards of a note you read, and they come back here when it is time.",
+    "toNotes": "Go to your notes",
+    "doneTitle": "Done for today",
+    "done": "{count, plural, one {# card reviewed.} other {# cards reviewed.}}",
+    "later": "{count, plural, one {# more card waits for the next days.} other {# more cards wait for the next days.}}",
+    "waitingToSend": "{count, plural, one {# grade waits to be sent.} other {# grades wait to be sent.}}",
+    "progress": "{n} of {total}",
+    "untitled": "Untitled",
+    "card": "Flashcard",
+    "front": "Front",
+    "back": "Back",
+    "show": "Show the answer",
+    "howWell": "How well did you know it?",
+    "rating": {
+      "AGAIN": "Again",
+      "HARD": "Hard",
+      "GOOD": "Good",
+      "EASY": "Easy"
+    },
+    "study": "Study these cards",
+    "studying": "Studying these cards",
+    "stopStudying": "Stop studying"
   }
 }

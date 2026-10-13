@@ -18,6 +18,7 @@ import { Discussion } from '@/features/discussion/Discussion'
 import { NoteCredits } from '@/features/workspaces/Credits'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
 import { StudyAids } from '@/features/ai/StudyAids'
+import { StudyCardsButton } from '@/features/learning/StudyCardsButton'
 
 /** A note the viewer can read but not edit: its published version, with an outline and read aloud. */
 export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[] }) {
@@ -79,6 +80,7 @@ export function NoteReader({ meta, cards }: { meta: NoteMeta; cards: StoredCard[
             <ReadAloudControls reader={reader} />
             {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
             <AiButton onClick={() => setAiOpen(true)} />
+            {cards.some((c) => c.type === 'flashcard') ? <StudyCardsButton noteId={meta.id} /> : null}
             <ReportButton entityType="NOTE" entityId={meta.id} className="ml-auto" />
           </div>
           {copy.copyError ? (

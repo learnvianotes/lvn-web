@@ -541,6 +541,10 @@ type CardEdge {
   node: Card!
 }
 
+input CardIdInput {
+  cardId: UUID!
+}
+
 """
 A card as the client has it. Ids are UUIDs the client makes, so cards created offline keep their id.
 """
@@ -593,6 +597,13 @@ enum CardOpStatus {
   Not applied: the card was deleted, or changed elsewhere before this delete
   """
   REJECTED
+}
+
+type CardReviewResult {
+  cardId: UUID!
+  due: DateTime!
+  intervalDays: Int!
+  state: ReviewState!
 }
 
 """
@@ -1621,6 +1632,52 @@ enum LearningEventType {
   VIDEO_STARTED
 }
 
+type LearningHistory {
+  """Days with something in them, newest first"""
+  days: [LearningHistoryDay!]!
+
+  """Pass as `before` for older days; null when there are none"""
+  nextBefore: String
+
+  """The time zone days are counted in"""
+  timeZone: String!
+}
+
+type LearningHistoryDay {
+  """Counts towards Rhythm: 10 learning minutes or 10 reviews (ADR-0030)"""
+  counted: Boolean!
+
+  """
+  The learning day, YYYY-MM-DD, in the person's time zone (it rolls over at 04:00)
+  """
+  day: String!
+
+  """Focus sessions, reviews and quizzes"""
+  learningSeconds: Int!
+
+  """Notes opened that day that the viewer can still read, newest first"""
+  notes: [Note]!
+  quizAnswers: Int!
+
+  """Notes and /core topics open"""
+  readingSeconds: Int!
+  reviews: Int!
+
+  """Most time first"""
+  topics: [LearningHistoryTopic!]!
+}
+
+type LearningHistoryTopic {
+  """topic:<id> or core:<subject>/<topic>"""
+  key: String!
+  seconds: Int!
+
+  """
+  The notes topic, when the key is one the viewer may see; null for /core topics
+  """
+  topic: Topic
+}
+
 type LegacyCounts {
   completedTopics: Int!
   markedProblems: Int!
@@ -2050,6 +2107,9 @@ type Mutation {
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
 
+  """The card starts again as new"""
+  resetCardReview(input: CardIdInput!): OkPayload!
+
   """Sets the password and signs out every device"""
   resetPassword(input: ResetPasswordInput!): OkPayload!
 
@@ -2069,6 +2129,9 @@ type Mutation {
   Their comments wait for your approval and they cause you no notifications; they are not told
   """
   restrictUser(input: PersonInput!): PersonPayload!
+
+  """Signed in only, as every mutation below"""
+  reviewCard(input: ReviewCardInput!): ReviewCardPayload!
   reviewClassroomJoinRequest(input: ReviewClassroomJoinRequestInput!): ClassroomPayload!
   reviewGroupJoinRequest(input: ReviewGroupJoinRequestInput!): GroupPayload!
 
@@ -2105,6 +2168,11 @@ type Mutation {
   """
   setInstitutionalEmail(input: SetInstitutionalEmailInput!): OkPayload!
 
+  """
+  Signed in only. The apps send the device's zone with events; this sets it by hand
+  """
+  setLearningTimeZone(input: SetLearningTimeZoneInput!): OkPayload!
+
   """Allow or stop copies of your note"""
   setNoteForking(input: SetNoteForkingInput!): NotePayload!
 
@@ -2134,6 +2202,10 @@ type Mutation {
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+  stopStudyingNoteCards(input: StudyNoteInput!): OkPayload!
+
+  """Adds a readable note's flashcards to the viewer's reviews"""
+  studyNoteCards(input: StudyNoteInput!): OkPayload!
 
   """
   Start notes of your own on a PDF of a note you can read (the rule for copies): a new PRIVATE note with the PDF in a
@@ -2302,6 +2374,11 @@ type Note {
   versions(after: String, first: Int): NoteVersionConnection
   viewerAccess: NoteAccess!
   viewerCan: NotePermissions!
+
+  """
+  Signed in: whether the viewer studies this note's flashcards (their own notes' always count)
+  """
+  viewerStudying: Boolean
   visibility: Visibility!
 }
 
@@ -2868,6 +2945,11 @@ type Query {
   group(id: UUID!): Group
 
   """
+  Signed in only: days before `before` (YYYY-MM-DD), `days` at a time (at most 60)
+  """
+  learningHistory(before: String, days: Int): LearningHistory!
+
+  """
   Open cases, oldest first: a group's (its moderators and mentor) or a class's (its staff), or every case (PLATFORM_ADMIN)
   """
   moderationQueue(after: String, first: Int, scope: ModerationScopeInput): ModerationCaseConnection!
@@ -2948,6 +3030,9 @@ type Query {
   Its owner only: a group platform moderators removed, with why; null for anything else
   """
   removedGroup(id: UUID!): RemovedGroup
+
+  """Signed in only"""
+  reviewQueue: ReviewQueue!
 
   """
   At most 100 characters; `first` per kind, 1 to 20 (default 5). With filters the words may be left out: the notes
@@ -3212,6 +3297,41 @@ input RestoreNoteVersionInput {
   versionId: UUID!
 }
 
+"""A flashcard to review, as the person reads its note now"""
+type ReviewCard {
+  """Rich text"""
+  back: JSON!
+  cardId: UUID!
+
+  """null for a new card"""
+  due: DateTime
+
+  """Rich text"""
+  front: JSON!
+  noteId: UUID!
+  noteTitle: String!
+  state: ReviewState!
+}
+
+input ReviewCardInput {
+  cardId: UUID!
+
+  """The device's id for this grade: sent twice, it counts once"""
+  clientOpId: UUID!
+  durationMs: Int
+  rating: ReviewRating!
+
+  """
+  When it was graded on the device; now when absent; believed back at most 30 days
+  """
+  reviewedAt: DateTime
+}
+
+type ReviewCardPayload {
+  review: CardReviewResult
+  userErrors: [UserError!]!
+}
+
 input ReviewClassroomJoinRequestInput {
   decision: JoinDecision!
   requestId: UUID!
@@ -3220,6 +3340,37 @@ input ReviewClassroomJoinRequestInput {
 input ReviewGroupJoinRequestInput {
   decision: JoinDecision!
   requestId: UUID!
+}
+
+type ReviewQueue {
+  """
+  Today's cards: due first (most overdue first), then new; 20 a day, at most 10 new
+  """
+  cards: [ReviewCard!]!
+  doneToday: Int!
+
+  """Cards due by the end of today, in the whole deck"""
+  due: Int!
+
+  """Cards never reviewed, in the whole deck"""
+  new: Int!
+
+  """Cards past today's cap: they wait for the next days"""
+  waiting: Int!
+}
+
+enum ReviewRating {
+  AGAIN
+  EASY
+  GOOD
+  HARD
+}
+
+enum ReviewState {
+  LEARNING
+  NEW
+  RELEARNING
+  REVIEW
 }
 
 input ReviewVerificationRequestInput {
@@ -3379,6 +3530,11 @@ input SetInstitutionalEmailInput {
   email: String!
 }
 
+input SetLearningTimeZoneInput {
+  """An IANA time zone, e.g. Asia/Kolkata"""
+  timeZone: String!
+}
+
 input SetNoteForkingInput {
   enabled: Boolean!
   noteId: UUID!
@@ -3454,6 +3610,10 @@ type StudentProfile {
   interestTopicIds: [UUID!]
   showOnProfile: Boolean!
   yearOfStudy: YearOfStudy
+}
+
+input StudyNoteInput {
+  noteId: UUID!
 }
 
 input StudyPdfInput {
@@ -3616,9 +3776,7 @@ enum TeacherSkillSource {
   MANUAL
 }
 
-"""
-A topic within a subject; curated by LVN or proposed by a user (usable by its proposer until curated)
-"""
+"""A topic of the notes subgraph"""
 type Topic {
   children: [Topic!]!
   id: UUID!
