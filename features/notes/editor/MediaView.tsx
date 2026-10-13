@@ -8,6 +8,7 @@ import { inlineText } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
 import { acceptFor, pendingFiles, UploadError, useMedia, type MediaCardType } from '../media'
 import { MediaBlock, type MediaContent } from '../render/MediaBlock'
+import { latestOf } from './views'
 
 const ICONS = { image: ImagePlus, video: Video, audio: Mic, file: FileUp } as const
 
@@ -16,7 +17,7 @@ const ICONS = { image: ImagePlus, video: Video, audio: Mic, file: FileUp } as co
  * then the file itself with its description and caption. Files dropped or pasted into the note arrive through
  * `pendingFiles` under the card's `upload` key; a card made from a menu opens the file picker (`upload: 'pick'`).
  */
-export function MediaView({ node, updateAttributes, selected, editor }: ReactNodeViewProps) {
+export function MediaView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const media = useMedia()
   const type = node.attrs.cardType as MediaCardType
@@ -66,7 +67,8 @@ export function MediaView({ node, updateAttributes, selected, editor }: ReactNod
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const set = (patch: Partial<MediaContent>) => updateAttributes({ data: { ...data, ...patch } })
+  // Onto the card's data as it is now, so a quick second edit keeps the first (see latestOf).
+  const set = (patch: Partial<MediaContent>) => updateAttributes({ data: { ...latestOf<MediaContent | null>({ editor, getPos, node }), ...patch } })
   const pick = (
     <input
       ref={input}
