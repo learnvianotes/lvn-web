@@ -24,8 +24,8 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 
   await page.goto('/')
   const main = page.getByRole('main')
-  await expect(main.getByRole('heading', { name: 'Start learning in seconds' })).toBeVisible()
-  await main.getByRole('link', { name: 'Sign up with email' }).click()
+  await expect(main.getByRole('heading', { name: 'Your Learning Community for a Brighter Tomorrow' })).toBeVisible()
+  await main.getByRole('link', { name: 'Get Started Free' }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
   await page.getByLabel('Your name').fill('Live Test')
@@ -993,7 +993,7 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
-  await page.getByRole('link', { name: /^Rhythm/ }).click()
+  await page.getByRole('main').getByRole('link', { name: /^Rhythm/ }).click()
   await expect(page).toHaveURL(/\/rhythm$/)
   const week = page.getByRole('region', { name: 'This week' })
   // A new account's first week aims only for the planned days from today on (lvn-backend ADR-0069).

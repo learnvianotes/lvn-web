@@ -8,7 +8,11 @@
       "notes": "Notes",
       "home": "Home",
       "search": "Search",
-      "resources": "Resources"
+      "resources": "Resources",
+      "features": "Features",
+      "subjects": "Subjects",
+      "community": "Community",
+      "start": "Get Started"
     },
     "theme": {
       "toLight": "Switch to light theme",
@@ -26,7 +30,45 @@
     "title": "Learn computer science one clear note at a time",
     "lead": "{subjects} subjects, {topics} topics and {problems} interview problems — written to be read on a phone, with code in Python, C++, Java and JavaScript.",
     "cta": "Browse notes",
-    "categories": "Browse by area"
+    "categories": "Browse by area",
+    "hero": {
+      "eyebrow": "Built by students, learn together",
+      "titleLead": "Your Learning Community for a",
+      "titleAccent": "Brighter Tomorrow",
+      "lead": "Create notes, share knowledge, prepare for exams, learn with AI and grow together.",
+      "start": "Get Started Free",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "openHome": "Open your home",
+      "account": "Your account"
+    },
+    "features": {
+      "label": "What you can do",
+      "notes": {
+        "title": "Smart Notes",
+        "lead": "Cards, code and pictures"
+      },
+      "ai": {
+        "title": "AI Learning",
+        "lead": "Ask about your notes"
+      },
+      "groups": {
+        "title": "Study Groups",
+        "lead": "Learn with your class"
+      },
+      "exams": {
+        "title": "Exam Prep",
+        "lead": "A plan to the day"
+      },
+      "quizzes": {
+        "title": "Quizzes & Flashcards",
+        "lead": "Remember what you read"
+      },
+      "community": {
+        "title": "Community",
+        "lead": "Share and discuss"
+      }
+    }
   },
   "core": {
     "topics": "{count, plural, one {# topic} other {# topics}}",
@@ -2072,16 +2114,36 @@
   },
   "homeDashboard": {
     "title": "Home",
-    "greeting": "Good to see you, {name}",
+    "greeting": {
+      "morning": "Good morning, {name}! 👋",
+      "afternoon": "Good afternoon, {name}! 👋",
+      "evening": "Good evening, {name}! 👋"
+    },
     "greetingAnon": "Good to see you",
-    "lead": "Today’s ring, your week, and what to do next.",
+    "lead": "Keep learning. Small steps lead to big achievements.",
     "openRhythm": "Open Rhythm",
     "continue": "Continue learning",
     "untitled": "Untitled",
     "nextExam": "Next exam",
     "allExams": "All exams",
     "addExam": "Add an exam",
-    "noExam": "No exam coming up. Add one, and LearnViaNotes plans your revision back from the day."
+    "noExam": "No exam coming up. Add one, and LearnViaNotes plans your revision.",
+    "daysLearned": "days learned",
+    "nothingToContinue": "Open a note to pick it up here.",
+    "inDays": "{count, plural, =0 {Today} one {In # day} other {In # days}}",
+    "viewPlan": "View Plan",
+    "weeklyGoal": "Weekly goal",
+    "ofDays": "{done} / {target} days",
+    "goalMet": "Goal met. Well done!",
+    "keepGoing": "Keep going!",
+    "today": "Today",
+    "recommended": "Recommended for you",
+    "seeAll": "See all",
+    "noRecommendations": "Read a few notes, add an exam or take a quiz, and suggestions appear here.",
+    "rooms": "Your rooms",
+    "noRooms": "You are not in a group or class yet.",
+    "findGroups": "Find a group",
+    "members": "{count, plural, one {# member} other {# members}}"
   },
   "teach": {
     "title": "Teach on LearnViaNotes",
@@ -2223,5 +2285,31 @@
       "browse": "Browse resources"
     },
     "browse": "Browse the catalogue"
+  },
+  "shell": {
+    "skip": "Skip to content",
+    "nav": "Main",
+    "menu": "Menu",
+    "close": "Close the menu",
+    "search": "Search",
+    "searchPlaceholder": "Search notes, topics, people, or ask AI…",
+    "account": "Your account",
+    "upload": "Upload a PDF",
+    "uploading": "Uploading…",
+    "createNote": "Create Note",
+    "entries": {
+      "home": "Home",
+      "notes": "My Notes",
+      "explore": "Explore",
+      "subjects": "Subjects",
+      "groups": "Groups",
+      "classes": "Classrooms",
+      "exams": "Exams",
+      "rhythm": "Rhythm",
+      "resources": "Resources",
+      "community": "Community",
+      "ask": "AI Assistant",
+      "saved": "Bookmarks"
+    }
   }
 }

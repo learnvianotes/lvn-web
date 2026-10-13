@@ -148,7 +148,7 @@ test('says why AI cannot answer: off, or the day’s allowance used up; a failed
   expect(calls.find((c) => c.op === 'DeleteAiAnswer')?.variables).toEqual({ id: ANSWER })
 })
 
-test('the header takes a signed-in learner to Ask AI, and phones find it with their notes', async ({ page }, info) => {
+test('the sidebar takes a signed-in learner to the AI Assistant; phones find it in the menu and with their notes', async ({ page }, info) => {
   await mockApi(page, {
     AiState: () => aiState(),
     MyAiAnswers: () => ({ myAiAnswers: [] }),
@@ -156,10 +156,14 @@ test('the header takes a signed-in learner to Ask AI, and phones find it with th
     MyNotes: () => ({ myNotes: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
   })
   await page.goto('/ask')
-  const header = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Ask AI' })
-  if (info.project.name !== 'phone') return void (await expect(header).toHaveAttribute('href', '/ask'))
-  // A phone's header has no room for it: it leads the views row of the notes.
-  await expect(header).toBeHidden()
+  const sidebar = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'AI Assistant' })
+  if (info.project.name !== 'phone') return void (await expect(sidebar).toHaveAttribute('href', '/ask'))
+  // A phone has the sidebar as a menu (lvn-backend ADR-0076), and Ask AI leads the views row of the notes.
+  await expect(sidebar).toBeHidden()
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'AI Assistant' })).toHaveAttribute('href', '/ask')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Menu' })).toHaveCount(0)
   await page.goto('/notes')
   await page.getByRole('link', { name: 'Ask AI' }).click()
   await expect(page).toHaveURL(/\/ask$/)
