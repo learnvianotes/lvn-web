@@ -15,10 +15,12 @@ import { RichDoc } from '@/features/notes/render/RichText'
 import { AnswerDoubtDocument, DeleteDoubtDocument, DoubtDocument, ReopenDoubtDocument, ResolveDoubtDocument } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
 import { StatusChip } from './Doubts'
+import { AnswerList, AskForm } from '@/features/ai/AskAi'
 
 /** One doubt (lvn-backend ADR-0048): the question, its answers (the mentor's marked), answering, resolving, reopening. */
 export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
   const t = useTranslations('workspaces')
+  const tAi = useTranslations('ai.ask')
   const router = useRouter()
   const { data, loading, refetch } = useQuery(DoubtDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [answer, answering] = useMutation(AnswerDoubtDocument)
@@ -75,6 +77,12 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
           ) : null}
         </div>
       </article>
+      {/* Ask AI on a doubt (lvn-backend ADR-0015, ADR-0060): over the notes shared with the workspace; the answer is the asker's. */}
+      <section aria-label={tAi('aboutDoubtTitle')} className="flex flex-col gap-3 rounded-2xl border border-dashed border-accent/40 p-4">
+        <p className="text-sm text-muted">{tAi('aboutDoubtLead')}</p>
+        <AskForm scope="WORKSPACE" doubtId={id} />
+        <AnswerList doubtId={id} compact />
+      </section>
       <section aria-label={t('answersTitle')} className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">{t('answers', { count: d.answers.length })}</h2>
         {d.answers.map((a) => (

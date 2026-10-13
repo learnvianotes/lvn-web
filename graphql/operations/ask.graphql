@@ -1,0 +1,68 @@
+# Ask AI (lvn-backend ADR-0060): answers from the notes the asker may read, with sources.
+
+fragment AiAnswerFields on AiAnswer {
+  id
+  question
+  scope
+  status
+  text
+  sources {
+    n
+    noteId
+    title
+    versionId
+    cardIds
+    snippet
+  }
+  error
+  noteId
+  doubtId
+  createdAt
+}
+
+query AiAnswer($id: UUID!) {
+  aiAnswer(id: $id) {
+    ...AiAnswerFields
+  }
+}
+
+query MyAiAnswers($first: Int, $noteId: UUID, $doubtId: UUID) {
+  myAiAnswers(first: $first, noteId: $noteId, doubtId: $doubtId) {
+    ...AiAnswerFields
+  }
+}
+
+mutation AskAi($input: AskAiInput!) {
+  askAi(input: $input) {
+    answer {
+      ...AiAnswerFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation AskAiAboutDoubt($doubtId: UUID!) {
+  askAiAboutDoubt(doubtId: $doubtId) {
+    answer {
+      ...AiAnswerFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation DeleteAiAnswer($id: UUID!) {
+  deleteAiAnswer(id: $id) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
