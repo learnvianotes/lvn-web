@@ -1052,4 +1052,10 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await expect(focus.getByRole('timer')).toHaveText(/^2[45]:\d\d$/)
   await focus.getByRole('button', { name: 'End the session' }).click()
   await expect(focus.getByRole('status')).toHaveText(/minutes? counted\.$/)
+
+  // Home brings it together: the greeting, today, and the next exam (P6h).
+  await page.goto('/home')
+  await expect(page.getByRole('heading', { name: 'Good to see you, Live' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('article', { name: 'Live midterm' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Today' })).toBeVisible()
 })
