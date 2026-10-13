@@ -137,7 +137,8 @@
       "account": "Account",
       "signInAction": "Sign in",
       "myNotes": "My notes",
-      "community": "Community"
+      "community": "Community",
+      "askAi": "Ask AI"
     }
   },
   "profile": {
@@ -304,7 +305,8 @@
         "PROJECT": "+ Project",
         "BLOG": "+ Blog post",
         "POST": "+ Post"
-      }
+      },
+      "askAi": "Ask AI"
     },
     "editor": {
       "title": "Title",
@@ -1557,6 +1559,45 @@
     "account": {
       "title": "AI",
       "lead": "Open a note and choose AI tasks to summarise it, explain it, quiz yourself or make flashcards. Each day your plan gives you an allowance."
+    },
+    "askTitle": "Ask AI",
+    "ask": {
+      "title": "Ask AI",
+      "lead": "Ask a question and get an answer from notes you can read, with the notes it came from.",
+      "where": "Where to look",
+      "scope": {
+        "MY_NOTES": "My notes",
+        "MY_PLACES": "My groups and classes",
+        "PUBLIC": "Public notes"
+      },
+      "scopeHint": {
+        "MY_NOTES": "Your published notes. A note you have never published is not searched yet.",
+        "MY_PLACES": "Notes shared with the groups and classes you are in.",
+        "PUBLIC": "Notes anyone can read on LearnViaNotes."
+      },
+      "label": "Your question",
+      "aboutNote": "Ask about this note",
+      "placeholder": "What would you like to know?",
+      "placeholderNote": "What does this note say about…?",
+      "ask": "Ask",
+      "aboutDoubt": "Ask AI about this doubt",
+      "aboutDoubtTitle": "Ask AI",
+      "aboutDoubtLead": "AI reads the notes shared with this workspace and this thread. Its answer is for you; post it yourself if it helps.",
+      "off": {
+        "NOT_CONFIGURED": "AI isn't switched on here yet.",
+        "BUDGET": "AI is resting until next month: this month's AI budget is used up.",
+        "PROVIDER_DOWN": "The AI model isn't answering right now. Try again in a minute."
+      },
+      "queued": "Waiting its turn…",
+      "writing": "Writing…",
+      "failed": "That didn't work. Try again.",
+      "delete": "Delete this answer",
+      "sources": "Sources",
+      "source": "Source {n}",
+      "untitled": "Untitled note",
+      "draft": "draft",
+      "history": "Your questions",
+      "none": "No questions yet."
     }
   }
 }

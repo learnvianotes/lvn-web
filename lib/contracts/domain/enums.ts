@@ -161,6 +161,13 @@ export const AiTaskType = {
 export type AiTaskType = (typeof AiTaskType)[keyof typeof AiTaskType]
 export const DERIVATIVE_AI_TASKS: ReadonlySet<AiTaskType> = new Set([AiTaskType.CREATE_NOTES, AiTaskType.OUTLINE_TO_NOTE])
 
+/**
+ * Where Ask AI looks (§10.2, ADR-0060): one note as the asker reads it, their own notes, notes shared with their groups
+ * and classes, public notes, or the notes shared with a workspace (a doubt, ADR-0015). Always within what they may read.
+ */
+export const AskAiScope = { THIS_NOTE: 'THIS_NOTE', MY_NOTES: 'MY_NOTES', MY_PLACES: 'MY_PLACES', PUBLIC: 'PUBLIC', WORKSPACE: 'WORKSPACE' } as const
+export type AskAiScope = (typeof AskAiScope)[keyof typeof AskAiScope]
+
 /** Year of study on a student profile (ADR-0026). */
 export const YearOfStudy = {
   YEAR_1: 'YEAR_1', YEAR_2: 'YEAR_2', YEAR_3: 'YEAR_3', YEAR_4: 'YEAR_4', YEAR_5: 'YEAR_5',

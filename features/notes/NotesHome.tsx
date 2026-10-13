@@ -247,6 +247,10 @@ export function NotesHome() {
 
         {/* Phones: the views and folders as one row to scroll, instead of the sidebar. */}
         <nav aria-label={t('views.label')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden">
+          <Link href="/ask" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent">
+            <Sparkles className="size-4" aria-hidden />
+            {t('askAi')}
+          </Link>
           {[
             { v: { kind: 'all' } as View, label: t('views.all'), icon: BookOpen },
             { v: { kind: 'unfiled' } as View, label: t('views.unfiled'), icon: Inbox },

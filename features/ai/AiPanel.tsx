@@ -47,6 +47,7 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import { cn } from '@/lib/cn'
 import { CardView } from '@/features/notes/render/CardView'
 import { Markdown } from '@/features/notes/render/Markdown'
+import { AnswerList, AskForm } from './AskAi'
 
 /**
  * AI tasks on a note (lvn-backend ADR-0059): one menu for every task, results beside the note that only their maker
@@ -146,6 +147,11 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
           </p>
         ) : null}
         {allowance && !off ? <Allowance used={allowance.usedToday} limit={allowance.limitToday} resetsAt={allowance.resetsAt} /> : null}
+
+        <section aria-label={t('askTitle')} className="flex flex-col gap-3">
+          <AskForm scope="THIS_NOTE" noteId={noteId} compact />
+          <AnswerList noteId={noteId} compact />
+        </section>
 
         <section aria-label={t('tasks')} className="flex flex-col gap-2">
           <div className="grid grid-cols-2 gap-2">

@@ -1,17 +1,24 @@
 'use client'
 
-import { NotebookPen, UserRound } from 'lucide-react'
+import { NotebookPen, Sparkles, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useSession } from '@/state/session'
 
 /** "Sign in", or the visitor's notes and account once this tab knows they are signed in. */
-export function AccountLink({ labels }: { labels: { signIn: string; account: string; notes: string; community: string } }) {
+export function AccountLink({ labels }: { labels: { signIn: string; account: string; notes: string; community: string; askAi: string } }) {
   const signedIn = useSession((s) => s.status === 'signed-in')
   return (
     <>
       {signedIn ? (
         <Link href="/community" className="hidden whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg md:inline-flex">
           {labels.community}
+        </Link>
+      ) : null}
+      {signedIn ? (
+        // From 640 px: phones reach Ask AI from their notes (the header must fit 360 px, notifications.spec.ts).
+        <Link href="/ask" aria-label={labels.askAi} className="hidden items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg sm:inline-flex lg:px-3">
+          <Sparkles className="size-4 lg:hidden" aria-hidden />
+          <span className="hidden lg:inline">{labels.askAi}</span>
         </Link>
       ) : null}
       {signedIn ? (
