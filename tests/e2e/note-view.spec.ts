@@ -167,3 +167,21 @@ test('an edit made before switching tabs is kept, and saved once', async ({ page
   await expect.poll(() => calls.filter((c) => c.op === 'UpdateNoteDraft').length, { timeout: 10_000 }).toBe(1)
   expect(JSON.stringify(calls.find((c) => c.op === 'UpdateNoteDraft')?.variables)).toContain(CARD_B)
 })
+
+test('a flashcard’s front and back typed one after the other are both saved (no edit undoes the one before)', async ({ page }) => {
+  const calls = await mockApi(page, owner({ UpdateNoteDraft: () => ({ updateNoteDraft: { __typename: 'UpdateNoteDraftPayload', note: meta(), results: [], conflictVersion: null, ...ok } }) }, true))
+  await page.goto(`/notes/${NOTE_ID}`)
+  await page.getByRole('button', { name: 'Add a card', exact: true }).click()
+  await page.getByRole('button', { name: /^Flashcard/ }).click()
+  await page.getByLabel('Front').fill('LIFO')
+  await page.getByLabel('Back').fill('Last in, first out: a stack')
+  const last = () =>
+    calls
+      .filter((c) => c.op === 'UpdateNoteDraft')
+      .flatMap((c) => (c.variables.input as { ops: { type?: string; content?: unknown }[] }).ops)
+      .filter((o) => o.type === 'flashcard')
+      .at(-1)?.content
+  await expect.poll(() => JSON.stringify(last() ?? null), { timeout: 10_000 }).toContain('Last in, first out')
+  expect(JSON.stringify(last())).toContain('LIFO')
+  await expect(page.getByLabel('Front')).toHaveValue('LIFO')
+})

@@ -677,7 +677,8 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await flashcards.getByRole('button', { name: `Add ${keeping} card${keeping === 1 ? '' : 's'} to this note` }).click()
   // The panel closes and the note loads again with the cards in its draft.
   await expect(page.getByText('Added to this note.')).toBeVisible({ timeout: 20_000 })
-  await expect(page.getByLabel('Front')).toHaveCount(keeping)
+  // The note's own cards (the docked Ask AI lists the result's cards too, from 1280 px).
+  await expect(page.getByRole('textbox', { name: 'Note content' }).getByLabel('Front')).toHaveCount(keeping)
 })
 
 test('a learner asks the real model about their note and gets an answer citing it (lvn-backend ADR-0060)', async ({ page, request }, info) => {
@@ -1102,7 +1103,7 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   await expect(page.getByRole('note')).toContainText('Students can join this class once you are verified as a teacher.')
   await expect(page.getByRole('tab', { name: 'Requests' })).toHaveCount(0)
 
-  const queue = await api<{ verificationRequestsToReview: { id: string; purpose: string; institution: string | null; requester: { displayName: string } }[] }>('{ verificationRequestsToReview { id purpose institution requester { displayName } } }', {}, admin.accessToken)
+  const queue = await api<{ verificationRequestsToReview: { id: string; purpose: string; institution: string | null; requester: { displayName: string } }[] }>('{ verificationRequestsToReview(first: 100) { id purpose institution requester { displayName } } }', {}, admin.accessToken)
   const mine = queue.verificationRequestsToReview.find((r) => r.requester.displayName === `Live New Teacher ${stamp}`)
   expect(mine).toMatchObject({ purpose: 'TEACHER_ROLE', institution: 'Govt. Junior College, Guntur' })
   await api('mutation ($input: ReviewVerificationRequestInput!) { reviewVerificationRequest(input: $input) { request { status } } }', { input: { requestId: mine!.id, approve: true } }, admin.accessToken)
