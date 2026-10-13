@@ -10,6 +10,7 @@ fragment ViewerFields on User {
   verified
   verificationMethod
   globalRole
+  teacherStatus
   restrictedMinor
   institutionalEmail
   institutionalEmailStatus

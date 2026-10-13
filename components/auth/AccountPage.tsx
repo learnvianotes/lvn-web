@@ -35,6 +35,7 @@ const card = 'flex flex-col gap-4 rounded-2xl border border-border bg-surface p-
 /** Phase 1 account page: verification, college email, study details, old-site data, sign-out. */
 export function AccountPage() {
   const t = useTranslations('profile')
+  const tt = useTranslations('teach')
   const { data, loading } = useQuery(ViewerDocument)
   const viewer = data?.viewer
   if (loading && !viewer) return <p role="status" className="text-sm text-muted">{t('loading')}</p>
@@ -103,7 +104,13 @@ export function AccountPage() {
         {t('people')}
         <span aria-hidden>→</span>
       </Link>
-      {viewer.globalRole === 'TEACHER' ? (
+      {viewer.globalRole === 'STUDENT' && !viewer.restrictedMinor ? (
+        <Link href="/teach" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+          {viewer.teacherStatus === 'PENDING' ? tt('accountPending') : viewer.teacherStatus === 'DECLINED' ? tt('accountDeclined') : tt('accountCard')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
+      {viewer.globalRole === 'TEACHER' || viewer.teacherStatus === 'PENDING' ? (
         <Link href="/profile/skills" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
           {t('skills')}
           <span aria-hidden>→</span>

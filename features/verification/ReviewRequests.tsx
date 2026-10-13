@@ -72,8 +72,15 @@ function RequestCard({ request: r, onDone }: { request: Request; onDone: () => v
           {r.requester.displayName}
         </Link>
         <span className="text-sm text-muted">@{r.requester.handle}</span>
+        {r.purpose === 'TEACHER_ROLE' ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('teacherApplication')}</span> : null}
         <span className="ml-auto text-xs text-muted">{format.dateTime(new Date(r.createdAt), { dateStyle: 'medium' })}</span>
       </div>
+      {r.purpose === 'TEACHER_ROLE' ? (
+        <p className="text-sm">
+          {t('teaches', { institution: r.institution ?? '' })}
+          {r.subjects ? ` · ${r.subjects}` : ''}
+        </p>
+      ) : null}
       {r.message ? <blockquote className="rounded-xl bg-surface-2 px-3 py-2 text-sm">{r.message}</blockquote> : null}
       {r.documents.length ? (
         <ul className="flex flex-col gap-1">

@@ -19,6 +19,8 @@ export function describeNotification(
       return n.note ? t('share', { actor, note: n.note.title || t('untitled') }) : t('shareGone', { actor })
     case 'VERIFICATION':
       if (data.kind === 'REQUESTED') return t('verificationRequested', { actor })
+      // An application to teach (lvn-backend ADR-0073).
+      if (data.purpose === 'TEACHER_ROLE') return t(data.decision === 'APPROVED' ? 'teacherApproved' : 'teacherDeclined')
       if (data.decision === 'APPROVED') return n.actor ? t('verificationApprovedBy', { actor }) : t('verificationApproved')
       return t('verificationRejected')
     case 'FOLLOW':

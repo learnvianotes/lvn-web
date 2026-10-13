@@ -27,7 +27,8 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
   const [withdraw] = useMutation(WithdrawVerificationRequestDocument)
   const [mode, setMode] = useState<'teacher' | 'documents' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const requests = mine.data?.myVerificationRequests ?? []
+  // Account verification only: applications to teach have their own page (lvn-backend ADR-0073).
+  const requests = (mine.data?.myVerificationRequests ?? []).filter((r) => r.purpose === 'ACCOUNT')
   const pending = requests.find((r) => r.status === 'PENDING')
   const last = requests[0]
   const done = async () => {

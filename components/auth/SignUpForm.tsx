@@ -38,6 +38,8 @@ export function SignUpForm() {
   const [signUp] = useMutation(SignUpDocument)
   const finish = useFinishSignIn()
   const [general, setGeneral] = useState<string | null>(null)
+  // "I teach" leads to the application to teach after sign-up (lvn-backend ADR-0073).
+  const [teaches, setTeaches] = useState(false)
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { displayName: '', email: '', password: '', dateOfBirth: '', institutionalEmail: '', terms: false as unknown as true },
@@ -51,7 +53,7 @@ export function SignUpForm() {
         variables: { input: { ...values, institutionalEmail: institutionalEmail || null, acceptedTermsVersion: options?.termsVersion ?? '' } },
       })
       const payload = data!.signUp
-      if (payload.session) return finish(payload.session, institutionalEmail ? '/verify' : next)
+      if (payload.session) return finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : next)
       setGeneral(applyProblems(payload.userErrors, form.setError, FIELDS))
     } catch {
       setGeneral(te('generic'))
@@ -73,6 +75,18 @@ export function SignUpForm() {
       <ProviderButtons next={next} />
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {general ? <Alert tone="error">{general}</Alert> : null}
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium">{t('iAm')}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            {([false, true] as const).map((v) => (
+              <label key={String(v)} className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium ${teaches === v ? 'border-accent bg-accent-soft text-accent' : 'border-border'}`}>
+                <input type="radio" name="iAm" className="sr-only" checked={teaches === v} onChange={() => setTeaches(v)} />
+                {v ? t('teacher') : t('learner')}
+              </label>
+            ))}
+          </div>
+          {teaches ? <p className="text-xs text-muted">{t('teacherHint')}</p> : null}
+        </fieldset>
         <Field label={t('name')} error={message('displayName', te('required'))}>
           <Input autoComplete="name" {...form.register('displayName')} />
         </Field>

@@ -10,7 +10,7 @@ const unverified = { ...viewerExtras, verified: false, verificationMethod: null 
 const person = (id: string, displayName: string, handle: string) => ({ __typename: 'User', id, displayName, handle })
 const meera = person('01920000-0000-7000-8000-0000000000e1', 'Meera Iyer', 'meera')
 const ravi = person('01920000-0000-7000-8000-0000000000e2', 'Ravi Kumar', 'ravi')
-const request = (over: Record<string, unknown> = {}) => ({ __typename: 'VerificationRequest', id: '01920000-0000-7000-8000-0000000ve001', method: 'TEACHER', status: 'PENDING', message: null, reason: null, createdAt: new Date().toISOString(), decidedAt: null, requester: ravi, teacher: meera, ...over })
+const request = (over: Record<string, unknown> = {}) => ({ __typename: 'VerificationRequest', id: '01920000-0000-7000-8000-0000000ve001', purpose: 'ACCOUNT', institution: null, subjects: null, method: 'TEACHER', status: 'PENDING', message: null, reason: null, createdAt: new Date().toISOString(), decidedAt: null, requester: ravi, teacher: meera, ...over })
 const none = { userErrors: [] }
 const basics = { MyDataExports: () => ({ myDataExports: [] }), NoteImports: () => ({ noteImports: [] }) }
 

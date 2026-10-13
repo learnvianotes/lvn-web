@@ -20,6 +20,7 @@ const viewer = (over: Record<string, unknown> = {}) => ({
   verified: false,
   verificationMethod: null,
   globalRole: 'STUDENT',
+  teacherStatus: 'NONE',
   restrictedMinor: false,
   institutionalEmail: null,
   institutionalEmailStatus: 'NONE',
