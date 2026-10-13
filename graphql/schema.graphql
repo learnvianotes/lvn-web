@@ -1621,6 +1621,52 @@ enum LearningEventType {
   VIDEO_STARTED
 }
 
+type LearningHistory {
+  """Days with something in them, newest first"""
+  days: [LearningHistoryDay!]!
+
+  """Pass as `before` for older days; null when there are none"""
+  nextBefore: String
+
+  """The time zone days are counted in"""
+  timeZone: String!
+}
+
+type LearningHistoryDay {
+  """Counts towards Rhythm: 10 learning minutes or 10 reviews (ADR-0030)"""
+  counted: Boolean!
+
+  """
+  The learning day, YYYY-MM-DD, in the person's time zone (it rolls over at 04:00)
+  """
+  day: String!
+
+  """Focus sessions, reviews and quizzes"""
+  learningSeconds: Int!
+
+  """Notes opened that day that the viewer can still read, newest first"""
+  notes: [Note]!
+  quizAnswers: Int!
+
+  """Notes and /core topics open"""
+  readingSeconds: Int!
+  reviews: Int!
+
+  """Most time first"""
+  topics: [LearningHistoryTopic!]!
+}
+
+type LearningHistoryTopic {
+  """topic:<id> or core:<subject>/<topic>"""
+  key: String!
+  seconds: Int!
+
+  """
+  The notes topic, when the key is one the viewer may see; null for /core topics
+  """
+  topic: Topic
+}
+
 type LegacyCounts {
   completedTopics: Int!
   markedProblems: Int!
@@ -2104,6 +2150,11 @@ type Mutation {
   Adds or replaces the college or organisation email; a code is sent to it
   """
   setInstitutionalEmail(input: SetInstitutionalEmailInput!): OkPayload!
+
+  """
+  Signed in only. The apps send the device's zone with events; this sets it by hand
+  """
+  setLearningTimeZone(input: SetLearningTimeZoneInput!): OkPayload!
 
   """Allow or stop copies of your note"""
   setNoteForking(input: SetNoteForkingInput!): NotePayload!
@@ -2868,6 +2919,11 @@ type Query {
   group(id: UUID!): Group
 
   """
+  Signed in only: days before `before` (YYYY-MM-DD), `days` at a time (at most 60)
+  """
+  learningHistory(before: String, days: Int): LearningHistory!
+
+  """
   Open cases, oldest first: a group's (its moderators and mentor) or a class's (its staff), or every case (PLATFORM_ADMIN)
   """
   moderationQueue(after: String, first: Int, scope: ModerationScopeInput): ModerationCaseConnection!
@@ -3379,6 +3435,11 @@ input SetInstitutionalEmailInput {
   email: String!
 }
 
+input SetLearningTimeZoneInput {
+  """An IANA time zone, e.g. Asia/Kolkata"""
+  timeZone: String!
+}
+
 input SetNoteForkingInput {
   enabled: Boolean!
   noteId: UUID!
@@ -3616,9 +3677,7 @@ enum TeacherSkillSource {
   MANUAL
 }
 
-"""
-A topic within a subject; curated by LVN or proposed by a user (usable by its proposer until curated)
-"""
+"""A topic of the notes subgraph"""
 type Topic {
   children: [Topic!]!
   id: UUID!

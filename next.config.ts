@@ -6,8 +6,9 @@ import createNextIntlPlugin from 'next-intl/plugin'
 const legacySubjects = (JSON.parse(readFileSync('content-build/catalog.json', 'utf8')) as { subjects: { id: string }[] })
   .subjects.map((s) => s.id)
 
-/** Pages of the retired app with no equivalent yet; accounts arrive with the Phase 1 backend. */
-const retiredPages = ['login', 'signup', 'forgot-password', 'history', 'settings']
+/** Pages of the retired app with no equivalent yet; accounts arrive with the Phase 1 backend. History came back in
+ * Phase 6 (lvn-backend ADR-0067): the old /history address now opens the new learning history. */
+const retiredPages = ['login', 'signup', 'forgot-password', 'settings']
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 

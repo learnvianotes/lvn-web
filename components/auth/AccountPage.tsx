@@ -67,6 +67,10 @@ export function AccountPage() {
           <span aria-hidden>→</span>
         </Link>
       ) : null}
+      <Link href="/history" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+        {t('history')}
+        <span aria-hidden>→</span>
+      </Link>
       <Link href="/classes" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('classes')}
         <span aria-hidden>→</span>

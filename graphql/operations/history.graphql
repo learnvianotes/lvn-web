@@ -1,0 +1,37 @@
+# Learning history (lvn-backend ADR-0067): a person's days, newest first.
+
+query LearningHistory($before: String, $days: Int) {
+  learningHistory(before: $before, days: $days) {
+    timeZone
+    nextBefore
+    days {
+      day
+      learningSeconds
+      readingSeconds
+      reviews
+      quizAnswers
+      counted
+      topics {
+        key
+        seconds
+        topic {
+          id
+          title
+        }
+      }
+      notes {
+        id
+        title
+      }
+    }
+  }
+}
+
+mutation SetLearningTimeZone($input: SetLearningTimeZoneInput!) {
+  setLearningTimeZone(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
