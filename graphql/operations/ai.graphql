@@ -23,6 +23,13 @@ fragment AiArtifactFields on AiArtifact {
     type
     content
   }
+  # CLEAN_UP (ADR-0063)
+  changes {
+    cardId
+    before
+    after
+    applied
+  }
   error
   fromPublishedVersion
   truncated
@@ -59,6 +66,17 @@ mutation RunAiTask($input: RunAiTaskInput!) {
     artifact {
       ...AiArtifactFields
     }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation ApplyAiChanges($input: ApplyAiChangesInput!) {
+  applyAiChanges(input: $input) {
+    applied
     userErrors {
       field
       message

@@ -21,6 +21,7 @@ const artifact = (over: Record<string, unknown> = {}) => ({
   markdown: null,
   title: null,
   cards: null,
+  changes: null,
   error: null,
   fromPublishedVersion: false,
   truncated: false,
@@ -296,4 +297,51 @@ test('transcribes a note’s recording and tidies rough notes into clean ones (l
     { noteId: NOTE_ID, task: 'TRANSCRIBE', language: 'ENGLISH', cardIds: [RECORDING] },
     { noteId: NOTE_ID, task: 'QUICK_NOTE', language: 'ENGLISH' },
   ])
+})
+
+test('an owner cleans up a converted note: checks each change, drops one, and the rest mend the cards (lvn-backend ADR-0063)', async ({ page }) => {
+  const [A, B, C] = ['01920000-0000-7000-8000-00000000c0c1', '01920000-0000-7000-8000-00000000c0c2', '01920000-0000-7000-8000-00000000c0c3']
+  const change = (cardId: string, before: string, after: string, applied = false) => ({ __typename: 'AiChange', cardId, before, after, applied })
+  const proposed = [
+    change(A, 'Binary search halves the ran- ge each step.', 'Binary search halves the range each step.'),
+    change(B, 'It needs sorted in put 12 Algorithms.', 'It needs sorted input.'),
+    change(C, 'Tbe running time is O(log n).', 'The running time is O(log n).'),
+  ]
+  const calls = await mockApi(
+    page,
+    owner({
+      NoteAiArtifacts: () => artifacts([]),
+      RunAiTask: () => ran(artifact({ task: 'CLEAN_UP', status: 'QUEUED' })),
+      AiArtifact: () => ({ aiArtifact: artifact({ task: 'CLEAN_UP', changes: proposed }) }),
+      // The third card was edited meanwhile: it keeps its words.
+      ApplyAiChanges: () => ({ applyAiChanges: { __typename: 'ApplyAiChangesPayload', applied: [A], userErrors: [] } }),
+    }),
+  )
+  await page.goto(`/notes/${NOTE_ID}`)
+  const panel = await openPanel(page)
+  await panel.getByRole('button', { name: /^Clean up the text/ }).click()
+  const result = panel.getByRole('article', { name: 'Clean up the text' })
+  await expect(result.getByText('Binary search halves the range each step.')).toBeVisible()
+  await expect(result.getByText('Binary search halves the ran- ge each step.')).toBeVisible()
+  await result.getByRole('checkbox', { name: 'Change 2' }).uncheck()
+  await result.getByRole('button', { name: 'Apply 2 changes' }).click()
+  // The panel closes and the note loads again with its mended words; the editor says what happened.
+  await expect(panel).toBeHidden()
+  await expect(page.getByText('Applied 1 change. 1 card was edited since, so it was left as it is.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'RunAiTask')?.variables).toEqual({ input: { noteId: NOTE_ID, task: 'CLEAN_UP', language: 'ENGLISH' } })
+  expect(calls.find((c) => c.op === 'ApplyAiChanges')?.variables).toEqual({ input: { artifactId: ART, cardIds: [A, C] } })
+  await expect.poll(() => calls.filter((c) => c.op === 'NoteToEdit').length).toBeGreaterThanOrEqual(2)
+})
+
+test('clean-up is offered only to people who may edit the note, and says when nothing needs mending', async ({ page }) => {
+  await mockApi(page, reader(true, { NoteAiArtifacts: () => artifacts([]) }))
+  await page.goto(`/notes/${NOTE_ID}`)
+  let panel = await openPanel(page)
+  await expect(panel.getByRole('button', { name: /^Summarise/ })).toBeVisible()
+  await expect(panel.getByRole('button', { name: /^Clean up the text/ })).toHaveCount(0)
+
+  await mockApi(page, owner({ NoteAiArtifacts: () => artifacts([artifact({ task: 'CLEAN_UP', changes: [] })]) }))
+  await page.goto(`/notes/${NOTE_ID}`)
+  panel = await openPanel(page)
+  await expect(panel.getByRole('article', { name: 'Clean up the text' }).getByText('Nothing needs mending.')).toBeVisible()
 })

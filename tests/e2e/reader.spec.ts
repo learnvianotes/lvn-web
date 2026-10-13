@@ -265,7 +265,7 @@ test('a PDF card in a note opens the reader', async ({ page }) => {
 test('converting a PDF makes a note that opens beside it, shows its progress and gets its cards', async ({ page }) => {
   await mockStorage(page)
   const NEW = '01920000-0000-7000-8000-00000000a0cc'
-  const conversion = (status: string, extra: object = {}) => ({ __typename: 'PdfConversion', id: '01920000-0000-7000-8000-0000000c0001', status, progress: status === 'DONE' ? 100 : 15, pages: 1, scannedPages: 0, cards: null, error: null, ...extra })
+  const conversion = (status: string, extra: object = {}) => ({ __typename: 'PdfConversion', id: '01920000-0000-7000-8000-0000000c0001', status, progress: status === 'DONE' ? 100 : 15, pages: 1, scannedPages: 0, cards: null, aiPages: null, aiRejected: null, error: null, ...extra })
   let checks = 0
   const converted = [
     fileCard,
@@ -281,7 +281,8 @@ test('converting a PDF makes a note that opens beside it, shows its progress and
     NotePdfConversion: (v) => {
       if (v.id !== NEW) return { note: { __typename: 'Note', id: v.id, pdfConversion: null } }
       checks++
-      return { note: { __typename: 'Note', id: NEW, pdfConversion: checks > 2 ? conversion('DONE', { cards: 2 }) : conversion('PARSING') } }
+      // A scanned page the OCR was unsure of, read again by AI (lvn-backend ADR-0063).
+      return { note: { __typename: 'Note', id: NEW, pdfConversion: checks > 2 ? conversion('DONE', { cards: 2, scannedPages: 1, aiPages: 1, aiRejected: 0 }) : conversion('PARSING') } }
     },
   })
   await page.goto(READER_URL)
@@ -294,6 +295,8 @@ test('converting a PDF makes a note that opens beside it, shows its progress and
   await expect(page.getByText('Reading the PDF: layout, tables, pictures and scans…')).toBeVisible()
   expect(calls.find((c) => c.op === 'ConvertPdfToNote')?.variables).toEqual({ noteId: NOTE_ID, fileId: PDF_ID })
   await expect(page.getByText(/Made 2 cards from 1 page\./)).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText(/AI read 1 unclear page again\./)).toBeVisible()
+  await expect(page.getByText(/use Clean up the text in the AI panel/)).toBeVisible()
   if (isPhone()) await page.getByRole('button', { name: 'Show notes' }).click()
   await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(PDF_TEXT.page1[1]!)).toBeVisible()
   await expect(page.locator('.lvn-anchor-chip')).toHaveCount(2)

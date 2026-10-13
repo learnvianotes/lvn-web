@@ -903,7 +903,9 @@
       },
       "pages": "{n, plural, one {# page} other {# pages}}{scanned, plural, =0 {} one {, # scanned} other {, # scanned}}",
       "done": "Made {cards, plural, one {# card} other {# cards}} from {pages, plural, one {# page} other {# pages}}. Check them beside the PDF: each card’s page chip shows where it came from.",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "aiPages": "AI read {n, plural, one {# unclear page} other {# unclear pages}} again{rejected, plural, =0 {.} one {; # reading disagreed with the scan and was set aside.} other {; # readings disagreed with the scan and were set aside.}}",
+      "cleanUpHint": "To mend words the conversion broke, use Clean up the text in the AI panel."
     }
   },
   "notifications": {
@@ -1513,7 +1515,8 @@
       "CREATE_NOTES": "Make notes",
       "OUTLINE_TO_NOTE": "Outline → note",
       "TRANSCRIBE": "Transcribe",
-      "QUICK_NOTE": "Tidy into notes"
+      "QUICK_NOTE": "Tidy into notes",
+      "CLEAN_UP": "Clean up the text"
     },
     "hint": {
       "SUMMARIZE": "The note in a few lines, with its key points",
@@ -1529,7 +1532,8 @@
       "CREATE_NOTES": "Fresh study notes from this one, as your own",
       "OUTLINE_TO_NOTE": "Turn this outline into full notes, as your own",
       "TRANSCRIBE": "What the recording says, as text to keep",
-      "QUICK_NOTE": "Your rough words and photos, as clean notes"
+      "QUICK_NOTE": "Your rough words and photos, as clean notes",
+      "CLEAN_UP": "Mends words a PDF’s conversion broke, for you to check"
     },
     "translateInto": "Translate into",
     "translate": "Translate",
@@ -1639,6 +1643,18 @@
       "keepFailed": "Those cards weren't saved. Try again."
     },
     "transcribeOne": "Transcribe the recording",
-    "transcribeN": "Transcribe recording {n}"
+    "transcribeN": "Transcribe recording {n}",
+    "cleanUp": {
+      "lead": "Only what conversion broke is mended: split words, misread letters, stray page numbers. Check each change; the ones you keep replace the card’s words.",
+      "nothing": "Nothing needs mending.",
+      "pick": "Change {n}",
+      "before": "Now",
+      "after": "Mended",
+      "applied": "Applied",
+      "apply": "{n, plural, =0 {Apply changes} one {Apply # change} other {Apply # changes}}",
+      "done": "{n, plural, =0 {No changes were applied.} one {Applied # change.} other {Applied # changes.}}",
+      "refused": "{n, plural, one {# card was edited since, so it was left as it is.} other {# cards were edited since, so they were left as they are.}}",
+      "failed": "The changes could not be applied. Try again."
+    }
   }
 }

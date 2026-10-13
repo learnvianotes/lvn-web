@@ -60,7 +60,7 @@ export function ConvertDialog({ open, onClose, noteId, fileId, fileName }: { ope
   )
 }
 
-/** Where a conversion is: working (with its stage), done (check the cards) or failed (why). */
+/** Where a conversion is: working (with its stage), done (check the cards, and what AI read again) or failed (why). */
 export function ConversionBanner({ conversion, onDismiss }: { conversion: ConversionFieldsFragment; onDismiss: () => void }) {
   const t = useTranslations('reader.convert')
   const active = ACTIVE.includes(conversion.status)
@@ -82,7 +82,12 @@ export function ConversionBanner({ conversion, onDismiss }: { conversion: Conver
   return (
     <div role="status" className="flex shrink-0 items-start gap-3 border-b border-border bg-surface px-3 py-2 text-sm">
       {done ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />}
-      <span className="min-w-0 flex-1">{done ? t('done', { cards: conversion.cards ?? 0, pages: conversion.pages ?? 0 }) : (conversion.error ?? t('failed'))}</span>
+      <span className="min-w-0 flex-1">
+        {done ? t('done', { cards: conversion.cards ?? 0, pages: conversion.pages ?? 0 }) : (conversion.error ?? t('failed'))}
+        {/* Pages the vision model read again (ADR-0063), and where scanned text may need mending. */}
+        {done && conversion.aiPages ? <> {t('aiPages', { n: conversion.aiPages, rejected: conversion.aiRejected ?? 0 })}</> : null}
+        {done && conversion.scannedPages ? <span className="text-muted"> {t('cleanUpHint')}</span> : null}
+      </span>
       <button type="button" aria-label={t('dismiss')} title={t('dismiss')} className="rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-fg" onClick={onDismiss}>
         <X className="size-4" aria-hidden />
       </button>

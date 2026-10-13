@@ -229,6 +229,12 @@ export function NotePage({ id }: { id: string }) {
             setNotice(tAi('addedToNote'))
             reload()
           }}
+          onTextMended={(applied, refused) => {
+            // Clean-up changed cards' words (ADR-0063): show them.
+            setAiOpen(false)
+            setNotice([tAi('cleanUp.done', { n: applied }), refused ? tAi('cleanUp.refused', { n: refused }) : null].filter(Boolean).join(' '))
+            reload()
+          }}
         />
         {meta.viewerAccess === 'OWNER' ? <ShareDialog meta={meta} open={shareOpen} onClose={() => setShareOpen(false)} onSaved={onNote} /> : null}
         {meta.viewerAccess === 'OWNER' ? <NoteDetailsDialog meta={meta} open={detailsOpen} onClose={() => setDetailsOpen(false)} onSaved={onNote} /> : null}
