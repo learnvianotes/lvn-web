@@ -100,7 +100,7 @@ export function AccountPage() {
         {t('resources')}
         <span aria-hidden>→</span>
       </Link>
-      <Link href="/resources/saved" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+      <Link href="/saved" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('savedResources')}
         <span aria-hidden>→</span>
       </Link>

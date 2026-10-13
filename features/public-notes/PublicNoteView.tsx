@@ -12,6 +12,7 @@ import { publicNotePath } from './paths'
 import { PublicMedia } from './PublicMedia'
 import { PublicReadAloud } from './PublicReadAloud'
 import { PublicDiscussion } from '@/features/discussion/PublicDiscussion'
+import { PublicSaveNoteButton } from '@/features/saved/SaveNoteButton'
 import { CreditsLine } from '@/features/workspaces/Credits'
 import { StudyAidsView } from '@/features/ai/StudyAids'
 
@@ -71,8 +72,9 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
           </p>
         ) : null}
         {note.contributors?.length ? <CreditsLine credits={note.contributors} /> : null}
-        <div className="w-fit">
+        <div className="flex w-fit flex-wrap items-center gap-2">
           <PublicReadAloud cards={words} />
+          <PublicSaveNoteButton noteId={note.id} />
         </div>
       </header>
 

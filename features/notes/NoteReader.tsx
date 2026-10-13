@@ -19,6 +19,7 @@ import { Discussion } from '@/features/discussion/Discussion'
 import { NoteCredits } from '@/features/workspaces/Credits'
 import { AiDock } from '@/features/ai/AiDock'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
+import { SaveNoteButton } from '@/features/saved/SaveNoteButton'
 import { Breadcrumb } from './view/Breadcrumb'
 import { CardRail } from './view/CardRail'
 import { NoteTabPanel, NoteTabs, type NoteTab } from './view/NoteTabs'
@@ -77,6 +78,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
             <ReadAloudControls reader={reader} />
             {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
             <CopyLinkButton note={meta} />
+            <SaveNoteButton noteId={meta.id} />
             <AiButton onClick={() => setAiOpen(true)} />
             <ReportButton entityType="NOTE" entityId={meta.id} className="ml-auto" />
           </div>

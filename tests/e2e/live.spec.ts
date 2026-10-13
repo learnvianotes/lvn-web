@@ -1210,7 +1210,7 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   await page.getByLabel('Write a comment').fill('Week 2 has the clearest explanation of arrays.')
   await page.getByRole('button', { name: 'Comment', exact: true }).last().click()
   await expect(page.getByText('Week 2 has the clearest explanation of arrays.')).toBeVisible()
-  await page.goto('/resources/saved')
+  await page.goto('/saved')
   await expect(page.getByRole('article', { name: title })).toBeVisible()
   // Clean up: the submitter deletes it.
   await api('mutation ($input: ResourceIdInput!) { deleteResource(input: $input) { ok } }', { input: { id } }, author.accessToken)
@@ -1239,7 +1239,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await expect(page).toHaveURL(/\/profile$/)
   const entries: [string, RegExp][] = [
     ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
-    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/resources\/saved$/], ['Subjects', /\/core$/],
+    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/core$/],
   ]
   for (const [name, url] of entries) {
     if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
@@ -1256,4 +1256,36 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await page.getByRole('button', { name: 'Create Note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   expect(failures).toEqual([])
+})
+
+test('a learner saves someone’s public note and finds it in Bookmarks (lvn-backend ADR-0076)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify the author')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email: `live-saved-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+  })
+  const author = up.signUp.session
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${author.user.id}'`)
+  const title = `Live saved note ${stamp}`
+  const card = { id: randomUUID(), type: 'text', position: 'a0', content: { doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Heaps keep the smallest item on top.' }] }] } } }
+  const id = (await api<{ createNote: { note: { id: string } } }>('mutation ($input: CreateNoteInput!) { createNote(input: $input) { note { id } } }', { input: { title, cards: [card] } }, author.accessToken)).createNote.note.id
+  await api('mutation ($input: NoteIdInput!) { publishNote(input: $input) { note { id } } }', { input: { noteId: id } }, author.accessToken)
+  await api('mutation ($input: ChangeNoteVisibilityInput!) { changeNoteVisibility(input: $input) { note { id } } }', { input: { noteId: id, visibility: 'PUBLIC' } }, author.accessToken)
+
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Saver')
+  await page.getByLabel('Email', { exact: true }).fill(`live-saver-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.goto(`/notes/${id}`)
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await fromSidebar(page, 'Bookmarks')
+  await expect(page).toHaveURL(/\/saved$/)
+  await page.getByRole('region', { name: 'Notes' }).getByRole('link', { name: new RegExp(title) }).click()
+  await expect(page).toHaveURL(new RegExp(`/notes/${id}$`))
 })

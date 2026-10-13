@@ -257,7 +257,7 @@
     "rhythm": "Rhythm",
     "review": "Review flashcards",
     "resources": "Your resources",
-    "savedResources": "Your saved resources"
+    "savedResources": "Bookmarks: your saved notes and resources"
   },
   "notes": {
     "pageTitle": "Note",
@@ -2304,7 +2304,7 @@
       "title": "Resources",
       "lead": "Books, courses, tools and software that learners recommend, checked by our moderators. No shops, no prices: just what helped people learn.",
       "add": "Add a resource",
-      "saved": "Your saved resources",
+      "saved": "Your bookmarks",
       "search": "Search resources",
       "typeFilter": "Type",
       "all": "All",
@@ -2372,5 +2372,19 @@
       "ask": "AI Assistant",
       "saved": "Bookmarks"
     }
+  },
+  "saved": {
+    "title": "Bookmarks",
+    "lead": "Notes and resources you saved to come back to. Only you see them.",
+    "notes": "Notes",
+    "resources": "Resources",
+    "noNotes": "You have not saved a note yet.",
+    "findNotes": "Find notes",
+    "untitled": "Untitled note",
+    "by": "by {name}",
+    "more": "Show more",
+    "save": "Save",
+    "savedOne": "Saved",
+    "hint": "Save it to your Bookmarks; only you see it"
   }
 }
