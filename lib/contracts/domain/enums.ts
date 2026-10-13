@@ -157,6 +157,10 @@ export const AiTaskType = {
   EXPLAIN_CODE: 'EXPLAIN_CODE',
   /** One short page of key points, definitions and formulas (owner, 2026-10-09; ADR-0025) */
   REVISION_SHEET: 'REVISION_SHEET',
+  /** What an audio or video card says, as a text card to keep (ADR-0062) */
+  TRANSCRIBE: 'TRANSCRIBE',
+  /** Rough text and photos of one's own note, as a structured note (ADR-0062) */
+  QUICK_NOTE: 'QUICK_NOTE',
 } as const
 export type AiTaskType = (typeof AiTaskType)[keyof typeof AiTaskType]
 export const DERIVATIVE_AI_TASKS: ReadonlySet<AiTaskType> = new Set([AiTaskType.CREATE_NOTES, AiTaskType.OUTLINE_TO_NOTE])

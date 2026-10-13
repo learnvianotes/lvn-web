@@ -738,3 +738,33 @@ test('a public note gets its study aids from the real model, on its public page 
   await region.getByRole('tab', { name: 'Quiz' }).click()
   await expect(region.getByRole('link', { name: 'Save these cards in your notes' })).toBeVisible()
 })
+
+test('a learner tidies rough notes into clean ones with the real model (lvn-backend ADR-0062)', async ({ page, request }, info) => {
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ aiStatus { available } }' } })
+  test.skip(!((await res.json()) as { data: { aiStatus: { available: boolean } } }).data.aiStatus.available, 'AI is off in this environment')
+  test.setTimeout(300_000)
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Tidier')
+  await page.getByLabel('Email', { exact: true }).fill(`live-tidy-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.getByRole('link', { name: 'My notes' }).click()
+  await page.getByRole('button', { name: 'New note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  await page.getByRole('textbox', { name: 'Note content' }).click()
+  const saved = page.waitForResponse((r) => r.url().endsWith('/graphql') && (r.request().postData() ?? '').includes('mitochondria'), { timeout: 15_000 })
+  await page.keyboard.type('bio lec 4 - mitochondria = powerhouse, ATP made by resp. glycolysis in cytoplasm, krebs in matrix, ETC inner membrane')
+  await saved
+
+  await page.getByRole('button', { name: 'AI tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await panel.getByRole('button', { name: /^Tidy into notes/ }).click()
+  const result = panel.getByRole('article', { name: 'Tidy into notes' })
+  await expect(result).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
+  await expect(result.getByText(/mitochondri/i).first()).toBeVisible()
+  await expect(result.getByRole('button', { name: /^Add \d+ cards? to this note$/ })).toBeVisible()
+})

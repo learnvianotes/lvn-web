@@ -78,7 +78,7 @@ test('asks about one note from its AI panel: the draft is the source', async ({ 
   const calls = await mockApi(page, {
     NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
     AiState: () => aiState(),
-    NoteAiArtifacts: () => ({ note: { __typename: 'Note', id: NOTE_ID, aiArtifacts: [] } }),
+    NoteAiArtifacts: () => ({ note: { __typename: 'Note', id: NOTE_ID, cards: { __typename: 'CardConnection', edges: [] }, aiArtifacts: [] } }),
     MyAiAnswers: (v) => ({ myAiAnswers: v.noteId === NOTE_ID ? answers : [] }),
     AskAi: (v) => {
       const input = v.input as { question: string }
