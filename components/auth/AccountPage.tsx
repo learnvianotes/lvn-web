@@ -25,6 +25,7 @@ import { YourData } from '@/features/data/YourData'
 import { AccountStanding } from '@/features/moderation/Standing'
 import { ReviewRequests } from '@/features/verification/ReviewRequests'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
+import { AiAccountSection } from '@/features/ai/AiPanel'
 
 type Viewer = NonNullable<ViewerQuery['viewer']>
 const YEARS: YearOfStudy[] = ['YEAR_1', 'YEAR_2', 'YEAR_3', 'YEAR_4', 'YEAR_5', 'POSTGRADUATE', 'GRADUATED', 'SCHOOL', 'NOT_STUDYING']
@@ -88,6 +89,7 @@ export function AccountPage() {
       <InstitutionalEmail viewer={viewer} />
       <StudyDetails viewer={viewer} />
       <LegacyData viewer={viewer} />
+      <AiAccountSection className={card} />
       <YourData />
     </div>
   )

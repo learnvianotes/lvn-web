@@ -1,0 +1,79 @@
+# AI (lvn-backend ADR-0058, ADR-0059): whether AI answers, the viewer's allowance, and AI tasks on a note.
+
+query AiState {
+  aiStatus {
+    available
+    reason
+  }
+  myAiAllowance {
+    usedToday
+    limitToday
+    resetsAt
+  }
+}
+
+fragment AiArtifactFields on AiArtifact {
+  id
+  task
+  status
+  language
+  markdown
+  title
+  cards {
+    type
+    content
+  }
+  error
+  fromPublishedVersion
+  truncated
+  keptAt
+  createdAt
+}
+
+query NoteAiArtifacts($noteId: UUID!) {
+  note(id: $noteId) {
+    id
+    aiArtifacts {
+      ...AiArtifactFields
+    }
+  }
+}
+
+query AiArtifact($id: UUID!) {
+  aiArtifact(id: $id) {
+    ...AiArtifactFields
+  }
+}
+
+mutation RunAiTask($input: RunAiTaskInput!) {
+  runAiTask(input: $input) {
+    artifact {
+      ...AiArtifactFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation KeepAiCards($input: KeepAiCardsInput!) {
+  keepAiCards(input: $input) {
+    noteId
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation DeleteAiArtifact($id: UUID!) {
+  deleteAiArtifact(id: $id) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}

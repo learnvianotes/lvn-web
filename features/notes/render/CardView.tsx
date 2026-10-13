@@ -3,6 +3,7 @@ import { useTranslations } from 'next-intl'
 import { cardAnchor, type CardAnchor, type Doc, type Inline } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
 import { FlashcardCardView, QuestionCardView, QuizCardView } from './interactive'
+import { Markdown } from './Markdown'
 import { MediaBlock } from './MediaBlock'
 import { InlineText, RichDoc } from './RichText'
 
@@ -67,8 +68,9 @@ export function CardView({ id, type, content, highlighted, onAnchor }: { id: str
             ))}
           </ul>
         )
-      case 'code':
       case 'markdown':
+        return <Markdown source={c.source as string} />
+      case 'code':
       case 'diagram':
         return (
           <figure className="overflow-hidden rounded-xl border border-border bg-surface-2">
