@@ -625,3 +625,49 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await palette.getByRole('option', { name: new RegExp(`${group} · Group`) }).click()
   await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
 })
+
+test('a learner asks AI about a note with the real model: a summary, then flashcards kept in the note (lvn-backend ADR-0059)', async ({ page, request }, info) => {
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ aiStatus { available } }' } })
+  const available = ((await res.json()) as { data: { aiStatus: { available: boolean } } }).data.aiStatus.available
+  test.skip(!available, 'AI is off in this environment')
+  // The model answers one task at a time, and loads on its first one.
+  test.setTimeout(300_000)
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Asker')
+  await page.getByLabel('Email', { exact: true }).fill(`live-ai-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.getByRole('link', { name: 'My notes' }).click()
+  await page.getByRole('button', { name: 'New note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  await page.getByLabel('Title').fill('Binary heaps')
+  const editor = page.getByRole('textbox', { name: 'Note content' })
+  await editor.click()
+  const saved = page.waitForResponse((r) => r.url().endsWith('/graphql') && (r.request().postData() ?? '').includes('sifts it down'), { timeout: 15_000 })
+  await page.keyboard.type('A min-heap keeps the smallest item at the root. Insert adds at the end and sifts it up; extract-min moves the last item to the root and sifts it down. Both take O(log n).')
+  await saved
+
+  await page.getByRole('button', { name: 'AI tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await panel.getByRole('button', { name: /^Summarise/ }).click()
+  const summary = panel.getByRole('article', { name: 'Summarise' })
+  await expect(summary).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
+  await expect(summary.getByText(/heap/i).first()).toBeVisible()
+
+  await panel.getByRole('button', { name: /^Flashcards/ }).click()
+  const flashcards = panel.getByRole('article', { name: 'Flashcards' })
+  await expect(flashcards).toHaveAttribute('data-ai-status', 'READY', { timeout: 120_000 })
+  const boxes = flashcards.getByRole('checkbox')
+  const made = await boxes.count()
+  expect(made).toBeGreaterThan(0)
+  if (made > 1) await flashcards.getByRole('checkbox', { name: 'Keep card 1' }).uncheck()
+  const keeping = made > 1 ? made - 1 : 1
+  await flashcards.getByRole('button', { name: `Add ${keeping} card${keeping === 1 ? '' : 's'} to this note` }).click()
+  // The panel closes and the note loads again with the cards in its draft.
+  await expect(page.getByText('Added to this note.')).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByLabel('Front')).toHaveCount(keeping)
+})

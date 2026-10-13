@@ -205,3 +205,16 @@ test("AI that is off says why, and a spent allowance stops new tasks; the server
   await panel.getByRole('button', { name: /^Quiz/ }).click()
   await expect(panel.getByRole('alert')).toHaveText("You've used today's AI allowance; it comes back at midnight UTC.")
 })
+
+test("the account page shows today's AI allowance, or why AI is off", async ({ page }) => {
+  let state = aiState({ usedToday: 150_000 })
+  await mockApi(page, { AiState: () => state, MyDataExports: () => ({ myDataExports: [] }), NoteImports: () => ({ noteImports: [] }) }, { profile: null, legacyImport: { __typename: 'LegacyImport', status: 'NOT_FOUND', claimedAt: null, counts: null } })
+  await page.goto('/profile')
+  const section = page.getByRole('region', { name: 'AI' })
+  await expect(section.getByText("Today's AI allowance: 75% used")).toBeVisible()
+  await expect(section.getByRole('meter', { name: "Today's AI allowance" })).toHaveAttribute('aria-valuenow', '150000')
+
+  state = aiState({ available: false, reason: 'BUDGET' })
+  await page.reload()
+  await expect(page.getByRole('region', { name: 'AI' }).getByText("AI is resting until next month: this month's AI budget is used up.")).toBeVisible()
+})

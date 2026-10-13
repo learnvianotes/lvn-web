@@ -1553,6 +1553,10 @@
     "savedAsNote": "Saved as a new private note.",
     "openNote": "Open it",
     "nothingUsable": "Nothing usable came back. Try again.",
-    "keepFailed": "Those cards weren't kept. Try again."
+    "keepFailed": "Those cards weren't kept. Try again.",
+    "account": {
+      "title": "AI",
+      "lead": "Open a note and choose AI tasks to summarise it, explain it, quiz yourself or make flashcards. Each day your plan gives you an allowance."
+    }
   }
 }

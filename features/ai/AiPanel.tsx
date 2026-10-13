@@ -201,7 +201,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
   )
 }
 
-function Allowance({ used, limit, resetsAt }: { used: number; limit: number | null; resetsAt: string }) {
+export function Allowance({ used, limit, resetsAt }: { used: number; limit: number | null; resetsAt: string }) {
   const t = useTranslations('ai')
   if (limit == null) return <p className="text-xs text-muted">{t('noLimit')}</p>
   const time = new Date(resetsAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -395,5 +395,23 @@ export function AiButton({ onClick, className }: { onClick: () => void; classNam
       <Sparkles className="size-4 text-accent" aria-hidden />
       <span className="hidden sm:inline">{t('button')}</span>
     </Button>
+  )
+}
+
+/** The account page's view of AI (P5b): whether it answers, and how much of today's allowance is used. */
+export function AiAccountSection({ className }: { className?: string }) {
+  const t = useTranslations('ai')
+  const { data } = useQuery(AiStateDocument, { fetchPolicy: 'cache-and-network' })
+  if (!data) return null
+  const { aiStatus: status, myAiAllowance: allowance } = data
+  return (
+    <section className={className} aria-labelledby="ai-allowance">
+      <h2 id="ai-allowance" className="flex items-center gap-2 text-lg font-semibold">
+        <Sparkles className="size-4 text-accent" aria-hidden />
+        {t('account.title')}
+      </h2>
+      <p className="text-sm text-muted">{t('account.lead')}</p>
+      {status.available ? <Allowance used={allowance.usedToday} limit={allowance.limitToday} resetsAt={allowance.resetsAt} /> : <p className="text-sm">{t(`unavailable.${status.reason ?? 'NOT_CONFIGURED'}`)}</p>}
+    </section>
   )
 }
