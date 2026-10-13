@@ -91,7 +91,7 @@ test('a class announcement’s comments are a private thread with the staff', as
   const CLASS = '01920000-0000-7000-8000-0000000c0001'
   const teacher = { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }
   const calls = await mockApi(page, {
-    Classroom: () => ({ classroom: { __typename: 'Classroom', id: CLASS, name: 'Physics 9A', description: null, memberCount: 31, viewerRole: 'STUDENT', teacher, createdAt: '2026-10-01T10:00:00.000Z', joinCode: null, viewerRequestId: null, viewerInviteId: null, viewerCan: { __typename: 'ClassroomActions', requestJoin: false, acceptInvite: false, review: false, post: false, manage: false, leave: true } } }),
+    Classroom: () => ({ classroom: { __typename: 'Classroom', id: CLASS, name: 'Physics 9A', description: null, memberCount: 31, viewerRole: 'STUDENT', teacher, createdAt: '2026-10-01T10:00:00.000Z', joinCode: null, viewerRequestId: null, viewerInviteId: null, viewerCan: { __typename: 'ClassroomActions', publishQuiz: false, requestJoin: false, acceptInvite: false, review: false, post: false, manage: false, leave: true } } }),
     ClassroomPosts: () => ({ classroom: { __typename: 'Classroom', id: CLASS, posts: { __typename: 'ClassroomPostConnection', edges: [{ __typename: 'ClassroomPostEdge', node: { __typename: 'ClassroomPost', id: 'p1', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, body: doc('Test on Friday'), createdAt: new Date().toISOString(), viewerCanDelete: false, author: { ...teacher, handle: 'meera' }, discussion: { __typename: 'Discussion', commentCount: 1 } } }], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } }),
     Discussion: () => discussion([comment('c1', 'Which chapters?', { author: asha, private: true })]),
   })

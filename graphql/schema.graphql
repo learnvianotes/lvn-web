@@ -491,6 +491,60 @@ input ChangeNoteVisibilityInput {
   visibility: Visibility!
 }
 
+type ClassQuiz {
+  author: User!
+  classroomId: UUID!
+  id: UUID!
+
+  """The viewer's attempts, newest first; the last is their score"""
+  myAttempts: [QuizAttempt!]!
+  publishedAt: DateTime!
+  questionCount: Int!
+
+  """
+  In order. The correct choices and explanations are null until the viewer has submitted (staff always see them)
+  """
+  questions: [ClassQuizQuestion!]!
+
+  """
+  Staff only: how many of the class's students have submitted (per-student results wait for Phase 6)
+  """
+  submittedCount: Int
+  title: String!
+  viewerCanDelete: Boolean!
+}
+
+type ClassQuizChoice {
+  """Inline rich text"""
+  content: JSON!
+  id: String!
+}
+
+input ClassQuizIdInput {
+  quizId: UUID!
+}
+
+type ClassQuizPayload {
+  quiz: ClassQuiz
+  userErrors: [UserError!]!
+}
+
+type ClassQuizQuestion {
+  choices: [ClassQuizChoice!]!
+  correct: [String!]
+
+  """Rich text"""
+  explanation: JSON
+  id: UUID!
+
+  """More than one choice is correct"""
+  multiple: Boolean!
+  position: Int!
+
+  """Rich text, as a quiz card's question"""
+  question: JSON!
+}
+
 """
 A class, owned by the core subgraph: null when the viewer may no longer see it
 """
@@ -513,6 +567,9 @@ type Classroom {
   """Members only: announcements, newest first"""
   posts(after: String, first: Int): ClassroomPostConnection
 
+  """Members only: published quizzes, newest first"""
+  quizzes(first: Int): [ClassQuiz!]
+
   """
   Members only: notes shared to the class that the viewer may open, the most recently shared first
   """
@@ -531,6 +588,9 @@ type ClassroomActions {
   """The teacher: settings, roles, removing people"""
   manage: Boolean!
   post: Boolean!
+
+  """Teacher and TAs: publish quizzes (ADR-0064)"""
+  publishQuiz: Boolean!
   requestJoin: Boolean!
 
   """Teacher and TAs: answer requests, invite, post"""
@@ -1666,6 +1726,9 @@ type Mutation {
   declineLegacyData: OkPayload!
   deleteAiAnswer(id: UUID!): OkPayload!
   deleteAiArtifact(id: UUID!): OkPayload!
+
+  """Staff: moves the quiz to the trash; its attempts stay"""
+  deleteClassQuiz(input: ClassQuizIdInput!): OkPayload!
   deleteClassroom(input: ClassroomIdInput!): OkPayload!
   deleteClassroomPost(input: ClassroomPostIdInput!): ClassroomPayload!
 
@@ -1731,6 +1794,11 @@ type Mutation {
   oauthExchange(input: OAuthExchangeInput!): AuthPayload!
   pinGroupPost(input: PinGroupPostInput!): GroupPostPayload!
   proposeTopic(input: ProposeTopicInput!): TopicPayload!
+
+  """
+  Staff: a quiz every member of the class can take (classroom.publishQuiz)
+  """
+  publishClassQuiz(input: PublishClassQuizInput!): ClassQuizPayload!
 
   """
   Snapshot the draft as the version readers see (owner; a verified account)
@@ -1865,6 +1933,11 @@ type Mutation {
   file card, crediting the original note when it was someone else's
   """
   studyPdf(input: StudyPdfInput!): NotePayload!
+
+  """
+  Scores the viewer's answers; the same clientOpId returns the same attempt
+  """
+  submitQuizAttempt(input: SubmitQuizAttemptInput!): QuizAttemptPayload!
 
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
@@ -2503,6 +2576,19 @@ input ProposeTopicInput {
   title: String!
 }
 
+input PublishClassQuizInput {
+  classroomId: UUID!
+
+  """
+  1 to 50 questions, each quiz card content: question, choices, correct, multiple, explanation
+  """
+  questions: [JSON!]!
+
+  """The note the questions came from; kept when the author can read it"""
+  sourceNoteId: UUID
+  title: String!
+}
+
 type Query {
   """
   What happened in the viewer's groups and classes, newest first; their own doing left out
@@ -2517,6 +2603,9 @@ type Query {
 
   """Whether AI answers now; works signed out"""
   aiStatus: AiStatus!
+
+  """A quiz of a class the viewer is in; null otherwise"""
+  classQuiz(id: UUID!): ClassQuiz
   classroom(id: UUID!): Classroom
 
   """The class a code names; at most 20 codes an hour"""
@@ -2684,6 +2773,34 @@ type Query {
 
   """The signed-in user, null for anonymous visitors"""
   viewer: User
+}
+
+type QuizAnswer {
+  choiceIds: [String!]!
+  correct: Boolean!
+  questionId: UUID!
+}
+
+input QuizAnswerInput {
+  """Empty leaves the question unanswered (wrong)"""
+  choiceIds: [String!]!
+  questionId: UUID!
+}
+
+type QuizAttempt {
+  answers: [QuizAnswer!]!
+  id: UUID!
+  score: Int!
+  submittedAt: DateTime!
+  total: Int!
+}
+
+type QuizAttemptPayload {
+  attempt: QuizAttempt
+
+  """The quiz again, now with its answers for the viewer"""
+  quiz: ClassQuiz
+  userErrors: [UserError!]!
 }
 
 input ReactInput {
@@ -3090,6 +3207,16 @@ type Subject {
 
   """Top-level topics: curated ones and the viewer's proposals"""
   topics: [Topic!]!
+}
+
+input SubmitQuizAttemptInput {
+  answers: [QuizAnswerInput!]!
+
+  """
+  The client's id for this submission: sending it again returns the same attempt
+  """
+  clientOpId: UUID!
+  quizId: UUID!
 }
 
 input SyncOpInput {

@@ -24,6 +24,7 @@ fragment ClassroomDetail on Classroom {
     acceptInvite
     review
     post
+    publishQuiz
     manage
     leave
   }
@@ -305,6 +306,108 @@ mutation ShareNoteToClassroom($noteId: UUID!, $classroomId: UUID!) {
     }
     userErrors {
       message
+    }
+  }
+}
+
+# Classroom quizzes (lvn-backend ADR-0064)
+
+fragment ClassQuizListFields on ClassQuiz {
+  id
+  classroomId
+  title
+  publishedAt
+  questionCount
+  submittedCount
+  viewerCanDelete
+  author {
+    id
+    displayName
+  }
+  myAttempts {
+    id
+    score
+    total
+    submittedAt
+  }
+}
+
+fragment ClassQuizFields on ClassQuiz {
+  ...ClassQuizListFields
+  questions {
+    id
+    position
+    question
+    choices {
+      id
+      content
+    }
+    multiple
+    correct
+    explanation
+  }
+  myAttempts {
+    id
+    answers {
+      questionId
+      choiceIds
+      correct
+    }
+  }
+}
+
+query ClassroomQuizzes($id: UUID!) {
+  classroom(id: $id) {
+    id
+    quizzes(first: 50) {
+      ...ClassQuizListFields
+    }
+  }
+}
+
+query ClassQuiz($id: UUID!) {
+  classQuiz(id: $id) {
+    ...ClassQuizFields
+  }
+}
+
+mutation PublishClassQuiz($input: PublishClassQuizInput!) {
+  publishClassQuiz(input: $input) {
+    quiz {
+      ...ClassQuizListFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation SubmitQuizAttempt($input: SubmitQuizAttemptInput!) {
+  submitQuizAttempt(input: $input) {
+    attempt {
+      id
+      score
+      total
+    }
+    quiz {
+      ...ClassQuizFields
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation DeleteClassQuiz($quizId: UUID!) {
+  deleteClassQuiz(input: { quizId: $quizId }) {
+    ok
+    userErrors {
+      message
+      code
     }
   }
 }

@@ -31,7 +31,8 @@ let client: ApolloClient | undefined
 export function apolloClient(): ApolloClient {
   client ??= new ApolloClient({
     link: new HttpLink({ uri: env.NEXT_PUBLIC_API_URL, fetch: authFetch }),
-    cache: new InMemoryCache(),
+    // A quiz choice's id is unique only within its question, so choices are kept inside their question, not by id.
+    cache: new InMemoryCache({ typePolicies: { ClassQuizChoice: { keyFields: false } } }),
     defaultOptions: { watchQuery: { fetchPolicy: 'cache-and-network' } },
   })
   return client

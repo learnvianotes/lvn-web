@@ -35,11 +35,15 @@ import {
   type ClassroomDetailFragment,
 } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
+import { ClassQuizzes } from './quizzes/ClassQuizzes'
 
-type Tab = 'posts' | 'notes' | 'people' | 'requests' | 'reports' | 'settings'
+type Tab = 'posts' | 'quizzes' | 'notes' | 'people' | 'requests' | 'reports' | 'settings'
 type Run = () => Promise<{ data?: Record<string, { userErrors: { message: string }[] } | null> | null }>
 
-/** One class (lvn-backend ADR-0046): announcements and notes for its members; people, requests and settings for staff. */
+/**
+ * One class (lvn-backend ADR-0046): announcements, quizzes (ADR-0064) and notes for its members; people, requests and
+ * settings for staff.
+ */
 export function ClassPage({ id }: { id: string }) {
   const t = useTranslations('classes')
   const { data, loading, refetch } = useQuery(ClassroomDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
@@ -47,7 +51,7 @@ export function ClassPage({ id }: { id: string }) {
   const classroom = data?.classroom
   if (!classroom) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
   const staff = classroom.viewerCan.review
-  const tabs: Tab[] = classroom.viewerRole ? ['posts', 'notes', ...(staff ? (['people', 'requests', 'reports'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
+  const tabs: Tab[] = classroom.viewerRole ? ['posts', 'quizzes', 'notes', ...(staff ? (['people', 'requests', 'reports'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Header classroom={classroom} onChanged={() => void refetch()} />
@@ -62,6 +66,7 @@ export function ClassPage({ id }: { id: string }) {
           </div>
           <div role="tabpanel">
             {tab === 'posts' ? <Posts classroom={classroom} /> : null}
+            {tab === 'quizzes' ? <ClassQuizzes classroom={classroom} /> : null}
             {tab === 'notes' ? <SharedNotes classroom={classroom} /> : null}
             {tab === 'people' ? <People classroom={classroom} onChanged={() => void refetch()} /> : null}
             {tab === 'requests' ? <Requests classroom={classroom} onChanged={() => void refetch()} /> : null}
