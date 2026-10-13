@@ -88,3 +88,9 @@ export function describeNotification(
       return t('other')
   }
 }
+
+/** Where a notification opens: its path, and for a comment or mention on a note the note's Discussions tab (ADR-0076). */
+export function notificationHref(n: { category: string; path: string }): string {
+  if ((n.category === 'COMMENT' || n.category === 'MENTION') && /^\/notes\/[0-9a-f-]{36}$/.test(n.path)) return `${n.path}?tab=discussions`
+  return n.path
+}

@@ -1,11 +1,13 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { ArrowLeft, Folder, Hash, History, Rocket, Share2, SlidersHorizontal, Trash2, BookMarked, CopyPlus } from 'lucide-react'
+import type { Editor } from '@tiptap/react'
+import { Folder, Hash, History, Rocket, Share2, SlidersHorizontal, Trash2, BookMarked, GitFork } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useMemo, useState } from 'react'
+import type { CardType } from '@/lib/contracts/domain/enums'
 import { Button } from '@/components/ui/button'
 import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { sendSave, type NoteMeta } from './api'
@@ -18,12 +20,17 @@ import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
 import { NoteEditor } from './editor/NoteEditor'
 import { savedFromMirror } from './editor/mirror'
-import { cardsToDoc } from './model/doc'
+import { cardsToDoc, docToCards } from './model/doc'
+import { insertCardAfter } from './editor/nodes'
+import { Breadcrumb } from './view/Breadcrumb'
+import { NoteTabPanel, NoteTabs, useNoteTab } from './view/NoteTabs'
+import { offeredTabs } from './view/offered'
+import { CardsTab, SummaryTab, useNoteStudy } from './view/StudyTabs'
 import { savedStateOf } from './model/save'
 import { useLoadedNote } from './useLoadedNote'
 import { Discussion } from '@/features/discussion/Discussion'
 import { AiButton, AiPanel } from '@/features/ai/AiPanel'
-import { StudyAids } from '@/features/ai/StudyAids'
+import { AiDock, useWide } from '@/features/ai/AiDock'
 import { useLearningTime } from '@/features/learning/useLearningTime'
 
 /** A note: the editor for its owner and editors, the reader for everyone else (loading: ./useLoadedNote). */
@@ -44,6 +51,20 @@ export function NotePage({ id }: { id: string }) {
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
   const [notice, setNotice] = useState<string | null>(null)
+  const [editor, setEditor] = useState<Editor | null>(null)
+  const study = useNoteStudy(id)
+  const wide = useWide()
+  const ready = loaded.state === 'ready' ? loaded : null
+  // The tabs it offers (ADR-0076): each has something, or a way to make something.
+  const offered = offeredTabs({
+    canEdit: !!ready?.meta.viewerCan.edit,
+    reader: ready?.meta.viewerAccess === 'READER',
+    published: !!ready?.meta.publishedVersion,
+    ai: study.ai.available,
+    cardTypes: (ready?.cards ?? []).map((c) => c.type),
+    tasks: study.tasks,
+  })
+  const [tab, chooseTab] = useNoteTab(offered)
 
   const reload = useCallback(() => setGeneration((g) => g + 1), [])
   // Learning history (lvn-backend ADR-0067): the note opened, and the time it is read.
@@ -68,7 +89,7 @@ export function NotePage({ id }: { id: string }) {
   if (meta.viewerAccess === 'READER') {
     return (
       <MediaProvider noteId={null} cards={loaded.media} readNoteId={id}>
-        <NoteReader meta={meta} cards={loaded.cards} />
+        <NoteReader meta={meta} cards={loaded.cards} study={study} offered={offered} tab={tab} onTab={chooseTab} wide={wide} />
       </MediaProvider>
     )
   }
@@ -93,7 +114,7 @@ export function NotePage({ id }: { id: string }) {
   const menuItems = [
     ...(meta.viewerAccess === 'OWNER' ? [{ label: t('details.button'), icon: SlidersHorizontal, onClick: () => setDetailsOpen(true) }] : []),
     { label: t('versions.button'), icon: History, onClick: () => setVersionsOpen({ open: true }) },
-    ...(meta.viewerCan.fork ? [{ label: t('share.makeCopy'), icon: CopyPlus, onClick: () => void copy.makeCopy() }] : []),
+    ...(meta.viewerCan.fork ? [{ label: t('share.makeCopy'), icon: GitFork, onClick: () => void copy.makeCopy() }] : []),
     ...(meta.viewerCan.delete ? [{ label: t('trash'), icon: Trash2, onClick: () => void moveToTrash(), danger: true }] : []),
   ]
 
@@ -130,6 +151,34 @@ export function NotePage({ id }: { id: string }) {
     </>
   )
 
+  const idBase = `note-${id}`
+  /** The cards as they are now in the editor (they may have changed since loading). */
+  const currentCards = () => (editor ? docToCards(editor.getJSON()) : loaded.cards)
+  const addedToNote = () => {
+    // The cards are in the draft now: show them (the tab stays open through the reload).
+    setAiOpen(false)
+    setNotice(tAi('addedToNote'))
+    reload()
+  }
+  // A card added from the Flashcards or Quiz tab is written in the cards, so the cards open with it.
+  const addCard = (type: CardType) => {
+    chooseTab('content')
+    requestAnimationFrame(() => {
+      if (!editor) return
+      editor.commands.focus('end')
+      insertCardAfter(editor, type)
+    })
+  }
+  const tabPanel =
+    tab === 'summary' ? (
+      <SummaryTab noteId={id} study={study} canEdit={meta.viewerCan.edit} onAddedToNote={addedToNote} />
+    ) : tab === 'flashcards' || tab === 'quiz' ? (
+      <CardsTab kind={tab} noteId={id} cards={currentCards()} study={study} canEdit={meta.viewerCan.edit} reader={false} onAdd={meta.viewerCan.edit ? addCard : undefined} onAddedToNote={addedToNote} />
+    ) : tab === 'discussions' ? (
+      // What readers said about the published note (lvn-backend ADR-0047).
+      <Discussion target={{ type: 'NOTE', id }} />
+    ) : null
+
   const chips =
     meta.viewerAccess === 'OWNER' ? (
       <button type="button" onClick={() => setDetailsOpen(true)} className="flex flex-wrap items-center gap-1.5 text-left text-xs text-muted">
@@ -156,11 +205,8 @@ export function NotePage({ id }: { id: string }) {
   return (
     <MediaProvider noteId={id} cards={loaded.media} readNoteId={id}>
       <div className="flex flex-col gap-3">
-        <nav className="flex items-center justify-between gap-2 text-sm">
-          <Link href="/notes" className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-muted transition hover:bg-surface-2 hover:text-fg">
-            <ArrowLeft className="size-4" aria-hidden />
-            {t('backToNotes')}
-          </Link>
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <Breadcrumb meta={meta} own={meta.viewerAccess === 'OWNER'} />
           <span className="flex items-center gap-2 text-xs text-muted">
             {meta.viewerAccess === 'OWNER' ? (
               <button type="button" className="rounded-full hover:ring-1 hover:ring-accent/40" title={t('share.title')} onClick={() => setShareOpen(true)}>
@@ -170,7 +216,7 @@ export function NotePage({ id }: { id: string }) {
             {meta.publishedVersion ? t('publishedVersion', { n: meta.publishedVersion.number }) : t('neverPublished')}
             {meta.viewerAccess === 'EDITOR' ? ` · ${t('editingFor', { name: meta.owner.displayName })}` : ''}
           </span>
-        </nav>
+        </div>
         {meta.moderation ? <ModerationBanner entityType="NOTE" entityId={id} moderation={meta.moderation} /> : null}
         {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
         {copy.copyError ? (
@@ -205,11 +251,12 @@ export function NotePage({ id }: { id: string }) {
           menuItems={menuItems}
           onOpenVersion={(versionId) => setVersionsOpen({ open: true, versionId })}
           onAnchor={(anchor, cardId) => router.push(`/notes/${id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)}
+          onEditor={setEditor}
+          tabs={<NoteTabs tabs={offered} current={tab} onChange={chooseTab} idBase={idBase} />}
+          contentPanel={{ id: `${idBase}-panel-content`, labelledBy: `${idBase}-tab-content` }}
+          panel={tab === 'content' ? null : <NoteTabPanel idBase={idBase} tab={tab} current={tab}>{tabPanel}</NoteTabPanel>}
+          aside={wide && !aiOpen ? <AiDock noteId={id} study={study} canEdit={meta.viewerCan.edit} canFork={meta.viewerCan.fork} hasCode={currentCards().some((c) => c.type === 'code')} onAddedToNote={addedToNote} /> : null}
         />
-        {/* A public note's study aids (lvn-backend ADR-0061): their progress, and hiding them, for the owner. */}
-        {meta.publishedVersion ? <StudyAids noteId={id} /> : null}
-        {/* What readers said about the published note (lvn-backend ADR-0047). */}
-        {meta.publishedVersion ? <Discussion target={{ type: 'NOTE', id }} /> : null}
         <VersionsDialog
           noteId={id}
           open={versionsOpen.open}
@@ -226,12 +273,7 @@ export function NotePage({ id }: { id: string }) {
           onClose={() => setAiOpen(false)}
           canEdit={meta.viewerCan.edit}
           canFork={meta.viewerCan.fork}
-          onAddedToNote={() => {
-            // The cards are in the draft now: show them (reloading closes the panel).
-            setAiOpen(false)
-            setNotice(tAi('addedToNote'))
-            reload()
-          }}
+          onAddedToNote={addedToNote}
           onTextMended={(applied, refused) => {
             // Clean-up changed cards' words (ADR-0063): show them.
             setAiOpen(false)

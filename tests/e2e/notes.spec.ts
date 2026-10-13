@@ -205,7 +205,7 @@ test('a reader makes a copy, which opens with a credit to the author', async ({ 
   })
   await page.goto(`/notes/${NOTE_ID}`)
   await expect(page.getByText('By Ravi Kumar')).toBeVisible()
-  await page.getByRole('button', { name: 'Make a copy' }).click()
+  await page.getByRole('button', { name: 'Fork' }).click()
   await expect(page).toHaveURL(new RegExp(`/notes/${COPY}$`))
   await expect(page.getByText('Copied from Searching by Ravi Kumar')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Searching' })).toHaveAttribute('href', `/notes/${NOTE_ID}`)

@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import {
@@ -113,22 +113,18 @@ export interface AiPanelProps {
   onTextMended?: (applied: number, refused: number) => void
 }
 
-export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAddedToNote, onTextMended }: AiPanelProps) {
+/**
+ * Running AI tasks on a note, for the panel and the note view's dock and tabs (ADR-0076): AI's state and the day's
+ * allowance, and `run`, which puts the new result at the top of the note's results.
+ */
+export function useRunAiTask(noteId: string, enabled = true) {
   const t = useTranslations('ai')
-  const state = useQuery(AiStateDocument, { skip: !open, fetchPolicy: 'cache-and-network' })
-  const list = useQuery(NoteAiArtifactsDocument, { variables: { noteId }, skip: !open, fetchPolicy: 'cache-and-network' })
+  const state = useQuery(AiStateDocument, { skip: !enabled, fetchPolicy: 'cache-and-network' })
   const [runTask, running] = useMutation(RunAiTaskDocument)
-  const [language, setLanguage] = useState<AiLanguage>('HINDI')
   const [error, setError] = useState<string | null>(null)
   const status = state.data?.aiStatus
   const allowance = state.data?.myAiAllowance
   const spent = allowance?.limitToday != null && allowance.usedToday >= allowance.limitToday
-  const off = status ? !status.available : false
-  const artifacts = list.data?.note?.aiArtifacts ?? []
-  const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : EDITORS_ONLY.has(task) ? canEdit : true))
-  // Its recordings, each transcribed on its own (ADR-0062).
-  const recordings = (list.data?.note?.cards.edges ?? []).map((e) => e.node).filter((c) => c.type === 'audio' || c.type === 'video')
-
   const run = async (task: AiTask, lang: AiLanguage = 'ENGLISH', cardIds?: string[]) => {
     setError(null)
     const { result, error } = await attempt(() =>
@@ -149,6 +145,23 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
     // The allowance changed, or AI turned out to be off: ask again.
     if (payload?.userErrors.length) void state.refetch()
   }
+  /** Unknown (not answered yet, or failed) counts as off: no control is offered that cannot work. */
+  const available = !!status?.available
+  return { status, allowance, spent, off: status ? !status.available : false, available, run, running: running.loading, error }
+}
+
+export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAddedToNote, onTextMended }: AiPanelProps) {
+  const t = useTranslations('ai')
+  const languageId = useId()
+  const list = useQuery(NoteAiArtifactsDocument, { variables: { noteId }, skip: !open, fetchPolicy: 'cache-and-network' })
+  const ai = useRunAiTask(noteId, open)
+  const [language, setLanguage] = useState<AiLanguage>('HINDI')
+  const { status, allowance, spent, off, run, error } = ai
+  const running = { loading: ai.running }
+  const artifacts = list.data?.note?.aiArtifacts ?? []
+  const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : EDITORS_ONLY.has(task) ? canEdit : true))
+  // Its recordings, each transcribed on its own (ADR-0062).
+  const recordings = (list.data?.note?.cards.edges ?? []).map((e) => e.node).filter((c) => c.type === 'audio' || c.type === 'video')
 
   return (
     <Dialog open={open} onClose={onClose} title={t('title')} side>
@@ -201,10 +214,10 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
           ))}
           <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2 pl-3">
             <Languages className="size-4 shrink-0 text-accent" aria-hidden />
-            <label htmlFor={`ai-language-${noteId}`} className="text-sm font-semibold">
+            <label htmlFor={languageId} className="text-sm font-semibold">
               {t('translateInto')}
             </label>
-            <select id={`ai-language-${noteId}`} value={language} onChange={(e) => setLanguage(e.target.value as AiLanguage)} className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-bg px-2 text-sm">
+            <select id={languageId} value={language} onChange={(e) => setLanguage(e.target.value as AiLanguage)} className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-bg px-2 text-sm">
               {LANGUAGES.map((l) => (
                 <option key={l} value={l}>
                   {t(`language.${l}`)}
@@ -227,7 +240,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
           {list.loading && !list.data ? <p className="text-sm text-muted">{t('loading')}</p> : null}
           {list.data && !artifacts.length ? <p className="text-sm text-muted">{t('noResults')}</p> : null}
           {artifacts.map((a) => (
-            <Result key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void run(a.task, a.language)} onAddedToNote={onAddedToNote} onTextMended={onTextMended} />
+            <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void run(a.task, a.language)} onAddedToNote={onAddedToNote} onTextMended={onTextMended} />
           ))}
         </section>
       </div>
@@ -259,7 +272,7 @@ function Poll({ id }: { id: string }) {
   return null
 }
 
-function Result({ noteId, artifact: a, canEdit, onRetry, onAddedToNote, onTextMended }: { noteId: string; artifact: Artifact; canEdit: boolean; onRetry: () => void; onAddedToNote?: () => void; onTextMended?: AiPanelProps['onTextMended'] }) {
+export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote, onTextMended }: { noteId: string; artifact: Artifact; canEdit: boolean; onRetry: () => void; onAddedToNote?: () => void; onTextMended?: AiPanelProps['onTextMended'] }) {
   const t = useTranslations('ai')
   const [remove, removing] = useMutation(DeleteAiArtifactDocument)
   const [copied, setCopied] = useState(false)

@@ -127,3 +127,14 @@ describe('liveUrlFrom', () => {
     expect(liveUrlFrom({ NEXT_PUBLIC_APP_ENV: 'production', NEXT_PUBLIC_API_URL: api, NEXT_PUBLIC_LIVE_URL: undefined })).toBeNull()
   })
 })
+
+describe('where a notification opens (lvn-backend ADR-0076)', () => {
+  it('opens a comment or mention on a note in its Discussions tab, everything else at its path', async () => {
+    const { notificationHref } = await import('@/features/notifications/describe')
+    const note = '/notes/01920000-0000-7000-8000-00000000a001'
+    expect(notificationHref({ category: 'COMMENT', path: note })).toBe(`${note}?tab=discussions`)
+    expect(notificationHref({ category: 'MENTION', path: note })).toBe(`${note}?tab=discussions`)
+    expect(notificationHref({ category: 'COMMENT', path: '/groups/g1' })).toBe('/groups/g1')
+    expect(notificationHref({ category: 'SHARE', path: note })).toBe(note)
+  })
+})

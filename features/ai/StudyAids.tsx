@@ -78,27 +78,30 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
         </h2>
         <p className="text-sm text-muted">{t(owner ? 'leadOwner' : 'lead')}</p>
       </header>
-      <div role="tablist" aria-label={t('title')} className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
-        {aids.map((a, i) => {
-          const Icon = ICON[a.task] ?? ScrollText
-          const selected = a.id === aid.id
-          return (
-            <button
-              key={a.id}
-              role="tab"
-              type="button"
-              aria-selected={selected}
-              aria-controls={`aid-${a.id}`}
-              onClick={() => setCurrent(i)}
-              className={cn('inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition', selected ? 'border-accent bg-accent text-accent-fg' : 'border-border text-muted hover:text-fg', a.hidden && 'opacity-60')}
-            >
-              {a.status === 'QUEUED' || a.status === 'RUNNING' ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Icon className="size-4" aria-hidden />}
-              {tTask(a.task)}
-            </button>
-          )
-        })}
-      </div>
-      <div role="tabpanel" id={`aid-${aid.id}`} aria-label={tTask(aid.task)} className="flex flex-col gap-3">
+      {/* One aid needs no tabs of its own (a note's tab may hold just its quiz or flashcards, ADR-0076). */}
+      {aids.length > 1 ? (
+        <div role="tablist" aria-label={t('title')} className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+          {aids.map((a, i) => {
+            const Icon = ICON[a.task] ?? ScrollText
+            const selected = a.id === aid.id
+            return (
+              <button
+                key={a.id}
+                role="tab"
+                type="button"
+                aria-selected={selected}
+                aria-controls={`aid-${a.id}`}
+                onClick={() => setCurrent(i)}
+                className={cn('inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition', selected ? 'border-accent bg-accent text-accent-fg' : 'border-border text-muted hover:text-fg', a.hidden && 'opacity-60')}
+              >
+                {a.status === 'QUEUED' || a.status === 'RUNNING' ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Icon className="size-4" aria-hidden />}
+                {tTask(a.task)}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
+      <div role={aids.length > 1 ? 'tabpanel' : 'group'} id={`aid-${aid.id}`} aria-label={tTask(aid.task)} className="flex flex-col gap-3">
         {owner ? (
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
             <span>{t(`status.${aid.status}`)}</span>
@@ -152,8 +155,11 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
   )
 }
 
-/** In the app: the aids of a note the viewer reads or owns, kept fresh while they are being made. */
-export function StudyAids({ noteId }: { noteId: string }) {
+/**
+ * In the app: the aids of a note the viewer reads or owns, kept fresh while they are being made; `tasks` keeps only
+ * those (the note view's AI Summary, Flashcards and Quiz tabs).
+ */
+export function StudyAids({ noteId, tasks }: { noteId: string; tasks?: readonly string[] }) {
   const { data, refetch } = useQuery(NoteInsightsDocument, { variables: { id: noteId }, fetchPolicy: 'cache-and-network' })
   const [keepCards] = useMutation(KeepAiCardsDocument)
   const [setHidden, hiding] = useMutation(SetAiInsightHiddenDocument)
@@ -164,11 +170,12 @@ export function StudyAids({ noteId }: { noteId: string }) {
   useLive((signal) => {
     if ((signal.kind === 'NOTE_PROCESSING' && signal.id === noteId) || signal.kind === 'RECONNECTED') void refetch().catch(() => undefined)
   })
-  if (!note?.aiInsights.length) return null
+  const aids = (note?.aiInsights ?? []).filter((a) => !tasks || tasks.includes(a.task))
+  if (!aids.length) return null
   const owner = !!status
   return (
     <StudyAidsView
-      aids={note.aiInsights}
+      aids={aids}
       owner={owner}
       busy={hiding.loading}
       onHidden={owner ? (aid, hidden) => void setHidden({ variables: { id: aid.id, hidden } }).then(() => refetch()) : undefined}

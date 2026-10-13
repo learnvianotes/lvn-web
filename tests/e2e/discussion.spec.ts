@@ -37,7 +37,8 @@ test('a reader of a note reacts, comments and replies', async ({ page }) => {
       return { addComment: { __typename: 'CommentPayload', comment: { __typename: 'Comment', id: made.id }, userErrors: [] } }
     },
   })
-  await page.goto(`/notes/${NOTE_ID}`)
+  // A note's discussion is its Discussions tab (ADR-0076), opened by its link.
+  await page.goto(`/notes/${NOTE_ID}?tab=discussions`)
   const thread = page.getByRole('region', { name: 'Discussion' })
   await expect(thread).toContainText('Why halve it?')
   await expect(thread.getByRole('heading')).toContainText('1 comment')
@@ -66,7 +67,8 @@ test('the owner approves a restricted personâ€™s comment and removes another', a
     ApproveComment: () => ((list = list.map((c) => (c.id === 'c1' ? { ...c, pendingApproval: false, viewerCan: can({ delete: true }) } : c))), { approveComment: { __typename: 'CommentPayload', comment: { __typename: 'Comment', id: 'c1' }, userErrors: [] } }),
     DeleteComment: () => ((list = list.filter((c) => c.id !== 'c2')), { deleteComment: { __typename: 'CommentPayload', comment: { __typename: 'Comment', id: 'c2' }, userErrors: [] } }),
   })
-  await page.goto(`/notes/${NOTE_ID}`)
+  // A note's discussion is its Discussions tab (ADR-0076), opened by its link.
+  await page.goto(`/notes/${NOTE_ID}?tab=discussions`)
   const thread = page.getByRole('region', { name: 'Discussion' })
   await expect(thread.getByText('Waiting for approval')).toBeVisible()
   await thread.getByRole('button', { name: 'Approve' }).click()
@@ -79,7 +81,8 @@ test('the owner approves a restricted personâ€™s comment and removes another', a
 
 test('someone who may not comment is told why, with no box to write in', async ({ page }) => {
   await mockApi(page, { NoteToEdit: asReader, Discussion: () => discussion([comment('c1', 'Removed later', { removed: true, author: null, body: null })], { viewerCanComment: false, whyNot: 'Verify your account to comment.' }) })
-  await page.goto(`/notes/${NOTE_ID}`)
+  // A note's discussion is its Discussions tab (ADR-0076), opened by its link.
+  await page.goto(`/notes/${NOTE_ID}?tab=discussions`)
   const thread = page.getByRole('region', { name: 'Discussion' })
   await expect(thread.getByText('Verify your account to comment.')).toBeVisible()
   await expect(thread.getByText('This comment was removed.')).toBeVisible()
@@ -111,7 +114,8 @@ test('the author of a held or hidden comment is told why, appeals once; othersâ€
     ReportContent: () => ({ reportContent: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
     AppealModeration: () => ({ appealModeration: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
   })
-  await page.goto(`/notes/${NOTE_ID}`)
+  // A note's discussion is its Discussions tab (ADR-0076), opened by its link.
+  await page.goto(`/notes/${NOTE_ID}?tab=discussions`)
   const thread = page.getByRole('region', { name: 'Discussion' })
   const items = thread.getByRole('article')
   await expect(items).toHaveCount(3)
@@ -139,7 +143,8 @@ test('the author of a held or hidden comment is told why, appeals once; othersâ€
 
 test('@handle in a comment links to the person; an email address does not (lvn-backend ADR-0054)', async ({ page }) => {
   await mockApi(page, { NoteToEdit: asReader, Discussion: () => discussion([comment('c1', 'Thanks @asharao! Mail me at ravi@example.com')]) })
-  await page.goto(`/notes/${NOTE_ID}`)
+  // A note's discussion is its Discussions tab (ADR-0076), opened by its link.
+  await page.goto(`/notes/${NOTE_ID}?tab=discussions`)
   const thread = page.getByRole('region', { name: 'Discussion' })
   await expect(thread.getByRole('link', { name: '@asharao' })).toHaveAttribute('href', '/u/asharao')
   await expect(thread.getByText(/Mail me at ravi@example\.com/)).toBeVisible()
