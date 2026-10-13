@@ -49,6 +49,9 @@ export function describeNotification(
     }
     case 'CLASSROOM_POST':
       return t('classPost', { actor, classroom: place ?? t('aClass') })
+    case 'QUIZ_PUBLISHED':
+      // A quiz published to the viewer's class (lvn-backend ADR-0064); the notification opens it.
+      return t('quizPublished', { actor, classroom: place ?? t('aClass') })
     case 'MODERATION': {
       // What a moderator decided about the viewer's own content (lvn-backend ADR-0051); the reason is shown with it.
       const type = typeof data.entityType === 'string' ? data.entityType : 'OTHER'

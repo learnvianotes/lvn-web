@@ -34,7 +34,7 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'JOIN_REQUEST', actor: meera, group: g })).toBe('Meera Iyer asked to join Algorithms study')
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'APPROVED' }, group: g })).toBe("You're in: Algorithms study accepted your request")
     expect(say({ category: 'JOIN_DECISION', data: { decision: 'REJECTED' }, group: null })).toBe("a group didn't accept your request")
-    expect(say({ category: 'QUIZ_PUBLISHED' })).toBe('Something new for you')
+    expect(say({ category: 'REVISION_REMINDER' })).toBe('Something new for you')
   })
 
   it('says who commented or replied, and on what (lvn-backend ADR-0047)', () => {
@@ -90,6 +90,8 @@ describe('notification sentences (lvn-backend ADR-0042)', () => {
     expect(say({ category: 'CLASSROOM_INVITE', path, actor: meera, classroom: c })).toBe('Meera Iyer invited you to Physics 9A')
     expect(say({ category: 'CLASSROOM_POST', path, actor: meera, classroom: c })).toBe('Meera Iyer posted an announcement in Physics 9A')
     expect(say({ category: 'CLASSROOM_POST', path, actor: meera })).toBe('Meera Iyer posted an announcement in a class')
+    // A quiz published to the class (lvn-backend ADR-0064).
+    expect(say({ category: 'QUIZ_PUBLISHED', path: '/classes/c1/quizzes/q1', actor: meera, classroom: c })).toBe('Meera Iyer published a quiz in Physics 9A')
   })
 })
 
