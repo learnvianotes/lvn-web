@@ -3,7 +3,7 @@
 import { LEARNING_LIMITS, type LearningEventInput } from '@/lib/contracts/validation/learning'
 import type { LearningEventType } from '@/lib/contracts/domain/enums'
 import { newId } from '@/lib/ids'
-import { TrackEventsDocument } from '@/graphql/generated/graphql'
+import { SetLearningTimeZoneDocument, TrackEventsDocument } from '@/graphql/generated/graphql'
 import { apolloClient } from '@/lib/apollo'
 import { useSession } from '@/state/session'
 
@@ -50,6 +50,24 @@ function listen() {
     if (s.status === 'signed-out' && before.status === 'signed-in') clear()
     if (s.status === 'signed-in' && before.status !== 'signed-in') void flush()
   })
+}
+
+let zoneTold: string | null = null
+
+/**
+ * Tells the server the browser's time zone once someone is signed in, not only with the first batch of events: a new
+ * account's days and exam countdowns are in their zone from the first page (ADR-0067, ADR-0070). Once per zone.
+ */
+export async function tellTimeZone(): Promise<void> {
+  if (typeof window === 'undefined' || useSession.getState().status !== 'signed-in') return
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  if (!timeZone || zoneTold === timeZone) return
+  zoneTold = timeZone
+  try {
+    await apolloClient().mutate({ mutation: SetLearningTimeZoneDocument, variables: { input: { timeZone } } })
+  } catch {
+    zoneTold = null
+  }
 }
 
 /** Records one learning event (types and fields: §14.1, ADR-0067). Nothing is recorded signed out. */

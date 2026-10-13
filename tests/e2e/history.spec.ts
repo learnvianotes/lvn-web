@@ -63,5 +63,6 @@ test('says days start at 4 in the person’s zone, and changes the zone', async 
   await page.getByRole('button', { name: 'Change' }).click()
   await page.getByLabel('Time zone').selectOption('Europe/London')
   await page.getByRole('button', { name: 'Save' }).click()
-  await expect.poll(() => calls.find((c) => c.op === 'SetLearningTimeZone')?.variables).toEqual({ input: { timeZone: 'Europe/London' } })
+  // The page told the browser's zone on its own first (ADR-0070); the person's choice is the last call.
+  await expect.poll(() => calls.filter((c) => c.op === 'SetLearningTimeZone').at(-1)?.variables).toEqual({ input: { timeZone: 'Europe/London' } })
 })
