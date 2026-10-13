@@ -120,7 +120,7 @@ export function CardView({ id, type, content, highlighted, onAnchor }: { id: str
       case 'question':
         return <QuestionCardView content={c} />
       case 'quiz':
-        return <QuizCardView content={c} />
+        return <QuizCardView id={id} content={c} />
       case 'flashcard':
         return <FlashcardCardView content={c} />
       case 'image':

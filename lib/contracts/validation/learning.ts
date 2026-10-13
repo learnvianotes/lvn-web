@@ -63,3 +63,18 @@ export const REVIEW_LIMITS = {
   dailyCards: 20,
   dailyNew: 10,
 } as const
+
+/** Limits on exams (ADR-0070). */
+export const EXAM_LIMITS = {
+  name: 100,
+  /** Topics an exam can have */
+  topics: 20,
+  /** Exams on or after today a person can have */
+  upcoming: 10,
+  /** How far ahead an exam can be */
+  daysAhead: 730,
+  /** Days a past exam stays in the list */
+  keptDays: 7,
+} as const
+
+export const examNameSchema = z.string().trim().min(1, 'Give the exam a name').max(EXAM_LIMITS.name, `An exam's name is at most ${EXAM_LIMITS.name} characters`)

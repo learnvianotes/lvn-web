@@ -38,6 +38,14 @@ export function Rhythm() {
       {r ? (
         <>
           <Today r={r} />
+          {r.suggestion ? (
+            <p role="note" className="rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+              {t('suggestion', { exam: r.suggestion.examName, days: r.suggestion.daysLeft, planned: r.suggestion.plannedDays })}{' '}
+              <a href="#rhythm-plan" className="font-semibold text-accent hover:underline">
+                {t('suggestionAction')}
+              </a>
+            </p>
+          ) : null}
           <Week r={r} />
           <Counters r={r} />
           <Plan r={r} />
@@ -98,12 +106,23 @@ function Today({ r }: { r: R }) {
           {!today.counted ? <p className="text-muted">{t('toGo', { minutes: minutesLeft, reviews: reviewsLeft })}</p> : null}
           <ul className="flex flex-col gap-1">
             {today.items.map((item) => (
-              <li key={item.kind} className="flex items-center gap-2">
+              <li key={item.kind} className="flex flex-wrap items-center gap-2">
                 <span aria-hidden className={cn('size-2 rounded-full', item.total && item.done >= item.total ? 'bg-accent' : 'bg-border')} />
-                {item.kind === 'REVIEWS' ? t('item.REVIEWS', { done: item.done, total: item.total }) : item.kind}
+                {item.kind === 'REVIEWS'
+                  ? t('item.REVIEWS', { done: item.done, total: item.total })
+                  : item.kind === 'PLAN_TASK'
+                    ? t('item.PLAN_TASK', { title: item.title ?? '', done: item.done, total: item.total })
+                    : item.kind === 'WEAK_TOPIC'
+                      ? t('item.WEAK_TOPIC', { title: item.title ?? item.topicKey ?? '' })
+                      : item.kind}
                 {item.kind === 'REVIEWS' && item.done < item.total ? (
                   <Link href="/review" className="font-medium text-accent hover:underline">
                     {t('reviewNow')}
+                  </Link>
+                ) : null}
+                {item.kind === 'PLAN_TASK' && item.done < item.total ? (
+                  <Link href="/exams" className="font-medium text-accent hover:underline">
+                    {t('examsLink')}
                   </Link>
                 ) : null}
               </li>

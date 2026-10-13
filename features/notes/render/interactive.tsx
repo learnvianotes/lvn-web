@@ -1,12 +1,24 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { Doc, Inline } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
+import { track } from '@/lib/learning'
 import { InlineText, RichDoc } from './RichText'
 
-/** Cards a reader does something with: reveal an answer, answer a quiz, flip a flashcard. Nothing is sent anywhere. */
+/**
+ * Cards a reader does something with: reveal an answer, answer a quiz, flip a flashcard. Inside a note read signed in,
+ * a checked quiz is a learning event on the note's topics (lvn-backend ADR-0070: weak topics, Readiness); nothing else
+ * is sent.
+ */
+
+const QuizTopics = createContext<string[] | null>(null)
+
+/** The topics of the note being read, for its quiz results; without it a quiz records nothing. */
+export function QuizTopicsProvider({ topicKeys, children }: { topicKeys: string[]; children: ReactNode }) {
+  return <QuizTopics value={topicKeys}>{children}</QuizTopics>
+}
 
 export function QuestionCardView({ content }: { content: { prompt: Doc; answer: Doc; hint?: Doc } }) {
   const t = useTranslations('notes.reader')
@@ -37,8 +49,9 @@ export function QuestionCardView({ content }: { content: { prompt: Doc; answer: 
   )
 }
 
-export function QuizCardView({ content }: { content: { question: Doc; choices: { id: string; content: Inline }[]; correct: string[]; multiple: boolean; explanation?: Doc } }) {
+export function QuizCardView({ id, content }: { id?: string; content: { question: Doc; choices: { id: string; content: Inline }[]; correct: string[]; multiple: boolean; explanation?: Doc } }) {
   const t = useTranslations('notes.reader')
+  const topicKeys = useContext(QuizTopics)
   const [picked, setPicked] = useState<string[]>([])
   const [checked, setChecked] = useState(false)
   const right = checked && picked.length === content.correct.length && picked.every((p) => content.correct.includes(p))
@@ -84,7 +97,16 @@ export function QuizCardView({ content }: { content: { question: Doc; choices: {
           </button>
         </div>
       ) : (
-        <button type="button" disabled={!picked.length} className="self-start rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-fg disabled:opacity-50" onClick={() => setChecked(true)}>
+        <button
+          type="button"
+          disabled={!picked.length}
+          className="self-start rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-fg disabled:opacity-50"
+          onClick={() => {
+            setChecked(true)
+            const correct = picked.length === content.correct.length && picked.every((p) => content.correct.includes(p))
+            if (topicKeys && id) track('QUIZ_COMPLETED', { entityType: 'NOTE_CARD', entityId: id, topicKeys: topicKeys.slice(0, 10), metadata: { answered: 1, correct: correct ? 1 : 0 } })
+          }}
+        >
           {t('check')}
         </button>
       )}

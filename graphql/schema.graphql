@@ -997,6 +997,17 @@ input CreateClassroomPostInput {
   classroomId: UUID!
 }
 
+input CreateExamInput {
+  """YYYY-MM-DD, today or later, at most two years away"""
+  date: String!
+
+  """1–100 characters"""
+  name: String!
+
+  """1–20 notes topics the viewer may use"""
+  topicIds: [UUID!]!
+}
+
 input CreateFolderInput {
   name: String!
   parentId: UUID
@@ -1214,6 +1225,86 @@ enum ErrorCode {
   UNAUTHENTICATED
   UNAVAILABLE
   VALIDATION
+}
+
+type Exam {
+  """YYYY-MM-DD, a learning day in the learner's zone"""
+  date: String!
+
+  """0 on the exam's day"""
+  daysLeft: Int!
+  id: UUID!
+  name: String!
+  past: Boolean!
+
+  """Exam Readiness, 0–100: the mean mastery of the topics"""
+  readiness: Int!
+
+  """Where the target line ends on the exam's day, in %"""
+  target: Int!
+
+  """Where the target line is today, in %"""
+  targetToday: Int!
+
+  """Oldest day first"""
+  tasks: [ExamPlanTask!]!
+  topics: [ExamTopic!]!
+}
+
+input ExamIdInput {
+  id: UUID!
+}
+
+type ExamPayload {
+  exam: Exam
+  userErrors: [UserError!]!
+}
+
+"""One revision session of an exam's plan"""
+type ExamPlanTask {
+  """YYYY-MM-DD, a learning day in the learner's zone"""
+  day: String!
+
+  """10 minutes on its topics that day, or a quiz answered on them"""
+  done: Boolean!
+  id: UUID!
+  today: Boolean!
+  topics: [ExamPlanTopic!]!
+}
+
+type ExamPlanTopic {
+  key: String!
+  title: String!
+}
+
+type ExamTopic {
+  """
+  Right answers in the topic's last 3 quiz results, 0–1; null without results
+  """
+  accuracy: Float
+
+  """topic:<id>, as learning events name it"""
+  key: String!
+
+  """0.6 × recall + 0.4 × accuracy, or the one there is; 0 with neither"""
+  mastery: Float!
+
+  """
+  Mean chance of recalling the topic's studied cards now, 0–1; null without studied cards
+  """
+  recall: Float
+  title: String!
+
+  """The notes topic, when the viewer may still use it"""
+  topic: Topic
+}
+
+"""A topic an exam can be set on"""
+type ExamTopicOption {
+  id: UUID!
+  key: String!
+  subjectTitle: String!
+  title: String!
 }
 
 """
@@ -1968,6 +2059,9 @@ type Mutation {
 
   """Staff: an announcement every member reads"""
   createClassroomPost(input: CreateClassroomPostInput!): ClassroomPayload!
+
+  """Signed in only, as every mutation below; at most 10 upcoming exams"""
+  createExam(input: CreateExamInput!): ExamPayload!
   createFolder(input: CreateFolderInput!): FolderPayload!
   createGroup(input: CreateGroupInput!): GroupPayload!
   createGroupPost(input: CreateGroupPostInput!): GroupPostPayload!
@@ -1998,6 +2092,7 @@ type Mutation {
 
   """The asker or a moderator"""
   deleteDoubt(input: DoubtIdInput!): GroupPayload!
+  deleteExam(input: ExamIdInput!): OkPayload!
 
   """Its notes and subfolders move up one level"""
   deleteFolder(input: IdInput!): OkPayload!
@@ -2250,6 +2345,7 @@ type Mutation {
   """
   unsubscribeEmail(input: UnsubscribeEmailInput!): UnsubscribePayload!
   updateClassroom(input: UpdateClassroomInput!): ClassroomPayload!
+  updateExam(input: UpdateExamInput!): ExamPayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
 
   """Admins: name, description, privacy, join policy"""
@@ -2946,6 +3042,15 @@ type Query {
 
   """A doubt the viewer's workspace holds"""
   doubt(id: UUID!): Doubt
+  exam(id: UUID!): Exam
+
+  """
+  Signed in only: topics to set an exam on, by words of their titles (at most 20)
+  """
+  examTopicOptions(query: String!): [ExamTopicOption!]!
+
+  """Signed in only: the viewer's exams from a week ago on, soonest first"""
+  exams: [Exam!]!
 
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
@@ -3099,6 +3204,9 @@ type Query {
 
   """The signed-in user, null for anonymous visitors"""
   viewer: User
+
+  """Signed in only: weak topics, each with why; an upcoming exam's first"""
+  weakTopics: [WeakTopic!]!
 }
 
 type QuizAnswer {
@@ -3413,6 +3521,7 @@ type Rhythm {
 
   """ISO weekdays, 1 Monday … 7 Sunday"""
   plannedDays: [Int!]!
+  suggestion: RhythmSuggestion
 
   """Planned days less paused ones, at least 1"""
   target: Int!
@@ -3454,8 +3563,18 @@ enum RhythmDayStatus {
 type RhythmItem {
   done: Int!
 
-  """REVIEWS now; PLAN_TASK and WEAK_TOPIC with the exam planner"""
+  """
+  REVIEWS, PLAN_TASK (today's exam-plan tasks) or WEAK_TOPIC (one weak topic, done at 10 minutes on it today)
+  """
   kind: String!
+
+  """
+  The exams of today's tasks, or the weak topic's title (null for a /core topic)
+  """
+  title: String
+
+  """The weak topic's key"""
+  topicKey: String
   total: Int!
 }
 
@@ -3477,6 +3596,16 @@ enum RhythmPauseReason {
   ILLNESS
   OTHER
   TRAVEL
+}
+
+"""
+Three weeks before an exam, one more planned day a week; nothing changes until the learner sets it
+"""
+type RhythmSuggestion {
+  daysLeft: Int!
+  examId: UUID!
+  examName: String!
+  plannedDays: Int!
 }
 
 type RhythmToday {
@@ -3968,6 +4097,15 @@ input UpdateClassroomInput {
   newCode: Boolean
 }
 
+input UpdateExamInput {
+  date: String
+  id: UUID!
+  name: String
+
+  """Replaces the topics; the plan is made again from today"""
+  topicIds: [UUID!]
+}
+
 """
 Omitted fields stay as they are; `parentId: null` moves the folder to the top level
 """
@@ -4206,6 +4344,31 @@ enum Visibility {
   PRIVATE
   PUBLIC
   SHARED
+}
+
+type WeakTopic {
+  accuracy: Float
+  daysLeft: Int
+
+  """The soonest exam it is a topic of, if any"""
+  examId: UUID
+  examName: String
+  key: String!
+  reason: WeakTopicReason!
+
+  """Null for a /core topic: show its key"""
+  title: String
+  topic: Topic
+}
+
+enum WeakTopicReason {
+  """Under 60 % right over the topic's last 3 quiz results"""
+  LOW_ACCURACY
+
+  """
+  A topic of an exam in the next 14 days with no time on it in the last 14
+  """
+  NOT_REVISITED
 }
 
 enum YearOfStudy {

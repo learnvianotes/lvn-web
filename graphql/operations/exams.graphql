@@ -1,0 +1,96 @@
+# Exams, weak topics and Exam Readiness (lvn-backend ADR-0070).
+
+fragment ExamFields on Exam {
+  id
+  name
+  date
+  daysLeft
+  past
+  readiness
+  target
+  targetToday
+  topics {
+    key
+    title
+    recall
+    accuracy
+    mastery
+  }
+  tasks {
+    id
+    day
+    done
+    today
+    topics {
+      key
+      title
+    }
+  }
+}
+
+query Exams {
+  exams {
+    ...ExamFields
+  }
+}
+
+query Exam($id: UUID!) {
+  exam(id: $id) {
+    ...ExamFields
+  }
+}
+
+query WeakTopics {
+  weakTopics {
+    key
+    title
+    reason
+    accuracy
+    examId
+    examName
+    daysLeft
+  }
+}
+
+query ExamTopicOptions($query: String!) {
+  examTopicOptions(query: $query) {
+    id
+    key
+    title
+    subjectTitle
+  }
+}
+
+mutation CreateExam($input: CreateExamInput!) {
+  createExam(input: $input) {
+    exam {
+      ...ExamFields
+    }
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation UpdateExam($input: UpdateExamInput!) {
+  updateExam(input: $input) {
+    exam {
+      ...ExamFields
+    }
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation DeleteExam($input: ExamIdInput!) {
+  deleteExam(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}

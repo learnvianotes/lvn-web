@@ -204,6 +204,7 @@
     "verificationQueue": "Proof of study to review",
     "aiProviders": "AI providers",
     "history": "Learning history",
+    "exams": "Exams",
     "rhythm": "Rhythm",
     "review": "Review flashcards"
   },
@@ -978,7 +979,9 @@
       "COMMENT": "a comment",
       "GROUP_POST": "a post"
     },
-    "mentionGone": "{actor} mentioned you somewhere you can no longer open"
+    "mentionGone": "{actor} mentioned you somewhere you can no longer open",
+    "revisionReminder": "Today’s revision for {exam} is waiting",
+    "revisionReminderAny": "Today’s revision is waiting"
   },
   "people": {
     "teacher": "Teacher",
@@ -1518,7 +1521,8 @@
       "VERIFICATION": "Verification",
       "DATA_EXPORT": "Data exports",
       "NOTES_IMPORT": "Imports",
-      "MENTION": "Mentions of you"
+      "MENTION": "Mentions of you",
+      "REVISION_REMINDER": "Revision reminders for your exams"
     },
     "unsubscribeTitle": "Stop these emails",
     "unsubscribeLead": "Click below and we'll stop sending you this kind of email. Everything still shows in the app.",
@@ -1865,7 +1869,9 @@
     "cameBack": "Back on rhythm.",
     "ring": "Today’s ring: {percent}% of the way to a counted day",
     "item": {
-      "REVIEWS": "Reviews: {done} of {total}"
+      "REVIEWS": "Reviews: {done} of {total}",
+      "PLAN_TASK": "Revision for {title}: {done} of {total}",
+      "WEAK_TOPIC": "Weak topic: {title}"
     },
     "reviewNow": "Review now",
     "week": "This week",
@@ -1908,6 +1914,63 @@
     "pausedNow": "Paused now",
     "endPause": "End the pause",
     "dropPause": "Cancel the pause",
-    "noPauses": "No pauses."
+    "noPauses": "No pauses.",
+    "examsLink": "Plan",
+    "suggestion": "{exam} is in {days, plural, one {# day} other {# days}}: try {planned} planned days a week until then.",
+    "suggestionAction": "Choose the days"
+  },
+  "exams": {
+    "title": "Exams",
+    "lead": "Add an exam and its topics: LearnViaNotes spreads revision sessions back from the day, and Readiness shows how well you know the topics now.",
+    "loading": "Loading…",
+    "failed": "Your exams could not load. Try again.",
+    "none": "No exams yet. Add one and its plan appears here.",
+    "add": "Add an exam",
+    "name": "Exam",
+    "namePlaceholder": "e.g. Operating Systems midterm",
+    "date": "Date",
+    "topics": "Topics",
+    "findTopic": "Find a topic",
+    "findTopicHelp": "Type a few letters of a topic’s name.",
+    "noTopicFound": "No topic matches.",
+    "addTopic": "Add {title}",
+    "removeTopic": "Remove {title}",
+    "save": "Save",
+    "create": "Add the exam",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete the exam",
+    "confirmDelete": "Delete {name} and its plan?",
+    "daysLeft": "{days, plural, =0 {Today} one {Tomorrow} other {In # days}}",
+    "past": "Done",
+    "readiness": "Readiness {value}%",
+    "readinessLabel": "Readiness: {value}%, target today {target}%",
+    "onTrack": "On track",
+    "behind": "{points} points below today’s target",
+    "todayTask": "Today: {topics}",
+    "todayDone": "Today’s revision is done",
+    "open": "Open",
+    "back": "All exams",
+    "plan": "Revision plan",
+    "planHelp": "A session is done by 10 minutes on its topics that day, or a quiz on them.",
+    "noPlan": "No sessions: the exam is today.",
+    "taskDone": "done",
+    "taskToday": "today",
+    "taskAhead": "to come",
+    "taskLeft": "not done",
+    "taskLabel": "{day}: {topics}, {status}",
+    "mastery": "Topics",
+    "masteryHelp": "Recall is how likely you are to remember a topic’s flashcards now; accuracy is your last quiz answers on it.",
+    "recall": "Recall {value}%",
+    "accuracy": "Accuracy {value}%",
+    "noData": "No flashcards or quizzes yet",
+    "weak": "Weak topics",
+    "weakHelp": "Topics to revise first.",
+    "noWeak": "No weak topics. Well done.",
+    "reason": {
+      "LOW_ACCURACY": "Under 60% right in your last quizzes ({value}%)",
+      "NOT_REVISITED": "Not revised in 14 days, before {exam}"
+    },
+    "aTopic": "A topic"
   }
 }
