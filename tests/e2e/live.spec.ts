@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { PDF_TEXT, samplePdf } from './support/sample-pdf'
 
 /**
@@ -17,6 +17,13 @@ import { PDF_TEXT, samplePdf } from './support/sample-pdf'
  * lvn-backend's lifecycle check does, since no API gives them.
  */
 test.skip(!process.env.E2E_LIVE || !process.env.E2E_BASE_URL, 'needs a deployed environment: E2E_LIVE=1 E2E_BASE_URL=<public url>')
+
+/** Opens a sidebar entry: the sidebar from 1024 px, the menu below (lvn-backend ADR-0076). */
+async function fromSidebar(page: Page, name: string) {
+  const menu = page.getByRole('button', { name: 'Menu' })
+  if (await menu.isVisible()) await menu.click()
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name, exact: true }).click()
+}
 
 test('a new learner signs up with email, keeps the session across a reload, signs out and signs in again', async ({ page }, info) => {
   const email = `live-${Date.now()}-${info.project.name}@example.com`
@@ -72,7 +79,7 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Stacks and queues')
@@ -642,7 +649,7 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Binary heaps')
@@ -686,7 +693,7 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Photosynthesis')
@@ -753,7 +760,7 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByRole('textbox', { name: 'Note content' }).click()
@@ -783,7 +790,7 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByRole('textbox', { name: 'Note content' }).click()
@@ -925,7 +932,7 @@ test('a learner’s reading reaches the learning events: the note opened and the
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   const noteId = page.url().split('/').at(-1)!
@@ -952,7 +959,7 @@ test('a learner reviews the flashcard of their note, and the day shows in their 
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
-  await page.getByRole('link', { name: 'My notes' }).click()
+  await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   await page.getByLabel('Title').fill('Live deck')
@@ -1055,8 +1062,8 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
 
   // Home brings it together: the greeting, today, and the next exam (P6h).
   await page.goto('/home')
-  await expect(page.getByRole('heading', { name: 'Good to see you, Live' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('article', { name: 'Live midterm' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Live!/ })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Next exam' }).getByText('Live midterm')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Today' })).toBeVisible()
 })
 

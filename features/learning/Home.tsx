@@ -120,13 +120,14 @@ export function Home() {
       </div>
 
       {rhythm ? (
-        <section aria-label={t('today')} className="flex flex-col gap-4">
+        // Today and This week are regions of their own (Rhythm's): this is only their column.
+        <div className="flex flex-col gap-4">
           <Today r={rhythm} />
           <Week r={rhythm} />
           <Link href="/rhythm" className="-mt-2 inline-flex items-center gap-1 self-end text-sm font-semibold text-accent hover:underline">
             {t('openRhythm')} <ArrowRight aria-hidden className="size-4" />
           </Link>
-        </section>
+        </div>
       ) : null}
 
       <section aria-labelledby="recommended" className="flex flex-col gap-3">

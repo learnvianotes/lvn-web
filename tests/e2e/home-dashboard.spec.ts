@@ -19,6 +19,8 @@ test('Home greets the learner and shows today, the week, the note to continue, t
   await page.goto('/home')
   await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Asha!/ })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Today' }).getByRole('img', { name: /50% of the way/ })).toBeVisible()
+  // One region per name: Today and This week are Rhythm's own (no wrapper named Today around them).
+  await expect(page.getByRole('region', { name: 'Today', exact: true })).toHaveCount(1)
   await expect(page.getByRole('region', { name: 'This week' }).getByText('1 of 4 days this week')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Continue learning' }).getByRole('link', { name: /Dijkstra/ })).toHaveAttribute('href', `/notes/${NOTE}`)
   await expect(page.getByRole('region', { name: 'Continue learning' }).getByText('You were reading this on Monday, 12 October')).toBeVisible()
