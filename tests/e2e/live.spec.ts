@@ -1134,7 +1134,7 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   const form = page.getByRole('form', { name: 'Add a resource' })
   // Each run's own book: one ISBN is one resource, and earlier runs' books may still be in the catalogue.
   const books = ['9780132350884', '9780262033848', '9780201633610', '9780596007126', '9781491950357', '9780134685991']
-  const isbn = books[Math.floor(Date.now() / 1000) % books.length]!
+  const isbn = books[(Math.floor(Date.now() / 60_000) + (info.project.name === 'phone' ? 3 : 0)) % books.length]!
   await form.getByLabel('ISBN').fill(isbn)
   await form.getByRole('button', { name: 'Look up the book' }).click()
   await expect(form.getByLabel('Title', { exact: true })).not.toHaveValue('', { timeout: 30_000 })
