@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { PDF_TEXT, samplePdf } from './support/sample-pdf'
 
@@ -801,4 +802,54 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await expect(page.getByText(/^Applied 1 change\./)).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(/the energy stored in glucose/)).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(/en- ergy/)).toHaveCount(0)
+})
+
+test('a teacher makes a class quiz from a note with the real model and publishes it; a student’s submission is counted (lvn-backend ADR-0064)', async ({ page, request }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to make a teacher')
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ aiStatus { available } }' } })
+  test.skip(!((await res.json()) as { data: { aiStatus: { available: boolean } } }).data.aiStatus.available, 'AI is off in this environment')
+  test.setTimeout(300_000)
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const signUp = async (who: string, name: string) =>
+    (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', { input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion } })).signUp.session
+  const teacher = await signUp('quiz-teacher', 'Quiz Teacher')
+  const student = await signUp('quiz-student', 'Quiz Student')
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${student.user.id}'`)
+  const text = (s: string) => ({ doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: s }] }] } })
+  await api('mutation ($input: CreateNoteInput!) { createNote(input: $input) { note { id } } }', { input: { title: 'Cell respiration', cards: [{ id: randomUUID(), type: 'text', position: 'a0', content: text('Cells release energy from glucose by respiration. Most ATP is made in the mitochondria. Glycolysis happens in the cytoplasm and splits glucose into pyruvate. Aerobic respiration needs oxygen and gives carbon dioxide and water.') }] } }, teacher.accessToken)
+  const made = await api<{ createClassroom: { classroom: { id: string; joinCode: string } } }>('mutation { createClassroom(input: { name: "Live biology" }) { classroom { id joinCode } } }', {}, teacher.accessToken)
+  const { id: classroomId, joinCode } = made.createClassroom.classroom
+  await api('mutation ($input: RequestToJoinClassroomInput!) { requestToJoinClassroom(input: $input) { classroom { id } } }', { input: { code: joinCode } }, student.accessToken)
+  const asking = await api<{ classroom: { joinRequests: { id: string }[] } }>('query ($id: UUID!) { classroom(id: $id) { joinRequests { id } } }', { id: classroomId }, teacher.accessToken)
+  await api('mutation ($input: ReviewClassroomJoinRequestInput!) { reviewClassroomJoinRequest(input: $input) { classroom { id } } }', { input: { requestId: asking.classroom.joinRequests[0]!.id, decision: 'APPROVED' } }, teacher.accessToken)
+
+  await page.goto('/sign-in')
+  await page.getByLabel('Email').fill(`live-quiz-teacher-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.waitForURL((u) => !u.pathname.startsWith('/sign-in'))
+  await page.goto(`/classes/${classroomId}`)
+  await page.getByRole('tab', { name: 'Quizzes' }).click()
+  await page.getByRole('button', { name: 'New quiz' }).click()
+  const builder = page.getByRole('dialog', { name: 'New quiz' })
+  await builder.getByLabel('Make questions from a note').selectOption({ label: 'Cell respiration' })
+  await builder.getByRole('button', { name: 'Make questions' }).click()
+  await expect(builder.getByLabel('Words of question 1')).not.toHaveValue('', { timeout: 150_000 })
+  await expect(builder.getByLabel('Title')).toHaveValue('Cell respiration')
+  await builder.getByRole('button', { name: /^Publish \d+ questions?$/ }).click()
+  await expect(page.getByText('Quiz published. Everyone in the class has been told.')).toBeVisible()
+  await expect(page.getByText('No student has submitted yet')).toBeVisible()
+
+  // The student is told, and submits through the API; the teacher sees the count.
+  const told = await api<{ notifications: { edges: { node: { category: string; path: string } }[] } }>('{ notifications(first: 1) { edges { node { category path } } } }', {}, student.accessToken)
+  expect(told.notifications.edges[0]?.node.category).toBe('QUIZ_PUBLISHED')
+  const quizId = told.notifications.edges[0]!.node.path.split('/').at(-1)!
+  const toTake = await api<{ classQuiz: { questions: { id: string; correct: string[] | null; choices: { id: string }[] }[] } }>('query ($id: UUID!) { classQuiz(id: $id) { questions { id correct choices { id } } } }', { id: quizId }, student.accessToken)
+  expect(toTake.classQuiz.questions.every((q) => q.correct === null)).toBe(true)
+  await api('mutation ($input: SubmitQuizAttemptInput!) { submitQuizAttempt(input: $input) { attempt { score } } }', { input: { quizId, clientOpId: randomUUID(), answers: toTake.classQuiz.questions.map((q) => ({ questionId: q.id, choiceIds: [q.choices[0]!.id] })) } }, student.accessToken)
+  await page.reload()
+  await page.getByRole('tab', { name: 'Quizzes' }).click()
+  await expect(page.getByText('1 student has submitted')).toBeVisible()
 })

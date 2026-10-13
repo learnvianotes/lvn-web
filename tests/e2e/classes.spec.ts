@@ -6,7 +6,7 @@ import { mockApi, NOTE_ID, USER } from './support/notes-api'
 const CLASS = '01920000-0000-7000-8000-0000000c0001'
 const TEACHER = '01920000-0000-7000-8000-00000000bbbb'
 const PUPIL = '01920000-0000-7000-8000-00000000cccc'
-const can = (over: Record<string, boolean> = {}) => ({ __typename: 'ClassroomActions', requestJoin: false, acceptInvite: false, review: false, post: false, manage: false, leave: false, ...over })
+const can = (over: Record<string, boolean> = {}) => ({ __typename: 'ClassroomActions', requestJoin: false, acceptInvite: false, review: false, post: false, publishQuiz: false, manage: false, leave: false, ...over })
 const teacherRef = { __typename: 'User', id: TEACHER, displayName: 'Meera Iyer' }
 const classroom = (over: Record<string, unknown> = {}) => ({
   __typename: 'Classroom', id: CLASS, name: 'Physics 9A', description: 'Mechanics this term', memberCount: 31, viewerRole: null, teacher: teacherRef, createdAt: '2026-10-01T10:00:00.000Z',
@@ -79,7 +79,7 @@ test('a student reads announcements and notes; staff tools and the code stay hid
   await expect(p.getByRole('tabpanel')).toContainText('Test on Friday')
   await expect(p.getByLabel('Write an announcement')).toHaveCount(0)
   await expect(p.getByRole('button', { name: 'Delete announcement' })).toHaveCount(0)
-  await expect(p.getByRole('tab')).toHaveText(['Announcements', 'Notes'])
+  await expect(p.getByRole('tab')).toHaveText(['Announcements', 'Quizzes', 'Notes'])
   await expect(p.getByTestId('class-code')).toHaveCount(0)
   await p.getByRole('tab', { name: 'Notes' }).click()
   await expect(p.getByRole('link', { name: /Kinematics summary/ })).toHaveAttribute('href', `/notes/${NOTE_ID}`)
@@ -106,7 +106,7 @@ test('the teacher starts a class, sees its code, and posts an announcement', asy
   await dialog.getByRole('button', { name: 'Create class' }).click()
   await expect(p).toHaveURL(new RegExp(`/classes/${CLASS}$`))
   await expect(p.getByTestId('class-code')).toHaveText('K7PQ2MXA')
-  await expect(p.getByRole('tab')).toHaveText(['Announcements', 'Notes', 'People', 'Requests', 'Reports', 'Settings'])
+  await expect(p.getByRole('tab')).toHaveText(['Announcements', 'Quizzes', 'Notes', 'People', 'Requests', 'Reports', 'Settings'])
   await p.getByLabel('Write an announcement').fill('Test on Friday')
   await p.getByRole('button', { name: 'Post', exact: true }).click()
   await expect(p.getByRole('tabpanel')).toContainText('Test on Friday')
