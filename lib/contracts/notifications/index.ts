@@ -17,6 +17,7 @@ export const NotificationCategory = {
   JOIN_DECISION: 'JOIN_DECISION', FOLLOW: 'FOLLOW', CONNECTION: 'CONNECTION', MENTOR_INVITE: 'MENTOR_INVITE',
   DOUBT: 'DOUBT', FORK_PUBLISHED: 'FORK_PUBLISHED', VERIFICATION: 'VERIFICATION', DATA_EXPORT: 'DATA_EXPORT',
   NOTES_IMPORT: 'NOTES_IMPORT', CLASSROOM_INVITE: 'CLASSROOM_INVITE', MODERATION: 'MODERATION', MENTION: 'MENTION',
+  RHYTHM_BUDDY: 'RHYTHM_BUDDY',
 } as const
 export type NotificationCategory = (typeof NotificationCategory)[keyof typeof NotificationCategory]
 
@@ -50,9 +51,10 @@ export type PushMessage = z.infer<typeof pushMessage>
  * Live updates (§9.2, ADR-0042): what the `live` subscription delivers. A kind and an id, nothing else — the client
  * refetches through the API, where the permission checks run. AI_ANSWER: an Ask AI answer of the viewer's has more text
  * (ADR-0060); `aiAnswer(id)` has it. NOTE_PROCESSING: a study aid for the viewer's public note finished (ADR-0061); the
- * id is the note's.
+ * id is the note's. BUDDY_PRESENCE: a Rhythm buddy started or ended a focus session (ADR-0072); `rhythmBuddies` has it,
+ * and the id is the buddy's.
  */
-export const LiveEventKind = { NOTIFICATION: 'NOTIFICATION', AI_ANSWER: 'AI_ANSWER', NOTE_PROCESSING: 'NOTE_PROCESSING' } as const
+export const LiveEventKind = { NOTIFICATION: 'NOTIFICATION', AI_ANSWER: 'AI_ANSWER', NOTE_PROCESSING: 'NOTE_PROCESSING', BUDDY_PRESENCE: 'BUDDY_PRESENCE' } as const
 export type LiveEventKind = (typeof LiveEventKind)[keyof typeof LiveEventKind]
 
 export const liveEvent = z

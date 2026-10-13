@@ -24,7 +24,7 @@ const rhythm = (over: Record<string, unknown> = {}, today: Record<string, unknow
   countedDaysAllTime: 140,
   pauses: [],
   pauseDaysLeft: 14,
-  suggestion: null,
+  suggestion: null, shareRhythm: false,
   ...over,
 })
 const ok = (name: string, userErrors: unknown[] = []) => ({ [name]: { __typename: 'OkPayload', ok: !userErrors.length, userErrors } })

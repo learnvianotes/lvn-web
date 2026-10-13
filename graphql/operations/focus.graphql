@@ -1,0 +1,171 @@
+# Focus sessions, Rhythm buddies, the classroom ring and class performance (lvn-backend ADR-0072).
+
+fragment FocusSessionFields on FocusSession {
+  id
+  topicKey
+  plannedMinutes
+  breakMinutes
+  meetUrl
+  startedAt
+  endedAt
+  focusedSeconds
+}
+
+query FocusSession {
+  focusSession {
+    ...FocusSessionFields
+  }
+}
+
+mutation StartFocusSession($input: StartFocusSessionInput!) {
+  startFocusSession(input: $input) {
+    session {
+      ...FocusSessionFields
+    }
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation EndFocusSession($input: FocusSessionIdInput!) {
+  endFocusSession(input: $input) {
+    session {
+      ...FocusSessionFields
+    }
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+query RhythmBuddies {
+  rhythmBuddies {
+    buddies {
+      id
+      user {
+        id
+        displayName
+        handle
+      }
+      studyingNow
+      studyingSince
+      topicTitle
+      meetUrl
+      countedDays
+      target
+      met
+    }
+    invites {
+      id
+      at
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+    sent {
+      id
+      at
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+  }
+}
+
+mutation InviteRhythmBuddy($input: InviteRhythmBuddyInput!) {
+  inviteRhythmBuddy(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation AnswerRhythmBuddy($input: AnswerRhythmBuddyInput!) {
+  answerRhythmBuddy(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation RemoveRhythmBuddy($input: RhythmBuddyIdInput!) {
+  removeRhythmBuddy(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation SetRhythmSharing($input: SetRhythmSharingInput!) {
+  setRhythmSharing(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+query ClassroomRhythmRing($id: UUID!) {
+  classroom(id: $id) {
+    id
+    rhythmRing {
+      students
+      metCount
+      countedDays
+      targetDays
+      people {
+        name
+        countedDays
+        target
+        met
+        user {
+          id
+        }
+      }
+    }
+  }
+}
+
+query ClassroomPerformance($id: UUID!) {
+  classroom(id: $id) {
+    id
+    performance {
+      quizzes
+      students {
+        name
+        submitted
+        average
+        user {
+          id
+        }
+        scores {
+          quizId
+          quizTitle
+          score
+          total
+          submittedAt
+        }
+      }
+      topics {
+        key
+        title
+        accuracy
+        answers
+        hard
+      }
+    }
+  }
+}

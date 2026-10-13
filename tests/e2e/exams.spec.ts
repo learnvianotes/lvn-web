@@ -135,6 +135,7 @@ test('Rhythm shows today’s revision and a weak topic in the ring, and suggests
           ],
         },
         weeksThisTerm: 0, weeksAllTime: 0, countedDaysAllTime: 1, pauses: [], pauseDaysLeft: 14,
+        shareRhythm: false,
         suggestion: { __typename: 'RhythmSuggestion', plannedDays: 5, examId: EXAM, examName: 'Operating Systems', daysLeft: 12 },
       },
     }),

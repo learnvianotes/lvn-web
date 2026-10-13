@@ -447,6 +447,11 @@ input AnswerMentorInviteInput {
   inviteId: UUID!
 }
 
+input AnswerRhythmBuddyInput {
+  accept: Boolean!
+  id: UUID!
+}
+
 input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
@@ -647,6 +652,14 @@ input ChangeNoteVisibilityInput {
   visibility: Visibility!
 }
 
+type ClassPerformance {
+  quizzes: Int!
+  students: [ClassStudentPerformance!]!
+
+  """Hardest first"""
+  topics: [ClassTopicPerformance!]!
+}
+
 type ClassQuiz {
   author: User!
   classroomId: UUID!
@@ -701,6 +714,37 @@ type ClassQuizQuestion {
   question: JSON!
 }
 
+type ClassQuizScore {
+  quizId: UUID!
+  quizTitle: String!
+
+  """The student's first attempt"""
+  score: Int!
+  submittedAt: DateTime!
+  total: Int!
+}
+
+type ClassStudentPerformance {
+  """Right over asked across the scores, 0–1; null before a first quiz"""
+  average: Float
+  name: String!
+  scores: [ClassQuizScore!]!
+  submitted: Int!
+  user: User!
+}
+
+type ClassTopicPerformance {
+  """Right over answers on the topic in first attempts, 0–1"""
+  accuracy: Float!
+  answers: Int!
+
+  """Under 60 %"""
+  hard: Boolean!
+  key: String!
+  title: String!
+  topic: Topic
+}
+
 """
 A class, owned by the core subgraph: null when the viewer may no longer see it
 """
@@ -720,11 +764,19 @@ type Classroom {
   members: [ClassroomMember!]
   name: String!
 
+  """
+  Staff only: each student's first score on each quiz, and the topics the class finds hard
+  """
+  performance: ClassPerformance
+
   """Members only: announcements, newest first"""
   posts(after: String, first: Int): ClassroomPostConnection
 
   """Members only: published quizzes, newest first"""
   quizzes(first: Int): [ClassQuiz!]
+
+  """Members only: this week's Rhythm across the class"""
+  rhythmRing: ClassroomRhythm
 
   """
   Members only: notes shared to the class that the viewer may open, the most recently shared first
@@ -833,6 +885,31 @@ type ClassroomPreview {
   teacher: User!
   viewerRequestId: UUID
   viewerRole: ClassroomRole
+}
+
+"""This week across a class's students"""
+type ClassroomRhythm {
+  countedDays: Int!
+
+  """Students whose week is met"""
+  metCount: Int!
+
+  """Only students who share their Rhythm with their classes"""
+  people: [ClassroomRhythmPerson!]!
+  students: Int!
+
+  """The sum of the students' targets"""
+  targetDays: Int!
+}
+
+type ClassroomRhythmPerson {
+  countedDays: Int!
+  met: Boolean!
+
+  """A child account's first name only"""
+  name: String!
+  target: Int!
+  user: User!
 }
 
 enum ClassroomRole {
@@ -1326,6 +1403,31 @@ enum FilePurpose {
   VOICE_NOTE
 }
 
+type FocusSession {
+  breakMinutes: Int!
+  endedAt: DateTime
+
+  """Counted when it ended: the time since it started, at most the plan"""
+  focusedSeconds: Int!
+  id: UUID!
+  meetUrl: String
+  note: Note
+  plannedMinutes: Int!
+  startedAt: DateTime!
+
+  """topic:<id> or core:<subject>/<topic>"""
+  topicKey: String
+}
+
+input FocusSessionIdInput {
+  id: UUID!
+}
+
+type FocusSessionPayload {
+  session: FocusSession
+  userErrors: [UserError!]!
+}
+
 """The viewer's folder; nested up to 5 levels"""
 type Folder {
   id: UUID!
@@ -1626,6 +1728,11 @@ input InviteMentorInput {
 
   """A teacher's handle or email"""
   person: String!
+}
+
+input InviteRhythmBuddyInput {
+  """Someone the viewer follows or is connected with"""
+  handle: String!
 }
 
 input InviteToClassroomInput {
@@ -2011,6 +2118,7 @@ type Mutation {
   """The team and the mentor"""
   answerDoubt(input: AnswerDoubtInput!): DoubtPayload!
   answerMentorInvite(input: AnswerMentorInviteInput!): GroupPayload!
+  answerRhythmBuddy(input: AnswerRhythmBuddyInput!): OkPayload!
 
   """
   The author's one appeal against hiding or removing their note or content, a group's owner's against its removal, or a suspended person's against the suspension
@@ -2124,6 +2232,7 @@ type Mutation {
   """Its author"""
   editComment(input: EditCommentInput!): CommentPayload!
   editGroupPost(input: EditGroupPostInput!): GroupPostPayload!
+  endFocusSession(input: FocusSessionIdInput!): FocusSessionPayload!
 
   """
   Ends a pause early (or drops one not started); its unused days come back
@@ -2141,6 +2250,7 @@ type Mutation {
 
   """Admins and the Owner invite a teacher; the invite lasts 14 days"""
   inviteMentor(input: InviteMentorInput!): GroupPayload!
+  inviteRhythmBuddy(input: InviteRhythmBuddyInput!): OkPayload!
 
   """Staff; the invited person accepts within 14 days"""
   inviteToClassroom(input: InviteToClassroomInput!): ClassroomPayload!
@@ -2185,6 +2295,9 @@ type Mutation {
   removeFollower(input: PersonInput!): PersonPayload!
   removeGroupMember(input: GroupMemberInput!): GroupPayload!
   removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
+
+  """Ends a buddy link, or takes back an invite"""
+  removeRhythmBuddy(input: RhythmBuddyIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
   """The asker or the mentor"""
@@ -2298,6 +2411,11 @@ type Mutation {
   setRhythmPlan(input: SetRhythmPlanInput!): OkPayload!
 
   """
+  Shows, or stops showing, the viewer's name and counted days on their classes' Rhythm ring
+  """
+  setRhythmSharing(input: SetRhythmSharingInput!): OkPayload!
+
+  """
   Share with one person, or change their role; a PRIVATE note becomes SHARED
   """
   shareNote(input: ShareNoteInput!): NotePayload!
@@ -2315,6 +2433,11 @@ type Mutation {
   """Ends this device's session (its whole refresh-token family)"""
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
+
+  """
+  Signed in only, as every mutation below. A session already open ends first
+  """
+  startFocusSession(input: StartFocusSessionInput!): FocusSessionPayload!
   stopStudyingNoteCards(input: StudyNoteInput!): OkPayload!
 
   """Adds a readable note's flashcards to the viewer's reviews"""
@@ -2764,6 +2887,9 @@ enum NotificationCategory {
   NOTES_IMPORT
   QUIZ_PUBLISHED
   REVISION_REMINDER
+
+  """Someone asked the viewer to be Rhythm buddies, or accepted (ADR-0072)"""
+  RHYTHM_BUDDY
   SHARE
   STREAK_AT_RISK
   VERIFICATION
@@ -3064,6 +3190,9 @@ type Query {
   """Topics whose title contains the words, curated first (at most 50)"""
   findTopics(query: String!, subjectId: UUID): [Topic!]!
 
+  """Signed in only: the viewer's open focus session"""
+  focusSession: FocusSession
+
   """
   The Following feed (ADR-0049): PUBLIC notes and publications of the people the viewer follows, newest first
   """
@@ -3169,6 +3298,9 @@ type Query {
 
   """Signed in only"""
   rhythm: Rhythm!
+
+  """Signed in only"""
+  rhythmBuddies: RhythmBuddies!
 
   """
   At most 100 characters; `first` per kind, 1 to 20 (default 5). With filters the words may be left out: the notes
@@ -3571,6 +3703,11 @@ type Rhythm {
 
   """ISO weekdays, 1 Monday … 7 Sunday"""
   plannedDays: [Int!]!
+
+  """
+  Their name and counted days show on their classes' Rhythm ring (ADR-0072); off by default
+  """
+  shareRhythm: Boolean!
   suggestion: RhythmSuggestion
 
   """Planned days less paused ones, at least 1"""
@@ -3582,6 +3719,45 @@ type Rhythm {
   week: [RhythmDay!]!
   weeksAllTime: Int!
   weeksThisTerm: Int!
+}
+
+type RhythmBuddies {
+  """At most five"""
+  buddies: [RhythmBuddy!]!
+  invites: [RhythmBuddyInvite!]!
+  sent: [RhythmBuddyInvite!]!
+}
+
+"""
+What a buddy may see of the other: studying now, and this week's counted days
+"""
+type RhythmBuddy {
+  countedDays: Int!
+
+  """The link's id: end it with removeRhythmBuddy"""
+  id: UUID!
+  meetUrl: String
+  met: Boolean!
+  since: DateTime!
+  studyingNow: Boolean!
+  studyingSince: DateTime
+  target: Int!
+
+  """The session's topic, when it has one the viewer may see"""
+  topicTitle: String
+  user: User!
+}
+
+input RhythmBuddyIdInput {
+  id: UUID!
+}
+
+type RhythmBuddyInvite {
+  at: DateTime!
+  id: UUID!
+
+  """Who asked (invites), or who was asked (sent)"""
+  user: User!
 }
 
 type RhythmDay {
@@ -3849,6 +4025,10 @@ input SetRhythmPlanInput {
   plannedDays: [Int!]!
 }
 
+input SetRhythmSharingInput {
+  share: Boolean!
+}
+
 input ShareNoteInput {
   noteId: UUID!
 
@@ -3893,6 +4073,23 @@ input SignUpInput {
 type SignedUrl {
   expiresAt: DateTime!
   url: String!
+}
+
+input StartFocusSessionInput {
+  """0–30, 5 by default"""
+  breakMinutes: Int
+
+  """
+  https://meet.google.com/abc-defg-hij; buddies see it during the session
+  """
+  meetUrl: String
+
+  """5–90, 25 by default"""
+  minutes: Int
+
+  """A note the viewer can read"""
+  noteId: UUID
+  topicKey: String
 }
 
 """

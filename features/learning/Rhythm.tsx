@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { EndRhythmPauseDocument, PauseRhythmDocument, RhythmDocument, SetRhythmPlanDocument, type RhythmPauseReason, type RhythmQuery } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { Buddies, FocusMode, ShareRhythm } from './Focus'
 import { Recommendations } from './Recommendations'
 
 type R = RhythmQuery['rhythm']
@@ -49,9 +50,12 @@ export function Rhythm() {
           ) : null}
           <Week r={r} />
           <Counters r={r} />
+          <FocusMode />
           <Recommendations />
+          <Buddies />
           <Plan r={r} />
           <Pauses r={r} />
+          <ShareRhythm shared={r.shareRhythm} />
           <p className="text-xs text-muted">{t('zone', { zone: r.timeZone })}</p>
         </>
       ) : null}

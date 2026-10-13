@@ -78,3 +78,16 @@ export const EXAM_LIMITS = {
 } as const
 
 export const examNameSchema = z.string().trim().min(1, 'Give the exam a name').max(EXAM_LIMITS.name, `An exam's name is at most ${EXAM_LIMITS.name} characters`)
+
+/** Limits on focus sessions and Rhythm buddies (ADR-0072). */
+export const FOCUS_LIMITS = {
+  /** Work minutes: 25 by default */
+  minutes: { min: 5, max: 90, default: 25 },
+  /** Rest minutes: 5 by default */
+  breakMinutes: { min: 0, max: 30, default: 5 },
+  /** Buddies, and invites out, a person can have */
+  buddies: 5,
+} as const
+
+/** A Google Meet link a focus session may carry: https://meet.google.com/abc-defg-hij */
+export const meetUrlSchema = z.string().trim().regex(/^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/, 'A Meet link looks like https://meet.google.com/abc-defg-hij')
