@@ -562,6 +562,20 @@
       "withConnections": "Share with all my connections",
       "withConnectionsHint": "Teachers you are connected with can read it, and so will teachers you connect with later. Editing is still given person by person.",
       "viaConnections": "Connection"
+    },
+    "record": {
+      "title": "Record a voice note",
+      "menu": "Record a voice note",
+      "menuHint": "Speak; it becomes an audio card you can transcribe",
+      "lead": "Recording stops by itself after 30 minutes. Transcribe it afterwards from AI tasks.",
+      "start": "Start recording",
+      "stop": "Stop",
+      "recordingFor": "Recording, {time}",
+      "listen": "Your recording",
+      "again": "Record again",
+      "add": "Add to the note",
+      "denied": "The browser was not allowed to use the microphone. Allow it in the site's settings and try again.",
+      "unsupported": "This browser cannot record audio."
     }
   },
   "moderation": {
@@ -1497,7 +1511,9 @@
       "QUIZ": "Quiz",
       "REVISION_SHEET": "Revision sheet",
       "CREATE_NOTES": "Make notes",
-      "OUTLINE_TO_NOTE": "Outline → note"
+      "OUTLINE_TO_NOTE": "Outline → note",
+      "TRANSCRIBE": "Transcribe",
+      "QUICK_NOTE": "Tidy into notes"
     },
     "hint": {
       "SUMMARIZE": "The note in a few lines, with its key points",
@@ -1511,7 +1527,9 @@
       "QUIZ": "Multiple-choice questions, ready to keep",
       "REVISION_SHEET": "The note on one page, for the night before",
       "CREATE_NOTES": "Fresh study notes from this one, as your own",
-      "OUTLINE_TO_NOTE": "Turn this outline into full notes, as your own"
+      "OUTLINE_TO_NOTE": "Turn this outline into full notes, as your own",
+      "TRANSCRIBE": "What the recording says, as text to keep",
+      "QUICK_NOTE": "Your rough words and photos, as clean notes"
     },
     "translateInto": "Translate into",
     "translate": "Translate",
@@ -1619,6 +1637,8 @@
       "saved": "Saved as a new private note.",
       "openNote": "Open it",
       "keepFailed": "Those cards weren't saved. Try again."
-    }
+    },
+    "transcribeOne": "Transcribe the recording",
+    "transcribeN": "Transcribe recording {n}"
   }
 }

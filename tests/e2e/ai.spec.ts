@@ -35,7 +35,8 @@ const aiState = (over: { available?: boolean; reason?: string | null; usedToday?
   aiStatus: { __typename: 'AiStatus', available: over.available ?? true, reason: over.reason ?? null },
   myAiAllowance: { __typename: 'AiAllowance', usedToday: over.usedToday ?? 20_000, limitToday: over.limitToday === undefined ? 200_000 : over.limitToday, resetsAt: new Date(Date.now() + 3_600_000).toISOString() },
 })
-const artifacts = (list: unknown[]) => ({ note: { __typename: 'Note', id: NOTE_ID, aiArtifacts: list } })
+const noRecordings = { __typename: 'CardConnection', edges: [] as unknown[] }
+const artifacts = (list: unknown[], recordings: string[] = []) => ({ note: { __typename: 'Note', id: NOTE_ID, cards: { ...noRecordings, edges: recordings.map((id) => ({ __typename: 'CardEdge', node: { __typename: 'Card', id, type: 'audio' } })) }, aiArtifacts: list } })
 const ran = (a: unknown) => ({ runAiTask: { __typename: 'RunAiTaskPayload', artifact: a, userErrors: [] } })
 
 async function openPanel(page: Page) {
@@ -137,6 +138,8 @@ test('a reader who may not copy the note is not offered tasks that make a copy, 
   await expect(panel.getByRole('button', { name: /^Make notes/ })).toHaveCount(0)
   await expect(panel.getByRole('button', { name: /^Outline → note/ })).toHaveCount(0)
   await expect(panel.getByRole('button', { name: /^Explain the code/ })).toHaveCount(0)
+  // Tidying into notes is for one's own notes (ADR-0062).
+  await expect(panel.getByRole('button', { name: /^Tidy into notes/ })).toHaveCount(0)
 })
 
 test('a failed result says why and runs again, translating sends the language, and a result can be deleted', async ({ page }) => {
@@ -271,4 +274,26 @@ test('the owner watches the study aids being made, live, and hides one from read
   await aids.getByRole('button', { name: 'Hide from readers' }).click()
   await expect(aids.getByText('Hidden from readers', { exact: true })).toBeVisible()
   expect(calls.find((c) => c.op === 'SetAiInsightHidden')?.variables).toEqual({ id: insight('SUMMARIZE').id, hidden: true })
+})
+
+test('transcribes a note’s recording and tidies rough notes into clean ones (lvn-backend ADR-0062)', async ({ page }) => {
+  const RECORDING = '01920000-0000-7000-8000-00000000c0a9'
+  const calls = await mockApi(
+    page,
+    owner({
+      NoteAiArtifacts: () => artifacts([], [RECORDING]),
+      RunAiTask: (v) => ran(artifact({ id: '01920000-0000-7000-8000-0000000a1abc', task: (v.input as { task: string }).task, status: 'QUEUED' })),
+      AiArtifact: () => ({ aiArtifact: artifact({ id: '01920000-0000-7000-8000-0000000a1abc', task: 'TRANSCRIBE', title: 'Transcript — Searching', cards: [aiCard('text', { doc: { type: 'doc', content: [p('Today we look at binary search.')] } })] }) }),
+    }),
+  )
+  await page.goto(`/notes/${NOTE_ID}`)
+  const panel = await openPanel(page)
+  await panel.getByRole('button', { name: /^Transcribe the recording/ }).click()
+  await expect(panel.getByRole('article', { name: 'Transcribe' }).getByText('Today we look at binary search.')).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Add 1 card to this note' })).toBeVisible()
+  await panel.getByRole('button', { name: /^Tidy into notes/ }).click()
+  expect(calls.filter((c) => c.op === 'RunAiTask').map((c) => c.variables.input)).toEqual([
+    { noteId: NOTE_ID, task: 'TRANSCRIBE', language: 'ENGLISH', cardIds: [RECORDING] },
+    { noteId: NOTE_ID, task: 'QUICK_NOTE', language: 'ENGLISH' },
+  ])
 })

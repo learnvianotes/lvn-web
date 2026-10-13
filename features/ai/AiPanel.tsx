@@ -20,6 +20,8 @@ import {
   NotebookPen,
   Plus,
   RotateCcw,
+  Mic,
+  Wand2,
   ScrollText,
   SearchCheck,
   Sparkles,
@@ -68,6 +70,7 @@ const TASKS: { task: AiTask; icon: LucideIcon }[] = [
   { task: 'REVISION_SHEET', icon: BookOpenCheck },
   { task: 'CREATE_NOTES', icon: NotebookPen },
   { task: 'OUTLINE_TO_NOTE', icon: ListTree },
+  { task: 'QUICK_NOTE', icon: Wand2 },
 ]
 /** Make something new from the note, so they need the right to copy it and are always kept as a new note (ADR-0025). */
 const DERIVATIVE = new Set<AiTask>(['CREATE_NOTES', 'OUTLINE_TO_NOTE'])
@@ -114,13 +117,15 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
   const spent = allowance?.limitToday != null && allowance.usedToday >= allowance.limitToday
   const off = status ? !status.available : false
   const artifacts = list.data?.note?.aiArtifacts ?? []
-  const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : true))
+  const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : task === 'QUICK_NOTE' ? canEdit : true))
+  // Its recordings, each transcribed on its own (ADR-0062).
+  const recordings = (list.data?.note?.cards.edges ?? []).map((e) => e.node).filter((c) => c.type === 'audio' || c.type === 'video')
 
-  const run = async (task: AiTask, lang: AiLanguage = 'ENGLISH') => {
+  const run = async (task: AiTask, lang: AiLanguage = 'ENGLISH', cardIds?: string[]) => {
     setError(null)
     const { result, error } = await attempt(() =>
       runTask({
-        variables: { input: { noteId, task, language: lang } },
+        variables: { input: { noteId, task, language: lang, ...(cardIds ? { cardIds } : {}) } },
         update(cache, { data }) {
           const made = data?.runAiTask.artifact
           if (!made) return
@@ -171,6 +176,21 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
               </button>
             ))}
           </div>
+          {recordings.map((r, i) => (
+            <button
+              key={r.id}
+              type="button"
+              disabled={off || spent || running.loading}
+              onClick={() => void run('TRANSCRIBE', 'ENGLISH', [r.id])}
+              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3 text-left transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+            >
+              <Mic className="size-4 shrink-0 text-accent" aria-hidden />
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold">{recordings.length === 1 ? t('transcribeOne') : t('transcribeN', { n: i + 1 })}</span>
+                <span className="text-xs leading-snug text-muted">{t('hint.TRANSCRIBE')}</span>
+              </span>
+            </button>
+          ))}
           <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2 pl-3">
             <Languages className="size-4 shrink-0 text-accent" aria-hidden />
             <label htmlFor={`ai-language-${noteId}`} className="text-sm font-semibold">

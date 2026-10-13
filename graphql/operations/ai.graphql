@@ -33,6 +33,15 @@ fragment AiArtifactFields on AiArtifact {
 query NoteAiArtifacts($noteId: UUID!) {
   note(id: $noteId) {
     id
+    # Its recordings, for Transcribe (ADR-0062)
+    cards(first: 100) {
+      edges {
+        node {
+          id
+          type
+        }
+      }
+    }
     aiArtifacts {
       ...AiArtifactFields
     }

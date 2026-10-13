@@ -8,36 +8,7 @@ import { Placeholder } from '@tiptap/extensions'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
-import {
-  AlertCircle,
-  ArrowDown,
-  ArrowUp,
-  Bold,
-  Check,
-  CloudOff,
-  Code,
-  Copy,
-  GripVertical,
-  Highlighter,
-  Italic,
-  Link2,
-  List,
-  ListOrdered,
-  ListTree,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  MoreHorizontal,
-  Plus,
-  Redo2,
-  Strikethrough,
-  Trash2,
-  Underline,
-  Undo2,
-  Volume2,
-  Wand2,
-  type LucideIcon,
-} from 'lucide-react'
+import { AlertCircle, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, Loader2, type LucideIcon, Maximize2, Mic, Minimize2, MoreHorizontal, Plus, Redo2, Strikethrough, Trash2, Underline, Undo2, Volume2, Wand2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
@@ -53,6 +24,7 @@ import { CARD_NODES, CONVERTIBLE, convertCard, currentCard, deleteCard, duplicat
 import { AnchorChips } from './anchors'
 import { ReadingHighlight, setReadingCard } from './reading'
 import { CARD_MENU, SlashMenu } from './slash'
+import { RecordDialog } from './Recorder'
 
 export interface NoteEditorProps {
   noteId: string
@@ -502,7 +474,9 @@ function MenuItem({ icon: Icon, label, onClick, danger }: { icon?: LucideIcon; l
 
 function AddCardMenu({ editor }: { editor: Editor | null }) {
   const t = useTranslations('notes.editor')
+  const tRecord = useTranslations('notes.record')
   const [open, setOpen] = useState(false)
+  const [recording, setRecording] = useState(false)
   if (!editor) return null
   const add = (type: CardType) => {
     setOpen(false)
@@ -525,8 +499,34 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
               </button>
             </li>
           ))}
+          {/* A voice note (lvn-backend ADR-0062): recorded here, then an audio card like a dropped file. */}
+          <li>
+            <button
+              type="button"
+              className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-2"
+              onClick={() => {
+                setOpen(false)
+                setRecording(true)
+              }}
+            >
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <Mic className="size-4 text-accent" aria-hidden />
+                {tRecord('menu')}
+              </span>
+              <span className="text-xs text-muted">{tRecord('menuHint')}</span>
+            </button>
+          </li>
         </ul>
       ) : null}
+      <RecordDialog
+        open={recording}
+        onClose={() => setRecording(false)}
+        onDone={(file) => {
+          setRecording(false)
+          editor.commands.focus('end')
+          insertMediaCards(editor.view, [file])
+        }}
+      />
     </div>
   )
 }
