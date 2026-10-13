@@ -1,0 +1,27 @@
+# Recommendations (lvn-backend ADR-0071).
+
+query Recommendations($limit: Int) {
+  recommendations(limit: $limit) {
+    kind
+    reason
+    score
+    noteTitle
+    topicKey
+    topicTitle
+    note {
+      id
+    }
+    topic {
+      id
+    }
+  }
+}
+
+mutation DismissRecommendation($input: DismissRecommendationInput!) {
+  dismissRecommendation(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}

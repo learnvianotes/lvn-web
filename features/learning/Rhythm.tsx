@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { EndRhythmPauseDocument, PauseRhythmDocument, RhythmDocument, SetRhythmPlanDocument, type RhythmPauseReason, type RhythmQuery } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { Recommendations } from './Recommendations'
 
 type R = RhythmQuery['rhythm']
 
@@ -48,6 +49,7 @@ export function Rhythm() {
           ) : null}
           <Week r={r} />
           <Counters r={r} />
+          <Recommendations />
           <Plan r={r} />
           <Pauses r={r} />
           <p className="text-xs text-muted">{t('zone', { zone: r.timeZone })}</p>

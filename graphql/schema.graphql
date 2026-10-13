@@ -1115,6 +1115,12 @@ type Discussion {
   whyNot: String
 }
 
+input DismissRecommendationInput {
+  """The note id or the topic key"""
+  entityId: String!
+  kind: RecommendationKind!
+}
+
 type DomainReview {
   domain: String!
   firstSeenAt: DateTime!
@@ -2111,6 +2117,9 @@ type Mutation {
 
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
+
+  """Signed in only: not shown again for 30 days"""
+  dismissRecommendation(input: DismissRecommendationInput!): OkPayload!
 
   """Its author"""
   editComment(input: EditCommentInput!): CommentPayload!
@@ -3147,6 +3156,9 @@ type Query {
   """
   publicNotes(after: String, first: Int): NoteConnection!
 
+  """Signed in only: best first, at most 20 (default 10)"""
+  recommendations(limit: Int): [Recommendation!]!
+
   """
   Its owner only: a group platform moderators removed, with why; null for anything else
   """
@@ -3279,6 +3291,44 @@ enum ReactionTargetType {
 type Reactions {
   counts: [ReactionCount!]!
   viewerReaction: ReactionKind
+}
+
+type Recommendation {
+  kind: RecommendationKind!
+
+  """The note, for CONTINUE_NOTE, QUIZ_ON_TOPIC and POPULAR_NOTE"""
+  note: Note
+
+  """Its title as the viewer sees it"""
+  noteTitle: String
+
+  """Why, in words"""
+  reason: String!
+
+  """Higher first; each kind has its band"""
+  score: Float!
+  topic: Topic
+
+  """The topic key, for EXAM_TOPIC and REVISE_TOPIC"""
+  topicKey: String
+  topicTitle: String
+}
+
+enum RecommendationKind {
+  """A note opened in the last 14 days, not today"""
+  CONTINUE_NOTE
+
+  """A topic of an exam in the next 14 days"""
+  EXAM_TOPIC
+
+  """A public note on the learner's topics that many people read"""
+  POPULAR_NOTE
+
+  """A public note with a quiz on a topic read this week"""
+  QUIZ_ON_TOPIC
+
+  """A weak topic"""
+  REVISE_TOPIC
 }
 
 input RefreshSessionInput {

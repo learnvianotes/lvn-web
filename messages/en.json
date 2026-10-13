@@ -1972,5 +1972,11 @@
       "NOT_REVISITED": "Not revised in 14 days, before {exam}"
     },
     "aTopic": "A topic"
+  },
+  "recommendations": {
+    "title": "Recommended for you",
+    "none": "Nothing to recommend yet. Read a few notes, add an exam or take a quiz, and suggestions appear here.",
+    "dismiss": "Not now: {title}",
+    "untitled": "Untitled"
   }
 }
