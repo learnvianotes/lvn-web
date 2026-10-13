@@ -134,6 +134,11 @@ What a task made for the viewer from a note (ADR-0059). Only its maker sees it, 
 type AiArtifact {
   """Card tasks, once READY: the cards to choose from"""
   cards: [AiCard!]
+
+  """
+  CLEAN_UP, once READY: the changes to choose from (empty when nothing needs mending)
+  """
+  changes: [AiChange!]
   createdAt: DateTime!
 
   """FAILED: why, in words for the person"""
@@ -178,6 +183,18 @@ A card a task made, exactly as it would be kept: `type` and `content` as in the 
 type AiCard {
   content: JSON!
   type: String!
+}
+
+"""A card's words as CLEAN_UP would leave them (ADR-0063)"""
+type AiChange {
+  after: String!
+
+  """Applied to the note with applyAiChanges"""
+  applied: Boolean!
+
+  """What the card said when the change was made"""
+  before: String!
+  cardId: UUID!
 }
 
 """
@@ -226,6 +243,11 @@ type AiStatus {
 }
 
 enum AiTask {
+  """
+  Mends what PDF conversion broke in the text, heading and quote cards of a note the person may edit, as changes to apply (ADR-0063)
+  """
+  CLEAN_UP
+
   """Needs the right to copy the note (ADR-0025)"""
   CREATE_NOTES
 
@@ -284,6 +306,21 @@ input AppealModerationInput {
   entityId: UUID!
   entityType: ReportEntityType!
   message: String!
+}
+
+input ApplyAiChangesInput {
+  artifactId: UUID!
+
+  """The cards whose changes to apply"""
+  cardIds: [UUID!]!
+}
+
+type ApplyAiChangesPayload {
+  """
+  The cards changed; a card edited since the change was made is left as it is
+  """
+  applied: [UUID!]!
+  userErrors: [UserError!]!
 }
 
 input AskAiInput {
@@ -1567,6 +1604,11 @@ type Mutation {
   The author's one appeal against hiding or removing their note or content, a group's owner's against its removal, or a suspended person's against the suspension
   """
   appealModeration(input: AppealModerationInput!): OkPayload!
+
+  """
+  Applies chosen changes of a CLEAN_UP result to the note, through the normal save (ADR-0063)
+  """
+  applyAiChanges(input: ApplyAiChangesInput!): ApplyAiChangesPayload!
   approveComment(input: CommentIdInput!): CommentPayload!
 
   """
@@ -2318,6 +2360,15 @@ type PageInfo {
 }
 
 type PdfConversion {
+  """
+  Pages the vision model read again where the OCR was unsure or met maths (ADR-0063)
+  """
+  aiPages: Int
+
+  """
+  Of those, the readings rejected for disagreeing with the OCR (its cards kept)
+  """
+  aiRejected: Int
   cards: Int
   createdAt: DateTime!
 

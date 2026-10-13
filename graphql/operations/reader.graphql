@@ -76,6 +76,9 @@ fragment ConversionFields on PdfConversion {
   pages
   scannedPages
   cards
+  # Pages read again by AI, and readings set aside (ADR-0063)
+  aiPages
+  aiRejected
   error
 }
 

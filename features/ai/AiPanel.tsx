@@ -24,6 +24,7 @@ import {
   Wand2,
   ScrollText,
   SearchCheck,
+  SpellCheck,
   Sparkles,
   Trash2,
   type LucideIcon,
@@ -36,6 +37,7 @@ import { Dialog } from '@/components/ui/dialog'
 import {
   AiArtifactDocument,
   AiStateDocument,
+  ApplyAiChangesDocument,
   DeleteAiArtifactDocument,
   KeepAiCardsDocument,
   NoteAiArtifactsDocument,
@@ -54,6 +56,7 @@ import { AnswerList, AskForm } from './AskAi'
 /**
  * AI tasks on a note (lvn-backend ADR-0059): one menu for every task, results beside the note that only their maker
  * sees, and cards kept in one tap — into this note for people who may edit it, otherwise into a new private note.
+ * Clean-up (ADR-0063) proposes changes to the note's own words instead, which its editor reviews and applies.
  */
 
 type Artifact = AiArtifactFieldsFragment
@@ -71,7 +74,10 @@ const TASKS: { task: AiTask; icon: LucideIcon }[] = [
   { task: 'CREATE_NOTES', icon: NotebookPen },
   { task: 'OUTLINE_TO_NOTE', icon: ListTree },
   { task: 'QUICK_NOTE', icon: Wand2 },
+  { task: 'CLEAN_UP', icon: SpellCheck },
 ]
+/** Work on the person's own words: only for people who may edit the note. */
+const EDITORS_ONLY = new Set<AiTask>(['QUICK_NOTE', 'CLEAN_UP'])
 /** Make something new from the note, so they need the right to copy it and are always kept as a new note (ADR-0025). */
 const DERIVATIVE = new Set<AiTask>(['CREATE_NOTES', 'OUTLINE_TO_NOTE'])
 const LANGUAGES: AiLanguage[] = ['HINDI', 'TELUGU', 'ENGLISH']
@@ -103,9 +109,11 @@ export interface AiPanelProps {
   hasCode?: boolean
   /** After cards were added to this note's draft, so the editor can load them */
   onAddedToNote?: () => void
+  /** After clean-up changed some of its cards' words (and left `refused` ones edited since), so the editor can load them */
+  onTextMended?: (applied: number, refused: number) => void
 }
 
-export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAddedToNote }: AiPanelProps) {
+export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAddedToNote, onTextMended }: AiPanelProps) {
   const t = useTranslations('ai')
   const state = useQuery(AiStateDocument, { skip: !open, fetchPolicy: 'cache-and-network' })
   const list = useQuery(NoteAiArtifactsDocument, { variables: { noteId }, skip: !open, fetchPolicy: 'cache-and-network' })
@@ -117,7 +125,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
   const spent = allowance?.limitToday != null && allowance.usedToday >= allowance.limitToday
   const off = status ? !status.available : false
   const artifacts = list.data?.note?.aiArtifacts ?? []
-  const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : task === 'QUICK_NOTE' ? canEdit : true))
+  const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : EDITORS_ONLY.has(task) ? canEdit : true))
   // Its recordings, each transcribed on its own (ADR-0062).
   const recordings = (list.data?.note?.cards.edges ?? []).map((e) => e.node).filter((c) => c.type === 'audio' || c.type === 'video')
 
@@ -219,7 +227,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
           {list.loading && !list.data ? <p className="text-sm text-muted">{t('loading')}</p> : null}
           {list.data && !artifacts.length ? <p className="text-sm text-muted">{t('noResults')}</p> : null}
           {artifacts.map((a) => (
-            <Result key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void run(a.task, a.language)} onAddedToNote={onAddedToNote} />
+            <Result key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void run(a.task, a.language)} onAddedToNote={onAddedToNote} onTextMended={onTextMended} />
           ))}
         </section>
       </div>
@@ -251,7 +259,7 @@ function Poll({ id }: { id: string }) {
   return null
 }
 
-function Result({ noteId, artifact: a, canEdit, onRetry, onAddedToNote }: { noteId: string; artifact: Artifact; canEdit: boolean; onRetry: () => void; onAddedToNote?: () => void }) {
+function Result({ noteId, artifact: a, canEdit, onRetry, onAddedToNote, onTextMended }: { noteId: string; artifact: Artifact; canEdit: boolean; onRetry: () => void; onAddedToNote?: () => void; onTextMended?: AiPanelProps['onTextMended'] }) {
   const t = useTranslations('ai')
   const [remove, removing] = useMutation(DeleteAiArtifactDocument)
   const [copied, setCopied] = useState(false)
@@ -324,6 +332,7 @@ function Result({ noteId, artifact: a, canEdit, onRetry, onAddedToNote }: { note
       ) : null}
       {a.status === 'READY' && a.markdown != null ? <Markdown source={a.markdown} className="flex flex-col gap-2.5 text-sm leading-relaxed" /> : null}
       {a.status === 'READY' && a.cards ? <KeepCards artifact={a} canEdit={canEdit} onAddedToNote={onAddedToNote} /> : null}
+      {a.status === 'READY' && a.changes ? <ApplyChanges artifact={a} onChanged={onTextMended} /> : null}
     </article>
   )
 }
@@ -402,6 +411,106 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
               </Link>
             </>
           )}
+        </p>
+      ) : null}
+      {error ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * Clean-up's changes (ADR-0063): each card's words before and after, chosen by default, applied through the normal
+ * save. A card edited since keeps its words, and the person is told.
+ */
+function ApplyChanges({ artifact: a, onChanged }: { artifact: Artifact; onChanged?: AiPanelProps['onTextMended'] }) {
+  const t = useTranslations('ai.cleanUp')
+  const changes = a.changes ?? []
+  const open = changes.filter((c) => !c.applied)
+  const [chosen, setChosen] = useState<ReadonlySet<string>>(() => new Set(open.map((c) => c.cardId)))
+  const [apply, applying] = useMutation(ApplyAiChangesDocument)
+  const [outcome, setOutcome] = useState<{ applied: number; refused: number } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  if (!changes.length) return <p className="text-sm text-muted">{t('nothing')}</p>
+
+  const toggle = (id: string) =>
+    setChosen((s) => {
+      const next = new Set(s)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const save = async () => {
+    setError(null)
+    setOutcome(null)
+    const cardIds = open.filter((c) => chosen.has(c.cardId)).map((c) => c.cardId)
+    const { result, error } = await attempt(() =>
+      apply({
+        variables: { input: { artifactId: a.id, cardIds } },
+        update(cache, { data }) {
+          const applied = data?.applyAiChanges.applied ?? []
+          if (!applied.length) return
+          cache.modify({
+            id: cache.identify({ __typename: 'AiArtifact', id: a.id }),
+            fields: {
+              changes: (existing) => (Array.isArray(existing) ? existing.map((c: { cardId: string; applied: boolean }) => (applied.includes(c.cardId) ? { ...c, applied: true } : c)) : existing),
+              keptAt: () => new Date().toISOString(),
+            },
+          })
+        },
+      }),
+    )
+    const payload = result?.data?.applyAiChanges
+    if (payload && !payload.userErrors.length) {
+      // What was sent is settled: applied, or refused for a card edited since (sending it again changes nothing).
+      setChosen((s) => new Set([...s].filter((id) => !cardIds.includes(id))))
+      const refused = cardIds.length - payload.applied.length
+      setOutcome({ applied: payload.applied.length, refused })
+      if (payload.applied.length) onChanged?.(payload.applied.length, refused)
+    }
+    setError(problemOf(error, payload, t('failed')))
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-muted">{t('lead')}</p>
+      <ol className="flex flex-col gap-2">
+        {changes.map((c, i) => (
+          <li key={c.cardId} className={cn('flex gap-3 rounded-xl border p-3 transition', c.applied || chosen.has(c.cardId) ? 'border-accent/40 bg-bg' : 'border-border bg-surface-2 opacity-60')}>
+            {c.applied ? (
+              <Check className="mt-1 size-4 shrink-0 text-accent" aria-label={t('applied')} />
+            ) : (
+              <input type="checkbox" checked={chosen.has(c.cardId)} onChange={() => toggle(c.cardId)} aria-label={t('pick', { n: i + 1 })} className="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
+            )}
+            <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+              <p className="whitespace-pre-wrap break-words text-muted line-through decoration-red-500/60">
+                <span className="sr-only">{t('before')}: </span>
+                {c.before}
+              </p>
+              <p className="whitespace-pre-wrap break-words">
+                <span className="sr-only">{t('after')}: </span>
+                {c.after}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      {open.length ? (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" className="gap-1.5" disabled={!open.some((c) => chosen.has(c.cardId)) || applying.loading} onClick={() => void save()}>
+            <SpellCheck className="size-4" aria-hidden />
+            {t('apply', { n: open.filter((c) => chosen.has(c.cardId)).length })}
+          </Button>
+        </div>
+      ) : null}
+      {outcome ? (
+        <p role="status" className="text-sm font-medium text-accent">
+          {t('done', { n: outcome.applied })}
+          {outcome.refused ? ` ${t('refused', { n: outcome.refused })}` : ''}
         </p>
       ) : null}
       {error ? (
