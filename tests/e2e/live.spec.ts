@@ -768,3 +768,37 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await expect(result.getByText(/mitochondri/i).first()).toBeVisible()
   await expect(result.getByRole('button', { name: /^Add \d+ cards? to this note$/ })).toBeVisible()
 })
+
+test('a learner cleans up words a conversion broke with the real model, and applies the changes (lvn-backend ADR-0063)', async ({ page, request }, info) => {
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ aiStatus { available } }' } })
+  test.skip(!((await res.json()) as { data: { aiStatus: { available: boolean } } }).data.aiStatus.available, 'AI is off in this environment')
+  test.setTimeout(300_000)
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Cleaner')
+  await page.getByLabel('Email', { exact: true }).fill(`live-clean-${Date.now()}-${info.project.name}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  await page.getByRole('link', { name: 'My notes' }).click()
+  await page.getByRole('button', { name: 'New note' }).click()
+  await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+  await page.getByRole('textbox', { name: 'Note content' }).click()
+  // As a scanned page's OCR leaves it: a word split across lines and a misread letter.
+  const saved = page.waitForResponse((r) => r.url().endsWith('/graphql') && (r.request().postData() ?? '').includes('glucose'), { timeout: 15_000 })
+  await page.keyboard.type('Respiration releases the en- ergy stored in glucose. Cells use tbis energy to grow and repair themselves.')
+  await saved
+
+  await page.getByRole('button', { name: 'AI tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await panel.getByRole('button', { name: /^Clean up the text/ }).click()
+  const result = panel.getByRole('article', { name: 'Clean up the text' })
+  await expect(result).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
+  await expect(result.getByText(/the energy stored/).first()).toBeVisible()
+  await result.getByRole('button', { name: /^Apply \d+ changes?$/ }).click()
+  await expect(page.getByText(/^Applied 1 change\./)).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(/the energy stored in glucose/)).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Note content' }).getByText(/en- ergy/)).toHaveCount(0)
+})
