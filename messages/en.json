@@ -908,7 +908,24 @@
       },
       "clearTopic": "Stop filtering by {topic}"
     },
-    "resources": "Resources"
+    "resources": "Resources",
+    "seeAll": "See all",
+    "seeAllOf": "See all {what}",
+    "tabs": {
+      "label": "What to search",
+      "all": "All",
+      "notes": "Notes",
+      "topics": "Topics",
+      "groups": "Groups",
+      "users": "Users",
+      "resources": "Resources"
+    },
+    "hints": {
+      "topics": "Type to search topics; one lists its notes.",
+      "groups": "Type to search groups and classes.",
+      "users": "Type to search people by name or handle.",
+      "resources": "Type to search books, courses and other resources."
+    }
   },
   "data": {
     "title": "Your data",
@@ -1286,6 +1303,7 @@
     "postLabel": "Write a post",
     "postPlaceholder": "Share something with the group…",
     "post": "Post",
+    "newPost": "New post",
     "noPosts": "No posts yet.",
     "older": "Show older",
     "edited": "edited",
@@ -1470,6 +1488,14 @@
       "practice": "Practice: your first attempt stays your score.",
       "pickAll": "Pick every correct answer.",
       "unanswered": "{n, plural, one {# question is unanswered; it counts as wrong.} other {# questions are unanswered; they count as wrong.}}",
+      "progress": "{n}/{total}",
+      "progressLabel": "Question {n} of {total}",
+      "answeredCount": "{n} of {total} answered",
+      "questions": "Questions",
+      "goTo": "Question {n}",
+      "goToAnswered": "Question {n}, answered",
+      "previous": "Previous",
+      "next": "Next",
       "submit": "Submit answers",
       "submitting": "Submitting…",
       "submitFailed": "Your answers were not sent. Check the connection and submit again.",

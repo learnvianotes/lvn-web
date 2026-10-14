@@ -499,10 +499,12 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   await page.getByRole('link', { name: new RegExp(name) }).click()
   await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
   await page.getByRole('button', { name: 'Join', exact: true }).click()
-  await page.getByLabel('Write a post').fill('Hello from the web')
-  await page.getByRole('button', { name: 'Post', exact: true }).click()
-  // The box empties once the API has the post; until then its own words could pass for the post in the list.
-  await expect(page.getByLabel('Write a post')).toHaveValue('')
+  await page.getByRole('button', { name: 'New post' }).click()
+  const writing = page.getByRole('dialog', { name: 'New post' })
+  await writing.getByLabel('Write a post').fill('Hello from the web')
+  await writing.getByRole('button', { name: 'Post', exact: true }).click()
+  // The dialog closes once the API has the post; until then its own words could pass for the post in the list.
+  await expect(writing).toBeHidden()
   await expect(page.getByRole('tabpanel').getByText('Hello from the web')).toBeVisible()
 
   const seen = await api<{ group: { memberCount: number; posts: { edges: { node: { author: { displayName: string }; body: unknown } }[] } } }>('query ($id: UUID!) { group(id: $id) { memberCount posts { edges { node { author { displayName } body } } } } }', { id: groupId }, owner.accessToken)

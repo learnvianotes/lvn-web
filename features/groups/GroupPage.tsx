@@ -1,12 +1,13 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { FileText, Globe, Lock, Pin, PinOff, Trash2, Users } from 'lucide-react'
+import { FileText, Globe, Lock, Pin, PinOff, Plus, Trash2, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
 import { ago } from '@/features/notes/look'
 import { PostComments } from '@/features/discussion/PostComments'
 import { ContentModeration, ModerationBanner } from '@/features/moderation/ModerationBanner'
@@ -186,7 +187,9 @@ function Posts({ group }: { group: GroupDetailFragment }) {
   const [remove] = useMutation(DeleteGroupPostDocument)
   const [pin] = useMutation(PinGroupPostDocument)
   const [text, setText] = useState('')
+  const [writing, setWriting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [postError, setPostError] = useState<string | null>(null)
   const posts = data?.group?.posts
   const act = async (fn: () => Promise<{ data?: Record<string, { userErrors: { message: string }[] } | null> | null }>) => {
     setError(await attempt(fn, t('failed')))
@@ -194,27 +197,59 @@ function Posts({ group }: { group: GroupDetailFragment }) {
   }
   const all = [...(posts?.pinned ?? []), ...(posts?.edges.map((e) => e.node) ?? [])]
   return (
-    <div className="flex flex-col gap-4">
+    // Room below the last post for the floating ＋.
+    <div className={group.viewerCan.post ? 'flex flex-col gap-4 pb-20' : 'flex flex-col gap-4'}>
       {group.viewerCan.post ? (
-        <form
-          className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3"
-          onSubmit={(e) => {
-            e.preventDefault()
-            void act(async () => {
-              const res = await create({ variables: { groupId: group.id, body: textToDoc(text) } })
-              if (res.data?.createGroupPost.post) setText('')
-              return res
-            })
-          }}
-        >
-          <label className="sr-only" htmlFor="new-post">
-            {t('postLabel')}
-          </label>
-          <textarea id="new-post" value={text} rows={3} onChange={(e) => setText(e.target.value)} placeholder={t('postPlaceholder')} className="resize-y bg-transparent text-sm focus:outline-none" />
-          <Button type="submit" size="sm" className="self-end" disabled={creating.loading || !text.trim()}>
-            {t('post')}
-          </Button>
-        </form>
+        <>
+          {/* A new post starts from the floating ＋ (lvn-backend ADR-0076); what was typed stays if the dialog is closed. */}
+          <button
+            type="button"
+            aria-label={t('newPost')}
+            title={t('newPost')}
+            onClick={() => setWriting(true)}
+            className="fixed bottom-6 right-6 z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-fg shadow-lg shadow-accent/30 transition hover:opacity-90"
+          >
+            <Plus className="size-6" aria-hidden />
+          </button>
+          <Dialog open={writing} onClose={() => setWriting(false)} title={t('newPost')}>
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={(e) => {
+                e.preventDefault()
+                void (async () => {
+                  const res = await create({ variables: { groupId: group.id, body: textToDoc(text) } }).catch(() => null)
+                  const created = res?.data?.createGroupPost
+                  if (!created?.post) return setPostError(created?.userErrors[0]?.message ?? t('failed'))
+                  setPostError(null)
+                  setText('')
+                  setWriting(false)
+                  await refetch()
+                })()
+              }}
+            >
+              <label className="sr-only" htmlFor="new-post">
+                {t('postLabel')}
+              </label>
+              <textarea
+                id="new-post"
+                autoFocus
+                value={text}
+                rows={5}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={t('postPlaceholder')}
+                className="resize-y rounded-xl border border-border bg-surface p-3 text-sm focus:border-accent focus:outline-none"
+              />
+              {postError ? (
+                <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+                  {postError}
+                </p>
+              ) : null}
+              <Button type="submit" size="sm" className="self-end" disabled={creating.loading || !text.trim()}>
+                {t('post')}
+              </Button>
+            </form>
+          </Dialog>
+        </>
       ) : null}
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
