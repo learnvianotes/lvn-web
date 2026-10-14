@@ -1,10 +1,10 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { ArrowLeft, Check, RotateCcw, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, RotateCcw, X } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { InlineText, RichDoc } from '@/features/notes/render/RichText'
 import { ClassQuizDocument, SubmitQuizAttemptDocument, type ClassQuizFieldsFragment } from '@/graphql/generated/graphql'
@@ -16,8 +16,9 @@ type Quiz = ClassQuizFieldsFragment
 type Answers = Record<string, string[]>
 
 /**
- * Taking a class quiz (lvn-backend ADR-0064): the questions without their answers, submitted once for a score by the
- * server, then each question's result, the correct choices and the explanation. Later tries are practice.
+ * Taking a class quiz (lvn-backend ADR-0064): the questions without their answers, one at a time (lvn-backend ADR-0076),
+ * submitted once for a score by the server, then each question's result, the correct choices and the explanation. Later
+ * tries are practice.
  */
 export function QuizPage({ classroomId, quizId }: { classroomId: string; quizId: string }) {
   const t = useTranslations('classes.quiz')
@@ -66,7 +67,21 @@ function TakeQuiz({ quiz, practice, onDone }: { quiz: Quiz; practice: boolean; o
   const [error, setError] = useState<string | null>(null)
   // One id per submission, kept until it is answered: a retry is the same attempt (ADR-0064).
   const op = useRef<string | null>(null)
-  const left = quiz.questions.filter((q) => !answers[q.id]?.length).length
+  // One question at a time; moving on takes the reader to the new question.
+  const [at, setAt] = useState(0)
+  const shown = useRef<HTMLFieldSetElement>(null)
+  const moved = useRef(false)
+  useEffect(() => {
+    if (moved.current) shown.current?.focus()
+  }, [at])
+  const go = (i: number) => {
+    moved.current = true
+    setAt(i)
+  }
+  const total = quiz.questions.length
+  const q = quiz.questions[Math.min(at, total - 1)]
+  const last = at >= total - 1
+  const left = quiz.questions.filter((x) => !answers[x.id]?.length).length
   const pick = (questionId: string, choiceId: string, multiple: boolean) =>
     setAnswers((a) => {
       const now = a[questionId] ?? []
@@ -94,53 +109,92 @@ function TakeQuiz({ quiz, practice, onDone }: { quiz: Quiz; practice: boolean; o
       }}
     >
       {practice ? <p className="text-sm text-muted">{t('practice')}</p> : null}
-      <ol className="flex flex-col gap-4">
-        {quiz.questions.map((q, i) => (
-          <li key={q.id}>
-            <fieldset className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
-              <legend className="sr-only">{t('questionN', { n: i + 1 })}</legend>
-              <div className="flex gap-2">
-                <span className="font-bold text-muted">{i + 1}.</span>
-                <RichDoc doc={q.question as Doc} className="flex flex-col gap-2 font-medium" />
-              </div>
-              {q.multiple ? <p className="text-xs text-muted">{t('pickAll')}</p> : null}
-              <ul className="flex flex-col gap-1.5">
-                {q.choices.map((c) => {
-                  const on = (answers[q.id] ?? []).includes(c.id)
-                  return (
-                    <li key={c.id}>
-                      <button
-                        type="button"
-                        role={q.multiple ? 'checkbox' : 'radio'}
-                        aria-checked={on}
-                        onClick={() => pick(q.id, c.id, q.multiple)}
-                        className={cn('w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors', on ? 'border-accent bg-accent-soft' : 'border-border hover:bg-surface-2')}
-                      >
-                        <InlineText content={c.content as Inline} />
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </fieldset>
-          </li>
-        ))}
-      </ol>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="font-semibold" aria-hidden>
+            {t('progress', { n: at + 1, total })}
+          </span>
+          <span className="text-muted">{t('answeredCount', { n: total - left, total })}</span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label={t('progressLabel', { n: at + 1, total })} aria-valuemin={1} aria-valuemax={total} aria-valuenow={at + 1}>
+          <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${((at + 1) / total) * 100}%` }} />
+        </div>
+      </div>
+      {q ? (
+        <fieldset ref={shown} tabIndex={-1} key={q.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4 outline-none">
+          <legend className="sr-only">{t('progressLabel', { n: at + 1, total })}</legend>
+          <div className="flex gap-2">
+            <span className="font-bold text-muted">{at + 1}.</span>
+            <RichDoc doc={q.question as Doc} className="flex flex-col gap-2 font-medium" />
+          </div>
+          {q.multiple ? <p className="text-xs text-muted">{t('pickAll')}</p> : null}
+          <ul className="flex flex-col gap-1.5">
+            {q.choices.map((c) => {
+              const on = (answers[q.id] ?? []).includes(c.id)
+              return (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    role={q.multiple ? 'checkbox' : 'radio'}
+                    aria-checked={on}
+                    onClick={() => pick(q.id, c.id, q.multiple)}
+                    className={cn('w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors', on ? 'border-accent bg-accent-soft' : 'border-border hover:bg-surface-2')}
+                  >
+                    <InlineText content={c.content as Inline} />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </fieldset>
+      ) : null}
+      <nav aria-label={t('questions')} className="flex flex-wrap gap-1.5">
+        {quiz.questions.map((x, i) => {
+          const answered = !!answers[x.id]?.length
+          return (
+            <button
+              key={x.id}
+              type="button"
+              aria-current={i === at ? 'step' : undefined}
+              aria-label={answered ? t('goToAnswered', { n: i + 1 }) : t('goTo', { n: i + 1 })}
+              onClick={() => go(i)}
+              className={cn('size-8 rounded-full border text-xs font-semibold', i === at ? 'border-accent bg-accent text-white' : answered ? 'border-accent/50 bg-accent-soft text-accent' : 'border-border text-muted hover:bg-surface-2')}
+            >
+              {i + 1}
+            </button>
+          )
+        })}
+      </nav>
       {left ? <p className="text-sm text-muted">{t('unanswered', { n: left })}</p> : null}
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       ) : null}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {at > 0 ? (
+          <Button type="button" variant="secondary" className="gap-1" onClick={() => go(at - 1)}>
+            <ChevronLeft className="size-4" aria-hidden />
+            {t('previous')}
+          </Button>
+        ) : null}
+        <span className="flex-1" />
         {practice ? (
-          <Button variant="secondary" onClick={onDone}>
+          <Button type="button" variant="secondary" onClick={onDone}>
             {t('cancel')}
           </Button>
         ) : null}
-        <Button type="submit" disabled={submitting.loading}>
-          {submitting.loading ? t('submitting') : t('submit')}
-        </Button>
+        {/* Keys keep Next and Submit apart: one element turned into the other mid-click would submit the quiz. */}
+        {last ? (
+          <Button key="submit" type="submit" disabled={submitting.loading}>
+            {submitting.loading ? t('submitting') : t('submit')}
+          </Button>
+        ) : (
+          <Button key="next" type="button" className="gap-1" onClick={() => go(at + 1)}>
+            {t('next')}
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        )}
       </div>
     </form>
   )

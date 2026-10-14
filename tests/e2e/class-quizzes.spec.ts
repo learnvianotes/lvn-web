@@ -87,7 +87,7 @@ test('a teacher makes questions from a note with AI, edits them, adds one by han
   expect(calls.find((c) => c.op === 'RunAiTask')?.variables).toEqual({ input: { noteId: NOTE, task: 'QUIZ' } })
 })
 
-test('a student takes a quiz without its answers, is scored, reads them, and practises again; a dropped submission is the same attempt', async ({ page }) => {
+test('a student takes a quiz without its answers, one question at a time, is scored, reads them, and practises again; a dropped submission is the same attempt', async ({ page }) => {
   let attempts: Attempt[] = []
   const calls = await mockApi(page, {
     Classroom: () => ({ classroom: classroom(false) }),
@@ -121,9 +121,25 @@ test('a student takes a quiz without its answers, is scored, reads them, and pra
   await page.getByRole('link', { name: 'Take the quiz' }).click()
   await expect(page).toHaveURL(new RegExp(`/classes/${CLASS}/quizzes/${QUIZ}$`))
   await expect(page.getByRole('heading', { name: 'Respiration' })).toBeVisible()
+  // One question at a time: 1/2 with Next, no Previous and no Submit yet.
+  await expect(page.getByRole('progressbar', { name: 'Question 1 of 2' })).toBeVisible()
+  await expect(page.getByText('1/2')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Previous' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Submit answers' })).toHaveCount(0)
+  await expect(page.getByRole('checkbox', { name: 'Water' })).toHaveCount(0)
   await page.getByRole('radio', { name: 'Mitochondria' }).click()
+  await expect(page.getByText('1 of 2 answered')).toBeVisible()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('group', { name: 'Question 2 of 2' })).toBeFocused()
+  await expect(page.getByRole('radio', { name: 'Mitochondria' })).toHaveCount(0)
   await page.getByRole('checkbox', { name: 'Water' }).click()
   await expect(page.getByText('Pick every correct answer.')).toBeVisible()
+  // Back to the first and forth again, by Previous and by its number: the answers stay.
+  await page.getByRole('button', { name: 'Previous' }).click()
+  await expect(page.getByRole('radio', { name: 'Mitochondria' })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('navigation', { name: 'Questions' }).getByRole('button', { name: 'Question 2, answered' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Water' })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Submit answers' }).click()
   await expect(page.getByText('Your answers were not sent. Check the connection and submit again.')).toBeVisible()
   await page.getByRole('button', { name: 'Submit answers' }).click()
@@ -144,6 +160,7 @@ test('a student takes a quiz without its answers, is scored, reads them, and pra
   await page.getByRole('button', { name: 'Try again' }).click()
   await expect(page.getByText('Practice: your first attempt stays your score.')).toBeVisible()
   await page.getByRole('radio', { name: 'Mitochondria' }).click()
+  await page.getByRole('button', { name: 'Next' }).click()
   await page.getByRole('checkbox', { name: 'Water' }).click()
   await page.getByRole('checkbox', { name: 'Carbon dioxide' }).click()
   await page.getByRole('button', { name: 'Submit answers' }).click()
@@ -151,4 +168,10 @@ test('a student takes a quiz without its answers, is scored, reads them, and pra
   await expect(page.getByText('Your score is your first attempt: 1 of 2')).toBeVisible()
   const third = calls.filter((c) => c.op === 'SubmitQuizAttempt').at(-1)!.variables.input as { clientOpId: string }
   expect(third.clientOpId).not.toBe(lost!.clientOpId)
+  // Cancelling practice sends nothing.
+  const before = calls.filter((c) => c.op === 'SubmitQuizAttempt').length
+  await page.getByRole('button', { name: 'Try again' }).click()
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByText('You got 2 of 2')).toBeVisible()
+  expect(calls.filter((c) => c.op === 'SubmitQuizAttempt')).toHaveLength(before)
 })

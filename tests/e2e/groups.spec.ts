@@ -49,6 +49,7 @@ test('someone outside asks to join with a note for the admins; inside stays clos
   await p.goto(`/groups/${GROUP}`)
   await expect(p.getByRole('heading', { name: 'Algorithms study' })).toBeVisible()
   await expect(p.getByText('Posts, notes and members are for members. Join to see them.')).toBeVisible()
+  await expect(p.getByRole('button', { name: 'New post' })).toHaveCount(0)
   await p.getByRole('button', { name: 'Ask to join' }).click()
   await p.getByLabel('A note for the admins (optional)').fill('I study graphs')
   await p.getByRole('button', { name: 'Send request' }).click()
@@ -56,7 +57,7 @@ test('someone outside asks to join with a note for the admins; inside stays clos
   expect(calls.find((c) => c.op === 'RequestToJoinGroup')?.variables).toEqual({ groupId: GROUP, message: 'I study graphs' })
 })
 
-test('members post, pinned posts come first, and moderators can pin and delete', async ({ page: p }) => {
+test('members post from the floating ＋, pinned posts come first, and moderators can pin and delete', async ({ page: p }) => {
   let posts = [post('p2', 'Week 2 is up')]
   const calls = await mockApi(p, {
     Group: () => ({ group: group({ viewerRole: 'MODERATOR', viewerCan: can({ post: true, moderate: true, leave: true }) }) }),
@@ -73,8 +74,12 @@ test('members post, pinned posts come first, and moderators can pin and delete',
   await expect(items.first()).toContainText('Read the rules')
   await expect(items.first()).toContainText('Pinned')
   await expect(items.first().getByRole('button', { name: 'Unpin' })).toBeVisible()
-  await p.getByLabel('Write a post').fill('Hello all\nSee you Friday')
-  await p.getByRole('button', { name: 'Post', exact: true }).click()
+  // A new post starts from the floating ＋.
+  await p.getByRole('button', { name: 'New post' }).click()
+  const writing = p.getByRole('dialog', { name: 'New post' })
+  await writing.getByLabel('Write a post').fill('Hello all\nSee you Friday')
+  await writing.getByRole('button', { name: 'Post', exact: true }).click()
+  await expect(writing).toBeHidden()
   await expect(items).toHaveCount(3)
   expect(calls.find((c) => c.op === 'CreateGroupPost')?.variables).toEqual({ groupId: GROUP, body: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello all' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'See you Friday' }] }] } })
 })

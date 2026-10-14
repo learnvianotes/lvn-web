@@ -108,3 +108,50 @@ test('More results adds the next notes of the same search', async ({ page }) => 
   await expect(page.getByRole('button', { name: 'More results' })).toHaveCount(0)
   expect(calls.filter((c) => c.op === 'Search').at(-1)?.variables).toEqual({ query: 'paths', first: 20, after: 'cursor-2' })
 })
+
+test('tabs: All, Notes, Topics, Groups, Users and Resources each ask for their kind, and the address keeps the tab', async ({ page }) => {
+  const person = { __typename: 'User', id: '01920000-0000-7000-8000-00000000cccc', displayName: 'Meera Iyer', handle: 'meera', globalRole: 'STUDENT' }
+  const resource = { __typename: 'Resource', id: '01920000-0000-7000-8000-00000000d101', type: 'BOOK', title: 'Graph Algorithms', author: 'Sedgewick', host: 'nptel.ac.in', saveCount: 0 }
+  const calls = await mockApi(page, { Search: () => results({ people: [person], groups: [group], classrooms: [classroom], resources: [resource] }) })
+  await page.goto('/search?q=graph')
+  const tabs = page.getByRole('tablist', { name: 'What to search' })
+  await expect(tabs.getByRole('tab')).toHaveText(['All', 'Notes', 'Topics', 'Groups', 'Users', 'Resources'])
+  await expect(tabs.getByRole('tab', { name: 'All' })).toHaveAttribute('aria-selected', 'true')
+  // All: every kind, each section leading to its tab.
+  await expect(page.getByRole('region', { name: 'People' }).getByRole('link', { name: /Meera Iyer/ })).toHaveAttribute('href', '/u/meera')
+  await expect(page.getByRole('region', { name: 'Resources' }).getByRole('link', { name: /Graph Algorithms/ })).toHaveAttribute('href', `/resources/${resource.id}`)
+  await page.getByRole('button', { name: 'See all Groups and classes' }).click()
+  await expect(tabs.getByRole('tab', { name: 'Groups' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page).toHaveURL(/\/search\?q=graph&tab=groups$/)
+  expect(calls.filter((c) => c.op === 'Search').at(-1)?.variables).toEqual({ query: 'graph', first: 20, scopes: ['GROUPS', 'CLASSROOMS'] })
+  // Groups: groups and classes only, no note filters.
+  const places = page.getByRole('region', { name: 'Groups and classes' })
+  await expect(places.getByRole('link', { name: /section B/ })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'People' })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Notes' })).toHaveCount(0)
+  await expect(page.getByRole('group', { name: 'Filters' })).toHaveCount(0)
+  for (const [tab, scopes] of [['Users', ['PEOPLE']], ['Resources', ['RESOURCES']], ['Topics', ['TOPICS']], ['Notes', ['NOTES']]] as const) {
+    await tabs.getByRole('tab', { name: tab }).click()
+    await expect.poll(() => calls.filter((c) => c.op === 'Search').at(-1)?.variables.scopes).toEqual(scopes)
+  }
+  // Notes keeps the kind and source chips.
+  await expect(page.getByRole('group', { name: 'Filters' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Dijkstra's algorithm/ })).toBeVisible()
+  await expect(page).toHaveURL(/\/search\?q=graph&tab=notes$/)
+  await page.reload()
+  await expect(page.getByRole('tablist', { name: 'What to search' }).getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('a topic from the Topics tab lists its notes in Notes; a tab with nothing found says so', async ({ page }) => {
+  const calls = await mockApi(page, { Search: (v) => (String(v.query).startsWith('nothing') ? nothing : results()) })
+  await page.goto('/search?tab=topics')
+  await expect(page.getByText('Type to search topics; one lists its notes.')).toBeVisible()
+  await page.getByRole('textbox').fill('paths')
+  await page.getByRole('button', { name: /Shortest paths/ }).click()
+  await expect(page.getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page).toHaveURL(/\/search\?tab=notes&topic=01920000-0000-7000-8000-00000000e101&topicTitle=Shortest\+paths$/)
+  await expect.poll(() => calls.filter((c) => c.op === 'Search').at(-1)?.variables).toEqual({ query: '', first: 20, scopes: ['NOTES'], filters: { kinds: null, sources: null, topicId: topic.id } })
+  await page.getByRole('tab', { name: 'Users' }).click()
+  await page.getByRole('textbox').fill('nothing at all')
+  await expect(page.getByText('Nothing found for “nothing at all”.')).toBeVisible()
+})
