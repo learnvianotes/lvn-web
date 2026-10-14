@@ -14,7 +14,7 @@ const workspace = (over: Record<string, unknown> = {}) => ({
   __typename: 'Group', id: GROUP, type: 'PROJECT', name: 'Heap visualiser', description: 'Watch a heap grow', privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 4, viewerRole: 'MEMBER', createdAt: '2026-10-01T10:00:00.000Z',
   viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null, pictureUrl: null, owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
 })
-const repo = (over: Record<string, unknown> = {}) => ({ __typename: 'GroupRepository', provider: 'GITHUB', url: 'https://github.com/team/heap-viz', available: true, name: 'team/heap-viz', description: 'Watch a heap grow', language: 'TypeScript', stars: 42, pushedAt: '2026-10-10T09:00:00.000Z', ...over })
+const repo = (over: Record<string, unknown> = {}) => ({ __typename: 'GroupRepository', provider: 'GITHUB', url: 'https://github.com/team/heap-viz', available: true, name: 'team/heap-viz', description: 'Watch a heap grow', language: 'TypeScript', stars: 42, pushedAt: '2026-10-10T09:00:00.000Z', app: null, events: null, ...over })
 const posts = () => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned: [], edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
 const idea = (id: string, text: string) => ({ __typename: 'GroupPost', id, kind: 'IDEA', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, body: doc(text), pinned: false, createdAt: new Date().toISOString(), editedAt: null, author: meera, viewerCan: { __typename: 'GroupPostActions', edit: false, delete: false, pin: false }, discussion: { __typename: 'Discussion', commentCount: 0 } })
 const summary = (status: string) => ({ __typename: 'Doubt', id: DOUBT, title: 'Why does sift-down swap twice?', moderation: 'OK', moderationReason: null, moderationCanAppeal: false, status, repoRef: 'src/heap.ts:42', createdAt: new Date().toISOString(), answerCount: status === 'OPEN' ? 0 : 1, author: asha })
@@ -148,4 +148,37 @@ test('a showcase note credits the team and its mentor', async ({ page }) => {
   await page.goto(`/notes/${NOTE_ID}`)
   await expect(page.getByText(/Built by/)).toContainText('Built by Asha Rao · mentored by Meera Iyer')
   await expect(page.getByRole('link', { name: 'Meera Iyer' })).toHaveAttribute('href', '/u/meera')
+})
+
+test('with the GitHub App set up, admins connect it, members read the repository’s activity, and GitHub’s return finishes it (ADR-0078)', async ({ page }) => {
+  let linked = repo({ app: { __typename: 'RepositoryApp', connected: false, installUrl: 'https://github.com/apps/learnvianotes/installations/new?state=abc' }, events: [] })
+  const calls = await mockApi(page, {
+    Group: () => ({ group: workspace({ viewerRole: 'ADMIN', viewerCan: can({ manage: true, inviteMentor: true, moderate: true, reviewRequests: true }) }) }),
+    GroupPosts: posts,
+    Workspace: () => ({ group: { __typename: 'Group', id: GROUP, repository: linked, showcase: null } }),
+    ConnectRepositoryApp: () => ({ connectRepositoryApp: { __typename: 'GroupPayload', group: { __typename: 'Group', id: GROUP }, userErrors: [] } }),
+    DisconnectRepositoryApp: () => ((linked = repo({ app: { __typename: 'RepositoryApp', connected: false, installUrl: null }, events: null })), { disconnectRepositoryApp: { __typename: 'GroupPayload', group: { __typename: 'Group', id: GROUP }, userErrors: [] } }),
+  })
+  await page.goto(`/groups/${GROUP}`)
+  await expect(page.getByRole('link', { name: 'Connect the GitHub App' })).toHaveAttribute('href', 'https://github.com/apps/learnvianotes/installations/new?state=abc')
+  // GitHub sends the admin back to the web, which finishes connecting.
+  await page.goto(`/github/setup?installation_id=42&setup_action=install&code=c0de&state=${GROUP}.1.sig`)
+  await expect(page.getByText('Connected. The repository’s activity now comes to the workspace.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'ConnectRepositoryApp')?.variables).toEqual({ input: { state: `${GROUP}.1.sig`, installationId: '42', code: 'c0de' } })
+  await expect(page.getByRole('link', { name: 'Back to the workspace' })).toHaveAttribute('href', `/groups/${GROUP}`)
+  // Connected: the activity, newest first, each leading to GitHub.
+  linked = repo({ app: { __typename: 'RepositoryApp', connected: true, installUrl: null }, events: [{ __typename: 'RepositoryEvent', id: 'e1', kind: 'PULL_REQUEST', action: 'merged', title: 'Heap sort', number: 7, authorLogin: 'ravi', url: 'https://github.com/team/heap-viz/pull/7', at: new Date().toISOString() }] })
+  await page.goto(`/groups/${GROUP}`)
+  const activity = page.getByRole('region', { name: 'Repository activity' })
+  await expect(activity.getByRole('link', { name: '#7 Heap sort' })).toHaveAttribute('href', 'https://github.com/team/heap-viz/pull/7')
+  await expect(activity).toContainText('Pull request merged by ravi')
+  page.once('dialog', (d) => void d.accept())
+  await activity.getByRole('button', { name: 'Disconnect the GitHub App' }).click()
+  await expect(page.getByText('The GitHub App is not connected to this repository.')).toBeVisible()
+})
+
+test('GitHub’s return without what is needed says so instead of failing silently', async ({ page }) => {
+  await mockApi(page, {})
+  await page.goto('/github/setup')
+  await expect(page.getByRole('main').getByRole('alert')).toHaveText('GitHub did not send what is needed. Start again from the workspace’s repository card.')
 })

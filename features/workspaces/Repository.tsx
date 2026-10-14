@@ -7,11 +7,12 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { attempt } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
-import { SetGroupRepositoryDocument, type RepositoryCardFragment } from '@/graphql/generated/graphql'
+import { DisconnectRepositoryAppDocument, SetGroupRepositoryDocument, type RepositoryCardFragment } from '@/graphql/generated/graphql'
 
 /**
  * A workspace's repository (lvn-backend ADR-0048): public details from GitHub or GitLab when the provider shows them,
- * else the link. LVN never hosts git. Admins link or change it.
+ * else the link. LVN never hosts git. Admins link or change it. With the GitHub App set up (ADR-0078), members see its
+ * activity and admins connect or disconnect it.
  */
 export function RepositoryCard({ groupId, repository, canManage, onChanged }: { groupId: string; repository: RepositoryCardFragment | null; canManage: boolean; onChanged: () => void }) {
   const t = useTranslations('workspaces')
@@ -52,6 +53,7 @@ export function RepositoryCard({ groupId, repository, canManage, onChanged }: { 
           )}
         </div>
       ) : null}
+      {repository?.app && !editing ? <RepositoryApp groupId={groupId} app={repository.app} events={repository.events ?? []} canManage={canManage} onChanged={onChanged} /> : null}
       {!repository && !editing ? <p className="text-sm text-muted">{t('noRepository')}</p> : null}
       {canManage && !editing ? (
         <Button variant="secondary" size="sm" className="w-fit" onClick={() => setEditing(true)}>
@@ -92,5 +94,70 @@ export function RepositoryCard({ groupId, repository, canManage, onChanged }: { 
         </p>
       ) : null}
     </div>
+  )
+}
+
+/** The GitHub App on a workspace's repository (lvn-backend ADR-0078): its activity, and connecting or disconnecting it. */
+function RepositoryApp({ groupId, app, events, canManage, onChanged }: { groupId: string; app: NonNullable<RepositoryCardFragment['app']>; events: NonNullable<RepositoryCardFragment['events']>; canManage: boolean; onChanged: () => void }) {
+  const t = useTranslations('workspaces.app')
+  const [disconnect, disconnecting] = useMutation(DisconnectRepositoryAppDocument)
+  const [error, setError] = useState<string | null>(null)
+  if (!app.connected) {
+    if (!app.installUrl) return <p className="text-xs text-muted">{t('notConnected')}</p>
+    return (
+      <div className="flex flex-col gap-1.5 border-t border-border pt-2">
+        <p className="text-xs text-muted">{t('connectHint')}</p>
+        <Button asChild size="sm" className="w-fit">
+          <a href={app.installUrl}>{t('connect')}</a>
+        </Button>
+      </div>
+    )
+  }
+  return (
+    <section aria-labelledby={`repo-activity-${groupId}`} className="flex flex-col gap-2 border-t border-border pt-2">
+      <h3 id={`repo-activity-${groupId}`} className="text-sm font-semibold">
+        {t('title')}
+      </h3>
+      {events.length ? (
+        <ul className="flex flex-col gap-1.5">
+          {events.map((e) => (
+            <li key={e.id} className="flex flex-col text-sm">
+              <a href={e.url} target="_blank" rel="noopener noreferrer nofollow" className="font-medium hover:text-accent">
+                {e.number ? `#${e.number} ` : ''}
+                {e.title}
+              </a>
+              <span className="text-xs text-muted">
+                {t(`kind.${e.kind}`)} {t(`action.${e.action}`)}
+                {e.authorLogin ? ` ${t('by', { login: e.authorLogin })}` : ''} · {ago(e.at)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted">{t('none')}</p>
+      )}
+      {canManage ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit"
+          disabled={disconnecting.loading}
+          onClick={() => {
+            if (!window.confirm(t('disconnectConfirm'))) return
+            void attempt(() => disconnect({ variables: { groupId } }), t('disconnect')).then((problem) => {
+              setError(problem)
+              onChanged()
+            })
+          }}
+        >
+          {t('disconnect')}
+        </Button>
+      ) : null}
+      {error ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      ) : null}
+    </section>
   )
 }

@@ -10,6 +10,21 @@ fragment RepositoryCard on GroupRepository {
   language
   stars
   pushedAt
+  # The GitHub App (lvn-backend ADR-0078): null until it is set up here.
+  app {
+    connected
+    installUrl
+  }
+  events(first: 10) {
+    id
+    kind
+    action
+    title
+    number
+    authorLogin
+    url
+    at
+  }
 }
 
 fragment DoubtSummary on Doubt {
@@ -228,6 +243,28 @@ mutation DeleteDoubt($doubtId: UUID!) {
 
 mutation SetProjectShowcase($groupId: UUID!, $noteId: UUID) {
   setProjectShowcase(input: { groupId: $groupId, noteId: $noteId }) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation ConnectRepositoryApp($input: ConnectRepositoryAppInput!) {
+  connectRepositoryApp(input: $input) {
+    group {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DisconnectRepositoryApp($groupId: UUID!) {
+  disconnectRepositoryApp(input: { groupId: $groupId }) {
     group {
       id
     }
