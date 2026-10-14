@@ -1,0 +1,19 @@
+{
+  "subjects": [
+    {
+      "id": "01920000-0000-7000-8000-00000000c501",
+      "slug": "dsa",
+      "title": "Data Structures and Algorithms",
+      "topics": [
+        { "id": "01920000-0000-7000-8000-00000000c511", "slug": "graphs", "title": "Graphs", "children": [{ "id": "01920000-0000-7000-8000-00000000c512", "slug": "shortest-paths", "title": "Shortest paths" }] },
+        { "id": "01920000-0000-7000-8000-00000000c513", "slug": "heaps", "title": "Heaps", "children": [] }
+      ]
+    },
+    {
+      "id": "01920000-0000-7000-8000-00000000c502",
+      "slug": "os",
+      "title": "Operating Systems",
+      "topics": [{ "id": "01920000-0000-7000-8000-00000000c521", "slug": "paging", "title": "Paging", "children": [] }]
+    }
+  ]
+}

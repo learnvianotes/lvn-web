@@ -1248,7 +1248,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await expect(page).toHaveURL(/\/profile$/)
   const entries: [string, RegExp][] = [
     ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
-    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/core$/],
+    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/subjects$/],
   ]
   for (const [name, url] of entries) {
     if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()

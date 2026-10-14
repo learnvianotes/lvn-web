@@ -2,10 +2,10 @@
   "site": {
     "name": "LearnViaNotes",
     "tagline": "A student-first learning community",
-    "description": "Clear, verified notes for computer science — DSA, CS fundamentals, AI and programming languages. Free to read, no account needed.",
+    "description": "LearnViaNotes: write notes, study them with AI, and learn together in groups and classes — notes, flashcards, quizzes, exams and more, free for students and teachers.",
     "skip": "Skip to content",
     "nav": {
-      "notes": "Notes",
+      "notes": "Subjects",
       "home": "Home",
       "search": "Search",
       "resources": "Resources",
@@ -29,8 +29,8 @@
     "eyebrow": "Free CS notes",
     "title": "Learn computer science one clear note at a time",
     "lead": "{subjects} subjects, {topics} topics and {problems} interview problems — written to be read on a phone, with code in Python, C++, Java and JavaScript.",
-    "cta": "Browse notes",
-    "categories": "Browse by area",
+    "cta": "Browse subjects",
+    "categories": "Subjects",
     "hero": {
       "eyebrow": "Built by students, learn together",
       "titleLead": "Your Learning Community for a",
@@ -68,7 +68,8 @@
         "title": "Community",
         "lead": "Share and discuss"
       }
-    }
+    },
+    "allSubjects": "All subjects"
   },
   "core": {
     "topics": "{count, plural, one {# topic} other {# topics}}",
@@ -2539,5 +2540,24 @@
     "save": "Save",
     "savedOne": "Saved",
     "hint": "Save it to your Bookmarks; only you see it"
+  },
+  "subjects": {
+    "title": "Subjects",
+    "lead": "The subjects and topics notes on LearnViaNotes are organised by. Each topic gathers the public notes and resources people share on it.",
+    "unavailable": "Subjects could not load just now. Try again in a moment.",
+    "topicCount": "{count, plural, one {# topic} other {# topics}}",
+    "breadcrumb": "Where you are",
+    "subjectLead": "Topics in {subject}, with the public notes and resources people share on it.",
+    "topicLead": "Public notes and resources on {topic}.",
+    "topics": "Topics",
+    "subtopics": "Subtopics",
+    "notes": "Public notes",
+    "resources": "Resources",
+    "untitled": "Untitled note",
+    "by": "by {name}",
+    "noNotes": "No public notes on {topic} yet.",
+    "writeOne": "Write one",
+    "noResources": "No resources on this yet.",
+    "browseResources": "Browse resources"
   }
 }

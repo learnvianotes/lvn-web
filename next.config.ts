@@ -2,13 +2,19 @@ import { readFileSync } from 'node:fs'
 import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
 
-/** Subjects that used to live at the site root (learnvianotes.in/<subject>/<topic>) now live under /core. */
+/**
+ * Subjects that used to live at the site root (learnvianotes.in/<subject>/<topic>): under /core while the old notes are on,
+ * otherwise on the app's own subject pages, which share their slugs (the curated catalogue).
+ */
 const legacySubjects = (JSON.parse(readFileSync('content-build/catalog.json', 'utf8')) as { subjects: { id: string }[] })
   .subjects.map((s) => s.id)
 
 /** Pages of the retired app with no equivalent yet; accounts arrive with the Phase 1 backend. History came back in
  * Phase 6 (lvn-backend ADR-0067): the old /history address now opens the new learning history. */
 const retiredPages = ['login', 'signup', 'forgot-password', 'settings']
+
+/** The old notes at /core are kept for later and off unless NEXT_PUBLIC_CORE_ENABLED=true (owner, 2026-10-14). */
+const coreEnabled = process.env.NEXT_PUBLIC_CORE_ENABLED === 'true'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
@@ -43,11 +49,24 @@ const config: NextConfig = {
   },
   async redirects() {
     return [
-      ...legacySubjects.flatMap((id) => [
-        { source: `/${id}`, destination: `/core/${id}`, permanent: true },
-        { source: `/${id}/:item`, destination: `/core/${id}/:item`, permanent: true },
-      ]),
-      { source: '/about', destination: '/core/about', permanent: true },
+      ...(coreEnabled
+        ? [
+            ...legacySubjects.flatMap((id) => [
+              { source: `/${id}`, destination: `/core/${id}`, permanent: true },
+              { source: `/${id}/:item`, destination: `/core/${id}/:item`, permanent: true },
+            ]),
+            { source: '/about', destination: '/core/about', permanent: true },
+          ]
+        : [
+            // Temporary while /core is off, so they can point back to it later.
+            ...legacySubjects.flatMap((id) => [
+              { source: `/${id}`, destination: `/subjects/${id}`, permanent: false },
+              { source: `/${id}/:item`, destination: `/subjects/${id}`, permanent: false },
+            ]),
+            { source: '/about', destination: '/', permanent: false },
+            { source: '/core', destination: '/subjects', permanent: false },
+            { source: '/core/:subject/:rest*', destination: '/subjects/:subject', permanent: false },
+          ]),
       ...retiredPages.map((page) => ({ source: `/${page}`, destination: '/', permanent: false })),
     ]
   },

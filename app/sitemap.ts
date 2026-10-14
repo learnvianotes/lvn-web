@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { getCatalog } from '@/features/core-content/source'
 import { listPublicNotes } from '@/features/public-notes/data'
 import { publicNotePath } from '@/features/public-notes/paths'
+import { listSubjects } from '@/features/subjects/data'
 import { env } from '@/lib/env'
 
 /**
@@ -10,20 +11,25 @@ import { env } from '@/lib/env'
  */
 export const dynamic = 'force-dynamic'
 
-/** Static pages, /core, and public notes (/n/[slug]-[id]) from the API; without the API the rest still ships. */
+/**
+ * Static pages, the subjects and their topics, and public notes (/n/[slug]-[id]) from the API; /core only while the old
+ * notes are on (owner, 2026-10-14). Without the API the rest still ships.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.NEXT_PUBLIC_SITE_URL
-  const catalog = getCatalog()
-  const lastModified = new Date(catalog.generatedAt)
-  const notes = await listPublicNotes().catch(() => [])
+  const [notes, subjects] = await Promise.all([listPublicNotes().catch(() => []), listSubjects().catch(() => [])])
+  const core = env.NEXT_PUBLIC_CORE_ENABLED ? getCatalog() : null
   return [
-    { url: `${base}/`, lastModified },
-    { url: `${base}/core`, lastModified },
-    { url: `${base}/core/about`, lastModified },
-    ...catalog.subjects.flatMap((s) => [
-      { url: `${base}/core/${s.id}`, lastModified },
-      ...s.topics.map((t) => ({ url: `${base}/core/${s.id}/${t.id}`, lastModified })),
-    ]),
+    { url: `${base}/` },
+    { url: `${base}/subjects` },
+    ...subjects.flatMap((s) => [{ url: `${base}/subjects/${s.slug}` }, ...s.topics.flatMap((t) => [t, ...t.children]).map((t) => ({ url: `${base}/subjects/${s.slug}/${t.slug}` }))]),
+    ...(core
+      ? [
+          { url: `${base}/core`, lastModified: new Date(core.generatedAt) },
+          { url: `${base}/core/about`, lastModified: new Date(core.generatedAt) },
+          ...core.subjects.flatMap((s) => [{ url: `${base}/core/${s.id}` }, ...s.topics.map((t) => ({ url: `${base}/core/${s.id}/${t.id}` }))]),
+        ]
+      : []),
     ...notes.map((n) => ({ url: `${base}${publicNotePath(n)}`, ...(n.publishedAt ? { lastModified: new Date(n.publishedAt) } : {}) })),
   ]
 }

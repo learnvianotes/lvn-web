@@ -11,7 +11,7 @@ const ENTRIES: [name: string, href: string][] = [
   ['Home', '/home'],
   ['My Notes', '/notes'],
   ['Explore', '/search'],
-  ['Subjects', '/core'],
+  ['Subjects', '/subjects'],
   ['Groups', '/groups'],
   ['Classrooms', '/classes'],
   ['Exams', '/exams'],
@@ -154,9 +154,9 @@ test('the landing’s links all lead to pages that exist, and its sections are t
     ...(await tiles.evaluateAll((as) => as.map((a) => a.getAttribute('href')!))),
     await main.getByRole('link', { name: 'Get Started Free' }).getAttribute('href'),
     await main.getByRole('link', { name: 'Sign in' }).getAttribute('href'),
-    await main.getByRole('link', { name: 'Browse notes' }).getAttribute('href'),
+    await main.getByRole('link', { name: 'Browse subjects' }).getAttribute('href'),
   ]
-  expect(hrefs).toEqual(['/notes', '/ask', '/groups', '/exams', '/review', '/community', '/sign-up', '/sign-in', '/core'])
+  expect(hrefs).toEqual(['/notes', '/ask', '/groups', '/exams', '/review', '/community', '/sign-up', '/sign-in', '/subjects'])
   for (const href of hrefs) expect(await exists(page, href!), href!).toBe(true)
   await expect(page.locator('#features')).toHaveCount(1)
   await expect(page.locator('#subjects')).toHaveCount(1)

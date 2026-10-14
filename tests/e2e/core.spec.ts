@@ -6,6 +6,9 @@ import { expect, test, type Page } from '@playwright/test'
  * way a guest used learnvianotes.in, and check that none of its sign-in features came along.
  */
 
+// The old notes are kept for later and off unless NEXT_PUBLIC_CORE_ENABLED=true (owner, 2026-10-14): these run then.
+test.skip(process.env.NEXT_PUBLIC_CORE_ENABLED !== 'true', '/core is off (NEXT_PUBLIC_CORE_ENABLED)')
+
 /** The launch splash goes once the catalog has loaded. */
 async function ready(page: Page) {
   await expect(page.locator('#splash')).toHaveCount(0, { timeout: 15_000 })

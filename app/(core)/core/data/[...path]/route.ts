@@ -1,4 +1,5 @@
 import { legacyDataPaths, legacyDocument } from '@core-server/content'
+import { env } from '@/lib/env'
 
 /**
  * The old site's content documents as static JSON (core-app/src/features/catalog/staticSource.ts reads them).
@@ -8,7 +9,8 @@ export const dynamic = 'force-static'
 export const dynamicParams = false
 
 export function generateStaticParams() {
-  return legacyDataPaths().map((p) => ({ path: p.split('/') }))
+  // Off unless NEXT_PUBLIC_CORE_ENABLED is true (owner, 2026-10-14): then no document is served.
+  return env.NEXT_PUBLIC_CORE_ENABLED ? legacyDataPaths().map((p) => ({ path: p.split('/') })) : []
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ path: string[] }> }) {

@@ -25,7 +25,7 @@ export async function SiteHeader() {
         <nav className="ml-auto flex items-center gap-0.5 sm:gap-1" aria-label="Main">
           <GuestNav labels={{ features: t('nav.features'), subjects: t('nav.subjects'), community: t('nav.community'), start: t('nav.start') }} />
           {/* An icon on phones, like the account links, so the header fits a phone's width with the bell. */}
-          <Link href="/core" aria-label={t('nav.notes')} className="inline-flex items-center rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg sm:px-3 md:hidden">
+          <Link href="/subjects" aria-label={t('nav.notes')} className="inline-flex items-center rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg sm:px-3 md:hidden">
             <BookOpen className="size-4 sm:hidden" aria-hidden />
             <span className="hidden sm:inline">{t('nav.notes')}</span>
           </Link>
