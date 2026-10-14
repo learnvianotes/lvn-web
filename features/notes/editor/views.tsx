@@ -165,21 +165,29 @@ function AtomCard({ label, selected, children }: { label: string; selected: bool
 }
 
 /**
- * A card's data as it is in the document now. A view renders with the node it was last given, so two quick edits in a
- * row (the front, then the back) would otherwise write the first one's old value back over it.
+ * A change written onto a card's data as it is in the document now, found by the card's id. A view renders with the
+ * node it was last given, so two quick edits in a row (the front, then the back) would otherwise write the first one's
+ * old value back over it; and a view can be replaced under the person's fingers (a new card is given its id by a
+ * follow-up transaction), so its own position may no longer point at the card, and an update through it is dropped.
  */
-export function latestOf<T>({ editor, getPos, node }: Pick<ReactNodeViewProps, 'editor' | 'getPos' | 'node'>): T {
+export function writeCard<T>({ editor, getPos, node }: Pick<ReactNodeViewProps, 'editor' | 'getPos' | 'node'>, change: (data: T) => T): void {
+  const { state } = editor
+  const id = node.attrs.id as string | null
   const pos = getPos()
-  const now = typeof pos === 'number' ? editor.state.doc.nodeAt(pos) : null
-  return (now?.type === node.type ? now.attrs.data : node.attrs.data) as T
+  const here = typeof pos === 'number' ? state.doc.nodeAt(pos) : null
+  let at: number | null = here && here.type === node.type && (!id || here.attrs.id === id) ? (pos as number) : null
+  if (at === null && id) state.doc.forEach((card, offset) => void (at === null && card.type === node.type && card.attrs.id === id && (at = offset)))
+  if (at === null) return
+  const card = state.doc.nodeAt(at)!
+  editor.view.dispatch(state.tr.setNodeMarkup(at, undefined, { ...card.attrs, data: change((card.attrs.data ?? node.attrs.data) as T) }))
 }
 
 type TableData = { hasHeaderRow: boolean; rows: Inline[][] }
 
-export function TableView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
+export function TableView({ node, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as TableData
-  const update = (change: (d: TableData) => TableData) => updateAttributes({ data: change(latestOf<TableData>({ editor, getPos, node })) })
+  const update = (change: (d: TableData) => TableData) => writeCard<TableData>({ editor, getPos, node }, change)
   const columns = data.rows[0]?.length ?? 1
   const setCell = (r: number, c: number, value: string) => update((d) => ({ ...d, rows: d.rows.map((row, i) => (i === r ? row.map((cell, j) => (j === c ? textToInline(value) : cell)) : row)) }))
   return (
@@ -228,10 +236,10 @@ export function TableView({ node, updateAttributes, selected, editor, getPos }: 
 
 type QuestionData = { prompt: Doc; answer: Doc; hint?: Doc }
 
-export function QuestionView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
+export function QuestionView({ node, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as QuestionData
-  const set = (patch: Partial<QuestionData>) => updateAttributes({ data: { ...latestOf<QuestionData>({ editor, getPos, node }), ...patch } })
+  const set = (patch: Partial<QuestionData>) => writeCard<QuestionData>({ editor, getPos, node }, (d) => ({ ...d, ...patch }))
   return (
     <AtomCard label={t('cards.question')} selected={selected}>
       <Field label={t('prompt')} value={docText(data.prompt)} onChange={(v) => set({ prompt: textToDoc(v) })} />
@@ -243,11 +251,11 @@ export function QuestionView({ node, updateAttributes, selected, editor, getPos 
 
 type QuizData = { question: Doc; choices: { id: string; content: Inline }[]; correct: string[]; multiple: boolean; explanation?: Doc }
 
-export function QuizView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
+export function QuizView({ node, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as QuizData
   const group = useId()
-  const update = (change: (d: QuizData) => QuizData) => updateAttributes({ data: change(latestOf<QuizData>({ editor, getPos, node })) })
+  const update = (change: (d: QuizData) => QuizData) => writeCard<QuizData>({ editor, getPos, node }, change)
   const toggle = (id: string, on: boolean) =>
     update((d) => {
       const correct = d.multiple ? (on ? [...d.correct, id] : d.correct.filter((c) => c !== id)) : [id]
@@ -305,14 +313,14 @@ export function QuizView({ node, updateAttributes, selected, editor, getPos }: R
 
 type FlashcardData = { front: Doc; back: Doc }
 
-export function FlashcardView({ node, updateAttributes, selected, editor, getPos }: ReactNodeViewProps) {
+export function FlashcardView({ node, selected, editor, getPos }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const data = node.attrs.data as FlashcardData
   return (
     <AtomCard label={t('cards.flashcard')} selected={selected}>
       <div className="grid gap-2 sm:grid-cols-2">
-        <Field label={t('front')} value={docText(data.front)} onChange={(v) => updateAttributes({ data: { ...latestOf<FlashcardData>({ editor, getPos, node }), front: textToDoc(v) } })} rows={3} />
-        <Field label={t('back')} value={docText(data.back)} onChange={(v) => updateAttributes({ data: { ...latestOf<FlashcardData>({ editor, getPos, node }), back: textToDoc(v) } })} rows={3} />
+        <Field label={t('front')} value={docText(data.front)} onChange={(v) => writeCard<FlashcardData>({ editor, getPos, node }, (d) => ({ ...d, front: textToDoc(v) }))} rows={3} />
+        <Field label={t('back')} value={docText(data.back)} onChange={(v) => writeCard<FlashcardData>({ editor, getPos, node }, (d) => ({ ...d, back: textToDoc(v) }))} rows={3} />
       </div>
     </AtomCard>
   )
