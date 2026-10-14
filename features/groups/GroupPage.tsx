@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery } from '@apollo/client/react'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { FileText, Globe, Lock, Pin, PinOff, Plus, Trash2, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { ago } from '@/features/notes/look'
+import { putToStorage, UploadError } from '@/features/notes/media'
 import { PostComments } from '@/features/discussion/PostComments'
 import { ContentModeration, ModerationBanner } from '@/features/moderation/ModerationBanner'
 import { PlaceResources } from '@/features/resources/PlaceResources'
@@ -35,10 +36,13 @@ import {
   SetGroupRoleDocument,
   ShareNoteToGroupDocument,
   UpdateGroupDocument,
+  CreateNoteUploadDocument,
+  CompleteNoteUploadDocument,
   WithdrawGroupJoinRequestDocument,
   type GroupDetailFragment,
   type GroupPostFieldsFragment,
 } from '@/graphql/generated/graphql'
+import { cn } from '@/lib/cn'
 import type { Doc } from '@/lib/contracts/validation'
 import { Doubts } from '@/features/workspaces/Doubts'
 import { Ideas } from '@/features/workspaces/Ideas'
@@ -86,6 +90,7 @@ export function GroupPage({ id }: { id: string }) {
             {tab === 'reports' ? <ModerationQueue scope={{ scope: 'GROUP', id: group.id }} groupId={group.id} /> : null}
             {tab === 'settings' ? (
               <div className="flex flex-col gap-8">
+                <PictureSetting group={group} onSaved={() => void refetch()} />
                 <Settings group={group} onSaved={() => void refetch()} />
                 {project ? <ShowcaseSetting group={group} /> : null}
               </div>
@@ -114,7 +119,11 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
   }
   const Icon = group.privacy === 'PRIVATE' ? Lock : Globe
   return (
-    <header className="flex flex-col gap-3 rounded-3xl border border-border bg-surface p-6 shadow-sm">
+    <header className="flex flex-col gap-3 overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-sm">
+      {group.pictureUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a short-lived read URL from storage
+        <img src={group.pictureUrl} alt={t('pictureOf', { name: group.name })} className="-mx-6 -mt-6 mb-1 h-40 w-[calc(100%+3rem)] max-w-none object-cover sm:h-52" />
+      ) : null}
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
         <Icon className="size-4" aria-hidden />
         {t(`privacy.${group.privacy}`)}
@@ -486,6 +495,77 @@ function Requests({ group }: { group: GroupDetailFragment }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+/** The group's picture (lvn-backend ADR-0076): chosen and saved at once by an admin, or taken away. */
+function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSaved: () => void }) {
+  const t = useTranslations('groups')
+  const client = useApolloClient()
+  const [update] = useMutation(UpdateGroupDocument)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  const save = async (input: { pictureFileId?: string; removePicture?: boolean }, done: string) => {
+    const problem = await attempt(() => update({ variables: { input: { groupId: group.id, ...input } } }), t('failed'))
+    setMessage(problem ? { ok: false, text: problem } : { ok: true, text: done })
+    onSaved()
+  }
+  const choose = async (picked: File) => {
+    setBusy(true)
+    setMessage(null)
+    try {
+      const res = await client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: picked.name, mimeType: picked.type, sizeBytes: picked.size, purpose: 'GROUP_PICTURE' } } })
+      const intent = res.data?.createUploadIntent.intent
+      if (!intent) throw new UploadError(res.data?.createUploadIntent.userErrors[0]?.message ?? t('failed'))
+      await putToStorage(intent, picked, () => undefined)
+      const done = await client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } })
+      if (!done.data?.completeUpload.ok) throw new UploadError(done.data?.completeUpload.userErrors[0]?.message ?? t('failed'))
+      await save({ pictureFileId: intent.fileId }, t('pictureSaved'))
+    } catch (e) {
+      setMessage({ ok: false, text: e instanceof UploadError && e.message !== 'network' && !e.message.startsWith('storage') ? e.message : t('failed') })
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section aria-labelledby="group-picture" className="flex flex-col gap-2">
+      <h3 id="group-picture" className="text-sm font-semibold">
+        {t('picture')}
+      </h3>
+      {group.pictureUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a short-lived read URL from storage
+        <img src={group.pictureUrl} alt="" className="h-28 w-56 rounded-xl border border-border object-cover" />
+      ) : (
+        <p className="text-sm text-muted">{t('noPicture')}</p>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <label className={cn('inline-flex h-9 cursor-pointer items-center rounded-xl border border-border bg-surface px-3 text-sm font-medium hover:bg-surface-2', busy && 'pointer-events-none opacity-50')}>
+          {busy ? t('pictureUploading') : group.pictureUrl ? t('pictureChange') : t('pictureChoose')}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            disabled={busy}
+            onChange={(e) => {
+              const picked = e.target.files?.[0]
+              e.target.value = ''
+              if (picked) void choose(picked)
+            }}
+          />
+        </label>
+        {group.pictureUrl ? (
+          <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => void save({ removePicture: true }, t('pictureRemoved'))}>
+            {t('pictureRemove')}
+          </Button>
+        ) : null}
+      </div>
+      <p className="text-xs text-muted">{t('pictureHint')}</p>
+      {message ? (
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+          {message.text}
+        </p>
+      ) : null}
+    </section>
   )
 }
 

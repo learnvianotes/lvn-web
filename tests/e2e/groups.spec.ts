@@ -7,7 +7,7 @@ const GROUP = '01920000-0000-7000-8000-0000000a0001'
 const OTHER = '01920000-0000-7000-8000-00000000bbbb'
 const can = (over: Record<string, boolean> = {}) => ({ __typename: 'GroupActions', join: false, requestJoin: false, post: false, moderate: false, manage: false, delete: false, reviewRequests: false, leave: false, askDoubt: false, inviteMentor: false, acceptMentorInvite: false, ...over })
 const group = (over: Record<string, unknown> = {}) => ({
-  __typename: 'Group', id: GROUP, type: 'COMMUNITY', name: 'Algorithms study', description: 'Weekly problems and solutions', privacy: 'PUBLIC', joinPolicy: 'APPROVAL', memberCount: 12, viewerRole: null, createdAt: '2026-10-01T10:00:00.000Z', viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null,
+  __typename: 'Group', id: GROUP, type: 'COMMUNITY', name: 'Algorithms study', description: 'Weekly problems and solutions', privacy: 'PUBLIC', joinPolicy: 'APPROVAL', memberCount: 12, viewerRole: null, createdAt: '2026-10-01T10:00:00.000Z', viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null, pictureUrl: null,
   owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
 })
 const card = (id: string, name: string, viewerRole: string | null = null) => ({ __typename: 'Group', id, type: 'COMMUNITY', name, description: null, privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 3, viewerRole })
@@ -272,4 +272,39 @@ test('the owner reads the platform moderators’ warning on the group; others ca
   await dialog.getByRole('button', { name: 'Send report' }).click()
   await expect(dialog.getByText('Thank you for telling us')).toBeVisible()
   expect(calls.find((c) => c.op === 'ReportContent')?.variables).toEqual({ input: { entityType: 'GROUP', entityId: GROUP, reason: 'HATE', details: 'The group name' } })
+})
+
+test('an admin chooses the group’s picture, shown atop the group, and removes it (ADR-0076)', async ({ page: p }) => {
+  let picture: string | null = null
+  await p.route('http://storage.test/**', async (route) => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'PUT', 'access-control-allow-headers': '*' } })
+    if (route.request().method() === 'GET') return route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('\x89PNG') })
+    return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' } })
+  })
+  const none = { userErrors: [] }
+  const admin = () => group({ viewerRole: 'OWNER', pictureUrl: picture, viewerCan: can({ post: true, moderate: true, manage: true, delete: true, reviewRequests: true }) })
+  const calls = await mockApi(p, {
+    Group: () => ({ group: admin() }),
+    GroupPosts: () => page([], []),
+    CreateNoteUpload: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: '01920000-0000-7000-8000-00000000f0d9', uploadUrl: 'http://storage.test/put', uploadHeaders: [{ __typename: 'UploadHeader', name: 'content-type', value: 'image/png' }] }, ...none } }),
+    CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...none } }),
+    UpdateGroup: (v) => {
+      const input = v.input as { pictureFileId?: string; removePicture?: boolean }
+      picture = input.removePicture ? null : input.pictureFileId ? 'http://storage.test/group.png' : picture
+      return { updateGroup: { __typename: 'GroupPayload', group: admin(), ...none } }
+    },
+  })
+  await p.goto(`/groups/${GROUP}`)
+  await expect(p.getByRole('img', { name: 'The picture of Algorithms study' })).toHaveCount(0)
+  await p.getByRole('tab', { name: 'Settings' }).click()
+  await expect(p.getByText('No picture yet.')).toBeVisible()
+  await p.getByLabel('Choose a picture').setInputFiles({ name: 'club.png', mimeType: 'image/png', buffer: Buffer.from('\x89PNG') })
+  await expect(p.getByText('Picture saved.')).toBeVisible()
+  expect(calls.find((c) => c.op === 'CreateNoteUpload')?.variables).toEqual({ input: { fileName: 'club.png', mimeType: 'image/png', sizeBytes: 5, purpose: 'GROUP_PICTURE' } })
+  expect(calls.find((c) => c.op === 'UpdateGroup')?.variables).toEqual({ input: { groupId: GROUP, pictureFileId: '01920000-0000-7000-8000-00000000f0d9' } })
+  await expect(p.getByRole('img', { name: 'The picture of Algorithms study' })).toHaveAttribute('src', 'http://storage.test/group.png')
+  await p.getByRole('button', { name: 'Remove the picture' }).click()
+  await expect(p.getByText('Picture removed.')).toBeVisible()
+  await expect(p.getByRole('img', { name: 'The picture of Algorithms study' })).toHaveCount(0)
+  expect(calls.filter((c) => c.op === 'UpdateGroup').at(-1)?.variables).toEqual({ input: { groupId: GROUP, removePicture: true } })
 })

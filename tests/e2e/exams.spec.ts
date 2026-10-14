@@ -41,6 +41,8 @@ test('lists exams with Readiness against today’s target, today’s revision, a
   await expect(card.getByText('6 points below today’s target')).toBeVisible()
   await expect(card.getByText('Today: Paging')).toBeVisible()
   await expect(card.getByText(/In 12 days/)).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true')
+  await page.getByRole('tab', { name: 'Progress' }).click()
   const weak = page.getByRole('region', { name: 'Weak topics' })
   await expect(weak.getByText('Under 60% right in your last quizzes (20%)')).toBeVisible()
   await expect(weak.getByText('Not revised in 14 days, before Operating Systems')).toBeVisible()
@@ -175,4 +177,52 @@ test('a quiz checked in a note read signed in is a result on the note’s topics
     topicKeys: [`topic:${TOPIC_A}`],
     metadata: { answered: 1, correct: 0 },
   })
+})
+
+const noteHit = (id: string, title: string) => ({ __typename: 'NoteSearchHit', snippet: '', note: { __typename: 'Note', id, title, kind: 'NOTE', visibility: 'PUBLIC', viewerAccess: 'READER', publishedAt: new Date().toISOString(), owner: { __typename: 'User', id: '01920000-0000-7000-8000-00000000bbbb', displayName: 'Meera Iyer' } } })
+const searchResults = (notes: unknown[]) => ({ search: { __typename: 'SearchResults', notes, notesCursor: null, people: [], topics: [], groups: [], classrooms: [], resources: [] } })
+
+test('tabs: the Study Plan’s checklist leads to each topic and Continue plan to the next; Progress; Notes on the exam’s topics', async ({ page }) => {
+  const calls = await mockApi(page, { Exams: () => ({ exams: [exam()] }), WeakTopics: () => ({ weakTopics }), Search: () => searchResults([noteHit(NOTE_ID, 'Paging in ten minutes')]) }, viewerExtras)
+  await page.goto('/exams')
+  const tabs = page.getByRole('tablist', { name: 'Your exams' })
+  await expect(tabs.getByRole('tab')).toHaveText(['Upcoming', 'Study Plan', 'Progress', 'Notes'])
+  // Study Plan: today's session, not done yet; its topic and Continue plan lead to its notes.
+  await tabs.getByRole('tab', { name: 'Study Plan' }).click()
+  const today = page.getByRole('list', { name: 'Today’s sessions' }).getByRole('listitem')
+  await expect(today).toHaveCount(1)
+  await expect(today.getByRole('img', { name: 'to do' })).toBeVisible()
+  await expect(today.getByRole('link', { name: 'Paging' })).toHaveAttribute('href', '/search?topic=Paging&topicTitle=Paging')
+  await expect(page.getByRole('link', { name: 'Continue plan' })).toHaveAttribute('href', '/search?topic=Paging&topicTitle=Paging')
+  await expect(page.getByRole('link', { name: 'The whole plan for Operating Systems' })).toHaveAttribute('href', `/exams/${EXAM}`)
+  // Progress: Readiness and each topic, then the weak topics.
+  await tabs.getByRole('tab', { name: 'Progress' }).click()
+  const progress = page.getByRole('region', { name: 'Operating Systems' })
+  await expect(progress.getByRole('meter', { name: 'Readiness: 34%, target today 40%' })).toBeVisible()
+  await expect(progress.getByText('Recall 90% · Accuracy 20%')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Weak topics' })).toBeVisible()
+  // Notes: on the exam's topics, from everywhere the person may read.
+  await tabs.getByRole('tab', { name: 'Notes' }).click()
+  await expect(page.getByRole('link', { name: /Paging in ten minutes/ })).toHaveAttribute('href', `/notes/${NOTE_ID}`)
+  expect(calls.filter((c) => c.op === 'Search').at(-1)?.variables).toEqual({ query: '', first: 20, scopes: ['NOTES'], filters: { kinds: null, sources: null, topicId: null, topicIds: [TOPIC_A, TOPIC_B] } })
+})
+
+test('a day’s revision done shows no Continue plan; with no exam coming up, each tab leads to adding one', async ({ page }) => {
+  let exams = [exam({ tasks: [task(1, '2026-10-13', ['Paging'], { today: true, done: true })] })]
+  await mockApi(page, { Exams: () => ({ exams }), WeakTopics: () => ({ weakTopics: [] }), Search: () => searchResults([]) }, viewerExtras)
+  await page.goto('/exams')
+  await page.getByRole('tab', { name: 'Study Plan' }).click()
+  await expect(page.getByText('Today’s revision is done')).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Today’s sessions' }).getByRole('img', { name: 'done' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Continue plan' })).toHaveCount(0)
+  await page.getByRole('tab', { name: 'Notes' }).click()
+  await expect(page.getByText('No notes on these topics yet.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Search notes' })).toHaveAttribute('href', '/search')
+  exams = []
+  await page.reload()
+  await page.getByRole('tab', { name: 'Progress' }).click()
+  await expect(page.getByText('No exam coming up. Add one and its plan, progress and notes appear here.')).toBeVisible()
+  await page.getByRole('button', { name: 'Add an exam' }).click()
+  await expect(page.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('region', { name: 'Add an exam' })).toBeVisible()
 })

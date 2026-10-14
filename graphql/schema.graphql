@@ -1429,6 +1429,7 @@ enum FilePurpose {
   AVATAR
   COVER
   EXPORT
+  GROUP_PICTURE
   IMPORT
   VERIFICATION_DOCUMENT
   VOICE_NOTE
@@ -1519,6 +1520,9 @@ type Group {
   moderationWarning: String
   name: String!
   owner: User!
+
+  """The group's picture, valid for 15 minutes (ADR-0076); null without one"""
+  pictureUrl: String
 
   """Members only: pinned posts, then the newest"""
   posts(after: String, first: Int): GroupPostConnection
@@ -4217,6 +4221,11 @@ input SearchFilters {
 
   """Notes about this topic"""
   topicId: UUID
+
+  """
+  Notes about any of these topics, at most 20 (an exam's topics, ADR-0076)
+  """
+  topicIds: [UUID!]
 }
 
 type SearchResults {
@@ -4719,7 +4728,15 @@ input UpdateGroupInput {
   groupId: UUID!
   joinPolicy: GroupJoinPolicy
   name: String
+
+  """
+  A new picture: an uploaded file (purpose GROUP_PICTURE) of the admin's own (ADR-0076)
+  """
+  pictureFileId: UUID
   privacy: GroupPrivacy
+
+  """Takes the picture away"""
+  removePicture: Boolean
 }
 
 """

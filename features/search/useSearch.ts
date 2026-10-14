@@ -10,9 +10,11 @@ export interface SearchFilters {
   kinds?: NoteKind[]
   sources?: NoteSource[]
   topicId?: string | null
+  /** Any of these topics (an exam's, lvn-backend ADR-0076) */
+  topicIds?: string[]
 }
 
-const filtered = (f: SearchFilters) => !!(f.kinds?.length || f.sources?.length || f.topicId)
+const filtered = (f: SearchFilters) => !!(f.kinds?.length || f.sources?.length || f.topicId || f.topicIds?.length)
 
 /**
  * Search as you type: asks the API 200 ms after the last keystroke, from two characters on, or at once with filters
@@ -32,7 +34,14 @@ export function useSearch(query: string, first: number, filters: SearchFilters =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settled])
   const ready = settled.length >= 2 || filtered(filters)
-  const variables = { query: settled, first, ...(scopes ? { scopes } : {}), ...(filtered(filters) ? { filters: { kinds: filters.kinds?.length ? filters.kinds : null, sources: filters.sources?.length ? filters.sources : null, topicId: filters.topicId ?? null } } : {}) }
+  const variables = {
+    query: settled,
+    first,
+    ...(scopes ? { scopes } : {}),
+    ...(filtered(filters)
+      ? { filters: { kinds: filters.kinds?.length ? filters.kinds : null, sources: filters.sources?.length ? filters.sources : null, topicId: filters.topicId ?? null, ...(filters.topicIds?.length ? { topicIds: filters.topicIds } : {}) } }
+      : {}),
+  }
   const result = useQuery(SearchDocument, { variables, skip: !ready, fetchPolicy: 'cache-first' })
   const data = ready ? (result.data ?? result.previousData)?.search : undefined
   const [loadingMore, setLoadingMore] = useState(false)

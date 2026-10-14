@@ -12,7 +12,7 @@ const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', conten
 const can = (over: Record<string, boolean> = {}) => ({ __typename: 'GroupActions', join: false, requestJoin: false, post: true, moderate: false, manage: false, delete: false, reviewRequests: false, leave: true, askDoubt: true, inviteMentor: false, acceptMentorInvite: false, ...over })
 const workspace = (over: Record<string, unknown> = {}) => ({
   __typename: 'Group', id: GROUP, type: 'PROJECT', name: 'Heap visualiser', description: 'Watch a heap grow', privacy: 'PUBLIC', joinPolicy: 'OPEN', memberCount: 4, viewerRole: 'MEMBER', createdAt: '2026-10-01T10:00:00.000Z',
-  viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null, owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
+  viewerRequestId: null, viewerMentorInviteId: null, moderationWarning: null, pictureUrl: null, owner: { __typename: 'User', id: OTHER, displayName: 'Meera Iyer' }, viewerCan: can(), ...over,
 })
 const repo = (over: Record<string, unknown> = {}) => ({ __typename: 'GroupRepository', provider: 'GITHUB', url: 'https://github.com/team/heap-viz', available: true, name: 'team/heap-viz', description: 'Watch a heap grow', language: 'TypeScript', stars: 42, pushedAt: '2026-10-10T09:00:00.000Z', ...over })
 const posts = () => ({ group: { __typename: 'Group', id: GROUP, posts: { __typename: 'GroupPostConnection', pinned: [], edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } })
