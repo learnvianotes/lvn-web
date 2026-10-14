@@ -15,6 +15,8 @@ const ENTRIES: [name: string, href: string][] = [
   ['Groups', '/groups'],
   ['Classrooms', '/classes'],
   ['Exams', '/exams'],
+  ['Quizzes', '/quizzes'],
+  ['Contests', '/contests'],
   ['Rhythm', '/rhythm'],
   ['Resources', '/resources'],
   ['Community', '/community'],
