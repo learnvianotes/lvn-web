@@ -263,14 +263,24 @@ mutation RemoveConnection($input: PersonInput!) {
 }
 
 # The Skills tab (lvn-backend ADR-0012, ADR-0044): read on profiles, edited by the teacher.
+fragment TeacherSkillFields on TeacherSkill {
+  id
+  kind
+  name
+  detail
+  source
+  sourceUrl
+  fetchedAt
+}
+
 fragment TeacherProfileFields on TeacherProfile {
   headline
   bio
   skills {
-    id
-    kind
-    name
-    detail
+    ...TeacherSkillFields
+  }
+  drafts {
+    ...TeacherSkillFields
   }
 }
 
@@ -293,6 +303,82 @@ mutation UpdateTeacherProfile($input: UpdateTeacherProfileInput!) {
     userErrors {
       message
       field
+    }
+  }
+}
+
+# Skills import (lvn-backend ADR-0077): identifiers a teacher proves are theirs, imported as drafts to review.
+fragment ExternalIdentityFields on ExternalIdentity {
+  id
+  kind
+  value
+  code
+  instructions
+  verified
+  checkedAt
+  fetchedAt
+  lastError
+}
+
+query MySkillsImport {
+  mySkillsImport {
+    allowed
+    sources
+    identities {
+      ...ExternalIdentityFields
+    }
+  }
+}
+
+mutation AddExternalIdentity($input: AddExternalIdentityInput!) {
+  addExternalIdentity(input: $input) {
+    identity {
+      ...ExternalIdentityFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation CheckExternalIdentity($identityId: UUID!) {
+  checkExternalIdentity(input: { identityId: $identityId }) {
+    identity {
+      ...ExternalIdentityFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RemoveExternalIdentity($identityId: UUID!) {
+  removeExternalIdentity(input: { identityId: $identityId }) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation PublishTeacherSkills($skillIds: [UUID!]!) {
+  publishTeacherSkills(input: { skillIds: $skillIds }) {
+    profile {
+      ...TeacherProfileFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DiscardTeacherSkills($skillIds: [UUID!]!) {
+  discardTeacherSkills(input: { skillIds: $skillIds }) {
+    profile {
+      ...TeacherProfileFields
+    }
+    userErrors {
+      message
     }
   }
 }
