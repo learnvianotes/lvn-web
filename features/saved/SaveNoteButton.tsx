@@ -14,12 +14,13 @@ import { useSession } from '@/state/session'
  * Save on a note (lvn-backend ADR-0076): to the viewer's Bookmarks, private to them. Visitors are asked to sign in and
  * come back to it.
  */
-export function SaveNoteButton({ noteId }: { noteId: string }) {
+/** `saved`: already known (a feed's card), so nothing more is asked. */
+export function SaveNoteButton({ noteId, saved }: { noteId: string; saved?: boolean }) {
   const t = useTranslations('saved')
   const status = useSession((s) => s.status)
   const path = usePathname()
   const signedIn = status === 'signed-in'
-  const { data } = useQuery(NoteSavedDocument, { variables: { id: noteId }, skip: !signedIn })
+  const { data } = useQuery(NoteSavedDocument, { variables: { id: noteId }, skip: !signedIn || saved !== undefined })
   const [save, saving] = useMutation(SaveNoteDocument)
   const [unsave, unsaving] = useMutation(UnsaveNoteDocument)
   if (!signedIn) {
@@ -30,8 +31,9 @@ export function SaveNoteButton({ noteId }: { noteId: string }) {
       </Link>
     )
   }
-  const note = data?.note
-  if (!note) return null
+  const viewerSaved = saved ?? data?.note?.viewerSaved
+  if (viewerSaved === undefined) return null
+  const note = { viewerSaved }
   const Icon = note.viewerSaved ? BookmarkCheck : Bookmark
   return (
     <Button
