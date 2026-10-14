@@ -5,6 +5,7 @@ import { createServer } from 'node:http'
 
 const { notes } = JSON.parse(readFileSync(new URL('./public-notes.json', import.meta.url), 'utf8'))
 const { profiles } = JSON.parse(readFileSync(new URL('./profiles.json', import.meta.url), 'utf8'))
+const { subjects } = JSON.parse(readFileSync(new URL('./subjects.json', import.meta.url), 'utf8'))
 const port = Number(process.env.SSR_API_PORT ?? 3199)
 
 const answer = (query, variables) => {
@@ -21,6 +22,14 @@ const answer = (query, variables) => {
     const { cards, ...rest } = n
     return { note: { ...rest, cards: { edges: cards.map((node) => ({ node })), pageInfo: { hasNextPage: false, endCursor: null } } } }
   }
+  // Subjects (no /core, owner 2026-10-14): the catalogue, one subject, and the public notes on a subject or topic.
+  if (query.includes('query Subjects ')) return { subjects }
+  if (query.includes('query Subject(')) return { subject: subjects.find((s) => s.slug === variables.slug) ?? null }
+  if (query.includes('query SubjectShelf(')) {
+    const graphs = variables.filters?.topicId === '01920000-0000-7000-8000-00000000c511'
+    return { search: { notes: graphs ? notes.slice(0, 1).map((n) => ({ note: { id: n.id, title: n.title, slug: n.slug, kind: n.kind ?? 'NOTE', publishedAt: n.publishedAt, owner: { displayName: n.owner?.displayName ?? 'Ravi Kumar' } } })) : [] } }
+  }
+  if (query.includes('query TopicResources(')) return { resources: { edges: [] } }
   // One-click unsubscribe (lvn-backend ADR-0050): the token "good" turns off class emails; anything else is refused.
   if (query.includes('unsubscribeEmail(')) {
     return { unsubscribeEmail: variables.token === 'good' ? { kind: 'CLASSROOM_POST', userErrors: [] } : { kind: null, userErrors: [{ message: 'This unsubscribe link is not valid.' }] } }

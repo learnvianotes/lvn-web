@@ -43,7 +43,7 @@ const ENTRIES: Entry[] = [
   { href: '/home', key: 'home', icon: House },
   { href: '/notes', key: 'notes', icon: NotebookPen, match: /^\/notes(\/|$)/ },
   { href: '/search', key: 'explore', icon: Compass },
-  { href: '/core', key: 'subjects', icon: BookOpen },
+  { href: '/subjects', key: 'subjects', icon: BookOpen, match: /^\/subjects(\/|$)/ },
   { href: '/groups', key: 'groups', icon: Users },
   { href: '/classes', key: 'classes', icon: GraduationCap },
   { href: '/exams', key: 'exams', icon: CalendarDays },

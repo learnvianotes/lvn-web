@@ -14,7 +14,7 @@ export function GuestNav({ labels }: { labels: { features: string; subjects: str
       <Link href="/#features" className={link}>
         {labels.features}
       </Link>
-      <Link href="/core" className={link}>
+      <Link href="/subjects" className={link}>
         {labels.subjects}
       </Link>
       <Link href="/community" className={link}>

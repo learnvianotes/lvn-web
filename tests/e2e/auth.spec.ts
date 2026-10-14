@@ -137,11 +137,11 @@ test.describe('sign in', () => {
       SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: session(viewer({ registrationComplete: false })), userErrors: [] } }),
       Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
     })
-    await page.goto('/sign-in?next=/core/python')
+    await page.goto('/sign-in?next=/subjects/dsa')
     await page.getByLabel('Email').fill('asha@example.com')
     await page.getByLabel('Password').fill('a long enough passphrase')
     await page.getByRole('button', { name: 'Sign in' }).click()
-    await expect(page).toHaveURL(/\/sign-up\/details\?next=%2Fcore%2Fpython$/)
+    await expect(page).toHaveURL(/\/sign-up\/details\?next=%2Fsubjects%2Fdsa$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Almost there, Asha')
     await expect(page.getByLabel('Your name')).toHaveValue('Asha Rao')
   })

@@ -16,6 +16,14 @@ const schema = z.object({
   NEXT_PUBLIC_API_URL: z.url(),
   /** Live updates, lvn-backend's graphql-ws endpoint (ADR-0042); see `liveUrl` below. */
   NEXT_PUBLIC_LIVE_URL: z.url().refine((u) => /^wss?:\/\//.test(u), 'must be a ws(s) URL').optional(),
+  /**
+   * The old notes at /core (owner, 2026-10-14): kept for later and off unless `true`. Off, nothing links to /core and its
+   * addresses lead to the subjects pages; the code and content stay.
+   */
+  NEXT_PUBLIC_CORE_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   /** /core feedback reports (core-app/src/config.ts reads it directly); empty disables sending. */
   NEXT_PUBLIC_FEEDBACK_URL: z.union([z.url(), z.literal('')]).optional(),
   // Google sign-in through Firebase Authentication (lvn-backend ADR-0007). Public identifiers, not secrets.
@@ -38,6 +46,7 @@ const unsetIfEmpty = (raw: Record<string, string | undefined>) => Object.fromEnt
 const parsed = schema.safeParse(unsetIfEmpty({
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_CORE_ENABLED: process.env.NEXT_PUBLIC_CORE_ENABLED,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_LIVE_URL: process.env.NEXT_PUBLIC_LIVE_URL,
   NEXT_PUBLIC_FEEDBACK_URL: process.env.NEXT_PUBLIC_FEEDBACK_URL,
