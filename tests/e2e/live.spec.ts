@@ -1289,3 +1289,53 @@ test('a learner saves someone’s public note and finds it in Bookmarks (lvn-bac
   await page.getByRole('region', { name: 'Notes' }).getByRole('link', { name: new RegExp(title) }).click()
   await expect(page).toHaveURL(new RegExp(`/notes/${id}$`))
 })
+
+test('a learner follows a topic and finds someone’s public note on it in For You; a reaction puts it in Trending (lvn-backend ADR-0076)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify the author and the reader who reacts')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const verified = async (who: string) => {
+    const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Live ${who}`, dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    })
+    sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
+    return up.signUp.session.accessToken
+  }
+  const author = await verified('feed-author')
+  const topic = (await api<{ findTopics: { id: string; title: string }[] }>('query ($q: String!) { findTopics(query: $q) { id title } }', { q: 'array' }, author)).findTopics[0]!
+  const title = `Live For You note ${stamp}`
+  const card = { id: randomUUID(), type: 'text', position: 'a0', content: { doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Arrays keep their items side by side.' }] }] } } }
+  const id = (await api<{ createNote: { note: { id: string } } }>('mutation ($input: CreateNoteInput!) { createNote(input: $input) { note { id } } }', { input: { title, topicIds: [topic.id], cards: [card] } }, author)).createNote.note.id
+  await api('mutation ($input: NoteIdInput!) { publishNote(input: $input) { note { id } } }', { input: { noteId: id } }, author)
+  await api('mutation ($input: ChangeNoteVisibilityInput!) { changeNoteVisibility(input: $input) { note { id } } }', { input: { noteId: id, visibility: 'PUBLIC' } }, author)
+  await api('mutation ($input: ReactInput!) { react(input: $input) { userErrors { message } } }', { input: { kind: 'HELPFUL', target: { type: 'NOTE', id } } }, await verified('feed-fan'))
+
+  await page.goto('/sign-up')
+  await page.getByLabel('Your name').fill('Live Follower')
+  await page.getByLabel('Email', { exact: true }).fill(`live-follower-${stamp}@example.com`)
+  await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
+  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+  // No topics yet: For You leads to choosing some, on the account.
+  await fromSidebar(page, 'Community')
+  await expect(page.getByRole('tab', { name: 'For You' })).toHaveAttribute('aria-selected', 'true')
+  await page.getByRole('link', { name: 'Choose topics' }).click()
+  await expect(page).toHaveURL(/\/profile#interests$/)
+  const interests = page.locator('#interests')
+  await interests.getByLabel('Add a topic').fill(topic.title)
+  await interests.getByRole('list', { name: 'Topics found' }).getByRole('button', { name: new RegExp(`^${topic.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} ·`) }).first().click()
+  await expect(interests.getByRole('list', { name: 'Your topics' })).toContainText(topic.title)
+  // For You has the note, newest first; its card opens it.
+  await fromSidebar(page, 'Community')
+  const mine = page.getByRole('article', { name: title })
+  await expect(mine).toBeVisible({ timeout: 15_000 })
+  await expect(mine.getByRole('link', { name: topic.title, exact: true })).toBeVisible()
+  await mine.getByRole('link', { name: title }).click()
+  await expect(page).toHaveURL(new RegExp(`/notes/${id}$`))
+  // Someone reacted this week: it is trending.
+  await fromSidebar(page, 'Community')
+  await page.getByRole('tab', { name: 'Trending' }).click()
+  await expect(page.getByRole('article', { name: title })).toBeVisible({ timeout: 15_000 })
+})
