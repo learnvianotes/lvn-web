@@ -2317,7 +2317,8 @@
     "handle": "Ask someone by their handle",
     "invite": "Ask",
     "share": "Show my name and days on my classes' Rhythm ring",
-    "shareHelp": "Your classmates and teachers see your first name and how many days counted this week. Off unless you turn it on."
+    "shareHelp": "Your classmates and teachers see your first name and how many days counted this week. Off unless you turn it on.",
+    "together": "Together: {counted} of {target} days"
   },
   "classRhythm": {
     "title": "Rhythm this week",
@@ -2604,5 +2605,55 @@
     },
     "more": "Show more",
     "onProfile": "Achievements"
+  },
+  "tasks": {
+    "title": "This week’s tasks",
+    "lead": "Pick up to three things to do this week. A plan for when and where makes them likelier to happen.",
+    "doneCount": "{done} of {total} done",
+    "add": "Add a task",
+    "full": "That’s {max} tasks for this week.",
+    "label": {
+      "REVIEWS": "Review {target} flashcards",
+      "QUIZ_ANSWERS": "{topic, select, other {Answer {target} questions on {topic}} __none {Answer {target} questions}}",
+      "TOPIC_MINUTES": "Spend {target} minutes on {topic}"
+    },
+    "progress": "{progress} / {target}",
+    "planShown": "Plan: {plan}",
+    "target": "Target",
+    "plan": "When and where (optional)",
+    "planPlaceholder": "After lunch, in the library",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Change",
+    "remove": "Remove",
+    "removeLabel": "Remove the task {task}",
+    "failed": "That didn’t work. Try again.",
+    "suggested": "Suggested for this week",
+    "addThis": "Add",
+    "addSuggested": "Add the task {task}",
+    "somethingElse": "Or something else",
+    "newTask": "A task for this week",
+    "kind": "What",
+    "kinds": {
+      "REVIEWS": "Review flashcards",
+      "QUIZ_ANSWERS": "Answer questions",
+      "TOPIC_MINUTES": "Minutes on a topic"
+    },
+    "addIt": "Add the task"
+  },
+  "classGoal": {
+    "title": "Class goal this week",
+    "progress": "{progress} of {target} counted days, together",
+    "reached": "Reached: {progress} of {target} counted days, together",
+    "share": "Each student counts up to {share} days, so no one carries it alone.",
+    "parts": "Each student’s part (only teachers see this)",
+    "days": "{days, plural, one {# day} other {# days}}",
+    "off": "No class goal this week. Teachers can set one.",
+    "target": "Target in counted days",
+    "automatic": "Size it from the class",
+    "turnOn": "Set a class goal",
+    "update": "Update the goal",
+    "turnOff": "Turn it off",
+    "failed": "That didn’t work. Try again."
   }
 }

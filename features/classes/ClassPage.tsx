@@ -80,7 +80,7 @@ export function ClassPage({ id }: { id: string }) {
             {tab === 'quizzes' ? <ClassQuizzes classroom={classroom} /> : null}
             {tab === 'notes' ? <SharedNotes classroom={classroom} /> : null}
             {tab === 'resources' ? <PlaceResources to={{ classroomId: classroom.id }} /> : null}
-            {tab === 'rhythm' ? <ClassRhythm classroomId={classroom.id} /> : null}
+            {tab === 'rhythm' ? <ClassRhythm classroomId={classroom.id} staff={staff} /> : null}
             {tab === 'performance' ? <ClassPerformance classroomId={classroom.id} /> : null}
             {tab === 'people' ? <People classroom={classroom} onChanged={() => void refetch()} /> : null}
             {tab === 'requests' ? <Requests classroom={classroom} onChanged={() => void refetch()} /> : null}

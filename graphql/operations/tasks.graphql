@@ -1,0 +1,72 @@
+# Weekly tasks and the class goal (lvn-backend ADR-0081).
+
+fragment WeeklyTaskFields on WeeklyTask {
+  id
+  kind
+  target
+  topicId
+  topicTitle
+  plan
+  progress
+  done
+}
+
+query WeeklyTasks {
+  weeklyTasks {
+    weekStart
+    max
+    tasks {
+      ...WeeklyTaskFields
+    }
+  }
+}
+
+query TaskSuggestions {
+  taskSuggestions {
+    kind
+    target
+    topicId
+    topicTitle
+    why
+  }
+}
+
+mutation AddWeeklyTask($input: AddWeeklyTaskInput!) {
+  addWeeklyTask(input: $input) {
+    task {
+      ...WeeklyTaskFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation UpdateWeeklyTask($input: UpdateWeeklyTaskInput!) {
+  updateWeeklyTask(input: $input) {
+    task {
+      ...WeeklyTaskFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation RemoveWeeklyTask($id: UUID!) {
+  removeWeeklyTask(input: { id: $id }) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetClassGoal($input: SetClassGoalInput!) {
+  setClassGoal(input: $input) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}

@@ -10,6 +10,7 @@ import { EndRhythmPauseDocument, PauseRhythmDocument, RhythmDocument, SetRhythmP
 import { cn } from '@/lib/cn'
 import { Buddies, FocusMode, ShareRhythm } from './Focus'
 import { Recommendations } from './Recommendations'
+import { WeeklyTasks } from './WeeklyTasks'
 
 type R = RhythmQuery['rhythm']
 
@@ -49,6 +50,7 @@ export function Rhythm() {
             </p>
           ) : null}
           <Week r={r} />
+          <WeeklyTasks />
           <Counters r={r} />
           <FocusMode />
           <Recommendations />

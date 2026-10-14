@@ -54,7 +54,7 @@ test('starts a focus session on a topic with a Meet link, shows the time left, a
 test('asks a buddy, answers an invite, and sees a buddy studying now with their Meet link', async ({ page }) => {
   let list = {
     ...noBuddies,
-    buddies: [{ __typename: 'RhythmBuddy', id: '01920000-0000-7000-8000-0000000b0001', user: user('01920000-0000-7000-8000-0000000000aa', 'Ravi Kumar'), studyingNow: true, studyingSince: new Date().toISOString(), topicTitle: 'Paging', meetUrl: 'https://meet.google.com/abc-defg-hij', countedDays: 2, target: 4, met: false }],
+    buddies: [{ __typename: 'RhythmBuddy', id: '01920000-0000-7000-8000-0000000b0001', user: user('01920000-0000-7000-8000-0000000000aa', 'Ravi Kumar'), studyingNow: true, studyingSince: new Date().toISOString(), topicTitle: 'Paging', meetUrl: 'https://meet.google.com/abc-defg-hij', countedDays: 2, target: 4, met: false, together: { __typename: 'BuddyTogether', countedDays: 5, target: 8 } }],
     invites: [{ __typename: 'RhythmBuddyInvite', id: '01920000-0000-7000-8000-0000000b0002', at: new Date().toISOString(), user: user('01920000-0000-7000-8000-0000000000bb', 'Meena Shah') }],
   }
   let refuse = true
@@ -79,6 +79,8 @@ test('asks a buddy, answers an invite, and sees a buddy studying now with their 
   const box = page.getByRole('region', { name: 'Rhythm buddies' })
   await expect(box.getByText('Studying now')).toBeVisible()
   await expect(box.getByText('On Paging · 2 of 4 days this week')).toBeVisible()
+  // The pair's week together (lvn-backend ADR-0081).
+  await expect(box.getByText('Together: 5 of 8 days')).toBeVisible()
   await expect(box.getByRole('link', { name: 'Join' })).toHaveAttribute('href', 'https://meet.google.com/abc-defg-hij')
   await expect(box.getByText('Meena Shah asked you to be Rhythm buddies.')).toBeVisible()
   await box.getByRole('button', { name: 'Accept' }).click()
@@ -117,7 +119,7 @@ test('a class shows its Rhythm this week, and staff see performance and hard top
   await mockApi(page, {
     Classroom: () => ({ classroom }),
     ClassroomPosts: () => ({ classroom: { __typename: 'Classroom', id: CLASS, posts: { __typename: 'ClassroomPostConnection', edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } } }),
-    ClassroomRhythmRing: () => ({ classroom: { __typename: 'Classroom', id: CLASS, rhythmRing: { __typename: 'ClassroomRhythm', students: 2, metCount: 1, countedDays: 5, targetDays: 8, people: [{ __typename: 'ClassroomRhythmPerson', name: 'Kiran', countedDays: 4, target: 4, met: true, user: { __typename: 'User', id: '01920000-0000-7000-8000-0000000000dd' } }] } } }),
+    ClassroomRhythmRing: () => ({ classroom: { __typename: 'Classroom', id: CLASS, rhythmRing: { __typename: 'ClassroomRhythm', students: 2, metCount: 1, countedDays: 5, targetDays: 8, people: [{ __typename: 'ClassroomRhythmPerson', name: 'Kiran', countedDays: 4, target: 4, met: true, user: { __typename: 'User', id: '01920000-0000-7000-8000-0000000000dd' } }], goal: null } } }),
     ClassroomPerformance: () => ({
       classroom: {
         __typename: 'Classroom', id: CLASS,

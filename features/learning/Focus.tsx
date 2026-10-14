@@ -140,7 +140,7 @@ export function FocusMode() {
   )
 }
 
-function TopicChoice({ value, onChange }: { value: { key: string; title: string } | null; onChange: (v: { key: string; title: string } | null) => void }) {
+export function TopicChoice({ value, onChange }: { value: { key: string; title: string } | null; onChange: (v: { key: string; title: string } | null) => void }) {
   const t = useTranslations('focus')
   const [query, setQuery] = useState('')
   const [find, found] = useLazyQuery(ExamTopicOptionsDocument)
@@ -226,6 +226,7 @@ export function Buddies() {
                 {b.studyingNow && b.topicTitle ? `${t('onTopic', { title: b.topicTitle })} · ` : ''}
                 {t('week', { counted: b.countedDays, target: b.target })}
               </span>
+              <span className="text-muted">{t('together', { counted: b.together.countedDays, target: b.together.target })}</span>
             </span>
             <span className="flex items-center gap-2">
               {b.studyingNow && b.meetUrl ? (
