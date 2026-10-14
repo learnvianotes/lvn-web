@@ -8,6 +8,7 @@ import { useEffect, useId, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { CreateExamDocument, DeleteExamDocument, ExamDocument, ExamsDocument, ExamTopicOptionsDocument, UpdateExamDocument, WeakTopicsDocument, type ExamFieldsFragment } from '@/graphql/generated/graphql'
+import { useSearch } from '@/features/search/useSearch'
 import { cn } from '@/lib/cn'
 import { EXAM_LIMITS } from '@/lib/contracts/validation'
 
@@ -21,42 +22,223 @@ const localToday = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+type Tab = 'upcoming' | 'plan' | 'progress' | 'notes'
+const TABS: Tab[] = ['upcoming', 'plan', 'progress', 'notes']
+/** Where a plan's topic leads: its notes, or a core subject's topic by name (lvn-backend ADR-0076). */
+export const topicHref = (tp: { key: string; title: string }) =>
+  tp.key.startsWith('topic:') ? `/search?${new URLSearchParams({ topic: tp.key.slice(6), topicTitle: tp.title })}` : `/search?${new URLSearchParams({ q: tp.title || coreName(tp.key) })}`
+
 /**
- * Exams (lvn-backend ADR-0070): each exam with its Readiness against the target line, today's revision, and the plan;
- * adding one with its topics; the weak topics to revise first. A task left is never framed as a loss.
+ * Exams (lvn-backend ADR-0070, ADR-0076) in tabs: Upcoming (each exam with its Readiness against the target line, and
+ * adding one), Study Plan (today's sessions as a checklist and Continue Plan), Progress (Readiness, the topics' mastery
+ * and the weak topics) and Notes (notes on an exam's topics). A task left is never framed as a loss.
  */
 export function Exams() {
   const t = useTranslations('exams')
   const { data, loading, error } = useQuery(ExamsDocument, { fetchPolicy: 'cache-and-network' })
   const [adding, setAdding] = useState(false)
+  const [tab, setTab] = useState<Tab>('upcoming')
   const exams = data?.exams
+  const upcoming = exams?.filter((e) => !e.past) ?? []
+  const add = () => {
+    setTab('upcoming')
+    setAdding(true)
+  }
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
-      {adding ? (
-        <section aria-label={t('add')} className="rounded-2xl border border-border bg-surface p-5">
-          <ExamForm onDone={() => setAdding(false)} />
-        </section>
-      ) : (
-        <Button className="self-start" onClick={() => setAdding(true)}>
-          {t('add')}
-        </Button>
-      )}
-      {error && !exams ? <Alert tone="error">{t('failed')}</Alert> : null}
-      {!exams && loading ? <p className="text-muted">{t('loading')}</p> : null}
-      {exams && !exams.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
-      <ul className="flex flex-col gap-3">
-        {exams?.map((e) => (
+      <div role="tablist" aria-label={t('tabs.label')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
+        {TABS.map((x) => (
+          <button
+            key={x}
+            role="tab"
+            type="button"
+            aria-selected={x === tab}
+            onClick={() => setTab(x)}
+            className={cn('-mb-px shrink-0 border-b-2 px-3 py-2 text-sm font-semibold', x === tab ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-fg')}
+          >
+            {t(`tabs.${x}`)}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" aria-label={t(`tabs.${tab}`)} className="flex flex-col gap-6">
+        {error && !exams ? <Alert tone="error">{t('failed')}</Alert> : null}
+        {!exams && loading ? <p className="text-muted">{t('loading')}</p> : null}
+        {tab === 'upcoming' ? (
+          <>
+            {adding ? (
+              <section aria-label={t('add')} className="rounded-2xl border border-border bg-surface p-5">
+                <ExamForm onDone={() => setAdding(false)} />
+              </section>
+            ) : (
+              <Button className="self-start" onClick={() => setAdding(true)}>
+                {t('add')}
+              </Button>
+            )}
+            {exams && !exams.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
+            <ul className="flex flex-col gap-3">
+              {exams?.map((e) => (
+                <li key={e.id}>
+                  <ExamCard exam={e} />
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+        {exams && tab !== 'upcoming' && !upcoming.length ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">
+            <p>{t('noUpcoming')}</p>
+            <Button onClick={add}>{t('add')}</Button>
+          </div>
+        ) : null}
+        {tab === 'plan' && upcoming.length ? <StudyPlan exams={upcoming} /> : null}
+        {tab === 'progress' && upcoming.length ? (
+          <>
+            {upcoming.map((e) => (
+              <ExamProgress key={e.id} exam={e} />
+            ))}
+            <WeakTopics />
+          </>
+        ) : null}
+        {tab === 'notes' && upcoming.length ? <ExamNotes exams={upcoming} /> : null}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Today's sessions as a checklist (lvn-backend ADR-0076). A session is done by studying its topics (ADR-0070), so each
+ * line shows whether it is and leads to its topics; Continue Plan opens the first topic still to study today.
+ */
+function StudyPlan({ exams }: { exams: Exam[] }) {
+  const t = useTranslations('exams')
+  const today = exams.flatMap((e) => e.tasks.filter((x) => x.today).map((task) => ({ exam: e, task })))
+  const next = today.find((x) => !x.task.done && x.task.topics.length)
+  return (
+    <>
+      <section aria-labelledby="plan-today" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="plan-today" className="text-lg font-bold">
+            {t('today')}
+          </h2>
+          {next ? (
+            <Button asChild>
+              <Link href={topicHref(next.task.topics[0]!)}>{t('continuePlan')}</Link>
+            </Button>
+          ) : null}
+        </div>
+        <p className="text-sm text-muted">{today.length ? (next ? t('planHelp') : t('todayDone')) : t('noTaskToday')}</p>
+        <ul aria-label={t('checklist')} className="flex flex-col gap-2">
+          {today.map(({ exam, task }) => (
+            <li key={task.id} className={cn('flex items-start gap-3 rounded-xl px-3 py-2 text-sm', task.done ? 'bg-accent-soft' : 'bg-surface-2')}>
+              <span
+                role="img"
+                aria-label={task.done ? t('taskDone') : t('taskToDo')}
+                className={cn('mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-xs', task.done ? 'bg-accent text-accent-fg' : 'border border-border')}
+              >
+                {task.done ? '✓' : ''}
+              </span>
+              <span className="flex flex-1 flex-col gap-1">
+                <span className="font-medium">{exam.name}</span>
+                <span className="flex flex-wrap gap-x-3 gap-y-1">
+                  {task.topics.map((tp) => (
+                    <Link key={tp.key} href={topicHref(tp)} className="text-accent hover:underline">
+                      {tp.title || coreName(tp.key)}
+                    </Link>
+                  ))}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <ul className="flex flex-col gap-2">
+        {exams.map((e) => (
           <li key={e.id}>
-            <ExamCard exam={e} />
+            <Link href={`/exams/${e.id}`} className="text-sm font-semibold text-accent hover:underline">
+              {t('wholePlan', { exam: e.name })}
+            </Link>
           </li>
         ))}
       </ul>
-      <WeakTopics />
-    </div>
+    </>
+  )
+}
+
+/** One exam's Readiness and its topics' mastery (lvn-backend ADR-0070). */
+function ExamProgress({ exam }: { exam: Exam }) {
+  const t = useTranslations('exams')
+  return (
+    <section aria-label={exam.name} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
+      <h2 className="text-lg font-bold">
+        <Link href={`/exams/${exam.id}`} className="hover:underline">
+          {exam.name}
+        </Link>
+      </h2>
+      <div className="flex items-center gap-3">
+        <span className="w-32 shrink-0 text-sm font-semibold">{t('readiness', { value: exam.readiness })}</span>
+        <ReadinessBar readiness={exam.readiness} targetToday={exam.targetToday} />
+      </div>
+      <TopicMastery exam={exam} />
+    </section>
+  )
+}
+
+/** Notes on an exam's topics: one's own, shared and public, newest first (lvn-backend ADR-0076). */
+function ExamNotes({ exams }: { exams: Exam[] }) {
+  const t = useTranslations('exams')
+  const [examId, setExamId] = useState(exams[0]!.id)
+  const exam = exams.find((e) => e.id === examId) ?? exams[0]!
+  const topicIds = exam.topics.flatMap((tp) => (tp.key.startsWith('topic:') ? [tp.key.slice(6)] : [])).slice(0, 20)
+  const { notes, hasMore, more, loadingMore, searched } = useSearch('', 20, { topicIds }, ['NOTES'])
+  return (
+    <section aria-labelledby="exam-notes" className="flex flex-col gap-3">
+      <h2 id="exam-notes" className="sr-only">
+        {t('tabs.notes')}
+      </h2>
+      {exams.length > 1 ? (
+        <div role="group" aria-label={t('whichExam')} className="flex flex-wrap gap-2">
+          {exams.map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              aria-pressed={e.id === exam.id}
+              onClick={() => setExamId(e.id)}
+              className={cn('rounded-full border px-3 py-1 text-sm', e.id === exam.id ? 'border-accent bg-accent-soft font-medium text-accent' : 'border-border bg-surface hover:border-accent hover:text-accent')}
+            >
+              {e.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <p className="text-sm text-muted">{t('notesHelp', { exam: exam.name })}</p>
+      {!topicIds.length || (searched && !notes.length) ? (
+        <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">
+          {t('noNotes')}{' '}
+          <Link href="/search" className="font-semibold text-accent hover:underline">
+            {t('findNotes')}
+          </Link>
+        </p>
+      ) : null}
+      <ul className="flex flex-col gap-2">
+        {notes.map(({ note }) => (
+          <li key={note.id}>
+            <Link href={`/notes/${note.id}`} className="flex flex-col gap-0.5 rounded-2xl border border-border bg-surface px-4 py-3 hover:border-accent/40">
+              <span className="font-semibold">{note.title || t('untitled')}</span>
+              <span className="text-xs text-muted">{t('by', { name: note.owner.displayName })}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {hasMore ? (
+        <Button variant="secondary" className="self-center" disabled={loadingMore} onClick={() => void more()}>
+          {t('moreNotes')}
+        </Button>
+      ) : null}
+    </section>
   )
 }
 
@@ -166,23 +348,7 @@ export function ExamDetail({ id }: { id: string }) {
           {t('mastery')}
         </h2>
         <p className="text-sm text-muted">{t('masteryHelp')}</p>
-        <ul className="flex flex-col gap-3">
-          {exam.topics.map((tp) => (
-            <li key={tp.key} className="flex flex-col gap-1">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                <span className="font-medium">{tp.title}</span>
-                <span className="text-muted">
-                  {tp.recall === null && tp.accuracy === null
-                    ? t('noData')
-                    : [tp.recall !== null ? t('recall', { value: pct(tp.recall) }) : null, tp.accuracy !== null ? t('accuracy', { value: pct(tp.accuracy) }) : null].filter(Boolean).join(' · ')}
-                </span>
-              </div>
-              <div aria-hidden className="h-1.5 rounded-full bg-surface-2">
-                <div className="h-full rounded-full bg-accent/70" style={{ width: `${pct(tp.mastery)}%` }} />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <TopicMastery exam={exam} />
       </section>
       <section aria-labelledby="exam-plan" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
         <h2 id="exam-plan" className="text-lg font-bold">
@@ -207,6 +373,30 @@ export function ExamDetail({ id }: { id: string }) {
         </ol>
       </section>
     </div>
+  )
+}
+
+/** Each topic's mastery, with the recall and quiz accuracy behind it (lvn-backend ADR-0070). */
+function TopicMastery({ exam }: { exam: Exam }) {
+  const t = useTranslations('exams')
+  return (
+    <ul className="flex flex-col gap-3">
+      {exam.topics.map((tp) => (
+        <li key={tp.key} className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+            <span className="font-medium">{tp.title}</span>
+            <span className="text-muted">
+              {tp.recall === null && tp.accuracy === null
+                ? t('noData')
+                : [tp.recall !== null ? t('recall', { value: pct(tp.recall) }) : null, tp.accuracy !== null ? t('accuracy', { value: pct(tp.accuracy) }) : null].filter(Boolean).join(' · ')}
+            </span>
+          </div>
+          <div aria-hidden className="h-1.5 rounded-full bg-surface-2">
+            <div className="h-full rounded-full bg-accent/70" style={{ width: `${pct(tp.mastery)}%` }} />
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
 

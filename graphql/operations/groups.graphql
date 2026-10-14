@@ -13,6 +13,7 @@ fragment GroupCard on Group {
 
 fragment GroupDetail on Group {
   ...GroupCard
+  pictureUrl
   createdAt
   moderationWarning
   viewerRequestId

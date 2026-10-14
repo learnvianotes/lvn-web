@@ -1345,7 +1345,17 @@
     "mentorInvites": "Invites to mentor",
     "mentorInvitedBy": "{name} asked you to mentor this project",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "picture": "Group picture",
+    "pictureOf": "The picture of {name}",
+    "noPicture": "No picture yet.",
+    "pictureChoose": "Choose a picture",
+    "pictureChange": "Change the picture",
+    "pictureUploading": "Uploading…",
+    "pictureRemove": "Remove the picture",
+    "pictureSaved": "Picture saved.",
+    "pictureRemoved": "Picture removed.",
+    "pictureHint": "A JPEG, PNG or WebP picture, up to 2 MB. Everyone who sees the group sees it."
   },
   "classes": {
     "title": "Classes",
@@ -2156,7 +2166,28 @@
       "LOW_ACCURACY": "Under 60% right in your last quizzes ({value}%)",
       "NOT_REVISITED": "Not revised in 14 days, before {exam}"
     },
-    "aTopic": "A topic"
+    "aTopic": "A topic",
+    "tabs": {
+      "label": "Your exams",
+      "upcoming": "Upcoming",
+      "plan": "Study Plan",
+      "progress": "Progress",
+      "notes": "Notes"
+    },
+    "noUpcoming": "No exam coming up. Add one and its plan, progress and notes appear here.",
+    "today": "Today",
+    "continuePlan": "Continue plan",
+    "checklist": "Today’s sessions",
+    "noTaskToday": "No session planned today.",
+    "taskToDo": "to do",
+    "wholePlan": "The whole plan for {exam}",
+    "whichExam": "Which exam",
+    "notesHelp": "Notes on the topics of {exam}: yours, those shared with you and public ones, newest first.",
+    "noNotes": "No notes on these topics yet.",
+    "findNotes": "Search notes",
+    "untitled": "Untitled note",
+    "by": "by {name}",
+    "moreNotes": "More notes"
   },
   "recommendations": {
     "title": "Recommended for you",

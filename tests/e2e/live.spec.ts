@@ -101,13 +101,20 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByLabel('Front').fill('LIFO')
   // The save that carries the back of the card, not an earlier one that happened to say Saved.
   const backSaved = page.waitForResponse((r) => r.url().endsWith('/graphql') && /UpdateNoteDraft/.test(r.request().postData() ?? '') && (r.request().postData() ?? '').includes('Last in, first out'), { timeout: 15_000 })
+  // Every save from here to the reload is kept, so a lost back can be told apart: refused by the API, or written over.
+  const saves: string[] = []
+  page.on('response', (r) => {
+    if (r.url().endsWith('/graphql') && /UpdateNoteDraft/.test(r.request().postData() ?? '')) void r.text().then((body) => saves.push(`${r.request().postData()} => ${body}`), () => undefined)
+  })
   await page.getByLabel('Back').fill('Last in, first out: a stack')
-  await backSaved
+  const saved = (await (await backSaved).json()) as { data?: { updateNoteDraft?: { results?: { status: string }[]; conflictVersion: unknown } } }
+  expect(saved.data?.updateNoteDraft?.results?.map((r) => r.status) ?? [], JSON.stringify(saved)).not.toContain('CONFLICT')
+  expect(saved.data?.updateNoteDraft?.conflictVersion ?? null, JSON.stringify(saved)).toBeNull()
   await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 15_000 })
 
   await page.reload()
   await expect(editor.getByText('A queue is first in, first out.')).toBeVisible()
-  await expect(page.getByLabel('Back')).toHaveValue('Last in, first out: a stack')
+  await expect(page.getByLabel('Back'), saves.join('\n')).toHaveValue('Last in, first out: a stack')
   // The outline: beside the note on wide screens, in the Contents sheet on phones.
   if (info.project.name === 'phone') await page.getByRole('button', { name: 'Contents' }).click()
   await expect(page.getByRole(info.project.name === 'phone' ? 'dialog' : 'navigation', { name: info.project.name === 'phone' ? 'Contents' : 'Outline' }).getByRole('button', { name: 'Practice' })).toBeVisible()
@@ -1340,4 +1347,32 @@ test('a learner follows a topic and finds someone’s public note on it in For Y
   await fromSidebar(page, 'Community')
   await page.getByRole('tab', { name: 'Trending' }).click()
   await expect(page.getByRole('article', { name: title })).toBeVisible({ timeout: 15_000 })
+})
+
+test('a group’s admin chooses its picture from this computer; it goes to storage and shows atop the group (lvn-backend ADR-0076)', async ({ page }, info) => {
+  test.skip(!process.env.E2E_VM, 'needs E2E_VM to verify the admin')
+  const stamp = `${Date.now()}-${info.project.name}`
+  const email = `live-picture-${stamp}@example.com`
+  const password = `live passphrase ${stamp}`
+  const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
+  const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
+    input: { email, password, displayName: 'Live Admin', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+  })
+  sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
+  const name = `Live picture club ${stamp}`
+  const groupId = (await api<{ createGroup: { group: { id: string } } }>('mutation ($input: CreateGroupInput!) { createGroup(input: $input) { group { id } } }', { input: { name, privacy: 'PUBLIC' } }, up.signUp.session.accessToken)).createGroup.group.id
+
+  await page.goto(`/sign-in?next=${encodeURIComponent(`/groups/${groupId}`)}`)
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  // A real 1×1 PNG: storage checks that the bytes are the picture they claim to be.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64')
+  await page.getByLabel('Choose a picture').setInputFiles({ name: 'club.png', mimeType: 'image/png', buffer: png })
+  await expect(page.getByText('Picture saved.')).toBeVisible({ timeout: 15_000 })
+  const picture = page.getByRole('img', { name: `The picture of ${name}` })
+  await expect(picture).toBeVisible()
+  await expect.poll(() => picture.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
 })
