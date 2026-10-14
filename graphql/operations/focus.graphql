@@ -57,6 +57,10 @@ query RhythmBuddies {
       countedDays
       target
       met
+      together {
+        countedDays
+        target
+      }
     }
     invites {
       id
@@ -133,6 +137,20 @@ query ClassroomRhythmRing($id: UUID!) {
         met
         user {
           id
+        }
+      }
+      goal {
+        target
+        progress
+        sharePerStudent
+        automatic
+        reached
+        parts {
+          countedDays
+          user {
+            id
+            displayName
+          }
         }
       }
     }

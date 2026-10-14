@@ -158,6 +158,17 @@ input AddPdfHighlightInput {
   rects: [[Float!]!]!
 }
 
+input AddWeeklyTaskInput {
+  kind: WeeklyTaskKind!
+
+  """When and where (at most 140 characters)"""
+  plan: String
+  target: Int!
+
+  """Needed for TOPIC_MINUTES; optional for QUIZ_ANSWERS"""
+  topicId: UUID
+}
+
 """
 The viewer's AI tokens today (UTC) against their plan's daily limit (§10.1, ADR-0024)
 """
@@ -586,6 +597,11 @@ type AuthPayload {
   userErrors: [UserError!]!
 }
 
+type BuddyTogether {
+  countedDays: Int!
+  target: Int!
+}
+
 """
 One block of a note (§4.1). `position` orders cards (a fractional index: compare as plain strings, then by id).
 """
@@ -721,6 +737,30 @@ input CategoryPreferenceInput {
 input ChangeNoteVisibilityInput {
   noteId: UUID!
   visibility: Visibility!
+}
+
+"""
+Counted days across the class against a target; no one is listed in order, and it cannot be failed
+"""
+type ClassGoal {
+  """Sized from the class's recent weeks rather than set by a teacher"""
+  automatic: Boolean!
+
+  """Teachers only: each student's part"""
+  parts: [ClassGoalPart!]
+
+  """Each student's counted days, up to their share"""
+  progress: Int!
+  reached: Boolean!
+
+  """The most one student's days count"""
+  sharePerStudent: Int!
+  target: Int!
+}
+
+type ClassGoalPart {
+  countedDays: Int!
+  user: User!
 }
 
 type ClassPerformance {
@@ -961,6 +1001,11 @@ type ClassroomPreview {
 """This week across a class's students"""
 type ClassroomRhythm {
   countedDays: Int!
+
+  """
+  The class's pooled goal this week, when its teachers turned it on (ADR-0081)
+  """
+  goal: ClassGoal
 
   """Students whose week is met"""
   metCount: Int!
@@ -2299,6 +2344,9 @@ type Mutation {
 
   """Owner and editors"""
   addPdfHighlight(input: AddPdfHighlightInput!): PdfHighlightPayload!
+
+  """Adds a task to this week (at most three)"""
+  addWeeklyTask(input: AddWeeklyTaskInput!): WeeklyTaskPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
 
   """The team and the mentor"""
@@ -2520,6 +2568,7 @@ type Mutation {
 
   """Ends a buddy link, or takes back an invite"""
   removeRhythmBuddy(input: RhythmBuddyIdInput!): OkPayload!
+  removeWeeklyTask(input: WeeklyTaskIdInput!): OkPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
   """The asker or the mentor"""
@@ -2608,6 +2657,9 @@ type Mutation {
 
   """The note's owner only"""
   setAiInsightHidden(hidden: Boolean!, id: UUID!): OkPayload!
+
+  """Teachers turn their class's goal on or off"""
+  setClassGoal(input: SetClassGoalInput!): OkPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
 
   """
@@ -2732,6 +2784,7 @@ type Mutation {
 
   """Replaces the items written by hand; imported items stay"""
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
+  updateWeeklyTask(input: UpdateWeeklyTaskInput!): WeeklyTaskPayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
   withdrawClassroomJoinRequest(input: JoinRequestIdInput!): ClassroomPayload!
@@ -3673,6 +3726,11 @@ type Query {
   syncPull(after: String, first: Int, since: String): SyncPullResult!
 
   """
+  Tasks worth setting this week: the next exam's weakest topic, weak topics, flashcards due
+  """
+  taskSuggestions: [TaskSuggestion!]!
+
+  """
   Verified teachers whose name or handle matches, to ask one of them for verification
   """
   teachers(search: String!): [User!]!
@@ -3708,6 +3766,9 @@ type Query {
 
   """Signed in only: weak topics, each with why; an upcoming exam's first"""
   weakTopics: [WeakTopic!]!
+
+  """The viewer's tasks this week, with how far each has come"""
+  weeklyTasks: WeeklyTasks!
 }
 
 type QuizAnswer {
@@ -4327,6 +4388,11 @@ type RhythmBuddy {
   studyingSince: DateTime
   target: Int!
 
+  """
+  The pair's week together (ADR-0081): both counted days against both targets
+  """
+  together: BuddyTogether!
+
   """The session's topic, when it has one the viewer may see"""
   topicTitle: String
   user: User!
@@ -4555,6 +4621,16 @@ input SetAchievementsShownInput {
 input SetAiDefaultsInput {
   chatConnectionId: UUID
   embedConnectionId: UUID
+}
+
+input SetClassGoalInput {
+  classroomId: UUID!
+  on: Boolean!
+
+  """
+  Counted days for the class this week; leave it out to size it from the class's recent weeks
+  """
+  target: Int
 }
 
 input SetClassroomRoleInput {
@@ -4859,6 +4935,15 @@ type TagPayload {
   userErrors: [UserError!]!
 }
 
+"""A task worth setting this week, and why"""
+type TaskSuggestion {
+  kind: WeeklyTaskKind!
+  target: Int!
+  topicId: UUID
+  topicTitle: String
+  why: String!
+}
+
 type TeacherProfile {
   bio: String
 
@@ -5122,6 +5207,14 @@ input UpdateTeacherProfileInput {
   skills: [TeacherSkillInput!]!
 }
 
+input UpdateWeeklyTaskInput {
+  id: UUID!
+
+  """An empty plan clears it"""
+  plan: String
+  target: Int
+}
+
 type UploadHeader {
   name: String!
   value: String!
@@ -5333,6 +5426,50 @@ enum WeakTopicReason {
   A topic of an exam in the next 14 days with no time on it in the last 14
   """
   NOT_REVISITED
+}
+
+type WeeklyTask {
+  done: Boolean!
+  id: UUID!
+  kind: WeeklyTaskKind!
+
+  """When and where, in the person's words"""
+  plan: String
+
+  """This week so far, from what learning recorded"""
+  progress: Int!
+  target: Int!
+  topicId: UUID
+  topicTitle: String
+}
+
+input WeeklyTaskIdInput {
+  id: UUID!
+}
+
+enum WeeklyTaskKind {
+  """Quiz answers, on a topic or any"""
+  QUIZ_ANSWERS
+
+  """Flashcards graded"""
+  REVIEWS
+
+  """Learning minutes on a topic"""
+  TOPIC_MINUTES
+}
+
+type WeeklyTaskPayload {
+  task: WeeklyTask
+  userErrors: [UserError!]!
+}
+
+type WeeklyTasks {
+  """Tasks a week may hold"""
+  max: Int!
+  tasks: [WeeklyTask!]!
+
+  """The Monday of the person's Rhythm week (YYYY-MM-DD)"""
+  weekStart: String!
 }
 
 enum YearOfStudy {
