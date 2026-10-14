@@ -4,7 +4,8 @@ import { expect, test, type Page } from '@playwright/test'
 /**
  * Phase 9's accessibility audit (lvn-backend docs/plans/phase-9.md, P9e): axe's WCAG 2.2 A and AA rules on every web
  * route of a deployed environment, signed out and as a new learner, at desktop and phone widths. Serious and critical
- * violations fail. Admin pages are left out (no API makes an admin). Skipped unless E2E_LIVE is set:
+ * violations fail, as does any request the Content Security Policy refuses (lvn-backend ADR-0090). Admin pages are left
+ * out (no API makes an admin). Skipped unless E2E_LIVE is set:
  *
  *   E2E_LIVE=1 E2E_BASE_URL=http://100.70.234.41:8080 pnpm test:e2e tests/e2e/a11y-sweep.spec.ts
  */
@@ -14,6 +15,13 @@ test.describe.configure({ timeout: 600_000 })
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
 type Finding = { path: string; rule: string; impact: string; help: string; targets: string[] }
+
+/** Every Content Security Policy refusal the browser reports, by page. */
+function watchCsp(page: Page, findings: Finding[]) {
+  page.on('console', (msg) => {
+    if (/Content Security Policy/i.test(msg.text())) findings.push({ path: new URL(page.url()).pathname, rule: 'csp', impact: 'serious', help: msg.text().slice(0, 300), targets: [] })
+  })
+}
 
 async function audit(page: Page, path: string): Promise<Finding[]> {
   if (path) await page.goto(path)
@@ -33,6 +41,7 @@ async function report(findings: Finding[], info: { attach: (name: string, o: { b
 test('every public page has no serious or critical WCAG 2.2 AA violation', async ({ page }, info) => {
   const paths = ['/', '/sign-in', '/sign-up', '/reset', '/subjects', '/legal/terms', '/legal/privacy', '/legal/content-licence']
   const findings: Finding[] = []
+  watchCsp(page, findings)
   for (const path of paths) findings.push(...(await audit(page, path)))
   // A subject and one of its topics, as a visitor reaches them.
   await page.goto('/subjects')
@@ -48,6 +57,8 @@ test('every public page has no serious or critical WCAG 2.2 AA violation', async
 })
 
 test('every page a learner uses has no serious or critical WCAG 2.2 AA violation', async ({ page }, info) => {
+  const findings: Finding[] = []
+  watchCsp(page, findings)
   const email = `a11y-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${info.project.name}@example.com`
   await page.goto('/sign-up')
   await page.getByLabel('Your name').fill('Axe Learner')
@@ -58,7 +69,6 @@ test('every page a learner uses has no serious or critical WCAG 2.2 AA violation
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
-  const findings: Finding[] = []
   const paths = [
     '/profile', '/profile/notifications', '/profile/people', '/profile/skills', '/home', '/notes', '/saved', '/search?q=graphs',
     '/ask', '/review', '/rhythm', '/exams', '/history', '/achievements', '/quizzes', '/contests', '/community', '/groups', '/classes',

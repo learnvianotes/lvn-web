@@ -31,7 +31,8 @@ const anyOrigin = plain ? 'https: http:' : 'https:'
 const devEval = process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+  // 'wasm-unsafe-eval': pdf.js decodes JPEG 2000 and colour profiles with WebAssembly (public/pdfjs/<version>/wasm).
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${anyOrigin}`,
   `media-src 'self' blob: ${anyOrigin}`,
