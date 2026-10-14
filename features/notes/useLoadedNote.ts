@@ -3,6 +3,7 @@
 import { useApolloClient } from '@apollo/client/react'
 import { useEffect, useState } from 'react'
 import type { CardFieldsFragment } from '@/graphql/generated/graphql'
+import { isNotThere } from '@/lib/query'
 import { loadNote, sendSave, type NoteMeta } from './api'
 import { readMirror, removeMirror, savedFromMirror } from './editor/mirror'
 import { docToCards, type StoredCard } from './model/doc'
@@ -11,6 +12,8 @@ import { planSave } from './model/save'
 export type LoadedNote =
   | { state: 'loading' }
   | { state: 'missing' }
+  /** It could not be asked for (no connection, a server error) and this browser has no copy: the page offers a retry. */
+  | { state: 'failed' }
   | { state: 'ready'; meta: NoteMeta; cards: StoredCard[]; media: CardFieldsFragment[]; mirror: Awaited<ReturnType<typeof readMirror>>; offline: boolean }
 
 /**
@@ -42,10 +45,12 @@ export function useLoadedNote(id: string, userId: string | undefined, generation
         }
       }
       let note: Awaited<ReturnType<typeof loadNote>> = null
+      let failure: unknown = null
       try {
         note = await loadNote(client, id)
-      } catch {
+      } catch (e) {
         offline = true
+        failure = e
       }
       if (cancelled) return
       if (!note && mirror && offline) {
@@ -53,7 +58,8 @@ export function useLoadedNote(id: string, userId: string | undefined, generation
         setLoaded({ state: 'ready', meta: mirrorMeta(id, mirror.title), cards: [], media: [], mirror, offline: true })
         return
       }
-      if (!note) return setLoaded({ state: 'missing' })
+      // Not found only when the API said so (null, or not there for you); a failure to ask is not a missing note.
+      if (!note) return setLoaded(failure && !isNotThere(failure) ? { state: 'failed' } : { state: 'missing' })
       setLoaded({ state: 'ready', meta: note.meta, cards: note.cards, media: note.media, mirror: keep ? mirror : null, offline })
     })()
     return () => {

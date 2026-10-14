@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { ago } from '@/features/notes/look'
 import { RichDoc } from '@/features/notes/render/RichText'
 import { publicNotePath } from '@/features/public-notes/paths'
@@ -53,9 +54,9 @@ export function CommunityPage() {
 
 function Activity() {
   const t = useTranslations('community')
-  const { data, fetchMore } = useQuery(ActivityFeedDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch, fetchMore } = useQuery(ActivityFeedDocument, { fetchPolicy: 'cache-and-network' })
   const feed = data?.activityFeed
-  if (!feed) return null
+  if (!feed) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!feed.edges.length) return <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noActivity')}</p>
   return (
     <div className="flex flex-col gap-3">
@@ -142,9 +143,9 @@ function ActivityCard({ item }: { item: Item }) {
 
 function Following() {
   const t = useTranslations('community')
-  const { data, fetchMore } = useQuery(FollowingFeedDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch, fetchMore } = useQuery(FollowingFeedDocument, { fetchPolicy: 'cache-and-network' })
   const feed = data?.followingFeed
-  if (!feed) return null
+  if (!feed) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!feed.edges.length) return <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noFollowing')}</p>
   return (
     <div className="flex flex-col gap-3">
@@ -187,9 +188,9 @@ function Empty({ children }: { children: React.ReactNode }) {
 /** For You (ADR-0076): public notes on the person's topics, newest first; with no topics, the ways to have some. */
 function ForYou() {
   const t = useTranslations('community')
-  const { data, fetchMore, refetch } = useQuery(ForYouFeedDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, fetchMore, refetch } = useQuery(ForYouFeedDocument, { fetchPolicy: 'cache-and-network' })
   const feed = data?.forYouFeed
-  if (!feed) return null
+  if (!feed) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!feed.edges.length) {
     return (
       <Empty>
@@ -236,9 +237,9 @@ function ForYou() {
 /** Trending (ADR-0076): the public notes most reacted to and discussed this week. */
 function Trending({ onForYou }: { onForYou: () => void }) {
   const t = useTranslations('community')
-  const { data, fetchMore, refetch } = useQuery(TrendingFeedDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, fetchMore, refetch } = useQuery(TrendingFeedDocument, { fetchPolicy: 'cache-and-network' })
   const feed = data?.trendingFeed
-  if (!feed) return null
+  if (!feed) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!feed.edges.length) {
     return (
       <Empty>

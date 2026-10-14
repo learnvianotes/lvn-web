@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { attempt } from '@/features/groups/shared'
 import { AnswerMentorInviteDocument, GroupNotesDocument, InviteMentorDocument, SetProjectShowcaseDocument, WorkspaceDocument, type GroupDetailFragment } from '@/graphql/generated/graphql'
 import { RepositoryCard } from './Repository'
@@ -13,7 +14,7 @@ import { RepositoryCard } from './Repository'
 /** A workspace's header parts (lvn-backend ADR-0048): a mentor invite to answer, the repository card, the showcase. */
 export function WorkspaceHeader({ group, onChanged }: { group: GroupDetailFragment; onChanged: () => void }) {
   const t = useTranslations('workspaces')
-  const { data, refetch } = useQuery(WorkspaceDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(WorkspaceDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
   const [answer] = useMutation(AnswerMentorInviteDocument)
   const [error, setError] = useState<string | null>(null)
   const reply = async (accept: boolean) => {
@@ -34,7 +35,7 @@ export function WorkspaceHeader({ group, onChanged }: { group: GroupDetailFragme
           </Button>
         </div>
       ) : null}
-      {data?.group ? <RepositoryCard groupId={group.id} repository={data.group.repository} canManage={group.viewerCan.manage} onChanged={() => void refetch()} /> : null}
+      {data?.group ? <RepositoryCard groupId={group.id} repository={data.group.repository} canManage={group.viewerCan.manage} onChanged={() => void refetch()} /> : !data ? <QueryState loading={loading} error={queryError} onRetry={refetch} /> : null}
       {showcase ? (
         <Link href={`/notes/${showcase.id}`} className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-accent hover:underline">
           <Award className="size-4" aria-hidden />

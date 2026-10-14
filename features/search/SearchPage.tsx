@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import type { NoteKind, NoteSource, SearchScope } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { Snippet } from './Snippet'
@@ -38,7 +39,7 @@ export function SearchPage() {
   const [tab, setTab] = useState<Tab>(TABS.find((x) => x === params.get('tab')) ?? 'all')
   // Kind, source and topic narrow notes, so they apply where notes are listed.
   const narrows = tab === 'all' || tab === 'notes'
-  const { notes, people, topics, groups, classrooms, resources, hasMore, more, loadingMore, loading, searched, settled } = useSearch(query, 20, narrows ? { kinds, sources, topicId: topic?.id } : {}, SCOPES[tab])
+  const { notes, people, topics, groups, classrooms, resources, hasMore, more, loadingMore, loading, searched, failed, retry, settled } = useSearch(query, 20, narrows ? { kinds, sources, topicId: topic?.id } : {}, SCOPES[tab])
 
   const go = (next: { q?: string; tab?: Tab; kinds?: NoteKind[]; sources?: NoteSource[]; topic?: { id: string; title: string } | null }) => {
     const q = next.q ?? query
@@ -168,6 +169,7 @@ export function SearchPage() {
           </div>
         ) : null}
         {!narrows && settled.length < 2 ? <p className="text-sm text-muted">{t(`hints.${tab}`)}</p> : null}
+        {failed ? <LoadFailed onRetry={retry} /> : null}
         {tab === 'users' ? nothingHere(people.length) : null}
         {tab === 'groups' ? nothingHere(groups.length + classrooms.length) : null}
         {tab === 'resources' ? nothingHere(resources.length) : null}

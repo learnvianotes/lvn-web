@@ -8,6 +8,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { putToStorage, UploadError } from '@/features/notes/media'
 import { ApplyToTeachDocument, CompleteNoteUploadDocument, CreateNoteUploadDocument, MyTeacherApplicationDocument, ViewerDocument } from '@/graphql/generated/graphql'
 
@@ -22,10 +23,13 @@ export function Teach() {
   const t = useTranslations('teach')
   const format = useFormatter()
   const client = useApolloClient()
-  const viewer = useQuery(ViewerDocument).data?.viewer
+  const viewerQuery = useQuery(ViewerDocument)
+  const viewer = viewerQuery.data?.viewer
   const app = useQuery(MyTeacherApplicationDocument, { fetchPolicy: 'cache-and-network' })
   const latest = app.data?.myTeacherApplication
-  if (!viewer) return null
+  if (!viewer) return <QueryState loading={viewerQuery.loading} error={viewerQuery.error} onRetry={viewerQuery.refetch} />
+  // Without the application a pending applicant would be offered the form again.
+  if (!app.data) return <QueryState loading={app.loading} error={app.error} onRetry={app.refetch} />
   const status = viewer.teacherStatus
   return (
     <div className="flex flex-col gap-6">

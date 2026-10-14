@@ -80,6 +80,11 @@
     "lead": "This page doesn't exist or is no longer public.",
     "home": "Go home"
   },
+  "states": {
+    "loading": "Loading…",
+    "loadFailed": "This could not be loaded.",
+    "retry": "Try again"
+  },
   "auth": {
     "welcome": {
       "headline": "Turn your notes into knowledge that sticks.",
@@ -2246,6 +2251,7 @@
     "lead": "Add an exam and its topics: LearnViaNotes spreads revision sessions back from the day, and Readiness shows how well you know the topics now.",
     "loading": "Loading…",
     "failed": "Your exams could not load. Try again.",
+    "notFound": "This exam is not here: it may have been deleted.",
     "none": "No exams yet. Add one and its plan appears here.",
     "add": "Add an exam",
     "name": "Exam",
@@ -2318,6 +2324,7 @@
   },
   "recommendations": {
     "title": "Recommended for you",
+    "loadFailed": "Your recommendations could not be loaded.",
     "none": "Nothing to recommend yet. Read a few notes, add an exam or take a quiz, and suggestions appear here.",
     "dismiss": "Not now: {title}",
     "untitled": "Untitled"
@@ -2344,6 +2351,7 @@
   },
   "buddies": {
     "title": "Rhythm buddies",
+    "loadFailed": "Your Rhythm buddies could not be loaded.",
     "lead": "Up to five people you follow or are connected with. You see when each other is studying, and each other's week; nothing else.",
     "none": "No buddies yet.",
     "invited": "{name} asked you to be Rhythm buddies.",
@@ -2652,6 +2660,7 @@
   },
   "tasks": {
     "title": "This week’s tasks",
+    "loadFailed": "This week’s tasks could not be loaded.",
     "lead": "Pick up to three things to do this week. A plan for when and where makes them likelier to happen.",
     "doneCount": "{done} of {total} done",
     "add": "Add a task",

@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { ResourcesDocument, SaveResourceDocument, UnsaveResourceDocument, type ResourceFieldsFragment, type ResourceSort, type ResourceType } from '@/graphql/generated/graphql'
 import { useSession } from '@/state/session'
 import { RESOURCE_TYPES } from './ResourceForm'
@@ -35,7 +36,7 @@ function Inner() {
     const timer = setTimeout(() => setQuery(typed.trim()), 250)
     return () => clearTimeout(timer)
   }, [typed])
-  const { data, fetchMore, loading } = useQuery(ResourcesDocument, { variables: { filter: { type, query: query || null }, sort, first: 24 }, skip: status === 'unknown', fetchPolicy: 'cache-and-network' })
+  const { data, fetchMore, loading, error, refetch } = useQuery(ResourcesDocument, { variables: { filter: { type, query: query || null }, sort, first: 24 }, skip: status === 'unknown', fetchPolicy: 'cache-and-network' })
   const items = data?.resources.edges.map((e) => e.node) ?? []
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">
@@ -77,6 +78,7 @@ function Inner() {
           </label>
         </div>
       </div>
+      {!data ? <QueryState loading={loading || status === 'unknown'} error={error} onRetry={refetch} /> : null}
       {data && !items.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted">{t('none')}</p> : null}
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((r) => (

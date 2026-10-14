@@ -7,9 +7,11 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useEffect, useId, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { CreateExamDocument, DeleteExamDocument, ExamDocument, ExamsDocument, ExamTopicOptionsDocument, UpdateExamDocument, WeakTopicsDocument, type ExamFieldsFragment } from '@/graphql/generated/graphql'
 import { useSearch } from '@/features/search/useSearch'
 import { cn } from '@/lib/cn'
+import { isNotThere } from '@/lib/query'
 import { EXAM_LIMITS } from '@/lib/contracts/validation'
 
 type Exam = ExamFieldsFragment
@@ -35,7 +37,7 @@ export const topicHref = (tp: { key: string; title: string }) =>
  */
 export function Exams() {
   const t = useTranslations('exams')
-  const { data, loading, error } = useQuery(ExamsDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ExamsDocument, { fetchPolicy: 'cache-and-network' })
   const [adding, setAdding] = useState(false)
   const [tab, setTab] = useState<Tab>('upcoming')
   const exams = data?.exams
@@ -65,7 +67,7 @@ export function Exams() {
         ))}
       </div>
       <div role="tabpanel" aria-label={t(`tabs.${tab}`)} className="flex flex-col gap-6">
-        {error && !exams ? <Alert tone="error">{t('failed')}</Alert> : null}
+        {error && !exams && !loading ? <LoadFailed message={t('failed')} onRetry={refetch} /> : null}
         {!exams && loading ? <p className="text-muted">{t('loading')}</p> : null}
         {tab === 'upcoming' ? (
           <>
@@ -289,7 +291,7 @@ export function ExamDetail({ id }: { id: string }) {
   const t = useTranslations('exams')
   const format = useFormatter()
   const router = useRouter()
-  const { data, loading } = useQuery(ExamDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ExamDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [remove, removing] = useMutation(DeleteExamDocument, { refetchQueries: [ExamsDocument] })
   const [editing, setEditing] = useState(false)
   const exam = data?.exam
@@ -299,7 +301,8 @@ export function ExamDetail({ id }: { id: string }) {
         <Link href="/exams" className="text-sm text-accent hover:underline">
           ← {t('back')}
         </Link>
-        {loading ? <p className="text-muted">{t('loading')}</p> : <Alert tone="error">{t('failed')}</Alert>}
+        {/* Not there only when the API said so; an exam that could not be asked for is offered again. */}
+        {loading ? <p className="text-muted">{t('loading')}</p> : error && !isNotThere(error) ? <LoadFailed message={t('failed')} onRetry={refetch} /> : <p className="text-muted">{t('notFound')}</p>}
       </div>
     )
   }

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { MyAchievementsDocument, MyPointsDocument, SetAchievementsShownDocument } from '@/graphql/generated/graphql'
 import { AchievementBadges } from './AchievementBadges'
 
@@ -17,7 +18,7 @@ const LEVEL_FROM = { NEWCOMER: 0, CONTRIBUTOR: 50, TRUSTED: 250 } as const
  */
 export function AchievementsPage() {
   const t = useTranslations('achievements')
-  const { data, loading } = useQuery(MyAchievementsDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(MyAchievementsDocument, { fetchPolicy: 'cache-and-network' })
   const viewer = data?.viewer
   const items = viewer?.achievements ?? []
   return (
@@ -35,7 +36,9 @@ export function AchievementsPage() {
         </h2>
         {items.length ? (
           <AchievementBadges items={items} />
-        ) : !loading ? (
+        ) : !data ? (
+          <QueryState loading={loading} error={error} onRetry={refetch} />
+        ) : (
           <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-sm text-muted">
             {t('none')}{' '}
             <Link href="/review" className="font-semibold text-accent hover:underline">
@@ -50,7 +53,7 @@ export function AchievementsPage() {
               {t('rhythm')}
             </Link>
           </p>
-        ) : null}
+        )}
       </section>
 
       {data ? <Visibility key={String(data.achievementSettings.showAchievements)} shown={data.achievementSettings.showAchievements} canShow={data.achievementSettings.canShow} /> : null}
@@ -121,7 +124,7 @@ function Visibility({ shown, canShow }: { shown: boolean; canShow: boolean }) {
 function History() {
   const t = useTranslations('achievements')
   const format = useFormatter()
-  const { data, fetchMore, loading } = useQuery(MyPointsDocument, { variables: { first: 20 }, fetchPolicy: 'cache-and-network' })
+  const { data, fetchMore, loading, error, refetch } = useQuery(MyPointsDocument, { variables: { first: 20 }, fetchPolicy: 'cache-and-network' })
   const entries = data?.myPoints.edges.map((e) => e.node) ?? []
   const page = data?.myPoints.pageInfo
   return (
@@ -129,6 +132,7 @@ function History() {
       <h2 id="history" className="text-lg font-bold">
         {t('history')}
       </h2>
+      {!data ? <QueryState loading={loading} error={error} onRetry={refetch} /> : null}
       {data && !entries.length ? <p className="text-sm text-muted">{t('noPoints')}</p> : null}
       {entries.length ? (
       <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">

@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client/react'
 import { Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
+import { QueryState } from '@/components/ui/query-state'
 import { ContestsDocument, type ContestsQuery } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 
@@ -15,7 +16,7 @@ type Item = ContestsQuery['contests'][number]
  */
 export function ContestsPage() {
   const t = useTranslations('contests')
-  const { data, loading } = useQuery(ContestsDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ContestsDocument, { fetchPolicy: 'cache-and-network' })
   const list = data?.contests ?? []
   const open = list.filter((c) => c.state === 'OPEN')
   const rest = list.filter((c) => c.state !== 'OPEN')
@@ -29,7 +30,7 @@ export function ContestsPage() {
         <ContestHero key={c.id} contest={c} />
       ))}
       {data && !list.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-sm text-muted">{t('none')}</p> : null}
-      {!data && loading ? <p className="text-muted">{t('loading')}</p> : null}
+      {!data ? <QueryState loading={loading} error={error} onRetry={refetch} /> : null}
       {rest.length ? (
         <ul className="flex flex-col gap-2">
           {rest.map((c) => (

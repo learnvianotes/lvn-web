@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { RichDoc } from '@/features/notes/render/RichText'
@@ -26,12 +27,12 @@ const plain = (doc: unknown) => ((doc as Doc | null)?.content ?? []).map((p) => 
  */
 export function Discussion({ target, title, compact }: { target: { type: CommentTargetType; id: string }; title?: string; compact?: boolean }) {
   const t = useTranslations('discussion')
-  const { data, loading, refetch, fetchMore } = useQuery(DiscussionDocument, { variables: { target }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch, fetchMore } = useQuery(DiscussionDocument, { variables: { target }, fetchPolicy: 'cache-and-network' })
   const [add, adding] = useMutation(AddCommentDocument)
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const d = data?.discussion
-  if (!d) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : null
+  if (!d) return loading ? <Loading label={t('loading')} /> : queryError && !data ? <LoadFailed onRetry={refetch} /> : null
   const refresh = () => void refetch()
   const send = async () => {
     const problem = await attempt(() => add({ variables: { input: { target, body: textToDoc(text) } } }), t('failed'))

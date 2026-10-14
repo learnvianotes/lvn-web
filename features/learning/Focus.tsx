@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { useLive } from '@/features/notifications/live'
 import {
   AnswerRhythmBuddyDocument,
@@ -182,7 +183,7 @@ export function TopicChoice({ value, onChange }: { value: { key: string; title: 
  */
 export function Buddies() {
   const t = useTranslations('buddies')
-  const { data, refetch } = useQuery(RhythmBuddiesDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, error, refetch } = useQuery(RhythmBuddiesDocument, { fetchPolicy: 'cache-and-network' })
   useLive((signal) => {
     if (signal.kind === 'BUDDY_PRESENCE' || signal.kind === 'RECONNECTED') void refetch().catch(() => undefined)
   })
@@ -193,7 +194,8 @@ export function Buddies() {
   const [handle, setHandle] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
   const list = data?.rhythmBuddies
-  if (!list) return null
+  // Nothing while it loads (the page around it is there); a failure says so in one line where the buddies would be.
+  if (!list) return error && !data ? <LoadFailed message={t('loadFailed')} onRetry={refetch} /> : null
   return (
     <section aria-labelledby="rhythm-buddies" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
       <h2 id="rhythm-buddies" className="text-lg font-bold">

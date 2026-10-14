@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { NightSky } from '@/components/brand/NightSky'
 import {
   CreateFolderDocument,
@@ -344,6 +345,7 @@ export function NotesHome() {
               ))}
             </div>
           ) : null}
+          {notes.error && !notes.data && !notes.loading ? <LoadFailed onRetry={notes.refetch} /> : null}
           {notes.data && !all.length ? (
             <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border bg-surface/60 px-6 py-12 text-center">
               <NotebookArt className="w-40" />

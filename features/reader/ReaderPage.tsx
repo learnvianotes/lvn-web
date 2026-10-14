@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import {
   AddPdfHighlightDocument,
   NoteFileDocument,
@@ -22,6 +23,7 @@ import {
 } from '@/graphql/generated/graphql'
 import { cardAnchor, type CardAnchor } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
+import { isNotThere } from '@/lib/query'
 import { sendSave, type NoteMeta } from '@/features/notes/api'
 import { savedFromMirror } from '@/features/notes/editor/mirror'
 import { NoteEditor } from '@/features/notes/editor/NoteEditor'
@@ -296,7 +298,14 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
   const onEditor = useCallback((e: Editor | null) => setEditor(e), [])
 
   // ── States without a PDF ─────────────────────────────────────────────────────────────────────────────────
-  const fileMissing = !file.loading && !file.data?.noteFile
+  // Not found only when the API said so; a file that could not be asked for is offered again.
+  const fileFailed = !file.loading && !file.data?.noteFile && !!file.error && !isNotThere(file.error)
+  const fileMissing = !file.loading && !file.data?.noteFile && !fileFailed
+  // The note beside it: the viewer could not be known, or the note could not be asked for.
+  const viewerFailed = !userId && !!viewerQuery.error && !viewerQuery.loading
+  const notesFailed = loaded.state === 'failed' || viewerFailed
+  const retryNotes = () => (viewerFailed ? viewerQuery.refetch() : setGeneration((g) => g + 1))
+  if (fileFailed) return <LoadFailed className="mx-auto my-16 max-w-md" onRetry={file.refetch} />
   if (loaded.state === 'missing' || fileMissing) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
@@ -430,7 +439,9 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               <div className={cn(panel !== 'notes' && 'hidden')}>
-                {loaded.state !== 'ready' || !userId ? (
+                {notesFailed ? (
+                  <LoadFailed onRetry={retryNotes} />
+                ) : loaded.state !== 'ready' || !userId ? (
                   <p role="status" className="py-8 text-center text-sm text-muted">
                     {t('loadingNotes')}
                   </p>

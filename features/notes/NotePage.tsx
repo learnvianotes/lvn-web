@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CardType } from '@/lib/contracts/domain/enums'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { sendSave, type NoteMeta } from './api'
 import { NoteDetailsDialog } from './NoteDetailsDialog'
@@ -81,7 +82,10 @@ export function NotePage({ id }: { id: string }) {
   const onNote = useCallback((meta: NoteMeta) => setLoaded((l) => (l.state === 'ready' ? { ...l, meta } : l)), [setLoaded])
   const send = useMemo(() => sendSave(client, onNote), [client, onNote])
 
+  // The note is asked for once the viewer is known; when the viewer cannot be, nor can the note.
+  if (!userId && viewer.error && !viewer.loading) return <LoadFailed className="mx-auto my-16 max-w-md" onRetry={viewer.refetch} />
   if (loaded.state === 'loading' || !userId) return <p role="status" className="py-16 text-center text-sm text-muted">{t('loading')}</p>
+  if (loaded.state === 'failed') return <LoadFailed className="mx-auto my-16 max-w-md" onRetry={reload} />
   if (loaded.state === 'missing') {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { RichDoc } from '@/features/notes/render/RichText'
 import { ReviewCardDocument, ReviewQueueDocument, type ReviewQueueQuery, type ReviewRating } from '@/graphql/generated/graphql'
 import { newId } from '@/lib/ids'
@@ -39,7 +40,7 @@ const savePending = (grades: Grade[]) => {
  */
 export function Review() {
   const t = useTranslations('review')
-  const { data, loading, error } = useQuery(ReviewQueueDocument, { fetchPolicy: 'network-only' })
+  const { data, loading, error, refetch } = useQuery(ReviewQueueDocument, { fetchPolicy: 'network-only' })
   const [send] = useMutation(ReviewCardDocument)
   const [cards, setCards] = useState<Card[] | null>(null)
   const [index, setIndex] = useState(0)
@@ -113,7 +114,7 @@ export function Review() {
     return () => window.removeEventListener('keydown', onKey)
   }, [card, shown, grade])
 
-  if (error && !data) return <p className="text-muted">{t('failed')}</p>
+  if (error && !data && !loading) return <LoadFailed message={t('failed')} onRetry={refetch} />
   if (loading && !cards) return <p className="text-muted">{t('loading')}</p>
   const queue = data?.reviewQueue
   if (!cards?.length) {

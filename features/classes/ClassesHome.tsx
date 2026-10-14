@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { QueryState } from '@/components/ui/query-state'
 import { attempt } from '@/features/groups/shared'
 import { AnswerClassroomInviteDocument, CreateClassroomDocument, MyClassroomsDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { ClassCardView, cleanCode } from './shared'
@@ -16,7 +17,7 @@ export function ClassesHome() {
   const t = useTranslations('classes')
   const router = useRouter()
   const viewer = useQuery(ViewerDocument)
-  const { data, refetch } = useQuery(MyClassroomsDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(MyClassroomsDocument, { fetchPolicy: 'cache-and-network' })
   const [answer] = useMutation(AnswerClassroomInviteDocument)
   const [creating, setCreating] = useState(false)
   const [code, setCode] = useState('')
@@ -99,7 +100,9 @@ export function ClassesHome() {
           </ul>
         ) : data ? (
           <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{teacher ? t('noneYetTeacher') : t('noneYet')}</p>
-        ) : null}
+        ) : (
+          <QueryState loading={loading} error={queryError} onRetry={refetch} />
+        )}
       </section>
       <CreateClassDialog open={creating} onClose={() => setCreating(false)} />
     </div>

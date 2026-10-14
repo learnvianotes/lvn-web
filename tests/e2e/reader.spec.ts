@@ -136,7 +136,8 @@ test('a reading link that has expired is renewed, and the PDF opens without a re
   })
   let asked = 0
   await mockApi(page, {
-    NoteToEdit: () => ({ note: { ...meta({ title: 'Biology' }), cards: page1([fileCard]) } }),
+    // The card and noteFile are one file in Apollo's cache: both carry the link that has expired, as the API's would.
+    NoteToEdit: () => ({ note: { ...meta({ title: 'Biology' }), cards: page1([{ ...fileCard, media: { ...pdfFile, url: signed('old') } }]) } }),
     NoteFile: () => ({ noteFile: { ...pdfFile, url: signed(++asked === 1 ? 'old' : 'new') } }),
     NoteHighlights: () => ({ note: { __typename: 'Note', id: NOTE_ID, highlights: [] } }),
   })

@@ -7,8 +7,10 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { AnswerContestQuestionDocument, ContestDocument, SetContestBandsDocument, StartContestDocument, SubmitContestDocument, type ContestAttemptFieldsFragment } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { isNotThere } from '@/lib/query'
 
 /**
  * A weekly contest (lvn-backend ADR-0082): its details and Start while it is open; then the attempt, timed by the
@@ -18,11 +20,15 @@ import { cn } from '@/lib/cn'
 export function ContestPage({ id }: { id: string }) {
   const t = useTranslations('contests')
   const format = useFormatter()
-  const { data, loading, refetch } = useQuery(ContestDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ContestDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [start, starting] = useMutation(StartContestDocument)
   const [problem, setProblem] = useState<string | null>(null)
   const c = data?.contest
-  if (!c) return !loading ? <p className="text-muted">{t('notFound')}</p> : <p className="text-muted">{t('loading')}</p>
+  if (!c) {
+    if (loading) return <Loading label={t('loading')} />
+    // Not there only when the API said so; a contest that could not be asked for is offered again.
+    return error && !isNotThere(error) ? <LoadFailed onRetry={refetch} /> : <p className="text-muted">{t('notFound')}</p>
+  }
   const a = c.viewerAttempt
   return (
     <div className="flex flex-col gap-6">

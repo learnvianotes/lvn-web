@@ -18,8 +18,9 @@ const filtered = (f: SearchFilters) => !!(f.kinds?.length || f.sources?.length |
 
 /**
  * Search as you type: asks the API 200 ms after the last keystroke, from two characters on, or at once with filters
- * alone. `more` brings the next notes of the same search. Words left in place for two seconds are a search made
- * (SEARCH_PERFORMED, lvn-backend ADR-0067); the words themselves are not sent.
+ * alone. `more` brings the next notes of the same search; `failed` says this search could not be asked, `retry` asks
+ * again. Words left in place for two seconds are a search made (SEARCH_PERFORMED, lvn-backend ADR-0067); the words
+ * themselves are not sent.
  */
 export function useSearch(query: string, first: number, filters: SearchFilters = {}, scopes?: SearchScope[]) {
   const [settled, setSettled] = useState(query)
@@ -73,6 +74,8 @@ export function useSearch(query: string, first: number, filters: SearchFilters =
     loadingMore,
     loading: ready && result.loading,
     searched: ready && !!result.data,
+    failed: ready && !result.loading && !result.data && !!result.error,
+    retry: () => result.refetch(),
     settled,
   }
 }

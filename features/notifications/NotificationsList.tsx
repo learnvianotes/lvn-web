@@ -5,6 +5,7 @@ import { Award, BadgeCheck, Bell, CalendarClock, CheckCheck, CircleHelp, DoorOpe
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { LoadFailed } from '@/components/ui/query-state'
 import { MarkNotificationsReadDocument, NotificationsDocument, type NotificationFieldsFragment } from '@/graphql/generated/graphql'
 import { ago } from '@/features/notes/look'
 import { describeNotification, notificationHref } from './describe'
@@ -35,7 +36,7 @@ const ICONS: Partial<Record<NotificationFieldsFragment['category'], typeof Bell>
 export function NotificationsList() {
   const t = useTranslations('notifications')
   const router = useRouter()
-  const { data, loading, fetchMore } = useQuery(NotificationsDocument, { variables: { first: PAGE }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch, fetchMore } = useQuery(NotificationsDocument, { variables: { first: PAGE }, fetchPolicy: 'cache-and-network' })
   const [mark] = useMutation(MarkNotificationsReadDocument)
   const [more, setMore] = useState(false)
   const items = data?.notifications.edges.map((e) => e.node) ?? []
@@ -88,7 +89,8 @@ export function NotificationsList() {
         ) : null}
       </header>
       {!items.length && loading ? <div aria-hidden className="h-40 animate-pulse rounded-2xl bg-surface-2" /> : null}
-      {!items.length && !loading ? (
+      {!data && !loading && error ? <LoadFailed onRetry={refetch} /> : null}
+      {data && !items.length && !loading ? (
         <p className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-muted">
           <Bell className="size-8" aria-hidden />
           {t('empty')}

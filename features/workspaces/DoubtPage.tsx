@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { ContentModeration } from '@/features/moderation/ModerationBanner'
@@ -14,6 +15,7 @@ import { ReportButton } from '@/features/moderation/ReportDialog'
 import { RichDoc } from '@/features/notes/render/RichText'
 import { AnswerDoubtDocument, DeleteDoubtDocument, DoubtDocument, ReopenDoubtDocument, ResolveDoubtDocument } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
+import { isNotThere } from '@/lib/query'
 import { StatusChip } from './Doubts'
 import { AnswerList, AskForm } from '@/features/ai/AskAi'
 
@@ -22,7 +24,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
   const t = useTranslations('workspaces')
   const tAi = useTranslations('ai.ask')
   const router = useRouter()
-  const { data, loading, refetch } = useQuery(DoubtDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(DoubtDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [answer, answering] = useMutation(AnswerDoubtDocument)
   const [resolve] = useMutation(ResolveDoubtDocument)
   const [reopen] = useMutation(ReopenDoubtDocument)
@@ -30,7 +32,11 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const d = data?.doubt
-  if (!d) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('doubtGone')}</p>
+  if (!d) {
+    if (loading) return <Loading label={t('loading')} />
+    // Gone only when the API said so; a doubt that could not be asked for is offered again.
+    return queryError && !isNotThere(queryError) ? <LoadFailed onRetry={refetch} /> : <p className="text-muted">{t('doubtGone')}</p>
+  }
   const run = async (fn: () => Promise<{ data?: Record<string, { userErrors: { message: string }[] } | null> | null }>) => {
     setError(await attempt(fn, t('failed')))
     void refetch()
