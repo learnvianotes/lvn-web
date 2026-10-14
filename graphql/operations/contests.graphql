@@ -1,0 +1,205 @@
+# Weekly contests (lvn-backend ADR-0082).
+
+fragment ContestAttemptFields on ContestAttempt {
+  id
+  startedAt
+  deadline
+  submittedAt
+  finished
+  score
+  total
+  personalBest
+  band
+  questions {
+    id
+    prompt
+    choices {
+      id
+      text
+    }
+    myChoiceId
+    correctChoiceId
+    explanation
+  }
+}
+
+fragment ContestFields on Contest {
+  id
+  title
+  subjectTitle
+  opensAt
+  closesAt
+  minutes
+  questionCount
+  state
+  participantsMilestone
+}
+
+query Contests {
+  contests {
+    ...ContestFields
+    viewerAttempt {
+      id
+      finished
+      score
+      total
+    }
+  }
+}
+
+query Contest($id: UUID!) {
+  contest(id: $id) {
+    ...ContestFields
+    viewerAttempt {
+      ...ContestAttemptFields
+    }
+  }
+  contestSettings {
+    showBands
+    canShowBands
+  }
+}
+
+mutation StartContest($contestId: UUID!) {
+  startContest(input: { contestId: $contestId }) {
+    contest {
+      ...ContestFields
+      viewerAttempt {
+        ...ContestAttemptFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation AnswerContestQuestion($input: AnswerContestQuestionInput!) {
+  answerContestQuestion(input: $input) {
+    contest {
+      id
+      viewerAttempt {
+        id
+        questions {
+          id
+          myChoiceId
+        }
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SubmitContest($attemptId: UUID!) {
+  submitContest(input: { attemptId: $attemptId }) {
+    contest {
+      ...ContestFields
+      viewerAttempt {
+        ...ContestAttemptFields
+      }
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation SetContestBands($show: Boolean!) {
+  setContestBands(input: { show: $show }) {
+    settings {
+      showBands
+      canShowBands
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+fragment AdminContestFields on AdminContest {
+  id
+  title
+  subjectId
+  subjectTitle
+  opensAt
+  closesAt
+  minutes
+  questionCount
+  published
+  attempts
+  questions {
+    id
+    prompt
+    choices {
+      id
+      text
+    }
+    correctChoiceId
+    explanation
+  }
+}
+
+query AdminContests {
+  adminContests {
+    ...AdminContestFields
+  }
+}
+
+mutation SaveContest($input: ContestInput!) {
+  saveContest(input: $input) {
+    contest {
+      ...AdminContestFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation PublishContest($id: UUID!) {
+  publishContest(input: { id: $id }) {
+    contest {
+      ...AdminContestFields
+    }
+    userErrors {
+      message
+    }
+  }
+}
+
+mutation DeleteContest($id: UUID!) {
+  deleteContest(input: { id: $id }) {
+    ok
+    userErrors {
+      message
+    }
+  }
+}
+
+query QuizzesHub {
+  myClassrooms {
+    id
+    name
+    quizzes(first: 10) {
+      id
+      title
+      questionCount
+      publishedAt
+      myAttempts {
+        id
+        submittedAt
+        score
+        total
+      }
+    }
+  }
+}
+
+query ContestSubjects {
+  subjects {
+    id
+    title
+  }
+}

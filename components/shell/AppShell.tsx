@@ -10,12 +10,14 @@ import {
   GraduationCap,
   House,
   Library,
+  ListChecks,
   Menu,
   MessagesSquare,
   NotebookPen,
   Plus,
   Search,
   Sparkles,
+  Trophy,
   Upload,
   Users,
   X,
@@ -36,8 +38,8 @@ import { cn } from '@/lib/cn'
 type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp }
 
 /**
- * Board A's left sidebar (lvn-backend ADR-0076). Only what works is listed: the board's Quizzes and Contests wait for
- * their features (Phase 8); its Calendar is Exams.
+ * Board A's left sidebar (lvn-backend ADR-0076): its Calendar is Exams, and its Quizzes and Contests are the weekly
+ * contests and the quizzes waiting for the person (ADR-0082).
  */
 const ENTRIES: Entry[] = [
   { href: '/home', key: 'home', icon: House },
@@ -47,6 +49,8 @@ const ENTRIES: Entry[] = [
   { href: '/groups', key: 'groups', icon: Users },
   { href: '/classes', key: 'classes', icon: GraduationCap },
   { href: '/exams', key: 'exams', icon: CalendarDays },
+  { href: '/quizzes', key: 'quizzes', icon: ListChecks },
+  { href: '/contests', key: 'contests', icon: Trophy, match: /^\/contests(\/|$)/ },
   { href: '/rhythm', key: 'rhythm', icon: Activity },
   { href: '/resources', key: 'resources', icon: Library },
   { href: '/community', key: 'community', icon: MessagesSquare },

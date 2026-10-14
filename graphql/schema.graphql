@@ -169,6 +169,35 @@ input AddWeeklyTaskInput {
   topicId: UUID
 }
 
+"""A contest as its writers see it"""
+type AdminContest {
+  """How many have started it"""
+  attempts: Int!
+  closesAt: DateTime!
+  id: UUID!
+  minutes: Int!
+  opensAt: DateTime!
+  published: Boolean!
+  questionCount: Int!
+  questions: [AdminContestQuestion!]!
+  subjectId: UUID
+  subjectTitle: String
+  title: String!
+}
+
+type AdminContestPayload {
+  contest: AdminContest
+  userErrors: [UserError!]!
+}
+
+type AdminContestQuestion {
+  choices: [ContestChoice!]!
+  correctChoiceId: String!
+  explanation: String!
+  id: UUID!
+  prompt: String!
+}
+
 """
 The viewer's AI tokens today (UTC) against their plan's daily limit (§10.1, ADR-0024)
 """
@@ -506,6 +535,12 @@ enum AiUnavailableReason {
 input AnswerClassroomInviteInput {
   accept: Boolean!
   inviteId: UUID!
+}
+
+input AnswerContestQuestionInput {
+  attemptId: UUID!
+  choiceId: String!
+  questionId: UUID!
 }
 
 input AnswerDoubtInput {
@@ -1173,6 +1208,135 @@ type ConnectionRequestItem {
 
   """Who asked (INCOMING) or was asked (OUTGOING)"""
   person: User!
+}
+
+type Contest {
+  closesAt: DateTime!
+  id: UUID!
+  minutes: Int!
+  opensAt: DateTime!
+
+  """Participants as a milestone (1,000+, 2,000+…); null below the first"""
+  participantsMilestone: Int
+
+  """Questions each attempt gets"""
+  questionCount: Int!
+  state: ContestState!
+  subjectTitle: String
+  title: String!
+
+  """The viewer's attempt, if they started one"""
+  viewerAttempt: ContestAttempt
+}
+
+type ContestAttempt {
+  """For an adult who asked, once the window has closed; null otherwise"""
+  band: ContestBand
+
+  """When it is marked as it stands"""
+  deadline: DateTime!
+
+  """Submitted, or past its deadline"""
+  finished: Boolean!
+  id: UUID!
+
+  """
+  The viewer's best share right (0–100) on this subject's contests, once finished
+  """
+  personalBest: Int
+
+  """
+  In the order drawn for the viewer, each with its choices in the viewer's order
+  """
+  questions: [ContestAttemptQuestion!]!
+
+  """Once finished"""
+  score: Int
+  startedAt: DateTime!
+  submittedAt: DateTime
+  total: Int!
+}
+
+input ContestAttemptIdInput {
+  attemptId: UUID!
+}
+
+type ContestAttemptQuestion {
+  choices: [ContestChoice!]!
+
+  """Only once the attempt is finished"""
+  correctChoiceId: String
+
+  """Only once the attempt is finished"""
+  explanation: String
+  id: UUID!
+  myChoiceId: String
+  prompt: String!
+}
+
+"""
+Where an adult's finished attempt falls among adults' (ADR-0082); never given to anyone under 18
+"""
+enum ContestBand {
+  TOP_10
+  TOP_25
+  TOP_50
+}
+
+type ContestChoice {
+  id: String!
+  text: String!
+}
+
+input ContestIdInput {
+  id: UUID!
+}
+
+input ContestInput {
+  closesAt: DateTime!
+
+  """Leave out to create one"""
+  id: UUID
+  minutes: Int!
+  opensAt: DateTime!
+  questionCount: Int!
+  questions: [ContestQuestionInput!]!
+  subjectId: UUID
+  title: String!
+}
+
+type ContestPayload {
+  contest: Contest
+  userErrors: [UserError!]!
+}
+
+input ContestQuestionInput {
+  """2–6 choices, in order"""
+  choices: [String!]!
+
+  """The index of the right choice"""
+  correct: Int!
+  explanation: String!
+  prompt: String!
+}
+
+type ContestSettings {
+  """Only adults may"""
+  canShowBands: Boolean!
+
+  """See a band among adults after a contest closes"""
+  showBands: Boolean!
+}
+
+type ContestSettingsPayload {
+  settings: ContestSettings
+  userErrors: [UserError!]!
+}
+
+enum ContestState {
+  CLOSED
+  OPEN
+  UPCOMING
 }
 
 type Contribution {
@@ -2349,6 +2513,9 @@ type Mutation {
   addWeeklyTask(input: AddWeeklyTaskInput!): WeeklyTaskPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
 
+  """Until the deadline or the submission; may change an answer"""
+  answerContestQuestion(input: AnswerContestQuestionInput!): ContestPayload!
+
   """The team and the mentor"""
   answerDoubt(input: AnswerDoubtInput!): DoubtPayload!
   answerMentorInvite(input: AnswerMentorInviteInput!): GroupPayload!
@@ -2453,6 +2620,9 @@ type Mutation {
   """
   deleteComment(input: CommentIdInput!): CommentPayload!
 
+  """Drafts only"""
+  deleteContest(input: ContestIdInput!): OkPayload!
+
   """The asker or a moderator"""
   deleteDoubt(input: DoubtIdInput!): GroupPayload!
   deleteExam(input: ExamIdInput!): OkPayload!
@@ -2536,6 +2706,7 @@ type Mutation {
   Staff: a quiz every member of the class can take (classroom.publishQuiz)
   """
   publishClassQuiz(input: PublishClassQuizInput!): ClassQuizPayload!
+  publishContest(input: ContestIdInput!): AdminContestPayload!
 
   """
   Snapshot the draft as the version readers see (owner; a verified account)
@@ -2643,6 +2814,9 @@ type Mutation {
   saveAiConnection(input: SaveAiConnectionInput!): AiConnectionPayload!
   saveAiTaskRoute(input: SaveAiTaskRouteInput!): AiSettingsPayload!
 
+  """Platform admins: creates a draft, or changes one"""
+  saveContest(input: ContestInput!): AdminContestPayload!
+
   """
   Saves a note the viewer can read to their saved notes (ADR-0076); saving it again changes nothing
   """
@@ -2661,6 +2835,9 @@ type Mutation {
   """Teachers turn their class's goal on or off"""
   setClassGoal(input: SetClassGoalInput!): OkPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
+
+  """Adults only"""
+  setContestBands(input: SetContestBandsInput!): ContestSettingsPayload!
 
   """
   Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
@@ -2719,6 +2896,9 @@ type Mutation {
   signOut: OkPayload!
   signUp(input: SignUpInput!): AuthPayload!
 
+  """One attempt each, while the contest is open"""
+  startContest(input: StartContestInput!): ContestPayload!
+
   """
   Signed in only, as every mutation below. A session already open ends first
   """
@@ -2733,6 +2913,7 @@ type Mutation {
   file card, crediting the original note when it was someone else's
   """
   studyPdf(input: StudyPdfInput!): NotePayload!
+  submitContest(input: ContestAttemptIdInput!): ContestPayload!
 
   """
   Scores the viewer's answers; the same clientOpId returns the same attempt
@@ -3498,6 +3679,9 @@ type Query {
   What happened in the viewer's groups and classes, newest first; their own doing left out
   """
   activityFeed(after: String, first: Int): ActivityConnection!
+
+  """Platform admins: every contest, drafts included"""
+  adminContests: [AdminContest!]!
   aiAnswer(id: UUID!): AiAnswer
 
   """
@@ -3517,6 +3701,13 @@ type Query {
 
   """The class a code names; at most 20 codes an hour"""
   classroomByCode(code: String!): ClassroomPreview
+  contest(id: UUID!): Contest
+  contestSettings: ContestSettings!
+
+  """
+  Published contests: open ones, upcoming ones, and those closed in the last four weeks
+  """
+  contests: [Contest!]!
 
   """
   Signed-in users: their progress on a /core subject (web reads it on /core pages)
@@ -4643,6 +4834,10 @@ input SetClassroomRoleInput {
   userId: UUID!
 }
 
+input SetContestBandsInput {
+  show: Boolean!
+}
+
 input SetGlobalRoleInput {
   role: GlobalRole!
   userId: UUID!
@@ -4756,6 +4951,10 @@ type SkillsImport {
 
   """The kinds of identifier this server can read"""
   sources: [ExternalIdentityKind!]!
+}
+
+input StartContestInput {
+  contestId: UUID!
 }
 
 input StartFocusSessionInput {
