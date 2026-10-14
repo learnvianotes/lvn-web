@@ -359,6 +359,7 @@
       "readPdfNotPdf": "Choose a PDF file.",
       "readPdfTooLarge": "PDFs can be up to {mb} MB.",
       "readPdfFailed": "The PDF could not be uploaded. Check your connection and try again.",
+      "fromPhotos": "Notes from photos",
       "newKind": {
         "label": "Start something else",
         "PROJECT": "+ Project",
@@ -691,6 +692,31 @@
         },
         "results": "Your results"
       }
+    },
+    "capture": {
+      "title": "Notes from photos and PDFs",
+      "lead": "Add up to {max} photos or PDFs (pages of notes, slides, a whiteboard), then AI makes one note from them all. Photos are made smaller so they upload quickly; a PDF can be up to {mb} MB.",
+      "choose": "Choose photos or PDFs",
+      "drop": "or drop them here",
+      "full": "The tray is full",
+      "count": "{n} of {max}",
+      "tray": "Photos and PDFs to make notes from",
+      "adding": "Adding…",
+      "photoN": "Photo {n}",
+      "remove": "Remove {name}",
+      "uploaded": "Uploaded",
+      "unreadable": "{name} could not be read here. Save it as JPEG or PNG and add it again.",
+      "notSupported": "{name} is not a photo or a PDF.",
+      "pdfTooLarge": "{name} is {size}; a PDF can be at most {mb} MB.",
+      "tooMany": "Only {max} photos or PDFs go into one note; {left, plural, one {# was} other {# were}} left out.",
+      "creating": "Making the note…",
+      "uploading": "Uploading {n} of {of}…",
+      "making": "Asking AI to make notes…",
+      "failed": "Not everything was uploaded. Check your connection and try again: it carries on where it stopped.",
+      "noteTitle": "Quick note, {when}",
+      "cancel": "Cancel",
+      "make": "Make notes",
+      "makeN": "Make notes from {n}"
     }
   },
   "moderation": {

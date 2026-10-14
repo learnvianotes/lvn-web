@@ -4,9 +4,9 @@ import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import type { Editor } from '@tiptap/react'
 import { Folder, Hash, History, Rocket, Share2, SlidersHorizontal, Trash2, BookMarked, GitFork } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CardType } from '@/lib/contracts/domain/enums'
 import { Button } from '@/components/ui/button'
 import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
@@ -46,7 +46,15 @@ export function NotePage({ id }: { id: string }) {
   const [versionsOpen, setVersionsOpen] = useState<{ open: boolean; versionId?: string }>({ open: false })
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
-  const [aiOpen, setAiOpen] = useState(false)
+  // Notes from photos (ADR-0084) opens the note with its AI panel, where the new notes arrive; once.
+  const askedAi = useSearchParams().get('ai') === '1'
+  const [aiOpen, setAiOpen] = useState(askedAi)
+  useEffect(() => {
+    if (!askedAi) return
+    const url = new URL(window.location.href)
+    url.searchParams.delete('ai')
+    window.history.replaceState(window.history.state, '', url)
+  }, [askedAi])
   const copy = useMakeCopy(id)
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
