@@ -79,3 +79,14 @@ mutation EndRhythmPause($input: RhythmPauseIdInput!) {
     }
   }
 }
+
+# Home's line for the day (lvn-backend ADR-0087)
+query DailyLine {
+  dailyLine {
+    day
+    title
+    line
+    fromAi
+    pending
+  }
+}

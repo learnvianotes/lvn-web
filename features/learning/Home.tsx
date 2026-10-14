@@ -4,7 +4,8 @@ import { useQuery } from '@apollo/client/react'
 import { ArrowRight, BookOpen, CalendarCheck, CalendarClock, GraduationCap, Library, ListChecks, Play, RotateCcw, TrendingUp, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { ExamsDocument, MyClassroomsDocument, MyGroupsDocument, RecommendationsDocument, RhythmDocument, ViewerDocument, type RecommendationKind, type RecommendationsQuery } from '@/graphql/generated/graphql'
+import { useEffect, useState } from 'react'
+import { DailyLineDocument, ExamsDocument, MyClassroomsDocument, MyGroupsDocument, RecommendationsDocument, RhythmDocument, ViewerDocument, type RecommendationKind, type RecommendationsQuery } from '@/graphql/generated/graphql'
 import { Today, Week } from './Rhythm'
 
 type Rec = RecommendationsQuery['recommendations'][number]
@@ -21,6 +22,30 @@ const ART: Record<RecommendationKind, { icon: typeof BookOpen; from: string; to:
 const coreName = (key: string) => key.replace(/^core:/, '').replace('/', ' / ').replace(/-/g, ' ')
 const hrefOf = (r: Rec) => (r.note ? `/notes/${r.note.id}` : r.resource ? `/resources/${r.resource.id}` : r.topic ? `/search?topic=${r.topic.id}&topicTitle=${encodeURIComponent(r.topicTitle ?? '')}` : `/search?q=${encodeURIComponent(r.topicTitle ?? coreName(r.topicKey ?? ''))}`)
 const partOfDay = (hour: number) => (hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening')
+
+/** While AI writes today's line, how often and how long Home asks again. */
+const POLL_MS = 4_000
+const POLL_FOR_MS = 60_000
+
+/**
+ * Home's line for the day (lvn-backend ADR-0087): a headline and a sentence written by AI for the person each day, a
+ * chosen line until it is written; while AI writes it, asked again every few seconds for a minute.
+ */
+function useDailyLine() {
+  const [polling, setPolling] = useState(true)
+  const { data, refetch } = useQuery(DailyLineDocument, { fetchPolicy: 'cache-and-network' })
+  const pending = !!data?.dailyLine.pending && polling
+  useEffect(() => {
+    if (!pending) return
+    const timer = setInterval(() => void refetch().catch(() => undefined), POLL_MS)
+    const stop = setTimeout(() => setPolling(false), POLL_FOR_MS)
+    return () => {
+      clearInterval(timer)
+      clearTimeout(stop)
+    }
+  }, [pending, refetch])
+  return data?.dailyLine ?? null
+}
 
 /**
  * Home as board A draws it (lvn-backend ADR-0076, on P6h): the greeting, the note to continue, the next exam and the
@@ -40,12 +65,19 @@ export function Home() {
   const pictures = (recs ?? []).filter((r) => r !== continueNote).slice(0, 4)
   const rooms = [...(groups ?? []).map((g) => ({ id: g.id, name: g.name, href: `/groups/${g.id}`, members: g.memberCount, kind: 'group' as const })), ...(classes ?? []).map((c) => ({ id: c.id, name: c.name, href: `/classes/${c.id}`, members: c.memberCount, kind: 'class' as const }))].slice(0, 4)
   const when = partOfDay(new Date().getHours())
+  const today = useDailyLine()
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{firstName ? t(`greeting.${when}`, { name: firstName }) : t('greetingAnon')}</h1>
-          <p className="text-sm text-muted">{t('lead')}</p>
+          {today ? (
+            <p className="max-w-2xl text-sm text-muted" data-testid="daily-line">
+              <span className="font-semibold text-fg">{today.title}</span> · {today.line}
+            </p>
+          ) : (
+            <p className="text-sm text-muted">{t('lead')}</p>
+          )}
         </div>
         {rhythm ? (
           <Link href="/rhythm" className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5 hover:border-accent">

@@ -1469,6 +1469,26 @@ input CreateUploadIntentInput {
   sizeBytes: Int!
 }
 
+"""
+Written by AI for the person once a day; a chosen line until then, or when AI is off
+"""
+type DailyLine {
+  """The learning day it is for (YYYY-MM-DD, in the person's zone)"""
+  day: String!
+
+  """Written by AI for this person"""
+  fromAi: Boolean!
+
+  """One sentence"""
+  line: String!
+
+  """AI is writing today's line: ask again in a few seconds"""
+  pending: Boolean!
+
+  """A headline of a few words"""
+  title: String!
+}
+
 type DataExport {
   """
   While READY: a download link that works for 15 minutes; ask again for a new one
@@ -3713,6 +3733,9 @@ type Query {
   Signed-in users: their progress on a /core subject (web reads it on /core pages)
   """
   coreProgress(subjectId: String!): CoreSubjectProgress!
+
+  """Signed in: Home's headline and line for today"""
+  dailyLine: DailyLine!
 
   """Public groups to join, by name"""
   discoverGroups(first: Int, query: String): [Group!]!

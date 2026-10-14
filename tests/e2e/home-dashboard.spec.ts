@@ -31,6 +31,21 @@ test('Home greets the learner and shows today, the week, the note to continue, t
   await expect(page.getByRole('link', { name: 'Open Rhythm' })).toHaveAttribute('href', '/rhythm')
 })
 
+const dailyLine = (title: string, line: string, pending = false) => ({ dailyLine: { __typename: 'DailyLine', day: '2026-10-15', title, line, fromAi: !pending, pending } })
+
+test('Home shows the day’s line: the chosen one while AI writes the learner’s own, then theirs (lvn-backend ADR-0087)', async ({ page }) => {
+  let asked = 0
+  await mockApi(page, {
+    Rhythm: () => ({ rhythm }),
+    Exams: () => ({ exams: [exam] }),
+    Recommendations: () => ({ recommendations: [continueRec] }),
+    DailyLine: () => (++asked === 1 ? dailyLine('Small steps count', 'Ten focused minutes today beat a perfect plan for someday.', true) : dailyLine('Ten days to Operating Systems', 'One topic today keeps your plan on track.')),
+  }, viewerExtras)
+  await page.goto('/home')
+  await expect(page.getByTestId('daily-line')).toHaveText('Small steps count · Ten focused minutes today beat a perfect plan for someday.')
+  await expect(page.getByTestId('daily-line')).toHaveText('Ten days to Operating Systems · One topic today keeps your plan on track.', { timeout: 10_000 })
+})
+
 test('Home offers to add an exam when there is none; the signed-in landing card opens Home', async ({ page }) => {
   await mockApi(page, { Rhythm: () => ({ rhythm }), Exams: () => ({ exams: [] }), Recommendations: () => ({ recommendations: [] }) }, viewerExtras)
   await page.goto('/')
