@@ -4,6 +4,12 @@ input AcceptTermsInput {
   version: String!
 }
 
+type AccountDeletionPayload {
+  """When the account will be deleted; null once cancelled"""
+  deletionScheduledFor: DateTime
+  userErrors: [UserError!]!
+}
+
 """An account's standing, for its owner alone (ADR-0053)"""
 type AccountStanding {
   """The suspension can still be appealed (once)"""
@@ -2575,6 +2581,9 @@ type Mutation {
   """
   blockUser(input: PersonInput!): PersonPayload!
 
+  """Keep your account: cancels a deletion you asked for"""
+  cancelAccountDeletion: AccountDeletionPayload!
+
   """
   PRIVATE, SHARED or PUBLIC (owner, verified account); PUBLIC needs a published version
   """
@@ -2769,6 +2778,11 @@ type Mutation {
   Report what you can see (a note, a person, a comment, a post, an announcement, a doubt or a group); reporting again updates your report
   """
   reportContent(input: ReportContentInput!): OkPayload!
+
+  """
+  Ask for your account to be deleted in 14 days, with your private notes and learning history; every other device is signed out. Public notes, posts and comments stay, by "Deleted user"
+  """
+  requestAccountDeletion(input: RequestAccountDeletionInput!): AccountDeletionPayload!
 
   """Teacher to teacher; the other accepts or declines (ADR-0013)"""
   requestConnection(input: PersonInput!): PersonPayload!
@@ -4252,6 +4266,14 @@ enum RepositoryProvider {
   GITLAB
 }
 
+input RequestAccountDeletionInput {
+  """The word DELETE"""
+  confirm: String!
+
+  """The account's password; required when the account has one"""
+  password: String
+}
+
 """
 fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by platform admins only, deleted 30 days after the decision
 """
@@ -5467,6 +5489,11 @@ type User {
   """Points and level, under the same rule as achievements"""
   contribution: Contribution
   createdAt: DateTime!
+
+  """
+  Viewer only: when the account will be deleted, if its owner asked (ADR-0088)
+  """
+  deletionScheduledFor: DateTime
   displayName: String!
 
   """Viewer only"""

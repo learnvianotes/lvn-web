@@ -4,6 +4,7 @@ import 'pdfjs-dist/web/pdf_viewer.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { cn } from '@/lib/cn'
 import { areaRect, hits, quoteOf, selectionRects, type PageRect } from './geometry'
+import { pdfSource } from './ranges'
 
 /**
  * A PDF on the page (lvn-backend ADR-0040): pdf.js's own viewer — pages rendered as you scroll, a text layer to
@@ -61,6 +62,8 @@ export interface PdfViewerHandle {
 
 export interface PdfViewerProps {
   url: string
+  /** A new URL for the same file when the old one has expired (lvn-backend ADR-0090) */
+  refreshUrl: () => Promise<string | null>
   marks: Mark[]
   initialPage?: number
   snipping: boolean
@@ -79,6 +82,8 @@ const FLASH_MS = 1800
 
 export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function PdfViewer(props, ref) {
   const { url, marks, snipping, className } = props
+  // The file, not its URL: a fresh URL for the same file (its signature renewed) must not reload the document.
+  const fileKey = url.split('?')[0]
   const container = useRef<HTMLDivElement>(null)
   const inner = useRef<HTMLDivElement>(null)
   const state = useRef<{ viewer: Viewer | null; bus: Bus | null; doc: Doc | null; links: InstanceType<ViewerModule['PDFLinkService']> | null }>({ viewer: null, bus: null, doc: null, links: null })
@@ -159,8 +164,11 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function Pd
         else if (e.matchesCount) latest.current.onFind(e.matchesCount)
       })
 
+      // In ranges, with a fresh URL whenever the 15-minute one expires (ADR-0090).
+      const source = await pdfSource(pdfjs, latest.current.url, () => latest.current.refreshUrl())
+      if (cancelled) return
       const loading = pdfjs.getDocument({
-        url,
+        ...source,
         cMapUrl: `${assets}cmaps/`,
         cMapPacked: true,
         standardFontDataUrl: `${assets}standard_fonts/`,
@@ -197,7 +205,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(function Pd
       state.current = { viewer: null, bus: null, doc: null, links: null }
       pagesBox?.replaceChildren()
     }
-  }, [url])
+  }, [fileKey])
 
   // Marks change as highlights and cards come and go.
   useEffect(drawAll, [marks])

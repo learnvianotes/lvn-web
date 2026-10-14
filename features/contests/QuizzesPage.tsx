@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client/react'
 import { Layers, ListChecks, Target } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { QueryState } from '@/components/ui/query-state'
 import { ContestsDocument, QuizzesHubDocument } from '@/graphql/generated/graphql'
 import { ContestHero } from './ContestsPage'
 
@@ -13,7 +14,8 @@ import { ContestHero } from './ContestsPage'
  */
 export function QuizzesPage() {
   const t = useTranslations('quizzes')
-  const contests = useQuery(ContestsDocument, { fetchPolicy: 'cache-and-network' }).data?.contests ?? []
+  const contestsQuery = useQuery(ContestsDocument, { fetchPolicy: 'cache-and-network' })
+  const contests = contestsQuery.data?.contests ?? []
   const hub = useQuery(QuizzesHubDocument, { fetchPolicy: 'cache-and-network' })
   const open = contests.find((c) => c.state === 'OPEN')
   const waiting = (hub.data?.myClassrooms ?? []).flatMap((c) => (c.quizzes ?? []).filter((q) => !q.myAttempts.some((x) => x.submittedAt)).map((q) => ({ ...q, classroom: c })))
@@ -30,6 +32,8 @@ export function QuizzesPage() {
 
       {open ? (
         <ContestHero contest={open} />
+      ) : !contestsQuery.data ? (
+        <QueryState loading={contestsQuery.loading} error={contestsQuery.error} onRetry={contestsQuery.refetch} />
       ) : (
         <p className="text-sm text-muted">
           {t('noContest')}{' '}
@@ -43,6 +47,7 @@ export function QuizzesPage() {
         <h2 id="class-quizzes" className="text-lg font-bold">
           {t('fromClasses')}
         </h2>
+        {!hub.data ? <QueryState loading={hub.loading} error={hub.error} onRetry={hub.refetch} /> : null}
         {hub.data && !waiting.length ? <p className="text-sm text-muted">{t('noneWaiting')}</p> : null}
         <ul className="flex flex-col gap-2">
           {waiting.map((q) => (

@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/ui/query-state";
 import { MyResourcesDocument } from "@/graphql/generated/graphql";
 
 const TONE = {
@@ -17,7 +18,7 @@ const TONE = {
 /** The resources a person sent (lvn-backend ADR-0074), newest first, each with its state and, if rejected, why. */
 export function MyResources() {
   const t = useTranslations("resources");
-  const { data } = useQuery(MyResourcesDocument, {
+  const { data, loading, error, refetch } = useQuery(MyResourcesDocument, {
     fetchPolicy: "cache-and-network",
   });
   const list = data?.myResources ?? [];
@@ -42,6 +43,9 @@ export function MyResources() {
           </Button>
         </div>
       </header>
+      {!data ? (
+        <QueryState loading={loading} error={error} onRetry={refetch} />
+      ) : null}
       {data && !list.length ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted">
           {t("none")}

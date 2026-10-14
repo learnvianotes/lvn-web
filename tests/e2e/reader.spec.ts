@@ -123,6 +123,31 @@ test('a PDF opens beside its note with pages, contents and find', async ({ page 
   await expect(reader.getByRole('search').getByRole('status')).toHaveText('1 of 2')
 })
 
+test('a reading link that has expired is renewed, and the PDF opens without a reload (lvn-backend ADR-0090)', async ({ page }) => {
+  // Read URLs live 15 minutes: storage refuses the old one, the reader asks the API again and carries on.
+  const signed = (sig: string) => `http://storage.test/get/bio.pdf?X-Amz-Expires=900&X-Amz-Signature=${sig}`
+  const fetched: string[] = []
+  await page.route('http://storage.test/**', async (route) => {
+    const req = route.request()
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS })
+    fetched.push(req.url())
+    if (req.url().endsWith('=old')) return route.fulfill({ status: 403, headers: CORS, body: '<Error><Code>AccessDenied</Code><Message>Request has expired</Message></Error>' })
+    return route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'application/pdf' }, body: PDF })
+  })
+  let asked = 0
+  await mockApi(page, {
+    // The card and noteFile are one file in Apollo's cache: both carry the link that has expired, as the API's would.
+    NoteToEdit: () => ({ note: { ...meta({ title: 'Biology' }), cards: page1([{ ...fileCard, media: { ...pdfFile, url: signed('old') } }]) } }),
+    NoteFile: () => ({ noteFile: { ...pdfFile, url: signed(++asked === 1 ? 'old' : 'new') } }),
+    NoteHighlights: () => ({ note: { __typename: 'Note', id: NOTE_ID, highlights: [] } }),
+  })
+  await page.goto(READER_URL)
+  await expect(page.locator('.textLayer').getByText(PDF_TEXT.page1[1]!)).toBeAttached({ timeout: 15_000 })
+  expect(asked).toBe(2)
+  // The refused link, then the renewed one: the document was not loaded a second time.
+  expect(fetched.map((u) => u.split('=').pop())).toEqual(['old', 'new'])
+})
+
 test('selected words become a highlight, with a colour and a comment, and can be removed', async ({ page }) => {
   await mockStorage(page)
   const { calls, highlights } = await mockReader(page)

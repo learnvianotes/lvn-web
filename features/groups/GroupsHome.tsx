@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { QueryState } from '@/components/ui/query-state'
 import { AnswerMentorInviteDocument, CreateGroupDocument, DiscoverGroupsDocument, MyGroupsDocument, MyMentorInvitesDocument } from '@/graphql/generated/graphql'
 import { attempt, GroupCardView } from './shared'
 
@@ -49,7 +50,9 @@ export function GroupsHome() {
           </ul>
         ) : mine.data ? (
           <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noneYet')}</p>
-        ) : null}
+        ) : (
+          <QueryState loading={mine.loading} error={mine.error} onRetry={mine.refetch} />
+        )}
       </section>
       <section aria-labelledby="find-groups" className="flex flex-col gap-3">
         <h2 id="find-groups" className="text-sm font-semibold text-muted">
@@ -70,7 +73,9 @@ export function GroupsHome() {
           </ul>
         ) : found.data ? (
           <p className="text-sm text-muted">{t('nothingFound')}</p>
-        ) : null}
+        ) : (
+          <QueryState loading={found.loading} error={found.error} onRetry={found.refetch} />
+        )}
       </section>
       <CreateGroupDialog open={creating} onClose={() => setCreating(false)} />
     </div>

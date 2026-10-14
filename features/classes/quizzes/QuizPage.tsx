@@ -6,10 +6,12 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { InlineText, RichDoc } from '@/features/notes/render/RichText'
 import { ClassQuizDocument, SubmitQuizAttemptDocument, type ClassQuizFieldsFragment } from '@/graphql/generated/graphql'
 import type { Doc, Inline } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
+import { isNotThere } from '@/lib/query'
 import { scoreOf } from './ClassQuizzes'
 
 type Quiz = ClassQuizFieldsFragment
@@ -22,10 +24,14 @@ type Answers = Record<string, string[]>
  */
 export function QuizPage({ classroomId, quizId }: { classroomId: string; quizId: string }) {
   const t = useTranslations('classes.quiz')
-  const { data, loading } = useQuery(ClassQuizDocument, { variables: { id: quizId }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ClassQuizDocument, { variables: { id: quizId }, fetchPolicy: 'cache-and-network' })
   const quiz = data?.classQuiz
   const [retaking, setRetaking] = useState(false)
-  if (!quiz) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
+  if (!quiz) {
+    if (loading) return <Loading label={t('loading')} />
+    // Not there only when the API said so; a quiz that could not be asked for is offered again.
+    return error && !isNotThere(error) ? <LoadFailed onRetry={refetch} /> : <p className="text-muted">{t('notFound')}</p>
+  }
   const latest = quiz.myAttempts[0] ?? null
   const first = scoreOf(quiz)
   const answering = !latest || retaking

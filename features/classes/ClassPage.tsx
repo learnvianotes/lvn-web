@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed, Loading, QueryState } from '@/components/ui/query-state'
 import { PostComments } from '@/features/discussion/PostComments'
 import { ContentModeration } from '@/features/moderation/ModerationBanner'
 import { PlaceResources } from '@/features/resources/PlaceResources'
@@ -36,6 +37,7 @@ import {
   type ClassroomDetailFragment,
 } from '@/graphql/generated/graphql'
 import type { Doc } from '@/lib/contracts/validation'
+import { isNotThere } from '@/lib/query'
 import { ClassQuizzes } from './quizzes/ClassQuizzes'
 import { ClassPerformance, ClassRhythm } from './ClassInsights'
 
@@ -49,10 +51,14 @@ type Run = () => Promise<{ data?: Record<string, { userErrors: { message: string
 export function ClassPage({ id }: { id: string }) {
   const t = useTranslations('classes')
   const tt = useTranslations('teach')
-  const { data, loading, refetch } = useQuery(ClassroomDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ClassroomDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [tab, setTab] = useState<Tab>('posts')
   const classroom = data?.classroom
-  if (!classroom) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <p className="text-muted">{t('notFound')}</p>
+  if (!classroom) {
+    if (loading) return <Loading label={t('loading')} />
+    // Not there only when the API said so; a class that could not be asked for is offered again.
+    return error && !isNotThere(error) ? <LoadFailed onRetry={refetch} /> : <p className="text-muted">{t('notFound')}</p>
+  }
   const staff = classroom.viewerCan.review
   const tabs: Tab[] = classroom.viewerRole ? ['posts', 'quizzes', 'notes', 'resources', 'rhythm', ...(staff ? (['performance', 'people', 'requests', 'reports'] as const) : []), ...(classroom.viewerCan.manage ? (['settings'] as const) : [])] : []
   return (
@@ -177,7 +183,7 @@ function Header({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
 
 function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
   const t = useTranslations('classes')
-  const { data, refetch, fetchMore } = useQuery(ClassroomPostsDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch, fetchMore } = useQuery(ClassroomPostsDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
   const [create, creating] = useMutation(CreateClassroomPostDocument)
   const [remove] = useMutation(DeleteClassroomPostDocument)
   const [text, setText] = useState('')
@@ -241,7 +247,9 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
         </ul>
       ) : posts ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noPosts')}</p>
-      ) : null}
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
       {posts?.pageInfo.hasNextPage ? (
         <Button variant="secondary" className="self-center" onClick={() =>
             void fetchMore({
@@ -259,7 +267,7 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
 
 function SharedNotes({ classroom }: { classroom: ClassroomDetailFragment }) {
   const t = useTranslations('classes')
-  const { data, refetch } = useQuery(ClassroomNotesDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(ClassroomNotesDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
   const staff = classroom.viewerCan.post
   const mine = useQuery(MyNotesDocument, { variables: { first: 50 }, fetchPolicy: 'cache-and-network', skip: !staff })
   const [share] = useMutation(ShareNoteToClassroomDocument)
@@ -323,14 +331,16 @@ function SharedNotes({ classroom }: { classroom: ClassroomDetailFragment }) {
         </ul>
       ) : data ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noNotes')}</p>
-      ) : null}
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
     </div>
   )
 }
 
 function People({ classroom, onChanged }: { classroom: ClassroomDetailFragment; onChanged: () => void }) {
   const t = useTranslations('classes')
-  const { data, refetch } = useQuery(ClassroomPeopleDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(ClassroomPeopleDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
   const [invite, inviting] = useMutation(InviteToClassroomDocument)
   const [setRole] = useMutation(SetClassroomRoleDocument)
   const [remove] = useMutation(RemoveClassroomMemberDocument)
@@ -381,46 +391,50 @@ function People({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
           {message.text}
         </p>
       ) : null}
-      <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
-        {(data?.classroom?.members ?? []).map((m) => (
-          <li key={m.user.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <Link href={`/u/${m.user.handle}`} className="flex min-w-0 flex-1 flex-col hover:text-accent">
-              <span className="truncate font-semibold">{m.user.displayName}</span>
-              <span className="truncate text-xs text-muted">{t(`role.${m.role}`)}</span>
-            </Link>
-            {teacher && m.role !== 'TEACHER' ? (
-              <>
-                <label>
-                  <span className="sr-only">{t('roleFor', { name: m.user.displayName })}</span>
-                  <select
-                    value={m.role}
-                    onChange={(e) => {
-                      const role = e.target.value as 'TEACHER' | 'TA' | 'STUDENT'
-                      if (role === 'TEACHER' && !window.confirm(t('handOverConfirm', { name: m.user.displayName }))) return
-                      void act(() => setRole({ variables: { classroomId: classroom.id, userId: m.user.id, role } }))
-                    }}
-                    className="h-9 rounded-lg border border-border bg-bg px-2 text-xs"
-                  >
-                    <option value="STUDENT">{t('role.STUDENT')}</option>
-                    <option value="TA">{t('role.TA')}</option>
-                    <option value="TEACHER">{t('makeTeacher', { name: m.user.displayName })}</option>
-                  </select>
-                </label>
-                <Button variant="secondary" size="sm" onClick={() => void act(() => remove({ variables: { classroomId: classroom.id, userId: m.user.id } }))}>
-                  {t('remove')}
-                </Button>
-              </>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      {data ? (
+        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+          {(data.classroom?.members ?? []).map((m) => (
+            <li key={m.user.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <Link href={`/u/${m.user.handle}`} className="flex min-w-0 flex-1 flex-col hover:text-accent">
+                <span className="truncate font-semibold">{m.user.displayName}</span>
+                <span className="truncate text-xs text-muted">{t(`role.${m.role}`)}</span>
+              </Link>
+              {teacher && m.role !== 'TEACHER' ? (
+                <>
+                  <label>
+                    <span className="sr-only">{t('roleFor', { name: m.user.displayName })}</span>
+                    <select
+                      value={m.role}
+                      onChange={(e) => {
+                        const role = e.target.value as 'TEACHER' | 'TA' | 'STUDENT'
+                        if (role === 'TEACHER' && !window.confirm(t('handOverConfirm', { name: m.user.displayName }))) return
+                        void act(() => setRole({ variables: { classroomId: classroom.id, userId: m.user.id, role } }))
+                      }}
+                      className="h-9 rounded-lg border border-border bg-bg px-2 text-xs"
+                    >
+                      <option value="STUDENT">{t('role.STUDENT')}</option>
+                      <option value="TA">{t('role.TA')}</option>
+                      <option value="TEACHER">{t('makeTeacher', { name: m.user.displayName })}</option>
+                    </select>
+                  </label>
+                  <Button variant="secondary" size="sm" onClick={() => void act(() => remove({ variables: { classroomId: classroom.id, userId: m.user.id } }))}>
+                    {t('remove')}
+                  </Button>
+                </>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
     </div>
   )
 }
 
 function Requests({ classroom, onChanged }: { classroom: ClassroomDetailFragment; onChanged: () => void }) {
   const t = useTranslations('classes')
-  const { data, refetch } = useQuery(ClassroomPeopleDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(ClassroomPeopleDocument, { variables: { id: classroom.id }, fetchPolicy: 'cache-and-network' })
   const [review] = useMutation(ReviewClassroomJoinRequestDocument)
   const [error, setError] = useState<string | null>(null)
   const requests = data?.classroom?.joinRequests ?? []
@@ -429,6 +443,7 @@ function Requests({ classroom, onChanged }: { classroom: ClassroomDetailFragment
     await refetch()
     onChanged()
   }
+  if (!data) return <QueryState loading={loading} error={queryError} onRetry={refetch} />
   if (!requests.length) return <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noRequests')}</p>
   return (
     <div className="flex flex-col gap-2">

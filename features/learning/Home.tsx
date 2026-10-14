@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, CalendarCheck, CalendarClock, GraduationCap, Libr
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { QueryState } from '@/components/ui/query-state'
 import { DailyLineDocument, ExamsDocument, MyClassroomsDocument, MyGroupsDocument, RecommendationsDocument, RhythmDocument, ViewerDocument, type RecommendationKind, type RecommendationsQuery } from '@/graphql/generated/graphql'
 import { Today, Week } from './Rhythm'
 
@@ -54,11 +55,16 @@ function useDailyLine() {
 export function Home() {
   const t = useTranslations('homeDashboard')
   const viewer = useQuery(ViewerDocument).data?.viewer
-  const rhythm = useQuery(RhythmDocument, { fetchPolicy: 'cache-and-network' }).data?.rhythm
-  const exams = useQuery(ExamsDocument, { fetchPolicy: 'cache-and-network' }).data?.exams
-  const recs = useQuery(RecommendationsDocument, { variables: { limit: 8 }, fetchPolicy: 'cache-and-network' }).data?.recommendations
-  const groups = useQuery(MyGroupsDocument, { fetchPolicy: 'cache-and-network' }).data?.myGroups
-  const classes = useQuery(MyClassroomsDocument, { fetchPolicy: 'cache-and-network' }).data?.myClassrooms
+  const rhythmQuery = useQuery(RhythmDocument, { fetchPolicy: 'cache-and-network' })
+  const examsQuery = useQuery(ExamsDocument, { fetchPolicy: 'cache-and-network' })
+  const recsQuery = useQuery(RecommendationsDocument, { variables: { limit: 8 }, fetchPolicy: 'cache-and-network' })
+  const groupsQuery = useQuery(MyGroupsDocument, { fetchPolicy: 'cache-and-network' })
+  const classesQuery = useQuery(MyClassroomsDocument, { fetchPolicy: 'cache-and-network' })
+  const rhythm = rhythmQuery.data?.rhythm
+  const exams = examsQuery.data?.exams
+  const recs = recsQuery.data?.recommendations
+  const groups = groupsQuery.data?.myGroups
+  const classes = classesQuery.data?.myClassrooms
   const firstName = viewer?.displayName.trim().split(/\s+/)[0]
   const next = exams?.find((e) => !e.past)
   const continueNote = recs?.find((r) => r.kind === 'CONTINUE_NOTE' && r.note)
@@ -66,6 +72,17 @@ export function Home() {
   const rooms = [...(groups ?? []).map((g) => ({ id: g.id, name: g.name, href: `/groups/${g.id}`, members: g.memberCount, kind: 'group' as const })), ...(classes ?? []).map((c) => ({ id: c.id, name: c.name, href: `/classes/${c.id}`, members: c.memberCount, kind: 'class' as const }))].slice(0, 4)
   const when = partOfDay(new Date().getHours())
   const today = useDailyLine()
+  // Each card says "nothing here" only once its answer came; until then it is loading, or failed with Try again.
+  const recsState = <QueryState loading={recsQuery.loading} error={recsQuery.error} onRetry={recsQuery.refetch} />
+  // Rooms are groups and classes: loading or failed while either has not come.
+  const roomsMissing = [groupsQuery, classesQuery].filter((q) => !q.data)
+  const roomsState = (
+    <QueryState
+      loading={roomsMissing.some((q) => q.loading)}
+      error={roomsMissing.find((q) => q.error)?.error}
+      onRetry={() => Promise.all(roomsMissing.map((q) => q.refetch()))}
+    />
+  )
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -106,10 +123,12 @@ export function Home() {
                 <Play className="size-4" />
               </span>
             </Link>
-          ) : (
+          ) : recs ? (
             <Link href="/notes" className="text-sm text-muted hover:text-accent">
               {t('nothingToContinue')}
             </Link>
+          ) : (
+            recsState
           )}
         </section>
         <section aria-labelledby="next-exam" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
@@ -125,6 +144,8 @@ export function Home() {
                 {t('viewPlan')}
               </Link>
             </div>
+          ) : !exams ? (
+            <QueryState loading={examsQuery.loading} error={examsQuery.error} onRetry={examsQuery.refetch} />
           ) : (
             <div className="flex flex-col gap-2">
               <p className="text-sm text-muted">{t('noExam')}</p>
@@ -144,10 +165,12 @@ export function Home() {
               <GoalRing done={rhythm.countedDays} target={rhythm.target} />
               <span className="flex flex-col">
                 <span className="text-xl font-extrabold">{t('ofDays', { done: rhythm.countedDays, target: rhythm.target })}</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
               </span>
             </div>
-          ) : null}
+          ) : (
+            <QueryState loading={rhythmQuery.loading} error={rhythmQuery.error} onRetry={rhythmQuery.refetch} />
+          )}
         </section>
       </div>
 
@@ -172,6 +195,7 @@ export function Home() {
           </Link>
         </div>
         {recs && !pictures.length ? <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">{t('noRecommendations')}</p> : null}
+        {!recs ? recsState : null}
         <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {pictures.map((r) => {
             const art = ART[r.kind]
@@ -212,6 +236,7 @@ export function Home() {
             </Link>
           </p>
         ) : null}
+        {roomsMissing.length ? roomsState : null}
         <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {rooms.map((room) => (
             <li key={`${room.kind}:${room.id}`}>

@@ -954,6 +954,8 @@ test('a learner’s reading reaches the learning events: the note opened and the
   await page.getByRole('button', { name: 'New note' }).click()
   await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
   const noteId = page.url().split('/').at(-1)!
+  // The reading clock starts once the note is open in the editor; the fake clock must not run before that.
+  await expect(page.getByLabel('Title')).toBeVisible()
   // Half a minute with the note open, then the tab goes to the background: the events go out.
   await page.clock.runFor(30_000)
   await page.evaluate(() => {

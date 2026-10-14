@@ -18,7 +18,64 @@ const coreEnabled = process.env.NEXT_PUBLIC_CORE_ENABLED === 'true'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
+/**
+ * Content Security Policy (lvn-backend ADR-0090, Phase 9). Pages are cached (ISR), so scripts cannot carry a per-request
+ * nonce: inline scripts stay allowed (Next's own and the theme script). Everything else is shut: plugins, other sites
+ * framing us, a changed base URL, forms posting elsewhere and frames other than Google sign-in. Connections go only to
+ * the site, the API and its live updates, storage (NEXT_PUBLIC_STORAGE_ORIGINS), Google sign-in and Sentry; without
+ * storage origins (development, tests) to any origin. Images and media come by pre-signed URL, itself the permission,
+ * so they allow any HTTPS origin (and plain HTTP or WebSocket only where the site itself runs on HTTP, the local
+ * environment).
+ */
+const plain = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').startsWith('http:')
+const anyOrigin = plain ? 'https: http:' : 'https:'
+// `next dev` evaluates its modules; built pages never do.
+const devEval = process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''
+const originOf = (url: string | undefined) => {
+  try {
+    return url ? new URL(url).origin : null
+  } catch {
+    return null
+  }
+}
+const storageOrigins = process.env.NEXT_PUBLIC_STORAGE_ORIGINS?.trim()
+const connections = storageOrigins
+  ? [
+      "'self'",
+      'blob:',
+      'data:',
+      originOf(process.env.NEXT_PUBLIC_API_URL),
+      originOf(process.env.NEXT_PUBLIC_LIVE_URL),
+      ...storageOrigins.split(/\s+/),
+      // Google sign-in through Firebase Authentication (identitytoolkit, securetoken) and Sentry, when set.
+      'https://*.googleapis.com',
+      'https://*.firebaseapp.com',
+      originOf(process.env.NEXT_PUBLIC_SENTRY_DSN),
+    ]
+      .filter((o): o is string => !!o && o !== 'null')
+      .join(' ')
+  : `'self' ${anyOrigin} ${plain ? 'wss: ws:' : 'wss:'}`
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  // 'wasm-unsafe-eval': pdf.js decodes JPEG 2000 and colour profiles with WebAssembly (public/pdfjs/<version>/wasm).
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${anyOrigin}`,
+  `media-src 'self' blob: ${anyOrigin}`,
+  "font-src 'self' data:",
+  `connect-src ${connections}`,
+  'frame-src https://*.firebaseapp.com https://accounts.google.com',
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  ...(plain ? [] : ['upgrade-insecure-requests']),
+].join('; ')
+
 const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },

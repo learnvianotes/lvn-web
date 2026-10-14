@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from '@apollo/client/react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { attempt } from '@/features/groups/shared'
 import { NotificationSettingsDocument, UpdateNotificationSettingsDocument, type NotificationCategory, type NotificationSettingsFieldsFragment } from '@/graphql/generated/graphql'
 
@@ -14,11 +15,11 @@ const ZONES = ['Asia/Kolkata', 'Asia/Dubai', 'Asia/Singapore', 'Europe/London', 
  */
 export function NotificationSettings() {
   const t = useTranslations('settings')
-  const { data } = useQuery(NotificationSettingsDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(NotificationSettingsDocument, { fetchPolicy: 'cache-and-network' })
   const [update] = useMutation(UpdateNotificationSettingsDocument)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const s = data?.notificationSettings
-  if (!s) return <p role="status" className="text-sm text-muted">{t('loading')}</p>
+  if (!s) return error && !loading ? <LoadFailed onRetry={refetch} /> : <Loading label={t('loading')} />
   const save = async (input: SettingsInput) => {
     // Shown at once (the switches are the server's state), then replaced by what the API answers.
     const next = applied(s, input)

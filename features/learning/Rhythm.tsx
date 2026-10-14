@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { EndRhythmPauseDocument, PauseRhythmDocument, RhythmDocument, SetRhythmPlanDocument, type RhythmPauseReason, type RhythmQuery } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { Buddies, FocusMode, ShareRhythm } from './Focus'
@@ -28,7 +29,7 @@ const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T00:00:00
  */
 export function Rhythm() {
   const t = useTranslations('rhythm')
-  const { data, loading, error } = useQuery(RhythmDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(RhythmDocument, { fetchPolicy: 'cache-and-network' })
   const r = data?.rhythm
   return (
     <div className="flex flex-col gap-6">
@@ -36,7 +37,7 @@ export function Rhythm() {
         <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
-      {error && !r ? <Alert tone="error">{t('failed')}</Alert> : null}
+      {error && !r && !loading ? <LoadFailed message={t('failed')} onRetry={refetch} /> : null}
       {!r && loading ? <p className="text-muted">{t('loading')}</p> : null}
       {r ? (
         <>

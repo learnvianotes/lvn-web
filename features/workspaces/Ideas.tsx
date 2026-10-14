@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { PostComments } from '@/features/discussion/PostComments'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
@@ -18,7 +19,7 @@ import { ReportButton } from '@/features/moderation/ReportDialog'
 /** The ideas board (lvn-backend ADR-0048): ideas ranked by the team's reactions; react and discuss under each. */
 export function Ideas({ group }: { group: GroupDetailFragment }) {
   const t = useTranslations('workspaces')
-  const { data, refetch } = useQuery(WorkspaceIdeasDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(WorkspaceIdeasDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
   const [create, creating] = useMutation(CreateIdeaDocument)
   const [remove] = useMutation(DeleteGroupPostDocument)
   const [text, setText] = useState('')
@@ -86,7 +87,9 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
         </ol>
       ) : data ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noIdeas')}</p>
-      ) : null}
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
     </div>
   )
 }

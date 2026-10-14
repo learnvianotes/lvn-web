@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { attempt, textToDoc } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { AskDoubtDocument, WorkspaceDoubtsDocument, type DoubtStatus, type GroupDetailFragment } from '@/graphql/generated/graphql'
@@ -25,7 +26,7 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
   const m = useTranslations('moderation.queue')
   const router = useRouter()
   const [status, setStatus] = useState<DoubtStatus | null>(null)
-  const { data } = useQuery(WorkspaceDoubtsDocument, { variables: { id: group.id, status }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(WorkspaceDoubtsDocument, { variables: { id: group.id, status }, fetchPolicy: 'cache-and-network' })
   const [ask, asking] = useMutation(AskDoubtDocument)
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
@@ -119,7 +120,9 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
         </ul>
       ) : data ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noDoubts')}</p>
-      ) : null}
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
     </div>
   )
 }

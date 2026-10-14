@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import {
   MyPeopleDocument,
   RemoveConnectionDocument,
@@ -26,7 +27,7 @@ type Tab = 'followers' | 'following' | 'connections' | 'requests' | 'blocked' | 
 export function PeopleLists() {
   const t = useTranslations('people.lists')
   const [tab, setTab] = useState<Tab>('followers')
-  const { data, loading, refetch } = useQuery(MyPeopleDocument, { variables: { first: 100 }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(MyPeopleDocument, { variables: { first: 100 }, fetchPolicy: 'cache-and-network' })
   const [removeFollower] = useMutation(RemoveFollowerDocument)
   const [unfollow] = useMutation(UnfollowUserDocument)
   const [unblock] = useMutation(UnblockUserDocument)
@@ -95,7 +96,8 @@ export function PeopleLists() {
         ))}
       </div>
       <div role="tabpanel" className="flex flex-col gap-2">
-        {!lists[tab].length && !loading ? <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-muted">{t(`empty.${tab}`)}</p> : null}
+        {!data ? <QueryState loading={loading} error={error} onRetry={refetch} /> : null}
+        {data && !lists[tab].length ? <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-muted">{t(`empty.${tab}`)}</p> : null}
         {lists[tab].length ? (
           <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
             {lists[tab].map((p) => (

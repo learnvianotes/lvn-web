@@ -1,0 +1,5 @@
+# gitleaks findings reviewed in Phase 9 (lvn-backend ADR-0090) and accepted.
+# The retired Vite site's Firebase web API key. Firebase web keys identify the project and ship in every page; they
+# are not secrets (access is governed by Firebase Auth's authorised domains and the key's API restrictions). The file
+# was removed by the Next.js rewrite; the key now comes from NEXT_PUBLIC_FIREBASE_API_KEY.
+2b89d7605af7d089900986054c1b72baf3ab93a8:src/lib/firebase.ts:gcp-api-key:12

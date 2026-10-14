@@ -5,6 +5,7 @@ import { Plus, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
+import { QueryState } from '@/components/ui/query-state'
 import { FindTopicsDocument, MyInterestsDocument, SetInterestsDocument } from '@/graphql/generated/graphql'
 
 /**
@@ -13,7 +14,7 @@ import { FindTopicsDocument, MyInterestsDocument, SetInterestsDocument } from '@
  */
 export function Interests() {
   const t = useTranslations('community.interests')
-  const { data } = useQuery(MyInterestsDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(MyInterestsDocument, { fetchPolicy: 'cache-and-network' })
   // The profile comes back without the viewer around it: the list is asked for again.
   const [save, saving] = useMutation(SetInterestsDocument, { refetchQueries: [MyInterestsDocument], awaitRefetchQueries: true })
   const [query, setQuery] = useState('')
@@ -37,7 +38,10 @@ export function Interests() {
         {t('title')}
       </h2>
       <p className="text-sm text-muted">{t('lead')}</p>
-      {chosen.length ? (
+      {/* Each change saves the whole list, so nothing can be added until the saved list has come. */}
+      {!data ? (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      ) : chosen.length ? (
         <ul aria-label={t('chosen')} className="flex flex-wrap gap-2">
           {chosen.map((topic) => (
             <li key={topic.id} className="inline-flex items-center gap-1 rounded-full bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
@@ -51,11 +55,13 @@ export function Interests() {
       ) : (
         <p className="text-sm text-muted">{t('none')}</p>
       )}
-      <label className="flex flex-col gap-1 text-sm font-medium">
-        {t('find')}
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('placeholder')} />
-      </label>
-      {found.length ? (
+      {data ? (
+        <label className="flex flex-col gap-1 text-sm font-medium">
+          {t('find')}
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('placeholder')} />
+        </label>
+      ) : null}
+      {data && found.length ? (
         <ul aria-label={t('results')} className="flex flex-wrap gap-2">
           {found
             .filter((topic) => !ids.includes(topic.id))

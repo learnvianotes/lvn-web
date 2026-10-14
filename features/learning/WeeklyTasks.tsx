@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { AddWeeklyTaskDocument, RemoveWeeklyTaskDocument, TaskSuggestionsDocument, UpdateWeeklyTaskDocument, WeeklyTasksDocument, type WeeklyTaskFieldsFragment, type WeeklyTaskKind } from '@/graphql/generated/graphql'
 import { TopicChoice } from './Focus'
 
@@ -24,10 +25,11 @@ const refetchQueries = [WeeklyTasksDocument, TaskSuggestionsDocument]
  */
 export function WeeklyTasks() {
   const t = useTranslations('tasks')
-  const { data } = useQuery(WeeklyTasksDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, error, refetch } = useQuery(WeeklyTasksDocument, { fetchPolicy: 'cache-and-network' })
   const week = data?.weeklyTasks
   const [adding, setAdding] = useState(false)
-  if (!week) return null
+  // Nothing while it loads (the page around it is there); a failure says so in one line where the tasks would be.
+  if (!week) return error && !data ? <LoadFailed message={t('loadFailed')} onRetry={refetch} /> : null
   const room = week.tasks.length < week.max
   const done = week.tasks.filter((x) => x.done).length
   return (

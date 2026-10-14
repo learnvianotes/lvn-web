@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { LearningHistoryDocument, SetLearningTimeZoneDocument, type LearningHistoryQuery } from '@/graphql/generated/graphql'
 
 type Day = LearningHistoryQuery['learningHistory']['days'][number]
@@ -21,7 +22,7 @@ const coreName = (key: string) => key.replace(/^core:/, '').replace('/', ' / ').
  */
 export function History() {
   const t = useTranslations('history')
-  const { data, loading, error, fetchMore } = useQuery(LearningHistoryDocument, { variables: { days: 14 }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch, fetchMore } = useQuery(LearningHistoryDocument, { variables: { days: 14 }, fetchPolicy: 'cache-and-network' })
   const history = data?.learningHistory
   const more = async () => {
     if (!history?.nextBefore) return
@@ -39,7 +40,7 @@ export function History() {
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {history ? <TimeZone zone={history.timeZone} /> : null}
-      {error && !history ? <Alert tone="error">{t('failed')}</Alert> : null}
+      {error && !history && !loading ? <LoadFailed message={t('failed')} onRetry={refetch} /> : null}
       {!history && loading ? <p className="text-muted">{t('loading')}</p> : null}
       {history && !history.days.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('empty')}</p> : null}
       <ol className="flex flex-col gap-3">

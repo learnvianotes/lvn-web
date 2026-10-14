@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { MyTeacherProfileDocument, UpdateTeacherProfileDocument, type TeacherSkillKind } from '@/graphql/generated/graphql'
 import { SkillsImport } from './SkillsImport'
 
@@ -20,7 +21,7 @@ let next = 0
  */
 export function SkillsEditor() {
   const t = useTranslations('people.skills')
-  const { data, loading } = useQuery(MyTeacherProfileDocument, { fetchPolicy: 'cache-and-network' })
+  const { data, loading, refetch } = useQuery(MyTeacherProfileDocument, { fetchPolicy: 'cache-and-network' })
   const [save, saving] = useMutation(UpdateTeacherProfileDocument)
   const [headline, setHeadline] = useState('')
   const [bio, setBio] = useState('')
@@ -38,8 +39,9 @@ export function SkillsEditor() {
     setLoaded(true)
   }, [viewer, loaded])
 
-  if (loading && !viewer) return <p role="status" className="text-sm text-muted">{t('loading')}</p>
-  if (viewer && viewer.globalRole !== 'TEACHER') return <p className="text-muted">{t('teachersOnly')}</p>
+  // No form without what is saved: Save sends the whole profile, so an empty form would wipe it.
+  if (!viewer) return loading ? <Loading label={t('loading')} /> : <LoadFailed onRetry={refetch} />
+  if (viewer.globalRole !== 'TEACHER') return <p className="text-muted">{t('teachersOnly')}</p>
 
   const update = (key: number, change: Partial<Item>) => setItems((list) => list.map((i) => (i.key === key ? { ...i, ...change } : i)))
   const move = (index: number, by: -1 | 1) =>
@@ -72,11 +74,9 @@ export function SkillsEditor() {
       >
         <header className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-extrabold tracking-tight">{t('editTitle')}</h1>
-          {viewer ? (
-            <Link href={`/u/${viewer.handle}`} className="text-sm font-medium text-accent hover:underline">
-              {t('seeProfile')}
-            </Link>
-          ) : null}
+          <Link href={`/u/${viewer.handle}`} className="text-sm font-medium text-accent hover:underline">
+            {t('seeProfile')}
+          </Link>
         </header>
         <p className="text-sm text-muted">{t('lead')}</p>
         <label className="flex flex-col gap-1.5">
@@ -137,11 +137,11 @@ export function SkillsEditor() {
             {message.text}
           </p>
         ) : null}
-        <Button type="submit" className="w-fit" disabled={saving.loading}>
+        <Button type="submit" className="w-fit" disabled={saving.loading || !loaded}>
           {t('save')}
         </Button>
       </form>
-      <SkillsImport drafts={viewer?.teacherProfile?.drafts ?? []} imported={(viewer?.teacherProfile?.skills ?? []).filter((s) => s.source !== 'MANUAL')} />
+      <SkillsImport drafts={viewer.teacherProfile?.drafts ?? []} imported={(viewer.teacherProfile?.skills ?? []).filter((s) => s.source !== 'MANUAL')} />
     </div>
   )
 }

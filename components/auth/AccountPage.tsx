@@ -9,6 +9,7 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import {
   ClaimLegacyDataDocument,
   DeclineLegacyDataDocument,
@@ -22,6 +23,7 @@ import {
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
+import { DeleteAccount } from '@/features/data/DeleteAccount'
 import { AccountStanding } from '@/features/moderation/Standing'
 import { ReviewRequests } from '@/features/verification/ReviewRequests'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
@@ -37,10 +39,10 @@ const card = 'flex flex-col gap-4 rounded-2xl border border-border bg-surface p-
 export function AccountPage() {
   const t = useTranslations('profile')
   const tt = useTranslations('teach')
-  const { data, loading } = useQuery(ViewerDocument)
+  const { data, loading, error, refetch } = useQuery(ViewerDocument)
   const viewer = data?.viewer
-  if (loading && !viewer) return <p role="status" className="text-sm text-muted">{t('loading')}</p>
-  if (!viewer) return null
+  if (loading && !viewer) return <Loading label={t('loading')} />
+  if (!viewer) return error ? <LoadFailed onRetry={refetch} /> : null
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
@@ -144,6 +146,7 @@ export function AccountPage() {
       <LegacyData viewer={viewer} />
       <AiAccountSection className={card} />
       <YourData />
+      <DeleteAccount />
     </div>
   )
 }

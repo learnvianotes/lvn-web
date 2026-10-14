@@ -34,6 +34,7 @@ import { useReadPdf } from '@/features/reader/readPdf'
 import { OPEN_SEARCH_EVENT } from '@/features/search/SearchPalette'
 import { CreateNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { DeletionBanner } from '@/features/data/DeleteAccount'
 
 type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp }
 
@@ -89,6 +90,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
       ) : null}
       <div className="flex min-w-0 flex-col">
         {app ? <TopBar onMenu={() => setOpen(true)} /> : visitor}
+        {app ? <DeletionBanner /> : null}
         <main id="main" className={app ? 'mx-auto min-h-[70dvh] w-full max-w-6xl flex-1 px-4 py-6 sm:py-8' : 'min-h-[70dvh]'}>
           {children}
         </main>

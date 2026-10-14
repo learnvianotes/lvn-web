@@ -25,6 +25,7 @@ const viewer = (over: Record<string, unknown> = {}) => ({
   institutionalEmail: null,
   institutionalEmailStatus: 'NONE',
   institution: null,
+  deletionScheduledFor: null,
   profile: null,
   legacyImport: { __typename: 'LegacyImport', status: 'NOT_FOUND', claimedAt: null, counts: null },
   ...over,

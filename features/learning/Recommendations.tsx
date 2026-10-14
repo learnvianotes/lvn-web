@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { BookOpen, CalendarClock, Library, ListChecks, RotateCcw, TrendingUp, X } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { LoadFailed } from '@/components/ui/query-state'
 import { DismissRecommendationDocument, RecommendationsDocument, type RecommendationKind, type RecommendationsQuery } from '@/graphql/generated/graphql'
 
 type Rec = RecommendationsQuery['recommendations'][number]
@@ -25,10 +26,11 @@ function hrefOf(r: Rec): string {
  */
 export function Recommendations({ limit = 6 }: { limit?: number }) {
   const t = useTranslations('recommendations')
-  const { data } = useQuery(RecommendationsDocument, { variables: { limit }, fetchPolicy: 'cache-and-network' })
+  const { data, error, refetch } = useQuery(RecommendationsDocument, { variables: { limit }, fetchPolicy: 'cache-and-network' })
   const [dismiss] = useMutation(DismissRecommendationDocument, { refetchQueries: [RecommendationsDocument] })
   const items = data?.recommendations
-  if (!items) return null
+  // Nothing while it loads (the page around it is there); a failure says so in one line where the list would be.
+  if (!items) return error && !data ? <LoadFailed message={t('loadFailed')} onRetry={refetch} /> : null
   return (
     <section aria-labelledby="recommended" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
       <h2 id="recommended" className="text-lg font-bold">

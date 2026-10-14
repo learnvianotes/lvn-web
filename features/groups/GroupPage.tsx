@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { LoadFailed, Loading, QueryState } from '@/components/ui/query-state'
 import { ago } from '@/features/notes/look'
 import { putToStorage, UploadError } from '@/features/notes/media'
 import { PostComments } from '@/features/discussion/PostComments'
@@ -43,6 +44,7 @@ import {
   type GroupPostFieldsFragment,
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { isNotThere } from '@/lib/query'
 import type { Doc } from '@/lib/contracts/validation'
 import { Doubts } from '@/features/workspaces/Doubts'
 import { Ideas } from '@/features/workspaces/Ideas'
@@ -54,11 +56,14 @@ type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'resources' | 'members' | 'r
 /** One group (lvn-backend ADR-0045): who it is for and how to get in; inside, posts, shared notes and members. */
 export function GroupPage({ id }: { id: string }) {
   const t = useTranslations('groups')
-  const { data, loading, refetch } = useQuery(GroupDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(GroupDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [tab, setTab] = useState<Tab>('posts')
   const group = data?.group
+  if (!group && loading) return <Loading label={t('loading')} />
+  // Not there only when the API said so; a group that could not be asked for is offered again.
+  if (!group && error && !isNotThere(error)) return <LoadFailed onRetry={refetch} />
   // A group platform moderators removed: its owner reads why there (ADR-0053); for everyone else it is not there.
-  if (!group) return loading ? <p role="status" className="text-sm text-muted">{t('loading')}</p> : <RemovedGroupNotice id={id} fallback={<p className="text-muted">{t('notFound')}</p>} />
+  if (!group) return <RemovedGroupNotice id={id} fallback={<p className="text-muted">{t('notFound')}</p>} />
   const member = !!group.viewerRole
   const project = group.type === 'PROJECT'
   const tabs: Tab[] = member ? ['posts', ...(project ? (['ideas', 'doubts'] as const) : []), 'notes', 'resources', 'members', ...(group.viewerCan.reviewRequests ? (['requests'] as const) : []), ...(group.viewerCan.moderate ? (['reports'] as const) : []), ...(group.viewerCan.manage ? (['settings'] as const) : [])] : []
@@ -191,7 +196,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
 
 function Posts({ group }: { group: GroupDetailFragment }) {
   const t = useTranslations('groups')
-  const { data, refetch, fetchMore } = useQuery(GroupPostsDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch, fetchMore } = useQuery(GroupPostsDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
   const [create, creating] = useMutation(CreateGroupPostDocument)
   const [remove] = useMutation(DeleteGroupPostDocument)
   const [pin] = useMutation(PinGroupPostDocument)
@@ -273,7 +278,9 @@ function Posts({ group }: { group: GroupDetailFragment }) {
         </ul>
       ) : posts ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noPosts')}</p>
-      ) : null}
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
       {posts?.pageInfo.hasNextPage ? (
         <Button variant="secondary" className="self-center" onClick={() =>
             void fetchMore({
@@ -325,7 +332,7 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
 
 function SharedNotes({ group }: { group: GroupDetailFragment }) {
   const t = useTranslations('groups')
-  const { data, refetch } = useQuery(GroupNotesDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(GroupNotesDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
   const mine = useQuery(MyNotesDocument, { variables: { first: 50 }, fetchPolicy: 'cache-and-network' })
   const [share] = useMutation(ShareNoteToGroupDocument)
   const [chosen, setChosen] = useState('')
@@ -384,7 +391,9 @@ function SharedNotes({ group }: { group: GroupDetailFragment }) {
         </ul>
       ) : data ? (
         <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noNotes')}</p>
-      ) : null}
+      ) : (
+        <QueryState loading={loading} error={queryError} onRetry={refetch} />
+      )}
     </div>
   )
 }
@@ -393,7 +402,7 @@ const ROLES = ['ADMIN', 'MODERATOR', 'MEMBER'] as const
 
 function Members({ group }: { group: GroupDetailFragment }) {
   const t = useTranslations('groups')
-  const { data, refetch } = useQuery(GroupMembersDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error: queryError, refetch } = useQuery(GroupMembersDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
   const [setRole] = useMutation(SetGroupRoleDocument)
   const [remove] = useMutation(RemoveGroupMemberDocument)
   const [mute] = useMutation(MuteGroupMemberDocument)
@@ -404,6 +413,7 @@ function Members({ group }: { group: GroupDetailFragment }) {
   }
   const rank = { OWNER: 4, ADMIN: 3, MODERATOR: 2, MEMBER: 1, MENTOR: 1 } as const
   const mine = rank[group.viewerRole ?? 'MEMBER']
+  if (!data) return <QueryState loading={loading} error={queryError} onRetry={refetch} />
   return (
     <div className="flex flex-col gap-3">
       {error ? (
@@ -468,13 +478,14 @@ function Members({ group }: { group: GroupDetailFragment }) {
 
 function Requests({ group }: { group: GroupDetailFragment }) {
   const t = useTranslations('groups')
-  const { data, refetch } = useQuery(GroupMembersDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(GroupMembersDocument, { variables: { id: group.id }, fetchPolicy: 'cache-and-network' })
   const [review] = useMutation(ReviewGroupJoinRequestDocument)
   const requests = data?.group?.joinRequests ?? []
   const decide = async (requestId: string, decision: 'APPROVED' | 'REJECTED') => {
     await review({ variables: { requestId, decision } })
     await refetch()
   }
+  if (!data) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!requests.length) return <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('noRequests')}</p>
   return (
     <ul className="flex flex-col gap-2">

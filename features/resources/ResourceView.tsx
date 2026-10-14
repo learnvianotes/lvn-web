@@ -9,9 +9,11 @@ import { useState } from 'react'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { LoadFailed } from '@/components/ui/query-state'
 import { Discussion } from '@/features/discussion/Discussion'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { DeleteResourceDocument, MyResourcesDocument, ResourceDocument, type ResourceFieldsFragment } from '@/graphql/generated/graphql'
+import { isNotThere } from '@/lib/query'
 import { useSession } from '@/state/session'
 import { SaveButton } from './Catalogue'
 import { RecommendDialog } from './RecommendDialog'
@@ -28,10 +30,18 @@ export function ResourcePage({ id }: { id: string }) {
 function Page({ id }: { id: string }) {
   const t = useTranslations('resources')
   const status = useSession((s) => s.status)
-  const { data, loading } = useQuery(ResourceDocument, { variables: { id }, skip: status === 'unknown', fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ResourceDocument, { variables: { id }, skip: status === 'unknown', fetchPolicy: 'cache-and-network' })
   const resource = data?.resource
   if (!resource) {
-    if (loading || status === 'unknown' || !data) return <div className="mx-auto max-w-3xl px-4 py-10" aria-busy="true" />
+    if (loading || status === 'unknown' || (!data && !error)) return <div className="mx-auto max-w-3xl px-4 py-10" aria-busy="true" />
+    // Not there only when the API said so; a resource that could not be asked for is offered again.
+    if (error && !isNotThere(error)) {
+      return (
+        <div className="mx-auto max-w-md px-4 py-16">
+          <LoadFailed onRetry={refetch} />
+        </div>
+      )
+    }
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="text-2xl font-bold">{t('notFound')}</h1>

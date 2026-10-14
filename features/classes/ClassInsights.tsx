@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { QueryState } from '@/components/ui/query-state'
 import { ClassroomPerformanceDocument, ClassroomRhythmRingDocument, SetClassGoalDocument, type ClassroomRhythmRingQuery } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 
@@ -14,8 +15,9 @@ import { cn } from '@/lib/cn'
  */
 export function ClassRhythm({ classroomId, staff = false }: { classroomId: string; staff?: boolean }) {
   const t = useTranslations('classRhythm')
-  const { data } = useQuery(ClassroomRhythmRingDocument, { variables: { id: classroomId }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ClassroomRhythmRingDocument, { variables: { id: classroomId }, fetchPolicy: 'cache-and-network' })
   const ring = data?.classroom?.rhythmRing
+  if (!data) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!ring) return null
   const share = ring.targetDays ? Math.min(ring.countedDays / ring.targetDays, 1) : 0
   return (
@@ -44,8 +46,9 @@ export function ClassRhythm({ classroomId, staff = false }: { classroomId: strin
 /** For staff: each student's first quiz scores and the topics the class finds hard (lvn-backend ADR-0072). */
 export function ClassPerformance({ classroomId }: { classroomId: string }) {
   const t = useTranslations('classPerformance')
-  const { data } = useQuery(ClassroomPerformanceDocument, { variables: { id: classroomId }, fetchPolicy: 'cache-and-network' })
+  const { data, loading, error, refetch } = useQuery(ClassroomPerformanceDocument, { variables: { id: classroomId }, fetchPolicy: 'cache-and-network' })
   const p = data?.classroom?.performance
+  if (!data) return <QueryState loading={loading} error={error} onRetry={refetch} />
   if (!p) return null
   return (
     <section aria-label={t('title')} className="flex flex-col gap-4">
