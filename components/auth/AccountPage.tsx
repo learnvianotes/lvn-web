@@ -81,6 +81,10 @@ export function AccountPage() {
         {t('rhythm')}
         <span aria-hidden>→</span>
       </Link>
+      <Link href="/achievements" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
+        {t('achievements')}
+        <span aria-hidden>→</span>
+      </Link>
       <Link href="/review" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('review')}
         <span aria-hidden>→</span>

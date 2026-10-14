@@ -25,6 +25,9 @@ export interface PublicProfile {
     bio: string | null
     skills: { id: string; kind: 'SKILL' | 'QUALIFICATION' | 'EXPERIENCE' | 'PROJECT' | 'PUBLICATION'; name: string; detail: string | null; source: 'MANUAL' | 'GITHUB' | 'WEBSITE' | 'ORCID' | 'OPENALEX'; sourceUrl: string | null; fetchedAt: string | null }[]
   } | null
+  /** Shown only when the person is an adult who chose to show them (ADR-0080); null otherwise */
+  achievements: { id: string; kind: 'TOPICS_MASTERED' | 'QUIZ_MASTER' | 'EXAM_READY' | 'RHYTHM_WEEKS' | 'SUBJECT_CONTRIBUTOR'; title: string; description: string }[] | null
+  contribution: { points: number; level: 'NEWCOMER' | 'CONTRIBUTOR' | 'TRUSTED' } | null
 }
 
 const PROFILE = `query PublicProfile($handle: String!) {
@@ -32,6 +35,8 @@ const PROFILE = `query PublicProfile($handle: String!) {
     id handle displayName globalRole verified createdAt followerMilestone
     profile { department yearOfStudy }
     teacherProfile { headline bio skills { id kind name detail source sourceUrl fetchedAt } }
+    achievements { id kind title description }
+    contribution { points level }
     publicNotes(first: 60) { edges { node { id title slug kind publishedAt } } }
   }
 }`

@@ -22,6 +22,10 @@ test('a teacher’s profile is rendered for anyone, indexed, with what they made
   await expect(page.getByText('@meera', { exact: true })).toBeVisible()
   await expect(page.getByText('Teacher', { exact: true })).toBeVisible()
   await expect(page.getByText('1,000+ followers')).toBeVisible()
+  // An adult who shows their achievements (lvn-backend ADR-0080): the badges and their level.
+  const achievements = page.getByRole('region', { name: /Achievements/ })
+  await expect(achievements.getByText('Trusted contributor')).toBeVisible()
+  await expect(achievements.getByRole('listitem')).toHaveText([/Quiz master/, /Data Structures contributor/])
   await expect(page.getByRole('tab')).toHaveText(['Notes 2', 'Blog 0', 'Projects 0', 'Posts 0', 'Skills'])
   await expect(page.getByRole('link', { name: /Heaps, explained/ })).toHaveAttribute('href', '/n/heaps-explained-01920000-0000-7000-8000-00000000d0e1')
   await page.getByRole('tab', { name: /Blog/ }).click()
@@ -38,6 +42,8 @@ test('a student’s profile shows Notes and Projects only, with what they chose 
   await signedOut(page)
   await page.goto('/u/ravi')
   await expect(page.getByRole('heading', { level: 1, name: /Ravi Kumar/ })).toBeVisible()
+  // Achievements not shown: no section at all.
+  await expect(page.getByRole('region', { name: /Achievements/ })).toHaveCount(0)
   await expect(page.getByText('Computer Science · 3rd year')).toBeVisible()
   await expect(page.getByRole('tab')).toHaveText(['Notes 1', 'Projects 0'])
   expect(await page.locator('meta[name="robots"]').getAttribute('content')).toContain('noindex')

@@ -256,6 +256,7 @@
     "home": "Home",
     "exams": "Exams",
     "rhythm": "Rhythm",
+    "achievements": "Achievements",
     "review": "Review flashcards",
     "resources": "Your resources",
     "savedResources": "Bookmarks: your saved notes and resources"
@@ -1125,7 +1126,14 @@
     "resourceRecommended": "{actor} recommended a resource to you",
     "rhythmBuddyRequested": "{actor} asked you to be Rhythm buddies",
     "rhythmBuddyAccepted": "{actor} is now your Rhythm buddy",
-    "commentOnResource": "{actor} commented on your resource"
+    "commentOnResource": "{actor} commented on your resource",
+    "achievement": {
+      "TOPICS_MASTERED": "{tier, plural, one {You mastered your first topic} other {You’ve mastered # topics}}",
+      "QUIZ_MASTER": "{tier, plural, one {You’re a quiz master on a topic} other {You’re a quiz master on # topics}}",
+      "EXAM_READY": "{tier, plural, one {An exam reached its Readiness target} other {# exams reached their Readiness target}}",
+      "RHYTHM_WEEKS": "You met {tier} Rhythm weeks",
+      "SUBJECT_CONTRIBUTOR": "You’re a {subject} contributor: {tier} points from others"
+    }
   },
   "people": {
     "teacher": "Teacher",
@@ -1287,7 +1295,12 @@
         "takeAway": "Take {name} off your profile"
       }
     },
-    "report": "Report"
+    "report": "Report",
+    "achievements": "Achievements",
+    "level": {
+      "CONTRIBUTOR": "Contributor",
+      "TRUSTED": "Trusted contributor"
+    }
   },
   "groups": {
     "title": "Groups",
@@ -2559,5 +2572,37 @@
     "writeOne": "Write one",
     "noResources": "No resources on this yet.",
     "browseResources": "Browse resources"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "lead": "What you have learned, and what others did with what you made public. Only you see this unless you show it.",
+    "earned": "Earned",
+    "none": "Nothing yet. Achievements mark what you learn: master a topic, get an exam ready, meet your Rhythm weeks.",
+    "review": "Review cards",
+    "exams": "Plan an exam",
+    "rhythm": "Your Rhythm",
+    "level": {
+      "NEWCOMER": "Newcomer",
+      "CONTRIBUTOR": "Contributor",
+      "TRUSTED": "Trusted contributor"
+    },
+    "points": "{points, plural, one {# point} other {# points}}",
+    "toNext": "{points, plural, one {# more point} other {# more points}} to the next level",
+    "how": "Points come from what others do with your public work: a reaction on a note (+1), a fork (+5), a resource moderators approve (+10). Taking them back takes the points back.",
+    "show": "Show my achievements and level on my profile",
+    "showHelp": "Anyone who opens your profile sees them. Your points history stays yours.",
+    "privateUnder18": "Your achievements stay private until you are 18: only you see them.",
+    "history": "Points history",
+    "noPoints": "No points yet. Make a note public: reactions and forks on it earn points.",
+    "rule": {
+      "REACTION": "A reaction on your note",
+      "REACTION_BACK": "A reaction taken back or the note no longer public",
+      "FORK": "Your note was forked",
+      "FORK_BACK": "The note is no longer public",
+      "RESOURCE_APPROVED": "Your resource was approved",
+      "RESOURCE_APPROVED_BACK": "Your resource left the catalogue"
+    },
+    "more": "Show more",
+    "onProfile": "Achievements"
   }
 }

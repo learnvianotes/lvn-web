@@ -1,5 +1,6 @@
 import { BadgeCheck, GraduationCap } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
+import { AchievementBadges } from '@/features/achievements/AchievementBadges'
 import type { PublicProfile } from './data'
 import { ProfileActions } from './ProfileActions'
 import { ProfileTabs } from './ProfileTabs'
@@ -34,6 +35,15 @@ export async function ProfileView({ person }: { person: PublicProfile }) {
         </div>
         <ProfileActions id={person.id} handle={person.handle} />
       </header>
+      {person.achievements?.length ? (
+        <section aria-labelledby="profile-achievements" className="flex flex-col gap-3">
+          <h2 id="profile-achievements" className="flex flex-wrap items-baseline gap-2 text-lg font-bold">
+            {t('achievements')}
+            {person.contribution && person.contribution.level !== 'NEWCOMER' ? <span className="text-sm font-semibold text-accent">{t(`level.${person.contribution.level}`)}</span> : null}
+          </h2>
+          <AchievementBadges items={person.achievements} />
+        </section>
+      ) : null}
       <ProfileTabs teacher={teacher} notes={person.notes} skills={person.teacherProfile} />
     </div>
   )
