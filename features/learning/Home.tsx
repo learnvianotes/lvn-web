@@ -165,7 +165,7 @@ export function Home() {
               <GoalRing done={rhythm.countedDays} target={rhythm.target} />
               <span className="flex flex-col">
                 <span className="text-xl font-extrabold">{t('ofDays', { done: rhythm.countedDays, target: rhythm.target })}</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
               </span>
             </div>
           ) : (
