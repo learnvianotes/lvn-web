@@ -75,6 +75,9 @@ export function describeNotification(
       // Someone recommended one to the viewer (ADR-0075), or moderators decided on one they sent (ADR-0074).
       if (data.kind === 'RECOMMENDED') return t('resourceRecommended', { actor })
       return t(data.decision === 'APPROVED' ? 'resourceApproved' : 'resourceRejected')
+    case 'ACHIEVEMENT':
+      // An achievement reached (lvn-backend ADR-0080): what was learned, in the person's words.
+      return t(`achievement.${String(data.kind)}`, { tier: Number(data.tier ?? 1), subject: String(data.subject ?? '') })
     case 'RHYTHM_BUDDY':
       // Someone asked to share Rhythm, or agreed to (lvn-backend ADR-0072).
       return t(data.kind === 'ACCEPTED' ? 'rhythmBuddyAccepted' : 'rhythmBuddyRequested', { actor })

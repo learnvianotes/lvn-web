@@ -25,6 +25,53 @@ type AccountWarning {
   reason: String!
 }
 
+"""An achievement: the highest tier reached of one kind (and subject)"""
+type Achievement {
+  """What it says the person did"""
+  description: String!
+  earnedAt: DateTime!
+  id: UUID!
+  kind: AchievementKind!
+
+  """For a subject contributor"""
+  subjectTitle: String
+
+  """The threshold reached: 5 topics, 12 weeks, 250 points…"""
+  tier: Int!
+  title: String!
+}
+
+"""What an achievement marks"""
+enum AchievementKind {
+  """Exams that reached their Readiness target before the day"""
+  EXAM_READY
+
+  """Topics with at least 30 quiz answers, nine in ten right"""
+  QUIZ_MASTER
+
+  """Weeks whose planned days were met"""
+  RHYTHM_WEEKS
+
+  """Points from public notes on one subject"""
+  SUBJECT_CONTRIBUTOR
+
+  """Topics recalled well and answered right (mastery ≥ 0.8)"""
+  TOPICS_MASTERED
+}
+
+type AchievementSettings {
+  """Only adults may show them"""
+  canShow: Boolean!
+
+  """Achievements and level shown on the viewer's profile"""
+  showAchievements: Boolean!
+}
+
+type AchievementSettingsPayload {
+  settings: AchievementSettings
+  userErrors: [UserError!]!
+}
+
 type ActivityConnection {
   edges: [ActivityEdge!]!
   pageInfo: PageInfo!
@@ -1081,6 +1128,28 @@ type ConnectionRequestItem {
 
   """Who asked (INCOMING) or was asked (OUTGOING)"""
   person: User!
+}
+
+type Contribution {
+  level: ContributorLevel!
+
+  """Points at which the next level starts; null at the top"""
+  nextLevelAt: Int
+
+  """
+  Points from what others did with the person's public work; never below 0
+  """
+  points: Int!
+}
+
+"""A level from points, lost again below its threshold"""
+enum ContributorLevel {
+  """From 50 points"""
+  CONTRIBUTOR
+  NEWCOMER
+
+  """From 250 points: may submit 20 resources a day"""
+  TRUSTED
 }
 
 enum ContributorRole {
@@ -2530,6 +2599,11 @@ type Mutation {
   """
   saveNote(input: NoteIdInput!): NotePayload!
   saveResource(input: ResourceIdInput!): ResourcePayload!
+
+  """
+  Shows or hides the viewer's achievements and level on their profile; refused under 18
+  """
+  setAchievementsShown(input: SetAchievementsShownInput!): AchievementSettingsPayload!
   setAiDefaults(input: SetAiDefaultsInput!): AiSettingsPayload!
 
   """The note's owner only"""
@@ -3052,6 +3126,10 @@ type Notification {
 }
 
 enum NotificationCategory {
+  """
+  An achievement the person reached (ADR-0080): in the app only, never pushed
+  """
+  ACHIEVEMENT
   CLASSROOM_INVITE
   CLASSROOM_POST
   COMMENT
@@ -3289,6 +3367,48 @@ enum Platform {
   WEB
 }
 
+"""A line of the viewer's own points history. Who acted is never told."""
+type PointsEntry {
+  createdAt: DateTime!
+
+  """
+  Positive when earned, negative when taken back (a reaction removed, a note no longer public, a resource removed)
+  """
+  delta: Int!
+  id: UUID!
+  rule: PointsRule!
+  sourceId: UUID!
+  sourceType: PointsSource!
+  subjectTitle: String
+}
+
+type PointsEntryConnection {
+  edges: [PointsEntryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type PointsEntryEdge {
+  cursor: String!
+  node: PointsEntry!
+}
+
+"""What earned points or took them back"""
+enum PointsRule {
+  """Someone forked a public note"""
+  FORK
+
+  """Someone reacted to a public note"""
+  REACTION
+
+  """Moderators approved a resource"""
+  RESOURCE_APPROVED
+}
+
+enum PointsSource {
+  NOTE
+  RESOURCE
+}
+
 enum ProblemMark {
   REVISIT
   SOLVED
@@ -3319,6 +3439,8 @@ input PublishClassQuizInput {
 }
 
 type Query {
+  achievementSettings: AchievementSettings!
+
   """
   What happened in the viewer's groups and classes, newest first; their own doing left out
   """
@@ -3439,6 +3561,9 @@ type Query {
 
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
+
+  """The viewer's points history, newest first"""
+  myPoints(after: String, first: Int): PointsEntryConnection!
 
   """The viewer's resources, newest first, whatever their state"""
   myResources: [Resource!]!
@@ -4423,6 +4548,10 @@ type Session {
   user: User!
 }
 
+input SetAchievementsShownInput {
+  show: Boolean!
+}
+
 input SetAiDefaultsInput {
   chatConnectionId: UUID
   embedConnectionId: UUID
@@ -5015,6 +5144,13 @@ type UploadIntentPayload {
 
 """A person, owned by the users subgraph"""
 type User {
+  """
+  Achievements, the highest tier of each: the viewer's own, or an adult's who shows them; null otherwise
+  """
+  achievements: [Achievement!]
+
+  """Points and level, under the same rule as achievements"""
+  contribution: Contribution
   createdAt: DateTime!
   displayName: String!
 

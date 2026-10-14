@@ -72,6 +72,24 @@
             "fetchedAt": "2026-10-01T10:00:00.000Z"
           }
         ]
+      },
+      "achievements": [
+        {
+          "id": "01920000-0000-7000-8000-00000000ac01",
+          "kind": "QUIZ_MASTER",
+          "title": "Quiz master",
+          "description": "Nine in ten right over at least 30 answers on a topic."
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000ac02",
+          "kind": "SUBJECT_CONTRIBUTOR",
+          "title": "Data Structures contributor",
+          "description": "Your public notes on Data Structures earned 250 points from what others did with them."
+        }
+      ],
+      "contribution": {
+        "points": 312,
+        "level": "TRUSTED"
       }
     },
     {
@@ -99,7 +117,9 @@
           }
         ]
       },
-      "teacherProfile": null
+      "teacherProfile": null,
+      "achievements": null,
+      "contribution": null
     }
   ]
 }

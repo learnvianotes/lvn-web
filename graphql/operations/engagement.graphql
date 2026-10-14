@@ -1,0 +1,62 @@
+# Achievements, points and contributor levels (lvn-backend ADR-0080).
+
+fragment AchievementFields on Achievement {
+  id
+  kind
+  tier
+  title
+  description
+  subjectTitle
+  earnedAt
+}
+
+query MyAchievements {
+  viewer {
+    id
+    achievements {
+      ...AchievementFields
+    }
+    contribution {
+      points
+      level
+      nextLevelAt
+    }
+  }
+  achievementSettings {
+    showAchievements
+    canShow
+  }
+}
+
+query MyPoints($first: Int, $after: String) {
+  myPoints(first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        delta
+        rule
+        sourceType
+        sourceId
+        subjectTitle
+        createdAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation SetAchievementsShown($show: Boolean!) {
+  setAchievementsShown(input: { show: $show }) {
+    settings {
+      showAchievements
+      canShow
+    }
+    userErrors {
+      message
+    }
+  }
+}
