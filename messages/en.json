@@ -1591,8 +1591,10 @@
     "classes": "Classes",
     "feeds": "Feeds",
     "tab": {
-      "activity": "Your groups and classes",
-      "following": "Following"
+      "forYou": "For You",
+      "trending": "Trending",
+      "following": "Following",
+      "activity": "Your groups and classes"
     },
     "noActivity": "Nothing new in your groups and classes yet. Join a group or a class to see what happens there.",
     "noFollowing": "Follow teachers and classmates to see their public notes here.",
@@ -1612,6 +1614,29 @@
       "PROJECT": "Project",
       "BLOG": "Blog",
       "POST": "Post"
+    },
+    "forYou": {
+      "noTopics": "For You shows public notes on the topics you choose, your exams’ topics and what you read lately.",
+      "noneYet": "No public notes on your topics yet.",
+      "choose": "Choose topics",
+      "exam": "Add an exam",
+      "basedOn": "On {topics}.",
+      "change": "Change"
+    },
+    "trending": {
+      "none": "Nothing is trending this week yet.",
+      "forYou": "See For You"
+    },
+    "interests": {
+      "title": "Topics you follow",
+      "lead": "Community’s For You shows public notes on these, with your exams’ topics and what you read lately. Only you see them.",
+      "chosen": "Your topics",
+      "none": "No topics chosen yet.",
+      "find": "Add a topic",
+      "placeholder": "Search topics, e.g. Heaps",
+      "results": "Topics found",
+      "remove": "Remove {topic}",
+      "failed": "That did not work. Try again."
     }
   },
   "settings": {

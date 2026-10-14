@@ -217,3 +217,38 @@ mutation DeclineLegacyData {
     }
   }
 }
+
+# The topics a person chose (lvn-backend ADR-0076): For You follows them.
+query MyInterests {
+  viewer {
+    id
+    profile {
+      interests {
+        id
+        title
+        subject {
+          id
+          title
+        }
+      }
+    }
+  }
+}
+
+mutation SetInterests($ids: [UUID!]!) {
+  updateProfile(input: { interestTopicIds: $ids }) {
+    profile {
+      interests {
+        id
+        title
+        subject {
+          id
+          title
+        }
+      }
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

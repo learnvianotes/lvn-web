@@ -274,8 +274,17 @@ test('the owner watches the study aids being made, live, and hides one from read
   await expect(aids.getByRole('status')).toHaveText('Being made…')
   stage = 'done'
   await expect.poll(() => live.subscriptions.length).toBeGreaterThan(0)
-  live.send({ kind: 'NOTE_PROCESSING', id: NOTE_ID })
-  await expect(aids.getByText('Halve what?')).toBeVisible({ timeout: 2500 })
+  // The event may reach the socket before the page listens; it is sent until the page shows it. Within 2.5 s, which
+  // is under the 3 s the aids are otherwise polled at, so this is the live path.
+  await expect
+    .poll(
+      async () => {
+        live.send({ kind: 'NOTE_PROCESSING', id: NOTE_ID })
+        return aids.getByText('Halve what?').isVisible()
+      },
+      { timeout: 2500, intervals: [250] },
+    )
+    .toBe(true)
   await sections.getByRole('tab', { name: 'AI Summary' }).click()
   await aids.getByRole('button', { name: 'Hide from readers' }).click()
   await expect(aids.getByText('Hidden from readers', { exact: true })).toBeVisible()

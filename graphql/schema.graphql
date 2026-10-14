@@ -1011,6 +1011,25 @@ enum CommentTargetType {
   RESOURCE
 }
 
+type CommunityConnection {
+  """
+  For You: the topics it follows (the viewer's interests, upcoming exams and recent reading); empty when there are none, null for one that is gone
+  """
+  basedOn: [Topic]!
+  edges: [CommunityEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CommunityEdge {
+  cursor: String!
+
+  """Null when the viewer can no longer read it"""
+  node: Note
+
+  """For You: the viewer's topic it is on"""
+  topic: Topic
+}
+
 """
 After a provider sign-in (no signUp call): the same details, collected once
 """
@@ -2625,6 +2644,11 @@ type Note {
   The latest conversion filling this note, for the person who asked for it
   """
   pdfConversion: PdfConversion
+
+  """
+  Its first picture as the viewer sees it (ADR-0076): a card's preview in Community; null without one
+  """
+  previewPicture: MediaFile
   publishedAt: DateTime
   publishedVersion: NoteVersion
 
@@ -3251,6 +3275,9 @@ type Query {
   """
   followingFeed(after: String, first: Int): NoteConnection!
 
+  """Public notes on the viewer's topics, newest published first"""
+  forYouFeed(after: String, first: Int): CommunityConnection!
+
   """
   A group the viewer may know about: public ones, and private ones they are in or asked to join
   """
@@ -3417,6 +3444,11 @@ type Query {
   Version of the Terms, Privacy Policy and public-content licence a new account accepts (§15.2)
   """
   termsVersion: String!
+
+  """
+  The public notes most reacted to and discussed in the last week, each person counted once, never the note's owner
+  """
+  trendingFeed(after: String, first: Int): CommunityConnection!
   unreadNotificationCount: Int!
 
   """
@@ -4382,10 +4414,13 @@ Department and year are shown to others only if showOnProfile; interests stay pr
 type StudentProfile {
   department: String
 
-  """
-  Viewer only. Topics arrive with notes (Phase 2), which will add the resolved `interests`.
-  """
+  """Viewer only: the topics they chose"""
   interestTopicIds: [UUID!]
+
+  """
+  Viewer only: the topics they chose, for Community's For You (ADR-0076); null for a topic that is gone
+  """
+  interests: [Topic]
   showOnProfile: Boolean!
   yearOfStudy: YearOfStudy
 }

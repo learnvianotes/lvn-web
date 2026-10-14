@@ -32,7 +32,8 @@ export function apolloClient(): ApolloClient {
   client ??= new ApolloClient({
     link: new HttpLink({ uri: env.NEXT_PUBLIC_API_URL, fetch: authFetch }),
     // A quiz choice's id is unique only within its question, so choices are kept inside their question, not by id.
-    cache: new InMemoryCache({ typePolicies: { ClassQuizChoice: { keyFields: false } } }),
+    // A profile has no id: queries that read different parts of it merge them rather than replace each other.
+    cache: new InMemoryCache({ typePolicies: { ClassQuizChoice: { keyFields: false }, StudentProfile: { merge: true } } }),
     defaultOptions: { watchQuery: { fetchPolicy: 'cache-and-network' } },
   })
   return client
