@@ -240,7 +240,25 @@ export function emptyCard(type: CardType): JSONContent {
 export function insertCardAfter(editor: Editor, type: CardType): boolean {
   const card = currentCard(editor)
   const at = card ? card.pos + card.node.nodeSize : editor.state.doc.content.size
-  return editor.chain().insertContentAt(at, emptyCard(type)).focus().setTextSelection(at + 1).run()
+  const inserted = editor.chain().insertContentAt(at, emptyCard(type)).run()
+  if (!inserted) return false
+  // A card edited in its own boxes (flashcard, quiz, question, table, media) gets the cursor in its first box. Focusing
+  // the editor instead happens a frame later and would take the cursor out of a box the person already typed in.
+  if (editor.state.doc.nodeAt(at)?.type.spec.atom) return focusCardField(editor, at)
+  return editor.chain().focus().setTextSelection(at + 1).run()
+}
+
+/** The first box of the card at a position, once its view has drawn it. */
+function focusCardField(editor: Editor, at: number): boolean {
+  const focus = (tries: number) => {
+    const field = (editor.view.nodeDOM(at) as HTMLElement | null)?.querySelector<HTMLElement>('textarea, input, select, button')
+    if (field) {
+      // Only when nothing else in the card has the cursor already.
+      if (!(editor.view.nodeDOM(at) as HTMLElement).contains(document.activeElement)) field.focus()
+    } else if (tries > 0) requestAnimationFrame(() => focus(tries - 1))
+  }
+  requestAnimationFrame(() => focus(10))
+  return true
 }
 
 /** Replaces the current card — an empty text card the slash menu was typed in — with an empty card of a type. */
@@ -249,10 +267,16 @@ export function replaceCurrentCard(editor: Editor, type: CardType): boolean {
   if (!card) return false
   const empty = card.node.type.name === 'textCard' && card.node.textContent.trim() === ''
   if (!empty) return insertCardAfter(editor, type)
+  const replacement = editor.schema.nodeFromJSON(emptyCard(type))
+  // As insertCardAfter: a card edited in its own boxes gets the cursor in its first one.
+  if (replacement.type.spec.atom) {
+    editor.chain().command(({ tr }) => (tr.replaceWith(card.pos, card.pos + card.node.nodeSize, replacement), true)).run()
+    return focusCardField(editor, card.pos)
+  }
   return editor
     .chain()
     .command(({ tr }) => {
-      tr.replaceWith(card.pos, card.pos + card.node.nodeSize, editor.schema.nodeFromJSON(emptyCard(type)))
+      tr.replaceWith(card.pos, card.pos + card.node.nodeSize, replacement)
       tr.setSelection(TextSelection.near(tr.doc.resolve(card.pos + 1)))
       return true
     })

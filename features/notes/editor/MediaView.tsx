@@ -8,7 +8,7 @@ import { inlineText } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
 import { acceptFor, pendingFiles, UploadError, useMedia, type MediaCardType } from '../media'
 import { MediaBlock, type MediaContent } from '../render/MediaBlock'
-import { latestOf } from './views'
+import { writeCard } from './views'
 
 const ICONS = { image: ImagePlus, video: Video, audio: Mic, file: FileUp } as const
 
@@ -67,8 +67,8 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Onto the card's data as it is now, so a quick second edit keeps the first (see latestOf).
-  const set = (patch: Partial<MediaContent>) => updateAttributes({ data: { ...latestOf<MediaContent | null>({ editor, getPos, node }), ...patch } })
+  // Onto the card's data as it is now, so a quick second edit keeps the first (see writeCard).
+  const set = (patch: Partial<MediaContent>) => writeCard<MediaContent | null>({ editor, getPos, node }, (d) => ({ ...(d as MediaContent), ...patch }))
   const pick = (
     <input
       ref={input}
