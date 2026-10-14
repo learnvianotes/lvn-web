@@ -7,6 +7,7 @@ import { MEERA, profileRelation, relation } from './support/people'
  * with all connections, and starting blogs and posts.
  */
 
+const skill = (id: string, kind: string, name: string, source = 'MANUAL', over: Record<string, unknown> = {}) => ({ __typename: 'TeacherSkill', id, kind, name, detail: null, source, sourceUrl: source === 'MANUAL' ? null : `https://github.com/asharao/${name}`, fetchedAt: source === 'MANUAL' ? null : '2026-10-01T10:00:00.000Z', ...over })
 const payload = (name: string, rel: unknown) => ({ [name]: { __typename: 'PersonPayload', user: { __typename: 'User', id: MEERA, relation: rel }, userErrors: [] } })
 
 async function signedOut(page: Page) {
@@ -23,6 +24,11 @@ test('a teacher’s Skills tab: headline, about, and items grouped', async ({ pa
   await expect(page.getByText('IIT Madras, 2014')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Skills', exact: true })).toBeVisible()
   await expect(page.getByText('Graph algorithms')).toBeVisible()
+  // An imported item says where it came from and when (ADR-0077).
+  const projects = page.getByRole('region', { name: 'Projects' })
+  await expect(projects.getByRole('link', { name: 'tiny-os' })).toHaveAttribute('href', 'https://github.com/meera/tiny-os')
+  await expect(projects.getByRole('link', { name: 'From GitHub' })).toBeVisible()
+  await expect(projects).toContainText('checked Oct 1, 2026')
 })
 
 test('a teacher asks another to connect, and withdraws; an incoming request is accepted', async ({ page }) => {
@@ -66,11 +72,15 @@ test('an unverified viewer still sees Follow, and learns why it needs verificati
 
 test('a teacher edits the Skills tab: adds, orders and saves in one go', async ({ page }) => {
   const calls = await mockApi(page, {
-    MyTeacherProfile: () => ({ viewer: { __typename: 'User', id: USER, handle: 'asharao', globalRole: 'TEACHER', teacherProfile: { __typename: 'TeacherProfile', headline: 'Teaches graphs', bio: null, skills: [{ __typename: 'TeacherSkill', id: 's1', kind: 'SKILL', name: 'Graphs', detail: null }] } } }),
-    UpdateTeacherProfile: (v) => ({ updateTeacherProfile: { __typename: 'TeacherProfilePayload', profile: { __typename: 'TeacherProfile', headline: 'x', bio: null, skills: [] }, userErrors: [] }, _v: v }),
+    MyTeacherProfile: () => ({ viewer: { __typename: 'User', id: USER, handle: 'asharao', globalRole: 'TEACHER', teacherProfile: { __typename: 'TeacherProfile', headline: 'Teaches graphs', bio: null, skills: [skill('s1', 'SKILL', 'Graphs'), skill('s2', 'PROJECT', 'tiny-os', 'GITHUB')], drafts: [] } } }),
+    MySkillsImport: () => ({ mySkillsImport: { __typename: 'SkillsImport', allowed: true, sources: ['GITHUB', 'WEBSITE'], identities: [] } }),
+    UpdateTeacherProfile: (v) => ({ updateTeacherProfile: { __typename: 'TeacherProfilePayload', profile: { __typename: 'TeacherProfile', headline: 'x', bio: null, skills: [], drafts: [] }, userErrors: [] }, _v: v }),
   }, { globalRole: 'TEACHER' })
   await page.goto('/profile/skills')
   await expect(page.getByLabel('Headline')).toHaveValue('Teaches graphs')
+  // Imported items are kept apart from the ones written by hand.
+  await expect(page.getByRole('group', { name: /^Item / })).toHaveCount(1)
+  await expect(page.getByRole('list', { name: 'Imported, on your profile' })).toContainText('tiny-os')
   await page.getByRole('button', { name: 'Add an item' }).click()
   const second = page.getByRole('group', { name: 'Item 2' })
   await second.getByLabel('Kind').selectOption('QUALIFICATION')
@@ -99,4 +109,51 @@ test('teachers start blogs and posts from their notes; students start projects',
   await group.getByRole('button', { name: '+ Blog post' }).click()
   await expect.poll(() => created.length).toBe(1)
   expect(created[0]).toMatchObject({ input: { kind: 'BLOG' } })
+})
+
+test('a teacher proves a GitHub account, then publishes or discards what was imported (ADR-0077)', async ({ page }) => {
+  const identity = (verified: boolean) => ({ __typename: 'ExternalIdentity', id: 'i1', kind: 'GITHUB', value: 'asharao', code: 'lvn-ab12cd34ef', instructions: "Add lvn-ab12cd34ef to your GitHub profile's bio, or to the description of a public gist, then check again.", verified, checkedAt: null, fetchedAt: verified ? '2026-10-14T10:00:00.000Z' : null, lastError: verified ? null : "lvn-ab12cd34ef is not in the GitHub profile's bio or a public gist's description yet." })
+  let identities: unknown[] = []
+  let drafts = [skill('d1', 'PROJECT', 'tiny-os', 'GITHUB'), skill('d2', 'SKILL', 'C', 'GITHUB')]
+  let published: unknown[] = []
+  const profile = () => ({ __typename: 'TeacherProfile', headline: null, bio: null, skills: published, drafts: identities.length && (identities[0] as { verified: boolean }).verified ? drafts : [] })
+  const calls = await mockApi(page, {
+    MyTeacherProfile: () => ({ viewer: { __typename: 'User', id: USER, handle: 'asharao', globalRole: 'TEACHER', teacherProfile: profile() } }),
+    MySkillsImport: () => ({ mySkillsImport: { __typename: 'SkillsImport', allowed: true, sources: ['GITHUB', 'WEBSITE'], identities } }),
+    AddExternalIdentity: () => ((identities = [identity(false)]), { addExternalIdentity: { __typename: 'ExternalIdentityPayload', identity: identities[0], userErrors: [] } }),
+    CheckExternalIdentity: () => ((identities = [identity(true)]), { checkExternalIdentity: { __typename: 'ExternalIdentityPayload', identity: identities[0], userErrors: [] } }),
+    PublishTeacherSkills: (v) => {
+      const ids = v.skillIds as string[]
+      published = drafts.filter((d) => ids.includes(d.id))
+      drafts = drafts.filter((d) => !ids.includes(d.id))
+      return { publishTeacherSkills: { __typename: 'TeacherProfilePayload', profile: profile(), userErrors: [] } }
+    },
+    DiscardTeacherSkills: (v) => ((drafts = drafts.filter((d) => !(v.skillIds as string[]).includes(d.id))), { discardTeacherSkills: { __typename: 'TeacherProfilePayload', profile: profile(), userErrors: [] } }),
+  }, { globalRole: 'TEACHER' })
+  await page.goto('/profile/skills')
+  const importing = page.getByRole('region', { name: 'Import from GitHub or your page' })
+  await importing.getByLabel('GitHub user name').fill('asharao')
+  await importing.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(importing.getByText('Not proven yet')).toBeVisible()
+  await expect(importing.getByText('lvn-ab12cd34ef', { exact: true })).toBeVisible()
+  expect(calls.find((c) => c.op === 'AddExternalIdentity')?.variables).toEqual({ input: { kind: 'GITHUB', value: 'asharao' } })
+  await importing.getByRole('button', { name: 'Check' }).click()
+  await expect(importing.getByText('Proven', { exact: true })).toBeVisible()
+  const review = importing.getByRole('list', { name: 'Drafts to review' })
+  await review.getByRole('button', { name: 'Publish tiny-os' }).click()
+  expect(calls.find((c) => c.op === 'PublishTeacherSkills')?.variables).toEqual({ skillIds: ['d1'] })
+  await expect(importing.getByRole('list', { name: 'Imported, on your profile' })).toContainText('tiny-os')
+  await review.getByRole('button', { name: 'Discard C' }).click()
+  expect(calls.find((c) => c.op === 'DiscardTeacherSkills')?.variables).toEqual({ skillIds: ['d2'] })
+  await expect(importing.getByRole('list', { name: 'Drafts to review' })).toHaveCount(0)
+})
+
+test('importing waits for verification: an applicant reads when it opens', async ({ page }) => {
+  await mockApi(page, {
+    MyTeacherProfile: () => ({ viewer: { __typename: 'User', id: USER, handle: 'asharao', globalRole: 'TEACHER', teacherProfile: { __typename: 'TeacherProfile', headline: null, bio: null, skills: [], drafts: [] } } }),
+    MySkillsImport: () => ({ mySkillsImport: { __typename: 'SkillsImport', allowed: false, sources: ['GITHUB', 'WEBSITE'], identities: [] } }),
+  }, { globalRole: 'TEACHER' })
+  await page.goto('/profile/skills')
+  await expect(page.getByText('Importing from GitHub or your own page opens once you are a verified teacher.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add', exact: true })).toHaveCount(0)
 })

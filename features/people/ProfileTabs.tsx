@@ -2,7 +2,7 @@
 
 import { FileText } from 'lucide-react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { publicNotePath } from '@/features/public-notes/paths'
 import type { PublicProfile } from './data'
@@ -56,9 +56,9 @@ export function ProfileTabs({ teacher, notes, skills }: { teacher: boolean; note
   )
 }
 
-const SKILL_KINDS = ['QUALIFICATION', 'EXPERIENCE', 'SKILL'] as const
+const SKILL_KINDS = ['QUALIFICATION', 'EXPERIENCE', 'SKILL', 'PROJECT', 'PUBLICATION'] as const
 
-/** The Skills tab (ADR-0012): what the teacher wrote about themselves, grouped. */
+/** The Skills tab (ADR-0012, ADR-0077): what the teacher wrote, and what they imported with where and when it came from. */
 function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
   const t = useTranslations('people.skills')
   if (!profile || (!profile.headline && !profile.bio && !profile.skills.length)) {
@@ -79,7 +79,11 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
             {k === 'SKILL' ? (
               <ul className="flex flex-wrap gap-2">
                 {items.map((s) => (
-                  <li key={s.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent" title={s.detail ?? undefined}>
+                  <li
+                    key={s.id}
+                    className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
+                    title={[s.detail, s.source !== 'MANUAL' ? t('from', { source: t(`source.${s.source}`) }) : null].filter(Boolean).join(' · ') || undefined}
+                  >
                     {s.name}
                   </li>
                 ))}
@@ -88,8 +92,17 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
               <ul className="flex flex-col gap-2">
                 {items.map((s) => (
                   <li key={s.id} className="rounded-2xl border border-border bg-surface px-4 py-3">
-                    <p className="font-semibold">{s.name}</p>
+                    <p className="font-semibold">
+                      {s.sourceUrl && s.kind === 'PROJECT' ? (
+                        <a href={s.sourceUrl} rel="nofollow noopener" target="_blank" className="hover:underline">
+                          {s.name}
+                        </a>
+                      ) : (
+                        s.name
+                      )}
+                    </p>
                     {s.detail ? <p className="text-sm text-muted">{s.detail}</p> : null}
+                    {s.source !== 'MANUAL' ? <Provenance skill={s} /> : null}
                   </li>
                 ))}
               </ul>
@@ -98,5 +111,24 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
         )
       })}
     </div>
+  )
+}
+
+/** Where an imported item came from and when it was checked (ADR-0077). */
+function Provenance({ skill }: { skill: NonNullable<PublicProfile['teacherProfile']>['skills'][number] }) {
+  const t = useTranslations('people.skills')
+  const format = useFormatter()
+  const source = t(`source.${skill.source}`)
+  return (
+    <p className="mt-1 text-xs text-muted">
+      {skill.sourceUrl ? (
+        <a href={skill.sourceUrl} rel="nofollow noopener" target="_blank" className="hover:underline">
+          {t('from', { source })}
+        </a>
+      ) : (
+        t('from', { source })
+      )}
+      {skill.fetchedAt ? ` · ${t('checked', { date: format.dateTime(new Date(skill.fetchedAt), { day: 'numeric', month: 'short', year: 'numeric' }) })}` : null}
+    </p>
   )
 }

@@ -80,6 +80,13 @@ input AddCommentInput {
   target: CommentTargetInput!
 }
 
+input AddExternalIdentityInput {
+  kind: ExternalIdentityKind!
+
+  """A GitHub user name (or its profile's address), or a page's address"""
+  value: String!
+}
+
 input AddPdfHighlightInput {
   cardId: UUID
 
@@ -1422,6 +1429,49 @@ type ExamTopicOption {
 }
 
 """
+A public identifier a teacher claims, and how to prove it is theirs (ADR-0077)
+"""
+type ExternalIdentity {
+  checkedAt: DateTime
+
+  """What to put where it proves the identifier is the teacher's"""
+  code: String!
+
+  """When its public data was last imported"""
+  fetchedAt: DateTime
+  id: UUID!
+
+  """Where to put it, in words"""
+  instructions: String!
+  kind: ExternalIdentityKind!
+
+  """Why the last check or import did not work"""
+  lastError: String
+
+  """A GitHub login, or a page's address"""
+  value: String!
+
+  """Proven now; cleared when a monthly re-check no longer finds the proof"""
+  verified: Boolean!
+}
+
+input ExternalIdentityIdInput {
+  identityId: UUID!
+}
+
+enum ExternalIdentityKind {
+  GITHUB
+  OPENALEX
+  ORCID
+  WEBSITE
+}
+
+type ExternalIdentityPayload {
+  identity: ExternalIdentity
+  userErrors: [UserError!]!
+}
+
+"""
 What an upload is for: AVATAR, VERIFICATION_DOCUMENT, and ATTACHMENT (a picture, video, audio or PDF for a note you can edit, given as parentId). Other purposes arrive with their features.
 """
 enum FilePurpose {
@@ -2149,6 +2199,11 @@ type Mutation {
   acceptTerms(input: AcceptTermsInput!): OkPayload!
   addComment(input: AddCommentInput!): CommentPayload!
 
+  """
+  Claims an identifier and gives the code that proves it (verified teachers)
+  """
+  addExternalIdentity(input: AddExternalIdentityInput!): ExternalIdentityPayload!
+
   """Owner and editors"""
   addPdfHighlight(input: AddPdfHighlightInput!): PdfHighlightPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
@@ -2196,6 +2251,11 @@ type Mutation {
   PRIVATE, SHARED or PUBLIC (owner, verified account); PUBLIC needs a published version
   """
   changeNoteVisibility(input: ChangeNoteVisibilityInput!): NotePayload!
+
+  """
+  Checks the proof now; once proven, its public data is imported as drafts. At most 10 checks a day
+  """
+  checkExternalIdentity(input: ExternalIdentityIdInput!): ExternalIdentityPayload!
 
   """Attach the old site's data to this account"""
   claimLegacyData: OkPayload!
@@ -2270,6 +2330,11 @@ type Mutation {
   """Removes the tag from every note"""
   deleteTag(input: IdInput!): OkPayload!
 
+  """
+  Removes drafts or imported items from the tab (items written by hand are edited with updateTeacherProfile)
+  """
+  discardTeacherSkills(input: TeacherSkillIdsInput!): TeacherProfilePayload!
+
   """Signed in only: not shown again for 30 days"""
   dismissRecommendation(input: DismissRecommendationInput!): OkPayload!
 
@@ -2327,6 +2392,9 @@ type Mutation {
   Snapshot the draft as the version readers see (owner; a verified account)
   """
   publishNote(input: NoteIdInput!): NotePayload!
+
+  """Drafts go on the tab, after its items; at most 60 items in all"""
+  publishTeacherSkills(input: TeacherSkillIdsInput!): TeacherProfilePayload!
   react(input: ReactInput!): ReactPayload!
 
   """
@@ -2339,6 +2407,9 @@ type Mutation {
   registerDevice(input: RegisterDeviceInput!): OkPayload!
   removeClassroomMember(input: ClassroomMemberInput!): ClassroomPayload!
   removeConnection(input: PersonInput!): PersonPayload!
+
+  """Removes the identifier and every item imported from it"""
+  removeExternalIdentity(input: ExternalIdentityIdInput!): OkPayload!
 
   """Stops someone following you; they are not told"""
   removeFollower(input: PersonInput!): PersonPayload!
@@ -2552,6 +2623,8 @@ type Mutation {
   updatePdfHighlight(input: UpdatePdfHighlightInput!): PdfHighlightPayload!
   updateProfile(input: UpdateProfileInput!): ProfilePayload!
   updateResource(input: UpdateResourceInput!): ResourcePayload!
+
+  """Replaces the items written by hand; imported items stay"""
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
   verifyEmail(input: VerifyEmailInput!): OkPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
@@ -3338,6 +3411,9 @@ type Query {
   """The viewer's resources, newest first, whatever their state"""
   myResources: [Resource!]!
   myRestricted: [PersonEdge!]!
+
+  """The viewer's identifiers and what can be imported"""
+  mySkillsImport: SkillsImport!
 
   """
   The viewer's account standing: a suspension and recent warnings (ADR-0053)
@@ -4400,6 +4476,16 @@ type SignedUrl {
   url: String!
 }
 
+"""Skills import for the viewer (ADR-0077)"""
+type SkillsImport {
+  """Whether the viewer may import: a verified teacher, not suspended"""
+  allowed: Boolean!
+  identities: [ExternalIdentity!]!
+
+  """The kinds of identifier this server can read"""
+  sources: [ExternalIdentityKind!]!
+}
+
 input StartFocusSessionInput {
   """0–30, 5 by default"""
   breakMinutes: Int
@@ -4579,9 +4665,16 @@ type TagPayload {
 
 type TeacherProfile {
   bio: String
+
+  """
+  The teacher only: imported items waiting for review, newest first; null for anyone else
+  """
+  drafts: [TeacherSkill!]
   headline: String
 
-  """In the teacher's order"""
+  """
+  Published items in the teacher's order; an imported one only while its identifier is proven
+  """
   skills: [TeacherSkill!]!
   updatedAt: DateTime
 }
@@ -4593,10 +4686,20 @@ type TeacherProfilePayload {
 
 type TeacherSkill {
   detail: String
+
+  """When an imported item was last fetched"""
+  fetchedAt: DateTime
   id: UUID!
   kind: TeacherSkillKind!
   name: String!
   source: TeacherSkillSource!
+
+  """Where an imported item came from"""
+  sourceUrl: String
+}
+
+input TeacherSkillIdsInput {
+  skillIds: [UUID!]!
 }
 
 input TeacherSkillInput {
@@ -4610,12 +4713,22 @@ input TeacherSkillInput {
 
 enum TeacherSkillKind {
   EXPERIENCE
+
+  """Open-source work (ADR-0077)"""
+  PROJECT
+
+  """A paper, book or chapter (ADR-0077)"""
+  PUBLICATION
   QUALIFICATION
   SKILL
 }
 
 enum TeacherSkillSource {
+  GITHUB
   MANUAL
+  OPENALEX
+  ORCID
+  WEBSITE
 }
 
 """Where the viewer stands as a teacher (ADR-0073)"""

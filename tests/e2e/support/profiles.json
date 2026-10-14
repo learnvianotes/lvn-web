@@ -39,19 +39,37 @@
             "id": "01920000-0000-7000-8000-00000000f501",
             "kind": "QUALIFICATION",
             "name": "M.Tech, Computer Science",
-            "detail": "IIT Madras, 2014"
+            "detail": "IIT Madras, 2014",
+            "source": "MANUAL",
+            "sourceUrl": null,
+            "fetchedAt": null
           },
           {
             "id": "01920000-0000-7000-8000-00000000f502",
             "kind": "SKILL",
             "name": "Graph algorithms",
-            "detail": null
+            "detail": null,
+            "source": "MANUAL",
+            "sourceUrl": null,
+            "fetchedAt": null
           },
           {
             "id": "01920000-0000-7000-8000-00000000f503",
             "kind": "EXPERIENCE",
             "name": "Assistant professor",
-            "detail": "Since 2016"
+            "detail": "Since 2016",
+            "source": "MANUAL",
+            "sourceUrl": null,
+            "fetchedAt": null
+          },
+          {
+            "id": "01920000-0000-7000-8000-0000000051a9",
+            "kind": "PROJECT",
+            "name": "tiny-os",
+            "detail": "A teaching operating system · C",
+            "source": "GITHUB",
+            "sourceUrl": "https://github.com/meera/tiny-os",
+            "fetchedAt": "2026-10-01T10:00:00.000Z"
           }
         ]
       }

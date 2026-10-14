@@ -20,14 +20,18 @@ export interface PublicProfile {
   profile: { department: string | null; yearOfStudy: string | null } | null
   notes: { id: string; title: string; slug: string; kind: 'NOTE' | 'BLOG' | 'POST' | 'PROJECT'; publishedAt: string | null }[]
   /** Teachers' Skills tab (ADR-0012); null for everyone else */
-  teacherProfile: { headline: string | null; bio: string | null; skills: { id: string; kind: 'SKILL' | 'QUALIFICATION' | 'EXPERIENCE'; name: string; detail: string | null }[] } | null
+  teacherProfile: {
+    headline: string | null
+    bio: string | null
+    skills: { id: string; kind: 'SKILL' | 'QUALIFICATION' | 'EXPERIENCE' | 'PROJECT' | 'PUBLICATION'; name: string; detail: string | null; source: 'MANUAL' | 'GITHUB' | 'WEBSITE' | 'ORCID' | 'OPENALEX'; sourceUrl: string | null; fetchedAt: string | null }[]
+  } | null
 }
 
 const PROFILE = `query PublicProfile($handle: String!) {
   userByHandle(handle: $handle) {
     id handle displayName globalRole verified createdAt followerMilestone
     profile { department yearOfStudy }
-    teacherProfile { headline bio skills { id kind name detail } }
+    teacherProfile { headline bio skills { id kind name detail source sourceUrl fetchedAt } }
     publicNotes(first: 60) { edges { node { id title slug kind publishedAt } } }
   }
 }`
