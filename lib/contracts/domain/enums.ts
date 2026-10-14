@@ -119,6 +119,17 @@ export const UploadLimits = {
   quotaTeacher: 20 * 1024 ** 3,
 } as const
 
+/**
+ * Notes made by AI from photos and PDFs (ADR-0084): the most a quick note reads, photos and PDFs together, and the
+ * largest PDF the apps add to one. Pictures are made smaller on the device first (at most `pictureSide` pixels on the
+ * longer side, as JPEG), so they upload quickly; the server's own limits stay as UploadLimits.
+ */
+export const QuickNoteLimits = {
+  files: 10,
+  pdfBytes: 20 * 1024 ** 2,
+  pictureSide: 2048,
+} as const
+
 export const NoteArtifactType = {
   SUMMARY: 'SUMMARY', KEY_CONCEPTS: 'KEY_CONCEPTS', QUESTIONS: 'QUESTIONS', QUIZ: 'QUIZ', FLASHCARDS: 'FLASHCARDS',
   EMBEDDINGS: 'EMBEDDINGS', TRANSCRIPT: 'TRANSCRIPT',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, BookOpenText, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
+import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -29,6 +29,7 @@ import { VisibilityBadge } from './ShareDialog'
 import { accentOf, ago, daypart } from './look'
 import { TEMPLATE_KEYS, templateCards, type TemplateKey } from './templates'
 import { useReadPdf } from '@/features/reader/readPdf'
+import { CaptureDialog } from './capture/CaptureDialog'
 
 type View = { kind: 'all' } | { kind: 'unfiled' } | { kind: 'shared' } | { kind: 'trash' } | { kind: 'folder'; id: string } | { kind: 'tag'; id: string }
 
@@ -71,6 +72,7 @@ export function NotesHome() {
   const [query, setQuery] = useState('')
   const readPdf = useReadPdf()
   const pdfInput = useRef<HTMLInputElement>(null)
+  const [capture, setCapture] = useState(false)
   const folders = organise.data?.myFolders ?? []
   const tags = organise.data?.myTags ?? []
   const all = useMemo<(NoteListFieldsFragment | SharedNote)[]>(() => connection?.edges.map((e) => e.node) ?? [], [connection])
@@ -139,6 +141,7 @@ export function NotesHome() {
           if (file) void readPdf.start(file, view.kind === 'folder' ? view.id : null)
         }}
       />
+      {capture ? <CaptureDialog open onClose={() => setCapture(false)} folderId={view.kind === 'folder' ? view.id : null} /> : null}
       <aside className="hidden flex-col gap-5 md:sticky md:top-20 md:flex md:self-start">
         <Button size="lg" className="w-full gap-2 shadow-lg shadow-accent/20" disabled={creating.loading || view.kind === 'trash'} onClick={() => void newNote()}>
           <Plus className="size-5" aria-hidden />
@@ -147,6 +150,10 @@ export function NotesHome() {
         <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={!!readPdf.uploading || view.kind === 'trash'} onClick={() => pdfInput.current?.click()}>
           <BookOpenText className="size-5" aria-hidden />
           {t('readPdf')}
+        </Button>
+        <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={view.kind === 'trash'} onClick={() => setCapture(true)}>
+          <Camera className="size-5" aria-hidden />
+          {t('fromPhotos')}
         </Button>
         <NewKinds teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading || view.kind === 'trash'} onNew={(kind) => void newNote(undefined, kind)} className="-mt-3" />
         <nav aria-label={t('views.label')} className="flex flex-col gap-0.5">
@@ -224,6 +231,10 @@ export function NotesHome() {
                   <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" disabled={!!readPdf.uploading} onClick={() => pdfInput.current?.click()}>
                     <BookOpenText className="size-5" aria-hidden />
                     {t('readPdf')}
+                  </Button>
+                  <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" onClick={() => setCapture(true)}>
+                    <Camera className="size-5" aria-hidden />
+                    {t('fromPhotos')}
                   </Button>
                   <NewKinds onDark teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading} onNew={(kind) => void newNote(undefined, kind)} className="w-full" />
                 </div>
