@@ -11,7 +11,8 @@ import { SubjectGrid } from '@/features/subjects/SubjectGrid'
  * The landing page as board A draws it (lvn-backend ADR-0076): the hero follows the theme (light lavender, or the night
  * sky in the dark theme), the six feature tiles, then the subjects notes are organised by (the app's own, not /core).
  */
-export const revalidate = 3600
+// Rendered on request, never at build time (the API is not there while images build); the subjects are cached an hour.
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const t = await getTranslations('home')

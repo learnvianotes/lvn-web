@@ -3,7 +3,8 @@ import { getTranslations } from 'next-intl/server'
 import { listSubjects } from '@/features/subjects/data'
 import { SubjectGrid } from '@/features/subjects/SubjectGrid'
 
-export const revalidate = 3600
+// Rendered on request, never at build time (the API is not there while images build); the subjects are cached an hour.
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('subjects')
