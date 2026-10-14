@@ -38,6 +38,8 @@ const schema = z.object({
   NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL: z.url().optional(),
   /** Sentry for unexpected errors (§16.5); off without it. Read directly by instrumentation*.ts, validated here. */
   NEXT_PUBLIC_SENTRY_DSN: z.url().refine((u) => /^https?:\/\//.test(u), 'must be an http(s) URL').optional(),
+  /** Where pre-signed storage URLs point, space-separated origins; read by next.config.ts's policy (lvn-backend ADR-0090). */
+  NEXT_PUBLIC_STORAGE_ORIGINS: optional,
 })
 
 // Each NEXT_PUBLIC_* is read by its full name so Next can inline it into client bundles. An empty value (as hosts and
@@ -59,6 +61,7 @@ const parsed = schema.safeParse(unsetIfEmpty({
   NEXT_PUBLIC_LINKEDIN_CLIENT_ID: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
   NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL: process.env.NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  NEXT_PUBLIC_STORAGE_ORIGINS: process.env.NEXT_PUBLIC_STORAGE_ORIGINS,
 }))
 
 if (!parsed.success) {
