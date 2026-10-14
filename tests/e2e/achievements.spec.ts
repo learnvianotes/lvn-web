@@ -26,7 +26,7 @@ const history = () => ({
 test('an adult sees their level, achievements and points, and chooses to show them on their profile', async ({ page }) => {
   let shown = false
   const calls = await mockApi(page, {
-    MyAchievements: (v) => mine([badge('01920000-0000-7000-8000-0000000000a1', 'QUIZ_MASTER', 'Quiz master'), badge('01920000-0000-7000-8000-0000000000a2', 'RHYTHM_WEEKS', '4 Rhythm weeks')], { showAchievements: shown, canShow: true })(v),
+    MyAchievements: () => mine([badge('01920000-0000-7000-8000-0000000000a1', 'QUIZ_MASTER', 'Quiz master'), badge('01920000-0000-7000-8000-0000000000a2', 'RHYTHM_WEEKS', '4 Rhythm weeks')], { showAchievements: shown, canShow: true })(),
     MyPoints: history,
     SetAchievementsShown: (v) => ((shown = v.show as boolean), { setAchievementsShown: { __typename: 'AchievementSettingsPayload', settings: { __typename: 'AchievementSettings', showAchievements: shown, canShow: true }, userErrors: [] } }),
   })
