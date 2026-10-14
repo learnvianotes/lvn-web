@@ -1660,7 +1660,35 @@
     "noShowcase": "No showcase",
     "saveShowcase": "Save showcase",
     "builtBy": "Built by",
-    "mentoredBy": "mentored by"
+    "mentoredBy": "mentored by",
+    "app": {
+      "title": "Repository activity",
+      "connect": "Connect the GitHub App",
+      "connectHint": "Install the LearnViaNotes App on this repository to see its commits, pull requests and issues here. Only titles, names and links come: never code.",
+      "notConnected": "The GitHub App is not connected to this repository.",
+      "none": "Nothing yet: new commits, pull requests and issues appear here.",
+      "disconnect": "Disconnect the GitHub App",
+      "disconnectConfirm": "Disconnect the GitHub App? Its activity here is deleted.",
+      "kind": {
+        "PUSH": "Commit",
+        "PULL_REQUEST": "Pull request",
+        "ISSUE": "Issue"
+      },
+      "action": {
+        "pushed": "pushed",
+        "opened": "opened",
+        "closed": "closed",
+        "merged": "merged",
+        "reopened": "reopened"
+      },
+      "by": "by {login}",
+      "setupTitle": "Connecting the GitHub App",
+      "setupWorking": "Checking with GitHub…",
+      "setupDone": "Connected. The repository’s activity now comes to the workspace.",
+      "setupBack": "Back to the workspace",
+      "setupMissing": "GitHub did not send what is needed. Start again from the workspace’s repository card.",
+      "setupRequested": "GitHub asked the organisation’s owner to approve the App. Once they do, connect again from the workspace."
+    }
   },
   "community": {
     "title": "Community",
@@ -1685,7 +1713,8 @@
       "IDEA": "{actor} shared an idea in",
       "DOUBT": "{actor} asked a doubt in",
       "CLASS_ANNOUNCEMENT": "{actor} posted an announcement in",
-      "SHARED_NOTE": "{actor} shared a note with"
+      "SHARED_NOTE": "{actor} shared a note with",
+      "REPOSITORY": "{actor} on GitHub, in"
     },
     "kind": {
       "NOTE": "Note",

@@ -36,7 +36,7 @@ type ActivityEdge {
 }
 
 type ActivityItem {
-  """Who posted, asked or shared"""
+  """Who posted, asked or shared; null for REPOSITORY"""
   actor: User
 
   """CLASS_ANNOUNCEMENT"""
@@ -59,6 +59,11 @@ type ActivityItem {
 
   """GROUP_POST and IDEA"""
   post: GroupPost
+
+  """
+  REPOSITORY: a commit, pull request or issue in a workspace's repository (ADR-0078)
+  """
+  repositoryEvent: RepositoryEvent
 }
 
 enum ActivityKind {
@@ -66,6 +71,7 @@ enum ActivityKind {
   DOUBT
   GROUP_POST
   IDEA
+  REPOSITORY
   SHARED_NOTE
 }
 
@@ -1047,6 +1053,15 @@ input CompleteRegistrationInput {
   institutionalEmail: String
 }
 
+"""
+From GitHub's return to the setup page: the install link's state, the installation and the person's code
+"""
+input ConnectRepositoryAppInput {
+  code: String!
+  installationId: String!
+  state: String!
+}
+
 enum ConnectionDirection {
   """They asked the viewer"""
   INCOMING
@@ -1725,8 +1740,17 @@ enum GroupPrivacy {
 Public details come from the provider's API when it shows the repository; otherwise the card is the link
 """
 type GroupRepository {
+  """
+  Members, for a GitHub repository while the GitHub App is set up here (ADR-0078); null otherwise
+  """
+  app: RepositoryApp
   available: Boolean!
   description: String
+
+  """
+  Members: the repository's commits, pull requests and issues from the GitHub App, newest first; null for others
+  """
+  events(first: Int): [RepositoryEvent!]
   language: String
   name: String
   provider: RepositoryProvider!
@@ -2266,6 +2290,11 @@ type Mutation {
   confirmNoteImport(input: NoteIdInput!): NoteImportPayload!
 
   """
+  Confirms the person installed the GitHub App and that it covers the workspace's repository, then connects it (ADR-0078)
+  """
+  connectRepositoryApp(input: ConnectRepositoryAppInput!): GroupPayload!
+
+  """
   Convert a PDF of a note the viewer can read into a new PRIVATE note of their own (the rule for copies), counted
   against their PDF pages this month; follow it with pdfConversion. One at a time.
   """
@@ -2334,6 +2363,9 @@ type Mutation {
   Removes drafts or imported items from the tab (items written by hand are edited with updateTeacherProfile)
   """
   discardTeacherSkills(input: TeacherSkillIdsInput!): TeacherProfilePayload!
+
+  """Stops the repository's activity and deletes what was kept"""
+  disconnectRepositoryApp(input: GroupIdInput!): GroupPayload!
 
   """Signed in only: not shown again for 30 days"""
   dismissRecommendation(input: DismissRecommendationInput!): OkPayload!
@@ -3778,6 +3810,41 @@ enum ReportReason {
   SELF_HARM
   SEXUAL
   SPAM
+}
+
+type RepositoryApp {
+  """The App is connected: the repository's activity comes to the workspace"""
+  connected: Boolean!
+
+  """
+  The workspace's admins, while not connected: where to install the App (for an hour)
+  """
+  installUrl: String
+}
+
+"""
+What happened in the repository: never code, only the title, who, where and when (ADR-0078)
+"""
+type RepositoryEvent {
+  """pushed, opened, closed, merged or reopened"""
+  action: String!
+  at: DateTime!
+
+  """A GitHub login, not a LearnViaNotes person"""
+  authorLogin: String
+  id: UUID!
+  kind: RepositoryEventKind!
+  number: Int
+
+  """A commit's first line, or a pull request's or issue's title"""
+  title: String!
+  url: String!
+}
+
+enum RepositoryEventKind {
+  ISSUE
+  PULL_REQUEST
+  PUSH
 }
 
 enum RepositoryProvider {

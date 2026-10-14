@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { BookOpen, CircleHelp, FileText, GraduationCap, Lightbulb, Megaphone, MessageSquare, Users } from 'lucide-react'
+import { BookOpen, CircleHelp, FileText, GitBranch, GraduationCap, Lightbulb, Megaphone, MessageSquare, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -84,14 +84,14 @@ function Activity() {
   )
 }
 
-const ICON = { GROUP_POST: MessageSquare, IDEA: Lightbulb, DOUBT: CircleHelp, CLASS_ANNOUNCEMENT: Megaphone, SHARED_NOTE: FileText } as const
+const ICON = { GROUP_POST: MessageSquare, IDEA: Lightbulb, DOUBT: CircleHelp, CLASS_ANNOUNCEMENT: Megaphone, SHARED_NOTE: FileText, REPOSITORY: GitBranch } as const
 
 /** One thing that happened, in words written here from ids (ADR-0049). */
 function ActivityCard({ item }: { item: Item }) {
   const t = useTranslations('community')
   const Icon = ICON[item.kind]
   const place = item.group ? { name: item.group.name, href: `/groups/${item.group.id}` } : item.classroom ? { name: item.classroom.name, href: `/classes/${item.classroom.id}` } : null
-  const actor = item.actor?.displayName ?? t('someone')
+  const actor = item.actor?.displayName ?? item.repositoryEvent?.authorLogin ?? t('someone')
   const body = item.post?.body ?? item.announcement?.body
   const href = item.doubt && item.group ? `/groups/${item.group.id}/doubts/${item.doubt.id}` : item.note ? `/notes/${item.note.id}` : (place?.href ?? '#')
   // A shared note the viewer can no longer read resolves to nothing; nothing is shown for it.
@@ -117,6 +117,12 @@ function ActivityCard({ item }: { item: Item }) {
         <Link href={href} className="font-semibold hover:text-accent">
           {item.doubt.title}
         </Link>
+      ) : null}
+      {item.repositoryEvent ? (
+        <a href={item.repositoryEvent.url} target="_blank" rel="noopener noreferrer nofollow" className="font-semibold hover:text-accent">
+          {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
+          {item.repositoryEvent.title}
+        </a>
       ) : null}
       {item.note ? (
         <Link href={href} className="inline-flex w-fit items-center gap-2 font-semibold hover:text-accent">

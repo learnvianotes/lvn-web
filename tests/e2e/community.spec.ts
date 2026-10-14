@@ -13,7 +13,7 @@ const doc = (s: string) => ({ type: 'doc', content: [{ type: 'paragraph', conten
 const page = (edges: unknown[], hasNextPage = false) => ({ edges, pageInfo: { __typename: 'PageInfo', hasNextPage, endCursor: hasNextPage ? 'c1' : null } })
 const item = (key: string, kind: string, over: Record<string, unknown> = {}) => ({
   __typename: 'ActivityEdge',
-  node: { __typename: 'ActivityItem', key, kind, at: new Date().toISOString(), actor: meera, group: null, classroom: null, post: null, announcement: null, doubt: null, note: null, ...over },
+  node: { __typename: 'ActivityItem', key, kind, at: new Date().toISOString(), actor: meera, group: null, classroom: null, post: null, announcement: null, doubt: null, note: null, repositoryEvent: null, ...over },
 })
 const group = { __typename: 'Group', id: GROUP, name: 'Heap team' }
 const classroom = { __typename: 'Classroom', id: CLASS, name: 'DSA 101' }

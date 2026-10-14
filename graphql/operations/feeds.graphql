@@ -59,6 +59,16 @@ query ActivityFeed($after: String) {
           title
           status
         }
+        # A workspace repository's commit, pull request or issue (lvn-backend ADR-0078)
+        repositoryEvent {
+          id
+          kind
+          action
+          title
+          number
+          authorLogin
+          url
+        }
         note {
           id
           title
