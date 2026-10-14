@@ -22,6 +22,7 @@ import {
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
+import { DeleteAccount } from '@/features/data/DeleteAccount'
 import { AccountStanding } from '@/features/moderation/Standing'
 import { ReviewRequests } from '@/features/verification/ReviewRequests'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
@@ -144,6 +145,7 @@ export function AccountPage() {
       <LegacyData viewer={viewer} />
       <AiAccountSection className={card} />
       <YourData />
+      <DeleteAccount />
     </div>
   )
 }

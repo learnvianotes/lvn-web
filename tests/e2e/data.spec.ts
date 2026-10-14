@@ -91,3 +91,50 @@ test('asks before importing the same file again', async ({ page }) => {
   await expect(page.getByText('1 note imported from vault.zip.')).toBeVisible()
   expect(calls.find((c) => c.op === 'ConfirmNoteImport')?.variables).toEqual({ id: '01920000-0000-7000-8000-00000000d0f1' })
 })
+
+test('deletes the account 14 days after asking, with the date on every page and a way to keep it (lvn-backend ADR-0088)', async ({ page }) => {
+  // The viewer the mock answers with, changed as the person asks and cancels.
+  const viewer: Record<string, unknown> = { ...viewerExtras, deletionScheduledFor: null }
+  const due = new Date(Date.now() + 14 * 86_400_000).toISOString()
+  const calls = await mockApi(
+    page,
+    {
+      MyDataExports: () => ({ myDataExports: [] }),
+      NoteImports: () => ({ noteImports: [] }),
+      RequestAccountDeletion: (v) => {
+        const input = v.input as { confirm: string; password: string | null }
+        if (input.password !== 'my passphrase') return { requestAccountDeletion: { deletionScheduledFor: null, userErrors: [{ __typename: 'UserError', field: ['input', 'password'], message: 'That password is not right.' }] } }
+        viewer.deletionScheduledFor = due
+        return { requestAccountDeletion: { deletionScheduledFor: due, ...none } }
+      },
+      CancelAccountDeletion: () => {
+        viewer.deletionScheduledFor = null
+        return { cancelAccountDeletion: { deletionScheduledFor: null, userErrors: [] } }
+      },
+      Organise: () => ({ myFolders: [], myTags: [] }),
+      MyNotes: () => ({ myNotes: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
+    },
+    viewer,
+  )
+  await page.goto('/profile')
+  const section = page.getByRole('region', { name: 'Delete your account' })
+  const submit = section.getByRole('button', { name: 'Delete my account' })
+  await expect(submit).toBeDisabled()
+  await section.getByLabel('Your password').fill('wrong')
+  await section.getByLabel('Type DELETE to confirm').fill('delete')
+  await submit.click()
+  await expect(section.getByRole('alert')).toHaveText('That password is not right.')
+  await section.getByLabel('Your password').fill('my passphrase')
+  await submit.click()
+  const date = new Date(due).toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })
+  await expect(section.getByRole('status')).toContainText(date)
+  expect(calls.filter((c) => c.op === 'RequestAccountDeletion').map((c) => c.variables.input)).toEqual([{ password: 'wrong', confirm: 'delete' }, { password: 'my passphrase', confirm: 'delete' }])
+
+  // Every page says when, with a way to keep the account.
+  await page.goto('/notes')
+  const banner = page.getByRole('alert').filter({ hasText: 'Your account will be deleted on' })
+  await expect(banner).toContainText(date)
+  await banner.getByRole('button', { name: 'Keep my account' }).click()
+  await expect(banner).toHaveCount(0)
+  expect(calls.filter((c) => c.op === 'CancelAccountDeletion')).toHaveLength(1)
+})

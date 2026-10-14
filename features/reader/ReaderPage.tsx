@@ -387,6 +387,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               <PdfViewer
                 ref={pdf}
                 url={file.data.noteFile.url}
+                refreshUrl={async () => (await file.refetch().catch(() => null))?.data?.noteFile?.url ?? null}
                 marks={marks}
                 initialPage={initialPage}
                 snipping={snipping}

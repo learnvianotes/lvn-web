@@ -980,6 +980,21 @@
       "skipped": "{n, plural, one {# item was} other {# items were}} skipped",
       "failed": "The import did not work. Try again.",
       "untitled": "Untitled note"
+    },
+    "delete": {
+      "heading": "Delete your account",
+      "lead": "Your account, your private notes, files and learning history are deleted 14 days after you ask. Notes you made public, and your posts and comments, stay, by “Deleted user”. Download your data first if you want a copy.",
+      "password": "Your password",
+      "passwordHint": "If you sign in with Google, leave it empty.",
+      "confirm": "Type DELETE to confirm",
+      "request": "Delete my account",
+      "scheduled": "Your account will be deleted on {date}. Every other device was signed out.",
+      "cancel": "Keep my account",
+      "failed": "That did not work. Try again."
+    },
+    "banner": {
+      "text": "Your account will be deleted on {date}.",
+      "keep": "Keep my account"
     }
   },
   "reader": {

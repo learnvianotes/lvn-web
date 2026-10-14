@@ -18,7 +18,37 @@ const coreEnabled = process.env.NEXT_PUBLIC_CORE_ENABLED === 'true'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
+/**
+ * Content Security Policy (lvn-backend ADR-0090, Phase 9). Pages are cached (ISR), so scripts cannot carry a per-request
+ * nonce: inline scripts stay allowed (Next's own and the theme script). Everything else is shut: plugins, other sites
+ * framing us, a changed base URL, forms posting elsewhere and frames other than Google sign-in. Files come from storage
+ * by pre-signed URL, whose origin is the environment's, so images, media and connections allow any HTTPS origin (and
+ * plain HTTP or WebSocket only where the site itself runs on HTTP, the local environment).
+ */
+const plain = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').startsWith('http:')
+const anyOrigin = plain ? 'https: http:' : 'https:'
+// `next dev` evaluates its modules; built pages never do.
+const devEval = process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${anyOrigin}`,
+  `media-src 'self' blob: ${anyOrigin}`,
+  "font-src 'self' data:",
+  `connect-src 'self' ${anyOrigin} ${plain ? 'wss: ws:' : 'wss:'}`,
+  'frame-src https://*.firebaseapp.com https://accounts.google.com',
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  ...(plain ? [] : ['upgrade-insecure-requests']),
+].join('; ')
+
 const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },

@@ -2,6 +2,7 @@
 
 fragment ViewerFields on User {
   id
+  deletionScheduledFor
   handle
   displayName
   email
@@ -249,6 +250,26 @@ mutation SetInterests($ids: [UUID!]!) {
     }
     userErrors {
       ...Problems
+    }
+  }
+}
+
+# Deleting one's account (lvn-backend ADR-0088)
+mutation RequestAccountDeletion($input: RequestAccountDeletionInput!) {
+  requestAccountDeletion(input: $input) {
+    deletionScheduledFor
+    userErrors {
+      field
+      message
+    }
+  }
+}
+
+mutation CancelAccountDeletion {
+  cancelAccountDeletion {
+    deletionScheduledFor
+    userErrors {
+      message
     }
   }
 }
