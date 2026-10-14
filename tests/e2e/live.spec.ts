@@ -570,6 +570,14 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   })
   const teacher = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
+  // People search indexes a new account in the background (lvn-backend ADR-0055), and the teacher picker searches once:
+  // on a busy machine the index can lag behind signing the learner up. Wait until the teacher can be found.
+  const probe = await api<{ signUp: { session: { accessToken: string } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken } } }', {
+    input: { email: `live-probe-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Probe', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+  })
+  await expect
+    .poll(async () => (await api<{ search: { people: { id: string }[] } }>('query ($q: String!) { search(query: $q, scopes: [PEOPLE], first: 8) { people { id } } }', { q: `Vouching Teacher ${stamp}` }, probe.signUp.session.accessToken)).search.people.some((p) => p.id === teacher.user.id), { timeout: 30_000 })
+    .toBe(true)
 
   await page.goto('/sign-up')
   await page.getByLabel('Your name').fill('Live Learner Without Email')
