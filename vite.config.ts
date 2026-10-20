@@ -3,12 +3,14 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync } from 'node:fs'
+import { launchChecks } from './build/launch-checks'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
 export default defineConfig({
   define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version) },
   plugins: [
+    launchChecks(),
     react(),
     // Installable app + offline support for the app shell. Study content comes from
     // Firestore and is cached on the device by the app itself (features/catalog/source.ts).

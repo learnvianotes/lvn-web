@@ -23,6 +23,7 @@ const pages = {
   auth: () => import('@/features/auth/AuthPage'),
   about: () => import('@/features/about/AboutPage'),
   settings: () => import('@/features/settings/SettingsPage'),
+  legal: () => import('@/features/legal/LegalPage'),
 }
 
 const TopicPage = lazy(() => pages.topic().then((m) => ({ default: m.TopicPage })))
@@ -31,6 +32,7 @@ const HistoryPage = lazy(() => pages.history().then((m) => ({ default: m.History
 const AuthPage = lazy(() => pages.auth().then((m) => ({ default: m.AuthPage })))
 const AboutPage = lazy(() => pages.about().then((m) => ({ default: m.AboutPage })))
 const SettingsPage = lazy(() => pages.settings().then((m) => ({ default: m.SettingsPage })))
+const LegalPage = lazy(() => pages.legal().then((m) => ({ default: m.LegalPage })))
 
 function Layout() {
   // Warm the study pages once the landing page is idle.
@@ -59,6 +61,9 @@ const router = createBrowserRouter([
       { path: '/forgot-password', element: page(<AuthPage mode="reset" />) },
       { path: '/history', element: page(<HistoryPage />) },
       { path: '/settings', element: page(<SettingsPage />) },
+      { path: '/privacy', element: page(<LegalPage doc="privacy" />) },
+      { path: '/terms', element: page(<LegalPage doc="terms" />) },
+      { path: '/grievance', element: page(<LegalPage doc="grievance" />) },
       { path: '/:subjectId', element: page(<SubjectPage />) },
       { path: '/:subjectId/:topicId', element: page(<TopicPage />) },
       { path: '*', element: <NotFound /> },

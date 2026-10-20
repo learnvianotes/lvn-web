@@ -229,7 +229,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         {mode === 'reset' && <p className="auth-switch">Remembered it? <Link to={withNext('/login')}>Log in</Link></p>}
         {mode === 'signup' && (
           <p className="auth-fine muted small">
-            Only your name, email and study data are stored — never sold. Delete your account anytime.
+            By creating an account you agree to the <Link to="/terms">Terms of Use</Link> and confirm you’ve read the{' '}
+            <Link to="/privacy">Privacy Policy</Link>. Only your name, email and study data are stored — never sold.
+            Delete your account anytime.
           </p>
         )}
       </div>

@@ -96,6 +96,10 @@ function HelpPanel({ ctx, initialTab }: { ctx: CapturedContext; initialTab: Tab 
         <span aria-hidden>·</span>
         <Link to="/settings" onClick={closeHelp}>Settings</Link>
         <span aria-hidden>·</span>
+        <Link to="/privacy" onClick={closeHelp}>Privacy</Link>
+        <span aria-hidden>·</span>
+        <Link to="/terms" onClick={closeHelp}>Terms</Link>
+        <span aria-hidden>·</span>
         <span>v{import.meta.env.VITE_APP_VERSION}</span>
       </p>
     </div>

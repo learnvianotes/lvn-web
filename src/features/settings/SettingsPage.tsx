@@ -55,7 +55,10 @@ export function SettingsPage() {
       ) : (
         <SignInBanner />
       )}
-      <p className="settings-foot muted small">{APP_NAME} v{import.meta.env.VITE_APP_VERSION} · <Link to="/about">About</Link></p>
+      <p className="settings-foot muted small">
+        {APP_NAME} v{import.meta.env.VITE_APP_VERSION} · <Link to="/about">About</Link> · <Link to="/privacy">Privacy</Link> ·{' '}
+        <Link to="/terms">Terms</Link> · <Link to="/grievance">Grievance</Link>
+      </p>
     </div>
   )
 }

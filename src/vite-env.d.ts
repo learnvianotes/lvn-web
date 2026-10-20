@@ -12,6 +12,10 @@ interface ImportMetaEnv {
   readonly VITE_AUTH_EMULATOR?: string
   /** Local development: e.g. 127.0.0.1:8080 */
   readonly VITE_FIRESTORE_EMULATOR?: string
+  /** production | test | development — from .env.<mode> */
+  readonly VITE_SITE_ENV: 'production' | 'test' | 'development'
+  /** The site's own address, no trailing slash (canonical links, sitemap) — from .env.<mode> */
+  readonly VITE_SITE_URL: string
   /** Set by vite.config.ts from package.json */
   readonly VITE_APP_VERSION: string
 }

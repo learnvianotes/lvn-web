@@ -1,8 +1,9 @@
-/* SiteFooter — landing page only: About and (when offered) Install app. */
+/* SiteFooter — landing page only: About, the legal pages, who runs the site and (when offered) Install app. */
 
 import { Link } from 'react-router-dom'
 import { Download } from 'lucide-react'
-import { APP_NAME } from '@/config'
+import { APP_NAME, LEGAL } from '@/config'
+import { LEGAL_PAGES, type LegalDoc } from '@/features/legal/legal'
 import { promptInstall, useCanInstall } from '@/shared/lib/install'
 
 const SOCIAL_LINKS = [
@@ -96,6 +97,16 @@ export function SiteFooter() {
         ) : (
           <span />
         )}
+      </div>
+
+      {/* BOTTOM — legal pages and the operator */}
+      <div className="footer-legal">
+        <nav aria-label="Legal">
+          {(Object.keys(LEGAL_PAGES) as LegalDoc[]).map((d) => (
+            <Link key={d} to={LEGAL_PAGES[d].path}>{LEGAL_PAGES[d].title}</Link>
+          ))}
+        </nav>
+        {LEGAL.operator && <span>Operated by {LEGAL.operator}</span>}
       </div>
 
     </footer>
