@@ -38,7 +38,7 @@ export default defineConfig({
         navigateFallback: '/index.html',
         // Firebase Hosting's reserved URLs (/__/auth/handler for sign-in, /__/firebase/init.json)
         // and files (robots.txt, sitemap.xml, …) must reach the server — never the app shell.
-        navigateFallbackDenylist: [/^\/__\//, /\.[a-z0-9]+$/i],
+        navigateFallbackDenylist: [/^\/__\//, /^[^?#]*\.[a-z0-9]+(?:[?#]|$)/i],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'].includes(url.hostname),
