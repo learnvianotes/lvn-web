@@ -70,10 +70,11 @@ export function render404(html: string): string {
 }
 
 function withHead(html: string, title: string, description: string, tags: string[]): string {
+  // Replacer functions: a "$" in a title must stay a "$", not a replacement pattern.
   const out = html
-    .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
-    .replace(/<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${esc(description)}" />`)
-    .replace('</head>', `\n    ${tags.join('\n    ')}\n  </head>`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${esc(title)}</title>`)
+    .replace(/<meta name="description" content="[^"]*"\s*\/?>/, () => `<meta name="description" content="${esc(description)}" />`)
+    .replace('</head>', () => `\n    ${tags.join('\n    ')}\n  </head>`)
   if (!out.includes(`<title>${esc(title)}</title>`) || !out.includes(`content="${esc(description)}"`)) {
     throw new Error('site-pages: index.html has no <title> or <meta name="description"> to replace')
   }

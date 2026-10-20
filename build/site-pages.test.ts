@@ -40,6 +40,11 @@ describe('rendering', () => {
     expect(html).toContain(`<meta property="og:url" content="${SITE}/a/b" />`)
     expect(html).not.toContain('noindex')
   })
+  it('keeps a "$" in a title as it is', () => {
+    const html = renderPage(BASE, { path: '/x', title: "Costs $& $' $1", description: 'a $` b', index: true }, SITE, true)
+    expect(html).toContain("<title>Costs $&amp; $' $1</title>")
+    expect(html).toContain('content="a $` b"')
+  })
   it('marks every page noindex outside production', () => {
     expect(renderPage(BASE, pages[0], 'https://test.web.app', false)).toContain('<meta name="robots" content="noindex" />')
   })
