@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync } from 'node:fs'
 import { launchChecks } from './build/launch-checks'
+import { sitePages } from './build/site-pages'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
@@ -32,11 +33,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html}', 'icons/*.png'],
+        // The app shell only — not the ~800 per-page HTML files (build/site-pages.ts).
+        globPatterns: ['index.html', '*.js', 'assets/**/*.{js,css}', 'icons/*.png'],
         navigateFallback: '/index.html',
         // Firebase Hosting's reserved URLs (/__/auth/handler for sign-in, /__/firebase/init.json)
-        // must reach the server — never answer them with the app shell.
-        navigateFallbackDenylist: [/^\/__\//],
+        // and files (robots.txt, sitemap.xml, …) must reach the server — never the app shell.
+        navigateFallbackDenylist: [/^\/__\//, /\.[a-z0-9]+$/i],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'].includes(url.hostname),
@@ -46,6 +48,8 @@ export default defineConfig({
         ],
       },
     }),
+    // After the PWA plugin, so every page carries its manifest link and service-worker script.
+    sitePages({ catalogFile: fileURLToPath(new URL('./content-build/catalog.json', import.meta.url)) }),
   ],
   build: {
     rollupOptions: {

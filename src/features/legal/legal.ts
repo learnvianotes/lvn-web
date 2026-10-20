@@ -5,7 +5,7 @@
    run while any of them is blank (build/launch-checks.ts).
    ============================================================ */
 
-import { LEGAL } from '@/config'
+import { LEGAL } from '../../config' // relative: build/site-pages.ts imports this file too
 
 export type LegalField = Exclude<keyof typeof LEGAL, 'effective'>
 
