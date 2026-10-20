@@ -33,6 +33,8 @@ export interface UserDataRepository {
   adultConfirmedAt(uid: string): Promise<number | null>
   /** Records that the learner confirmed they are an adult and accepted `termsVersion`. */
   confirmAdult(uid: string, termsVersion: string): Promise<void>
+  /** What only the server holds, for "Export my data": the age record and the activity events. */
+  serverOnly(uid: string): Promise<{ adultConfirmedAt: number | null; termsVersion: string | null; events: EventBatchDoc[] }>
   fetchAll(uid: string): Promise<RemoteSnapshot>
   commit(uid: string, writes: UserWrites): Promise<void>
   appendEvents(uid: string, batch: EventBatchDoc): Promise<void>

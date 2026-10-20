@@ -32,6 +32,8 @@ import { RATES, setRate, setVoice, speak, speechSupported, useSpeech, useVoices 
 import { setThemeMode, useThemeMode, type ThemeMode } from '@/shared/lib/theme'
 import { analyticsAvailable } from '@/services/analytics'
 import { setAnalyticsConsent, useAnalyticsConsent, type Choice } from '@/services/consent'
+import { userData } from '@/services/userdata/repository'
+import { flush as flushTracking } from '@/features/telemetry/track'
 import { Loading } from '@/shared/ui/Status'
 
 export function SettingsPage() {
@@ -257,14 +259,24 @@ function Account({ user }: { user: AppUser }) {
   )
 }
 
-function exportData(user: AppUser) {
+/** Everything held about the learner: this device's copy of their study data, plus what only the server has. */
+async function exportData(user: AppUser) {
+  await flushTracking()
+  const server = await (await userData()).serverOnly(user.uid)
   const data = {
     exportedAt: new Date().toISOString(),
-    account: { name: user.name, email: user.email, provider: user.provider },
+    account: {
+      name: user.name,
+      email: user.email,
+      provider: user.provider,
+      adultConfirmedAt: server.adultConfirmedAt && new Date(server.adultConfirmedAt).toISOString(),
+      termsVersion: server.termsVersion,
+    },
     progress: getProgress(),
     activity: getActivity(),
     notes: getNotes(),
     preferences: getPrefs(),
+    events: server.events,
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const a = document.createElement('a')
@@ -279,12 +291,24 @@ function DataSettings({ user }: { user: AppUser }) {
   const [confirm, setConfirm] = useState('')
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [msg, setMsg] = useState('')
 
   return (
     <Group title="Your data">
-      <Row label="Export my data" hint="Progress, study history, notes and preferences as a JSON file.">
-        <button className="btn btn-sm" onClick={() => exportData(user)}><Download size={14} aria-hidden /> Download</button>
+      <Row label="Export my data" hint="Your account, progress, study history, notes, preferences and activity as a JSON file.">
+        <button
+          className="btn btn-sm"
+          disabled={exporting}
+          onClick={async () => {
+            setExporting(true)
+            setMsg('')
+            try { await exportData(user) } catch { setMsg('Couldn’t reach the server to export everything. Check your connection and try again.') }
+            setExporting(false)
+          }}
+        >
+          <Download size={14} aria-hidden /> {exporting ? 'Preparing…' : 'Download'}
+        </button>
       </Row>
       <Row label="Delete account" hint="Permanently deletes your account, streak, history and notes.">
         {!open && <button className="btn btn-sm is-danger" onClick={() => setOpen(true)}><Trash2 size={14} aria-hidden /> Delete…</button>}
@@ -315,9 +339,9 @@ function DataSettings({ user }: { user: AppUser }) {
               {busy ? 'Deleting…' : 'Delete forever'}
             </button>
           </div>
-          {msg && <p className="settings-msg" role="alert">{msg}</p>}
         </div>
       )}
+      {msg && <p className="settings-msg" role="alert">{msg}</p>}
     </Group>
   )
 }

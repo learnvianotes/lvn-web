@@ -5,7 +5,7 @@
 
 import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, writeBatch, type WriteBatch } from 'firebase/firestore/lite'
 import { db } from '@/services/firebase/firestore'
-import { SCHEMA_VERSION, docId, type NoteDoc, type TrendingDoc, type UserDoc } from '@schema/firestore'
+import { SCHEMA_VERSION, docId, type EventBatchDoc, type NoteDoc, type TrendingDoc, type UserDoc } from '@schema/firestore'
 import type { RemoteSnapshot, UserDataRepository, UserWrites } from './repository'
 
 const userRef = (uid: string) => doc(db(), 'users', uid)
@@ -21,6 +21,18 @@ export const firestoreRepository: UserDataRepository = {
   async confirmAdult(uid, termsVersion) {
     const now = Date.now()
     await setDoc(userRef(uid), { adultConfirmedAt: now, termsVersion, updatedAt: now }, { merge: true })
+  },
+
+  async serverOnly(uid) {
+    const ref = userRef(uid)
+    const [user, events] = await Promise.all([getDoc(ref), getDocs(collection(ref, 'events'))])
+    const at = user.get('adultConfirmedAt')
+    const version = user.get('termsVersion')
+    return {
+      adultConfirmedAt: typeof at === 'number' ? at : null,
+      termsVersion: typeof version === 'string' ? version : null,
+      events: events.docs.map((d) => d.data() as EventBatchDoc).sort((a, b) => a.createdAt - b.createdAt),
+    }
   },
 
   async fetchAll(uid) {

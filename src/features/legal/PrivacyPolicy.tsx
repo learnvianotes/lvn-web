@@ -124,7 +124,10 @@ export function PrivacyPolicy() {
 
       <h2>Your rights</h2>
       <ul>
-        <li><strong>See and take your data:</strong> Settings → Your data → Export my data downloads it as a file.</li>
+        <li>
+          <strong>See and take your data:</strong> Settings → Your data → Export my data downloads all of it as a
+          file — your account details, age confirmation, progress, history, notes, preferences and activity events.
+        </li>
         <li><strong>Correct it:</strong> email us and we will fix wrong or incomplete details.</li>
         <li><strong>Delete it:</strong> Settings → Your data → Delete account, or email us.</li>
         <li>
