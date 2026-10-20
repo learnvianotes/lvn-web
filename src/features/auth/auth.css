@@ -29,12 +29,7 @@
 .auth-brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
 .auth-brand img { border-radius: 9px; }
 .auth-aside-title { font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 750; letter-spacing: -0.025em; }
-.auth-aside-title span {
-  background: linear-gradient(90deg, var(--accent), #8b5cf6 60%, var(--fire));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+.auth-aside-title span { color: var(--accent); }
 .auth-perks { list-style: none; padding: 0; display: grid; gap: 12px; max-width: 420px; }
 .auth-perks li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; line-height: 1.45; color: var(--text-2); }
 .auth-perks svg {
@@ -165,7 +160,7 @@
 .account-btn { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; }
 .account-btn:hover .avatar { box-shadow: 0 0 0 2px var(--accent-soft); }
 .avatar { display: inline-grid; place-items: center; border-radius: 50%; object-fit: cover; flex-shrink: 0; transition: box-shadow 0.15s; }
-.avatar--initial { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; font-weight: 700; font-size: 13px; }
+.avatar--initial { background: var(--accent); color: var(--accent-text); font-weight: 700; font-size: 13px; }
 .avatar--loading { width: 28px; height: 28px; margin: 0 4px; background: var(--surface-2); }
 .account-menu, .focus-menu {
   position: absolute;
