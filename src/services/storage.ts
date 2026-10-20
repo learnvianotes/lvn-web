@@ -6,6 +6,9 @@
 
 const PREFIX = 'cnote:'
 
+/** The localStorage key behind `key` (to match `storage` events from other tabs). */
+export const storageKey = (key: string) => `${PREFIX}${key}`
+
 /**
  * Retrieve a stored value by key.
  * Returns null if not found or if parsing fails.

@@ -6,7 +6,7 @@
    ============================================================ */
 
 import { useSyncExternalStore } from 'react'
-import { get, set } from '@/services/storage'
+import { get, set, storageKey } from '@/services/storage'
 
 export type Choice = 'granted' | 'denied'
 interface Stored { analytics: Choice; at: number }
@@ -27,6 +27,15 @@ export function setAnalyticsConsent(choice: Choice) {
   current = choice
   listeners.forEach((l) => l())
 }
+
+// A choice made in another tab (or an under-18 refusal there) applies here at once.
+if (typeof window !== 'undefined') window.addEventListener('storage', (e) => {
+  if (e.key !== null && e.key !== storageKey(KEY)) return
+  const next = read()
+  if (next === current) return
+  current = next
+  listeners.forEach((l) => l())
+})
 
 export function subscribeConsent(l: () => void) {
   listeners.add(l)
