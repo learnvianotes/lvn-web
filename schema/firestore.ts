@@ -57,6 +57,10 @@ export interface UserDoc {
   prefs?: Prefs
   schema: number
   updatedAt: number
+  /** epoch ms: when the learner confirmed they are 18 or older (the date of birth itself is never stored) */
+  adultConfirmedAt?: number
+  /** the Terms / Privacy Policy version (its effective date) accepted then */
+  termsVersion?: string
 }
 
 /* ── users/{uid}/days/{day} ──────────────────────────────── */

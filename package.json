@@ -9,6 +9,7 @@
     "build:test": "tsc -b && vite build --mode test",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test": "vitest run",
     "content:extract": "node scripts/content/extract.mjs",
     "content:seed": "node scripts/content/seed/run.mjs",
     "emulators": "bash scripts/dev/emulators.sh",
@@ -58,6 +59,7 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.4",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^3.2.7"
   }
 }

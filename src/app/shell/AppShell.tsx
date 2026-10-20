@@ -15,6 +15,7 @@ import { useLayout } from '@/app/shell/LayoutState'
 import { ListenBar } from '@/features/voice/ListenBar'
 import { FocusRuntime } from '@/features/focus/FocusRuntime'
 import { useUser } from '@/features/auth/auth'
+import { AgeGate } from '@/features/auth/AgeGate'
 import { trackPageView } from '@/services/analytics'
 import { useEffect, useRef } from 'react'
 
@@ -67,6 +68,7 @@ export function AppShell() {
         <div className="ws-scrim" onClick={closeDrawers} aria-hidden />
       </div>
       <HelpCenter />
+      <AgeGate />
       <ListenBar />
       {user && <FocusRuntime />}
     </>

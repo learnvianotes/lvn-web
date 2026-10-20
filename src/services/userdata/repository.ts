@@ -29,6 +29,10 @@ export interface UserWrites {
 }
 
 export interface UserDataRepository {
+  /** When the learner confirmed they are an adult (epoch ms), or null if they never have. */
+  adultConfirmedAt(uid: string): Promise<number | null>
+  /** Records that the learner confirmed they are an adult and accepted `termsVersion`. */
+  confirmAdult(uid: string, termsVersion: string): Promise<void>
   fetchAll(uid: string): Promise<RemoteSnapshot>
   commit(uid: string, writes: UserWrites): Promise<void>
   appendEvents(uid: string, batch: EventBatchDoc): Promise<void>

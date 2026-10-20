@@ -13,11 +13,19 @@
      (see progress/sync.ts), so a shared computer leaks nothing.
    • Which providers work is decided in the Firebase console —
      see docs/auth-setup.md.
+
+   Accounts are for adults (age.ts). A signed-in account becomes
+   'signed-in' only once it has confirmed it is 18+; until then it
+   is 'age-check' (AgeGate.tsx asks), and nothing syncs or tracks.
    ============================================================ */
 
 import { useSyncExternalStore } from 'react'
 import type { Auth, AuthProvider, User } from 'firebase/auth'
 import { firebaseApp, firebaseConfigured } from '@/services/firebase/app'
+import { get, set } from '@/services/storage'
+import { userData } from '@/services/userdata/repository'
+import { TERMS_VERSION } from '@/features/legal/legal'
+import { activeRefusal, markRefused } from './age'
 
 export interface AppUser {
   uid: string
@@ -33,6 +41,8 @@ export type AuthState =
   | { status: 'loading' }
   | { status: 'unavailable' }
   | { status: 'signed-out' }
+  /** signed in, but hasn't confirmed they are 18+ yet (AgeGate asks) */
+  | { status: 'age-check'; user: AppUser }
   | { status: 'signed-in'; user: AppUser }
 
 export type ProviderId = 'google' | 'github' | 'linkedin'
@@ -90,10 +100,15 @@ function load() {
     const auth = mod.initializeAuth(firebaseApp(), {
       persistence: [mod.indexedDBLocalPersistence, mod.browserLocalPersistence],
     })
+    currentUid = () => auth.currentUser?.uid ?? null
     auth.useDeviceLanguage()
     // Local development against the Auth emulator (npm run emulators).
     if (import.meta.env.DEV && import.meta.env.VITE_AUTH_EMULATOR) mod.connectAuthEmulator(auth, import.meta.env.VITE_AUTH_EMULATOR, { disableWarnings: true })
-    mod.onAuthStateChanged(auth, (u) => setState(u ? { status: 'signed-in', user: toAppUser(u) } : { status: 'signed-out' }))
+    mod.onAuthStateChanged(auth, (u) => {
+      if (u) return void settle(u)
+      settled.clear()
+      setState({ status: 'signed-out' })
+    })
     // Finish a sign-in that fell back to a full-page redirect (only when one was started).
     if (sessionStorage.getItem(REDIRECT_PENDING)) {
       sessionStorage.removeItem(REDIRECT_PENDING)
@@ -117,16 +132,27 @@ export async function signInWithEmail(email: string, password: string) {
   await mod.signInWithEmailAndPassword(auth, normalizeEmail(email), password)
 }
 
+/** The caller has already checked the date of birth (an adult). */
 export async function signUpWithEmail(name: string, email: string, password: string) {
   const { mod, auth } = await load()
-  const cred = await mod.createUserWithEmailAndPassword(auth, normalizeEmail(email), password)
-  const displayName = name.trim().slice(0, 60)
-  if (displayName) await mod.updateProfile(cred.user, { displayName })
-  await mod.sendEmailVerification(cred.user).catch(() => {})
-  setState({ status: 'signed-in', user: toAppUser(cred.user) })
+  setPendingAdult(true)
+  try {
+    const cred = await mod.createUserWithEmailAndPassword(auth, normalizeEmail(email), password)
+    const displayName = name.trim().slice(0, 60)
+    if (displayName) await mod.updateProfile(cred.user, { displayName })
+    await mod.sendEmailVerification(cred.user).catch(() => {})
+    await settle(cred.user)
+    if (state.status === 'signed-in' && state.user.uid === cred.user.uid) setState({ status: 'signed-in', user: toAppUser(cred.user) })
+  } finally {
+    setPendingAdult(false)
+  }
 }
 
-export async function signInWithProvider(id: ProviderId) {
+/**
+ * `adult`: the sign-up page has already checked the date of birth, so a new account needs no
+ * AgeGate. Without it (the log-in page), an account that never confirmed its age gets the gate.
+ */
+export async function signInWithProvider(id: ProviderId, { adult = false } = {}) {
   const { mod, auth } = await load()
   let provider: AuthProvider
   if (id === 'google') {
@@ -143,17 +169,144 @@ export async function signInWithProvider(id: ProviderId) {
     ;['openid', 'profile', 'email'].forEach((s) => p.addScope(s))
     provider = p
   }
+  if (adult) setPendingAdult(true)
+  let redirecting = false
   try {
-    await mod.signInWithPopup(auth, provider, mod.browserPopupRedirectResolver)
+    const cred = await mod.signInWithPopup(auth, provider, mod.browserPopupRedirectResolver)
+    await settle(cred.user)
   } catch (e) {
     // Popups blocked (common on mobile / in-app browsers): use a full-page redirect instead.
+    // (The pending adult confirmation survives it in sessionStorage.)
     if (errorCode(e) === 'auth/popup-blocked' || errorCode(e) === 'auth/operation-not-supported-in-this-environment') {
       sessionStorage.setItem(REDIRECT_PENDING, '1')
+      redirecting = true
       await mod.signInWithRedirect(auth, provider, mod.browserPopupRedirectResolver)
       return
     }
     throw e
+  } finally {
+    if (!redirecting) setPendingAdult(false)
   }
+}
+
+/* ── age: adults only (age.ts, AgeGate.tsx) ───────────────── */
+
+/** Set on this device once the account has confirmed it is 18+ (saves a read on every visit). */
+const adultKey = (uid: string) => `adult:${uid}`
+/** Confirmed here but not yet recorded on the server (offline): retried on the next visit. */
+const unsyncedKey = (uid: string) => `adult-unsynced:${uid}`
+/** sessionStorage: this sign-in comes from the sign-up page, which checked the date of birth. */
+const PENDING_ADULT = 'lvn:adult-pending'
+const PENDING_FOR_MS = 10 * 60 * 1000
+/** An account this new, on a device that just refused someone, is refused too. */
+const NEW_ACCOUNT_MS = 10 * 60 * 1000
+
+function setPendingAdult(on: boolean) {
+  try {
+    if (on) sessionStorage.setItem(PENDING_ADULT, String(Date.now()))
+    else sessionStorage.removeItem(PENDING_ADULT)
+  } catch { /* storage blocked */ }
+}
+
+function takePendingAdult(): boolean {
+  try {
+    const at = Number(sessionStorage.getItem(PENDING_ADULT))
+    sessionStorage.removeItem(PENDING_ADULT)
+    return at > 0 && Date.now() - at < PENDING_FOR_MS
+  } catch {
+    return false
+  }
+}
+
+async function recordAdult(uid: string) {
+  set(adultKey(uid), Date.now())
+  try {
+    await (await userData()).confirmAdult(uid, TERMS_VERSION)
+    set(unsyncedKey(uid), null)
+  } catch {
+    set(unsyncedKey(uid), true) // offline: keep going, record it next time
+  }
+}
+
+/** One age decision per signed-in account (the auth listener and the sign-up flows share it). */
+const settled = new Map<string, Promise<void>>()
+
+function settle(u: User): Promise<void> {
+  let p = settled.get(u.uid)
+  if (!p) {
+    p = decideAge(u)
+    settled.set(u.uid, p)
+  }
+  return p
+}
+
+async function decideAge(u: User) {
+  const user = toAppUser(u)
+  const show = (next: AuthState) => { if (getCurrentUid() === u.uid) setState(next) }
+  const refusal = activeRefusal()
+  const isNew = Date.now() - new Date(u.metadata.creationTime ?? 0).getTime() < NEW_ACCOUNT_MS
+  if (refusal && (refusal.uid === u.uid || (isNew && !get(adultKey(u.uid))))) {
+    await refuseUnderage()
+    return
+  }
+  if (takePendingAdult()) {
+    await recordAdult(u.uid)
+    return show({ status: 'signed-in', user })
+  }
+  if (get(adultKey(u.uid))) {
+    if (get(unsyncedKey(u.uid))) void recordAdult(u.uid)
+    return show({ status: 'signed-in', user })
+  }
+  try {
+    if (await (await userData()).adultConfirmedAt(u.uid)) {
+      set(adultKey(u.uid), Date.now())
+      return show({ status: 'signed-in', user })
+    }
+  } catch { /* offline or blocked: ask (recordAdult retries the write later) */ }
+  show({ status: 'age-check', user })
+}
+
+let currentUid: () => string | null = () => null
+const getCurrentUid = () => currentUid()
+
+/** AgeGate: the person gave an adult date of birth (and accepted the terms). */
+export async function confirmAdultAge() {
+  const { auth } = await load()
+  const u = auth.currentUser
+  if (!u) return
+  await recordAdult(u.uid)
+  setState({ status: 'signed-in', user: toAppUser(u) })
+}
+
+/** A notice for the person just refused (AgeGate shows it after signing them out). */
+let ageNotice: 'refused' | null = null
+const noticeListeners = new Set<() => void>()
+function setAgeNotice(n: typeof ageNotice) {
+  ageNotice = n
+  noticeListeners.forEach((l) => l())
+}
+export function useAgeNotice() {
+  return useSyncExternalStore((l) => { noticeListeners.add(l); return () => { noticeListeners.delete(l) } }, () => ageNotice)
+}
+export const dismissAgeNotice = () => setAgeNotice(null)
+
+/**
+ * AgeGate: under 18. The account's data and the account itself are deleted and the device
+ * remembers the refusal for a day. If the session is too old to delete the account, the
+ * data still goes; the account is deleted the next time it signs in here (decideAge).
+ */
+export async function refuseUnderage() {
+  const { mod, auth } = await load()
+  const u = auth.currentUser
+  setAgeNotice('refused')
+  if (!u) return markRefused()
+  markRefused(u.uid)
+  try { await (await userData()).deleteAll(u.uid) } catch { /* nothing synced, or offline */ }
+  try {
+    await mod.deleteUser(u)
+    markRefused()
+  } catch { /* auth/requires-recent-login: see above */ }
+  await mod.signOut(auth).catch(() => {})
 }
 
 /** Always resolves the same way whether or not the account exists. */

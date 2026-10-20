@@ -1,6 +1,8 @@
 /* ============================================================
    /login · /signup · /forgot-password
    Social providers first, then email + password.
+   Sign-up asks the date of birth first (age.ts): it covers both
+   ways in, and under-18s are refused before any account exists.
    ============================================================ */
 
 import './auth.css'
@@ -12,6 +14,8 @@ import {
   authErrorMessage, isValidEmail, passwordIssues, passwordStrength, safeNext, sendPasswordReset, signInWithEmail,
   signInWithProvider, signUpWithEmail, useAuth, type ProviderId,
 } from '@/features/auth/auth'
+import { activeRefusal, isAdult, isValidBirthDate, markRefused, type BirthDate } from './age'
+import { BirthDateField } from './BirthDateField'
 
 export type AuthMode = 'login' | 'signup' | 'reset'
 
@@ -52,10 +56,14 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState('')
   const [resetSent, setResetSent] = useState(false)
   const [touched, setTouched] = useState(false)
+  const [dob, setDob] = useState<Partial<BirthDate>>({})
+  const [dobError, setDobError] = useState('')
+  const [refused, setRefused] = useState(() => activeRefusal() !== null)
 
   useEffect(() => {
     document.title = `${TITLES[mode]} · ${APP_NAME}`
     setError('')
+    setDobError('')
     setTouched(false)
     return () => { document.title = APP_NAME }
   }, [mode])
@@ -66,6 +74,21 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const issues = passwordIssues(password)
   const strength = passwordStrength(password)
   const emailOk = isValidEmail(email)
+
+  /** Sign-up only: false (and the reason shown) unless an adult date of birth was given. */
+  const ageOk = () => {
+    if (!isValidBirthDate(dob)) {
+      setDobError('Enter your date of birth.')
+      return false
+    }
+    setDobError('')
+    if (!isAdult(dob)) {
+      markRefused()
+      setRefused(true)
+      return false
+    }
+    return true
+  }
 
   const run = async (key: string, action: () => Promise<void>) => {
     setBusy(key)
@@ -89,6 +112,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         setResetSent(true)
       })
     }
+    if (mode === 'signup' && !ageOk()) return
     if (mode === 'signup' && issues.length) return setError(`Password needs ${issues.join(', ')}.`)
     if (!password) return setError('Enter your password.')
     void run('email', async () => {
@@ -138,7 +162,13 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
         {unavailable && <p className="auth-error" role="alert">Sign-in isn’t available right now. You can keep studying without an account.</p>}
 
-        {mode === 'reset' && resetSent ? (
+        {mode === 'signup' && refused ? (
+          <div className="auth-refused" role="status">
+            <p><strong>Sorry, you can’t create an account.</strong></p>
+            <p>{APP_NAME} accounts are only for adults. You can still read every note and try every problem without one — your progress stays on this device.</p>
+            <Link className="btn btn-primary btn-sm" to="/">Back to the notes</Link>
+          </div>
+        ) : mode === 'reset' && resetSent ? (
           <div className="auth-success" role="status">
             <MailCheck size={20} aria-hidden />
             <p>If an account exists for <strong>{email.trim()}</strong>, a reset link is on its way. Check your inbox (and spam folder).</p>
@@ -146,6 +176,12 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           </div>
         ) : (
           <>
+            {mode === 'signup' && (
+              <>
+                <BirthDateField value={dob} onChange={(d) => { setDob(d); setDobError('') }} invalid={Boolean(dobError)} />
+                {dobError && <p className="auth-error" role="alert">{dobError}</p>}
+              </>
+            )}
             {mode !== 'reset' && PROVIDERS.length > 0 && (
               <>
                 <div className="auth-providers">
@@ -154,10 +190,13 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                       key={p.id}
                       className="btn auth-provider"
                       disabled={unavailable || busy !== null}
-                      onClick={() => void run(p.id, async () => {
-                        await signInWithProvider(p.id)
-                        navigate(next, { replace: true })
-                      })}
+                      onClick={() => {
+                        if (mode === 'signup' && !ageOk()) return
+                        void run(p.id, async () => {
+                          await signInWithProvider(p.id, { adult: mode === 'signup' })
+                          navigate(next, { replace: true })
+                        })
+                      }}
                     >
                       {busy === p.id ? <span className="spinner sm" aria-hidden /> : p.icon}
                       <span>Continue with {p.label}</span>
@@ -227,7 +266,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         )}
 
         {mode === 'reset' && <p className="auth-switch">Remembered it? <Link to={withNext('/login')}>Log in</Link></p>}
-        {mode === 'signup' && (
+        {mode === 'signup' && !refused && (
           <p className="auth-fine muted small">
             By creating an account you agree to the <Link to="/terms">Terms of Use</Link> and confirm you’ve read the{' '}
             <Link to="/privacy">Privacy Policy</Link>. Only your name, email and study data are stored — never sold.

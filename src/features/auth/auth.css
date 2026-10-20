@@ -92,6 +92,43 @@
 }
 .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .field input[aria-invalid='true'] { border-color: var(--danger); }
+.field-hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+/* Date of birth (BirthDateField) */
+.dob { border: 0; padding: 0; margin: 0; min-width: 0; }
+.dob legend { padding: 0; margin-bottom: 4px; }
+.dob-row { display: grid; grid-template-columns: 0.8fr 1.5fr 1fr; gap: 8px; }
+.dob select {
+  width: 100%;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: 400 15px var(--font);
+}
+.dob select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dob select[aria-invalid='true'] { border-color: var(--danger); }
+
+.auth-refused { display: grid; gap: 10px; justify-items: start; padding: 14px 16px; border-radius: 10px; background: var(--surface-2); color: var(--text-2); font-size: 14px; line-height: 1.5; }
+.auth-refused strong { color: var(--text); }
+
+/* AgeGate: a modal <dialog> over every page */
+.age-gate {
+  width: min(400px, calc(100% - 32px));
+  margin: auto;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text-2);
+  box-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.35);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.age-gate::backdrop { background: rgb(0 0 0 / 0.45); }
+.age-gate h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
 .field-password { position: relative; display: block; }
 .field-password input { padding-right: 44px; }
 .field-password .icon-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
@@ -119,7 +156,7 @@
 @media (max-width: 480px) {
   .auth-page { background: var(--surface); }
   .auth-card { width: 100%; margin: 0; padding: 14px 16px 20px; border: 0; border-radius: 0; gap: 12px; }
-  .field input { font-size: 16px; }
+  .field input, .dob select { font-size: 16px; }
 }
 
 /* ── Header: account + sign in ──────────────────────────── */

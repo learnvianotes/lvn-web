@@ -13,6 +13,16 @@ const userRef = (uid: string) => doc(db(), 'users', uid)
 const BATCH_LIMIT = 450
 
 export const firestoreRepository: UserDataRepository = {
+  async adultConfirmedAt(uid) {
+    const at = (await getDoc(userRef(uid))).get('adultConfirmedAt')
+    return typeof at === 'number' ? at : null
+  },
+
+  async confirmAdult(uid, termsVersion) {
+    const now = Date.now()
+    await setDoc(userRef(uid), { adultConfirmedAt: now, termsVersion, updatedAt: now }, { merge: true })
+  },
+
   async fetchAll(uid) {
     const ref = userRef(uid)
     const [user, days, notes] = await Promise.all([

@@ -33,7 +33,7 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // { progress, prefs, schema, updatedAt }
+    // { progress, prefs, schema, updatedAt, adultConfirmedAt, termsVersion }
     match /users/{uid} {
       function validProgress(p) {
         return p is map
@@ -56,11 +56,14 @@ service cloud.firestore {
 
       allow read, delete: if isOwner(uid);
       allow create, update: if isOwner(uid)
-        && onlyKeys(['progress', 'prefs', 'schema', 'updatedAt'])
+        && onlyKeys(['progress', 'prefs', 'schema', 'updatedAt', 'adultConfirmedAt', 'termsVersion'])
         && isTime(data().updatedAt)
         && data().get('schema', 1) is int
         && (!('progress' in data()) || validProgress(data().progress))
-        && (!('prefs' in data()) || validPrefs(data().prefs));
+        && (!('prefs' in data()) || validPrefs(data().prefs))
+        // the 18+ confirmation (the date of birth is never stored) and the terms version accepted with it
+        && (!('adultConfirmedAt' in data()) || isTime(data().adultConfirmedAt))
+        && (!('termsVersion' in data()) || smallString(data().termsVersion, 20));
 
       // One study log per day: { topics, focus, updatedAt }
       match /days/{day} {
