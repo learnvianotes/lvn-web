@@ -5,10 +5,9 @@
    ============================================================ */
 
 import './legal.css'
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { APP_NAME, LEGAL } from '@/config'
+import { LEGAL } from '@/config'
 import { formatLegalDate, LEGAL_FIELD_LABELS, LEGAL_PAGES, missingLegalFields, type LegalDoc } from './legal'
 import { PrivacyPolicy } from './PrivacyPolicy'
 import { Terms } from './Terms'
@@ -20,11 +19,6 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
   const { title } = LEGAL_PAGES[doc]
   const Body = BODIES[doc]
   const missing = missingLegalFields()
-
-  useEffect(() => {
-    document.title = `${title} · ${APP_NAME}`
-    return () => { document.title = APP_NAME }
-  }, [title])
 
   return (
     <div className="page page-narrow">

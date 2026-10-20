@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { clip, render404, renderPage, robotsTxt, sitemapXml, sitePagesFor, type CatalogFile } from './site-pages'
+import { render404, renderPage, robotsTxt, sitemapXml, sitePagesFor, type CatalogFile } from './site-pages'
+import { clip, pageFor } from '../src/shared/lib/pages'
 
 const catalog = JSON.parse(readFileSync(new URL('../content-build/catalog.json', import.meta.url), 'utf8')) as CatalogFile
 const pages = sitePagesFor(catalog)
@@ -65,6 +66,22 @@ describe('robots.txt and sitemap.xml', () => {
     expect(xml).not.toContain(`<loc>${SITE}/login</loc>`)
     expect(xml).not.toContain(`<loc>${SITE}/dsa-basics</loc>`)
     expect(xml.match(/<url>/g)).toHaveLength(pages.filter((p) => p.index && !p.canonical).length)
+  })
+})
+
+describe('pageFor (the app sets these as you move around)', () => {
+  it('matches what the build writes, for fixed, subject and topic pages', () => {
+    for (const path of ['/', '/privacy', '/login', '/sheet-150', '/dsa-basics', '/sheet-150/arrays-hashing', '/python/variables']) {
+      const built = pages.find((p) => p.path === path)
+      if (!built) continue
+      expect(pageFor(path, catalog)).toMatchObject({ title: built.title, description: built.description })
+    }
+  })
+  it('knows no page for an unknown address', () => {
+    expect(pageFor('/nope', catalog)).toBeUndefined()
+    expect(pageFor('/dsa-basics/nope', catalog)).toBeUndefined()
+    expect(pageFor('/dsa-basics/analysis/extra', catalog)).toBeUndefined()
+    expect(pageFor('/about')).toBeDefined() // fixed pages need no catalog
   })
 })
 

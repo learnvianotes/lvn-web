@@ -12,7 +12,8 @@
      sitemap.xml            the indexable pages (production only)
 
    Each file is the built index.html with its own <title>,
-   description, canonical link, robots and share tags. Routes come
+   description, canonical link, robots and share tags (titles and
+   descriptions: src/shared/lib/pages.ts). Routes come
    from content-build/catalog.json — the file `npm run
    content:seed` writes to Firestore — so a release that changes
    subjects or topics must seed and deploy the site together.
@@ -20,83 +21,13 @@
 
 import { readFileSync } from 'node:fs'
 import type { Plugin } from 'vite'
-import { LEGAL_PAGES } from '../src/features/legal/legal'
-import { LEGAL } from '../src/config'
+import { sitePagesFor, type CatalogLike, type Page } from '../src/shared/lib/pages'
 
-export interface CatalogFile {
-  generatedAt: string
-  subjects: {
-    id: string
-    title: string
-    description: string
-    kind: 'notes' | 'problems'
-    topics: { id: string; title: string; headings?: string[]; problems?: { title: string }[] }[]
-  }[]
-}
-
-export interface Page {
-  /** "/" or "/a/b" — no trailing slash */
-  path: string
-  title: string
-  description: string
-  /** false: noindex, and left out of the sitemap */
-  index: boolean
-  /** where search engines should send people (defaults to the page itself) */
-  canonical?: string
-  lastmod?: string
-  breadcrumbs?: { name: string; path: string }[]
-}
+export { sitePagesFor }
+export type { Page }
+export type CatalogFile = CatalogLike
 
 const NAME = 'LearnViaNotes'
-const HOME_DESCRIPTION =
-  'Free notes for CS interviews: DSA, 150 coding problems solved in Python, C++, Java and JavaScript, system design, DBMS, OS, networks, AI and more.'
-
-/** At most `max` characters, cut at a word, with an ellipsis when cut. */
-export function clip(text: string, max = 155): string {
-  const t = text.replace(/\s+/g, ' ').trim()
-  if (t.length <= max) return t
-  return `${t.slice(0, max - 1).replace(/[\s,;:—-]+\S*$/, '')}…`
-}
-
-export function sitePagesFor(catalog: CatalogFile): Page[] {
-  const day = catalog.generatedAt.slice(0, 10)
-  const pages: Page[] = [
-    { path: '/', title: `${NAME} — interview-ready CS notes and coding problems`, description: HOME_DESCRIPTION, index: true, lastmod: day },
-    { path: '/about', title: `About · ${NAME}`, description: `What ${NAME} is, the study tools it has and every subject it covers.`, index: true, lastmod: day },
-    ...Object.values(LEGAL_PAGES).map((p) => ({ path: p.path, title: `${p.title} · ${NAME}`, description: p.description, index: true, lastmod: LEGAL.effective })),
-    { path: '/login', title: `Log in · ${NAME}`, description: `Log in to ${NAME} to keep your streak and study history in sync.`, index: false },
-    { path: '/signup', title: `Create your account · ${NAME}`, description: `Create a free ${NAME} account to keep your streak and study history in sync.`, index: false },
-    { path: '/forgot-password', title: `Reset your password · ${NAME}`, description: `Reset your ${NAME} password.`, index: false },
-    { path: '/history', title: `History · ${NAME}`, description: `Your ${NAME} study history.`, index: false },
-    { path: '/settings', title: `Settings · ${NAME}`, description: `Your ${NAME} settings.`, index: false },
-  ]
-  for (const s of catalog.subjects) {
-    const first = s.topics[0]
-    pages.push({
-      path: `/${s.id}`,
-      title: s.kind === 'problems' ? `${s.title}: ${s.topics.reduce((n, t) => n + (t.problems?.length ?? 0), 0)} coding interview problems · ${NAME}` : `${s.title} notes · ${NAME}`,
-      description: clip(s.description),
-      // A notes subject opens its first topic, so that topic is the page to index.
-      index: s.kind === 'problems',
-      canonical: s.kind === 'notes' && first ? `/${s.id}/${first.id}` : undefined,
-      lastmod: day,
-    })
-    for (const t of s.topics) {
-      const detail = t.problems?.length
-        ? `${t.problems.length} problems with solutions in Python, C++, Java and JavaScript: ${t.problems.map((p) => p.title).join(', ')}`
-        : (t.headings ?? []).join(', ')
-      pages.push({
-        path: `/${s.id}/${t.id}`,
-        title: `${t.title} — ${s.title} · ${NAME}`,
-        description: clip(detail ? `${t.title}: ${detail}.` : `${t.title} — ${s.title} notes on ${NAME}.`),
-        index: true,
-        lastmod: day,
-        breadcrumbs: [{ name: s.title, path: `/${s.id}` }, { name: t.title, path: `/${s.id}/${t.id}` }],
-      })
-    }
-  }
-  return pages
-}
 
 /* ── rendering ───────────────────────────────────────────── */
 

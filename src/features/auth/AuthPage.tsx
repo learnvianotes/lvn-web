@@ -61,11 +61,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [refused, setRefused] = useState(() => activeRefusal() !== null)
 
   useEffect(() => {
-    document.title = `${TITLES[mode]} · ${APP_NAME}`
     setError('')
     setDobError('')
     setTouched(false)
-    return () => { document.title = APP_NAME }
   }, [mode])
 
   if (auth.status === 'signed-in' && mode !== 'reset') return <Navigate to={next} replace />
