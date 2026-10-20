@@ -16,7 +16,7 @@ initTheme()
 initSync()
 initTracking()
 initAuth()
-void initAnalytics()
+initAnalytics()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

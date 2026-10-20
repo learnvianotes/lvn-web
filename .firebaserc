@@ -1,7 +1,24 @@
 {
   "projects": {
-    "default": "learnvianotes-2e2d7"
+    "default": "learnvianotes-2e2d7",
+    "production": "learnvianotes-2e2d7",
+    "test": "learnvianotes-test"
   },
-  "targets": {},
+  "targets": {
+    "learnvianotes-2e2d7": {
+      "hosting": {
+        "app": [
+          "learnvianote"
+        ]
+      }
+    },
+    "learnvianotes-test": {
+      "hosting": {
+        "app": [
+          "learnvianotes-test"
+        ]
+      }
+    }
+  },
   "etags": {}
 }

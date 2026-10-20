@@ -1,1 +1,1 @@
-/*  /index.html  200
+# No catch-all: every real page is its own file (build/site-pages.ts) and Netlify serves 404.html for the rest.

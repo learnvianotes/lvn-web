@@ -32,7 +32,9 @@ guest vs signed-in features, the event log for recommendations and the roadmap:
 ```bash
 npm install
 npm run dev              # http://localhost:9090
-npm run build            # production build in dist/
+npm test                 # unit tests (Vitest)
+npm run build:test       # build for the test site (noindex; skips the launch checks)
+npm run build            # production build in dist/ — stops until src/config.ts → LEGAL is filled in
 npx vite preview         # serve dist/ locally (service worker active)
 npm run emulators        # local Firebase: Auth + Firestore + Functions (needs Java 21)
 npm run dev:local        # app on :9091 using the local emulators
@@ -40,14 +42,22 @@ npm run dev:local        # app on :9091 using the local emulators
 
 ## Going live
 
-The build output (`dist/`) is a static site, so any static host works. The routes are client-side, so
-unknown paths must serve `index.html`. That's already configured for:
+Launch status, owner decisions and legal notes: [docs/launch.md](docs/launch.md).
+
+- **Releases:** production deploys only from a pushed `v*` tag; `release/**` branches deploy the test project
+  ([docs/runbooks/release.md](docs/runbooks/release.md)).
+- **One-time setup:** Blaze, the test project, backups, uptime alerts and the mailbox
+  ([docs/runbooks/infra.md](docs/runbooks/infra.md)).
+
+The build output (`dist/`) is a static site with one HTML file per real page, generated from
+`content-build/catalog.json` by `build/site-pages.ts`. There is no catch-all rewrite, so unknown paths get
+`404.html` with a 404 status.
 
 | Host | Config | Deploy |
 |---|---|---|
-| Firebase Hosting | `firebase.json` | `npm run build && npx firebase-tools deploy --only hosting` |
-| Netlify | `public/_redirects` | build command `npm run build`, publish directory `dist` |
-| Vercel | `vercel.json` | framework "Vite" (defaults work) |
+| Firebase Hosting (live) | `firebase.json`, `.firebaserc` (aliases `production`, `test`) | `.github/workflows/deploy.yml` |
+| Netlify | `public/_redirects` (no catch-all) | build command `npm run build`, publish directory `dist` |
+| Vercel | `vercel.json` (`cleanUrls`, no catch-all) | framework "Vite" (defaults work) |
 
 After deploying, open the site on your phone:
 - **Android (Chrome):** menu → *Install app* (or the *Install app* link at the bottom of the home page).

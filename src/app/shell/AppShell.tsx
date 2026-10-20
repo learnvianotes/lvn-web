@@ -15,7 +15,10 @@ import { useLayout } from '@/app/shell/LayoutState'
 import { ListenBar } from '@/features/voice/ListenBar'
 import { FocusRuntime } from '@/features/focus/FocusRuntime'
 import { useUser } from '@/features/auth/auth'
+import { AgeGate } from '@/features/auth/AgeGate'
+import { ConsentBanner } from '@/features/consent/ConsentBanner'
 import { trackPageView } from '@/services/analytics'
+import { usePageMeta } from './usePageMeta'
 import { useEffect, useRef } from 'react'
 
 export function AppShell() {
@@ -27,6 +30,8 @@ export function AppShell() {
   const onHome = location.pathname === '/'
   const user = useUser()
   const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(location.pathname)
+
+  usePageMeta() // before the page view below, so it carries the page's own title
 
   // Analytics logs the first page view itself; log client-side navigations after that.
   const firstView = useRef(true)
@@ -67,6 +72,8 @@ export function AppShell() {
         <div className="ws-scrim" onClick={closeDrawers} aria-hidden />
       </div>
       <HelpCenter />
+      <AgeGate />
+      <ConsentBanner />
       <ListenBar />
       {user && <FocusRuntime />}
     </>

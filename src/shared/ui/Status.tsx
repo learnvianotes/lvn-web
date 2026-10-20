@@ -39,7 +39,17 @@ export function LoadError({ error, retry }: { error: Error; retry?: () => void }
   )
 }
 
+/** Also marks the page noindex: an address the app doesn't know must not be indexed (soft 404). */
 export function NotFound() {
+  useEffect(() => {
+    const meta = document.createElement('meta')
+    meta.name = 'robots'
+    meta.content = 'noindex'
+    document.head.append(meta)
+    const title = document.title
+    document.title = 'Page not found · LearnViaNotes'
+    return () => { meta.remove(); document.title = title }
+  }, [])
   return (
     <div className="state">
       <p className="state-title">Page not found</p>

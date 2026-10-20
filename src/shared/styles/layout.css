@@ -215,6 +215,23 @@ body.scroll-locked { overflow: hidden; }
 }
 .footer-install:hover { color: var(--text); }
 
+/* BOTTOM — legal links + operator, full width */
+.footer-legal {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 12px;
+}
+.footer-legal nav { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.footer-legal a { color: var(--muted); }
+.footer-legal a:hover { color: var(--text); }
+
 /* Collapse on small screens */
 @media (max-width: 600px) {
   .site-footer {
@@ -227,4 +244,6 @@ body.scroll-locked { overflow: hidden; }
   .footer-right {
     justify-self: center;
   }
+  .footer-legal { justify-content: center; margin-top: 0; }
+  .footer-legal nav { justify-content: center; }
 }

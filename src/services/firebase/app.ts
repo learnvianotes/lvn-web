@@ -1,5 +1,5 @@
 /* ============================================================
-   FIREBASE — the app instance. Config comes from .env.local.
+   FIREBASE — the app instance. Config: .env.local (dev), .env.<mode>.local or CI variables (builds).
    Firestore lives in ./db.ts and is only imported lazily, so
    pages that don't need it never download it.
    ============================================================ */
@@ -20,7 +20,7 @@ export const firebaseConfigured = Boolean(env.VITE_FIREBASE_API_KEY && env.VITE_
 let app: FirebaseApp | undefined
 
 export function firebaseApp(): FirebaseApp {
-  if (!firebaseConfigured) throw new Error('Firebase is not configured — set the VITE_FIREBASE_* variables in .env.local.')
+  if (!firebaseConfigured) throw new Error('Firebase is not configured — set the VITE_FIREBASE_* variables (.env.local for npm run dev; .env.production.local or .env.test.local for builds).')
   app ??= initializeApp({
     apiKey: env.VITE_FIREBASE_API_KEY,
     authDomain: authDomain(),

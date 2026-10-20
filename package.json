@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:test": "tsc -b && vite build --mode test",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test": "vitest run",
     "content:extract": "node scripts/content/extract.mjs",
     "content:seed": "node scripts/content/seed/run.mjs",
     "emulators": "bash scripts/dev/emulators.sh",
@@ -15,6 +17,7 @@
     "deploy:rules": "firebase deploy --only firestore",
     "deploy:functions": "firebase deploy --only functions",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy:test": "npm run build:test && firebase deploy --only firestore:rules -P test && firebase deploy --only hosting -P test",
     "emulators:auth": "EMULATORS=auth bash scripts/dev/emulators.sh",
     "dev:local": "vite --mode emulators --port 9091",
     "content:python": "python3 content-src/authoring/python/build.py && npm run content:extract",
@@ -57,6 +60,10 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.4",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6"
   }
 }

@@ -1,17 +1,12 @@
 {
   "hosting": {
-    "site": "learnvianote",
+    "target": "app",
     "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*"
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
+    "trailingSlash": false,
     "headers": [
       {
         "source": "**",
@@ -39,7 +34,25 @@
         ]
       },
       {
-        "source": "/@(sw.js|index.html|manifest.webmanifest)",
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/!(*.*)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/@(sw.js|index.html|404.html|manifest.webmanifest|robots.txt|sitemap.xml)",
         "headers": [
           {
             "key": "Cache-Control",

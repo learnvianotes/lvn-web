@@ -14,7 +14,7 @@ import type { Catalog, Problem, Solution, TopicDoc } from './types'
 import { NotFoundError } from './errors'
 
 function ensureConfigured() {
-  if (!firebaseConfigured) throw new Error('Firebase is not configured — set the VITE_FIREBASE_* variables in .env.local.')
+  if (!firebaseConfigured) throw new Error('Firebase is not configured — set the VITE_FIREBASE_* variables (.env.local for npm run dev; .env.production.local or .env.test.local for builds).')
 }
 
 export async function fetchMeta(): Promise<ContentMeta> {

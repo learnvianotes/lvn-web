@@ -26,7 +26,7 @@
   animation: bar-in 0.25s ease both;
 }
 @keyframes bar-in { from { opacity: 0; transform: translate(-50%, 16px); } }
-.listen-progress { position: absolute; left: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, var(--accent), #8b5cf6); transition: width 0.3s ease; }
+.listen-progress { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); transition: width 0.3s ease; }
 .listen-wave { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); flex-shrink: 0; }
 .listen-wave.is-on svg { animation: flicker 0.9s ease-in-out infinite; }
 .listen-title { display: grid; min-width: 0; flex: 1; line-height: 1.3; }
