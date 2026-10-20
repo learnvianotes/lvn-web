@@ -55,7 +55,8 @@ topic, and any other address is a 404. When subjects or topics change:
 
 ## Manual fallback
 
-From a laptop signed in with `firebase login`, when CI is down:
+From a laptop signed in with `firebase login`, with each project's web config in `.env.production.local` and
+`.env.test.local`, when CI is down:
 
 - **Live:** `npm run deploy:rules && npm run deploy:hosting`, rules first.
 - **Test:** `npm run deploy:test`, which does both.
