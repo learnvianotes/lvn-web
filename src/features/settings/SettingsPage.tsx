@@ -1,6 +1,7 @@
 /* ============================================================
    /settings — the essentials in one place.
      Appearance      theme (everyone)
+     Privacy         Google Analytics on / off (everyone; builds with analytics)
      Study           daily goal, read-aloud voice & speed, focus sound
      Home            default sort, reset my subject order
      Account         profile, verification, sync, sign out
@@ -29,6 +30,8 @@ import { SORTS } from '@/features/home/subjectOrder'
 import { toggleSound, useFocus } from '@/features/focus/focus'
 import { RATES, setRate, setVoice, speak, speechSupported, useSpeech, useVoices } from '@/features/voice/speech'
 import { setThemeMode, useThemeMode, type ThemeMode } from '@/shared/lib/theme'
+import { analyticsAvailable } from '@/services/analytics'
+import { setAnalyticsConsent, useAnalyticsConsent, type Choice } from '@/services/consent'
 import { Loading } from '@/shared/ui/Status'
 
 export function SettingsPage() {
@@ -43,6 +46,7 @@ export function SettingsPage() {
       </div>
 
       <Appearance />
+      {analyticsAvailable() && <Privacy />}
       {auth.status === 'loading' ? (
         <Loading />
       ) : user ? (
@@ -104,6 +108,25 @@ function Segmented<T extends string | number>({ value, options, onChange, label 
 }
 
 /* ── sections ────────────────────────────────────────────── */
+
+function Privacy() {
+  const consent = useAnalyticsConsent()
+  return (
+    <Group title="Privacy">
+      <Row label="Google Analytics" hint="Cookies that count visits and show which notes help. Off unless you allow it.">
+        <Segmented<Choice>
+          label="Google Analytics"
+          value={consent ?? 'denied'}
+          onChange={setAnalyticsConsent}
+          options={[
+            { value: 'denied', label: 'Off' },
+            { value: 'granted', label: 'On' },
+          ]}
+        />
+      </Row>
+    </Group>
+  )
+}
 
 function Appearance() {
   const mode = useThemeMode()

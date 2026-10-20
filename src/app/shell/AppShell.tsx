@@ -16,6 +16,7 @@ import { ListenBar } from '@/features/voice/ListenBar'
 import { FocusRuntime } from '@/features/focus/FocusRuntime'
 import { useUser } from '@/features/auth/auth'
 import { AgeGate } from '@/features/auth/AgeGate'
+import { ConsentBanner } from '@/features/consent/ConsentBanner'
 import { trackPageView } from '@/services/analytics'
 import { useEffect, useRef } from 'react'
 
@@ -69,6 +70,7 @@ export function AppShell() {
       </div>
       <HelpCenter />
       <AgeGate />
+      <ConsentBanner />
       <ListenBar />
       {user && <FocusRuntime />}
     </>

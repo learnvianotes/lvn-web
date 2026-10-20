@@ -6,10 +6,12 @@
      fact that the person confirmed they are an adult, and when,
      is stored with the account (users/{uid}.adultConfirmedAt).
    • A refusal is remembered on the device for a day, so going
-     back and answering again doesn't open sign-up.
+     back and answering again doesn't open sign-up. It also turns
+     Google Analytics off on the device (no tracking of children).
    ============================================================ */
 
 import { get, remove, set } from '@/services/storage'
+import { setAnalyticsConsent } from '@/services/consent'
 
 export const ADULT_AGE = 18
 const REFUSED_KEY = 'age-refused'
@@ -50,6 +52,7 @@ interface Refusal { at: number; uid?: string }
 
 export function markRefused(uid?: string) {
   set<Refusal>(REFUSED_KEY, { at: Date.now(), ...(uid ? { uid } : {}) })
+  setAnalyticsConsent('denied')
 }
 
 /** The refusal still in force on this device, if any. */
