@@ -65,4 +65,6 @@ jobs:
       - name: Firestore rules
         run: npx -y "$FIREBASE_TOOLS" deploy --only firestore:rules --project "$ALIAS" --non-interactive
       - name: Site
-        run: npx -y "$FIREBASE_TOOLS" deploy --only hosting --project "$ALIAS" --non-interactive --message "${{ github.ref_name }} ${{ github.sha }}"
+        env:
+          RELEASE: ${{ github.ref_name }} ${{ github.sha }}
+        run: npx -y "$FIREBASE_TOOLS" deploy --only hosting --project "$ALIAS" --non-interactive --message "$RELEASE"
