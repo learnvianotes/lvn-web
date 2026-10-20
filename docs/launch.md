@@ -32,6 +32,8 @@ The production build refuses to run until `LEGAL` is filled in, so nothing can g
 6. Section 7 calls. What is built now:
    - **How the age question is asked:** the date of birth (day, month, year), with no defaults and no hint of the
      cut-off. A neutral age screen ([FTC COPPA FAQ H.3, D.7](https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions)).
+     - The chosen date is shown in words. At the gate, where an answer can delete an account, every answer gets a
+       "Is this right?" step.
      - Only the outcome is stored.
      - A refusal is remembered on the device for a day.
      - A single "I am 18 or older" checkbox would be simpler, but the FTC calls it not neutral.
@@ -79,9 +81,13 @@ The pages follow the rules cited below, but they are drafts, not legal advice. C
 
 ## Known limits
 
-- **An existing account with an old session that answers under 18 at the gate:** its data is deleted at once.
-  Firebase won't delete the sign-in record without a recent sign-in, so that record is deleted the next time the
-  account signs in on that device.
+- **An account that answers under 18 at the gate:** its data is deleted at once.
+  - Firebase deletes the sign-in record itself only after a recent sign-in, so on an old session the gate asks for
+    the password (or the Google popup) first.
+  - If they sign out instead, the record goes the next time the account signs in on that device. Otherwise it stays,
+    with no data, until removed from the Firebase console, or by a clean-up function once Blaze is on (not built).
+- **A refusal on a shared device:** for a day, no unconfirmed account can get past the gate there; confirmed adults
+  are not affected. Nobody's account is deleted unless they answer under 18 themselves.
 - **Cloud Functions aren't deployed** (Spark plan). Account deletion still works from the app.
   `npm run deploy:functions` after Blaze adds the server-side clean-up and the trending topics.
 - **Pages are generated from `content-build/catalog.json`.** Seed and deploy together

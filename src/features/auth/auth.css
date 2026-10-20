@@ -124,6 +124,8 @@
 }
 .age-gate::backdrop { background: rgb(0 0 0 / 0.45); }
 .age-gate h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.age-gate-date { font-size: 20px; font-weight: 650; color: var(--text); }
+.field-hint strong { color: var(--text-2); font-weight: 600; }
 .field-password { position: relative; display: block; }
 .field-password input { padding-right: 44px; }
 .field-password .icon-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }

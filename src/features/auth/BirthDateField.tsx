@@ -1,9 +1,15 @@
 /* Date of birth — day, month, year with no defaults and no hint of the cut-off (age.ts). */
 
 import { useId } from 'react'
-import type { BirthDate } from './age'
+import { isValidBirthDate, type BirthDate } from './age'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/** "14 March 1995" — so a mis-picked day, month or year is easy to see. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function formatBirthDate(d: BirthDate) {
+  return `${d.day} ${MONTHS[d.month - 1]} ${d.year}`
+}
 
 export function BirthDateField({ value, onChange, invalid = false }: {
   value: Partial<BirthDate>
@@ -33,7 +39,9 @@ export function BirthDateField({ value, onChange, invalid = false }: {
           {years.map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
       </span>
-      <span id={hint} className="field-hint">Used once to check your age — we don’t keep it.</span>
+      <span id={hint} className="field-hint">
+        {isValidBirthDate(value) ? <><strong>{formatBirthDate(value)}</strong> · </> : null}Used once to check your age — we don’t keep it.
+      </span>
     </fieldset>
   )
 }

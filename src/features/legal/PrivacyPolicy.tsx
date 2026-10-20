@@ -28,7 +28,7 @@ export function PrivacyPolicy() {
         Accounts are only for people who are 18 or older. When you create an account we ask your date of birth, use it
         once to check your age, and keep only the fact that you confirmed you are 18 or older and when. We don’t store
         your date of birth. If you are under 18 we don’t create the account. If we learn that an account belongs to
-        someone under 18, we delete it and its data.
+        someone under 18, we delete its data at once and the account itself as soon as we can.
       </p>
 
       <h2>What we collect and why</h2>

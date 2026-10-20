@@ -41,8 +41,11 @@ export type AuthState =
   | { status: 'loading' }
   | { status: 'unavailable' }
   | { status: 'signed-out' }
-  /** signed in, but hasn't confirmed they are 18+ yet (AgeGate asks) */
-  | { status: 'age-check'; user: AppUser }
+  /**
+   * signed in, but not confirmed as 18+ (AgeGate): 'ask' the date of birth; 'blocked' while this
+   * device remembers a refusal; 'confirm-delete' after an under-18 answer on an old session
+   */
+  | { status: 'age-check'; user: AppUser; step: 'ask' | 'blocked' | 'confirm-delete' }
   | { status: 'signed-in'; user: AppUser }
 
 export type ProviderId = 'google' | 'github' | 'linkedin'
@@ -148,27 +151,32 @@ export async function signUpWithEmail(name: string, email: string, password: str
   }
 }
 
+function buildProvider(mod: AuthModule, id: ProviderId): AuthProvider {
+  if (id === 'google') {
+    const p = new mod.GoogleAuthProvider()
+    p.setCustomParameters({ prompt: 'select_account' })
+    return p
+  }
+  if (id === 'github') {
+    const p = new mod.GithubAuthProvider()
+    p.addScope('read:user')
+    p.addScope('user:email')
+    return p
+  }
+  const p = new mod.OAuthProvider('oidc.linkedin')
+  ;['openid', 'profile', 'email'].forEach((s) => p.addScope(s))
+  return p
+}
+
+const PROVIDER_IDS: Record<string, ProviderId> = { 'google.com': 'google', 'github.com': 'github', 'oidc.linkedin': 'linkedin' }
+
 /**
  * `adult`: the sign-up page has already checked the date of birth, so a new account needs no
  * AgeGate. Without it (the log-in page), an account that never confirmed its age gets the gate.
  */
 export async function signInWithProvider(id: ProviderId, { adult = false } = {}) {
   const { mod, auth } = await load()
-  let provider: AuthProvider
-  if (id === 'google') {
-    const p = new mod.GoogleAuthProvider()
-    p.setCustomParameters({ prompt: 'select_account' })
-    provider = p
-  } else if (id === 'github') {
-    const p = new mod.GithubAuthProvider()
-    p.addScope('read:user')
-    p.addScope('user:email')
-    provider = p
-  } else {
-    const p = new mod.OAuthProvider('oidc.linkedin')
-    ;['openid', 'profile', 'email'].forEach((s) => p.addScope(s))
-    provider = p
-  }
+  const provider = buildProvider(mod, id)
   if (adult) setPendingAdult(true)
   let redirecting = false
   try {
@@ -198,8 +206,6 @@ const unsyncedKey = (uid: string) => `adult-unsynced:${uid}`
 /** sessionStorage: this sign-in comes from the sign-up page, which checked the date of birth. */
 const PENDING_ADULT = 'lvn:adult-pending'
 const PENDING_FOR_MS = 10 * 60 * 1000
-/** An account this new, on a device that just refused someone, is refused too. */
-const NEW_ACCOUNT_MS = 10 * 60 * 1000
 
 function setPendingAdult(on: boolean) {
   try {
@@ -240,15 +246,16 @@ function settle(u: User): Promise<void> {
   return p
 }
 
+/**
+ * In order: an account that said it is under 18 on this device is deleted; one confirmed as
+ * an adult (sign-up page, this device, or the server) is let in; otherwise the AgeGate asks —
+ * or, while this device remembers a refusal, blocks (it never deletes an account unasked).
+ */
 async function decideAge(u: User) {
   const user = toAppUser(u)
   const show = (next: AuthState) => { if (getCurrentUid() === u.uid) setState(next) }
   const refusal = activeRefusal()
-  const isNew = Date.now() - new Date(u.metadata.creationTime ?? 0).getTime() < NEW_ACCOUNT_MS
-  if (refusal && (refusal.uid === u.uid || (isNew && !get(adultKey(u.uid))))) {
-    await refuseUnderage()
-    return
-  }
+  if (refusal?.uid === u.uid) return void (await refuseUnderage())
   if (takePendingAdult()) {
     await recordAdult(u.uid)
     return show({ status: 'signed-in', user })
@@ -263,13 +270,13 @@ async function decideAge(u: User) {
       return show({ status: 'signed-in', user })
     }
   } catch { /* offline or blocked: ask (recordAdult retries the write later) */ }
-  show({ status: 'age-check', user })
+  show({ status: 'age-check', user, step: refusal ? 'blocked' : 'ask' })
 }
 
 let currentUid: () => string | null = () => null
 const getCurrentUid = () => currentUid()
 
-/** AgeGate: the person gave an adult date of birth (and accepted the terms). */
+/** AgeGate: the person confirmed an adult date of birth (and accepted the terms). */
 export async function confirmAdultAge() {
   const { auth } = await load()
   const u = auth.currentUser
@@ -278,10 +285,11 @@ export async function confirmAdultAge() {
   setState({ status: 'signed-in', user: toAppUser(u) })
 }
 
-/** A notice for the person just refused (AgeGate shows it after signing them out). */
-let ageNotice: 'refused' | null = null
+/** A notice for the person just refused, shown after they are signed out. */
+export type AgeNotice = 'deleted' | 'signed-out'
+let ageNotice: AgeNotice | null = null
 const noticeListeners = new Set<() => void>()
-function setAgeNotice(n: typeof ageNotice) {
+function setAgeNotice(n: AgeNotice | null) {
   ageNotice = n
   noticeListeners.forEach((l) => l())
 }
@@ -291,21 +299,55 @@ export function useAgeNotice() {
 export const dismissAgeNotice = () => setAgeNotice(null)
 
 /**
- * AgeGate: under 18. The account's data and the account itself are deleted and the device
- * remembers the refusal for a day. If the session is too old to delete the account, the
- * data still goes; the account is deleted the next time it signs in here (decideAge).
+ * AgeGate: the person confirmed a date of birth under 18. The account's data is deleted at
+ * once, then the account. Firebase deletes an account only after a recent sign-in: when the
+ * session is older, the gate asks them to confirm it's them (deleteRefusedAccount). The device
+ * remembers the refusal (with the account) for a day either way.
  */
 export async function refuseUnderage() {
   const { mod, auth } = await load()
   const u = auth.currentUser
-  setAgeNotice('refused')
-  if (!u) return markRefused()
+  if (!u) {
+    markRefused()
+    return setAgeNotice('deleted')
+  }
   markRefused(u.uid)
   try { await (await userData()).deleteAll(u.uid) } catch { /* nothing synced, or offline */ }
   try {
     await mod.deleteUser(u)
-    markRefused()
-  } catch { /* auth/requires-recent-login: see above */ }
+  } catch (e) {
+    if (errorCode(e) === 'auth/requires-recent-login') {
+      return setState({ status: 'age-check', user: toAppUser(u), step: 'confirm-delete' })
+    }
+    setAgeNotice('signed-out') // offline: it goes the next time it signs in here
+    return void (await mod.signOut(auth).catch(() => {}))
+  }
+  markRefused()
+  setAgeNotice('deleted')
+  await mod.signOut(auth).catch(() => {})
+}
+
+/** AgeGate, step 'confirm-delete': sign in again (password, or the provider's popup), then delete. */
+export async function deleteRefusedAccount(password = '') {
+  const { mod, auth } = await load()
+  const u = auth.currentUser
+  if (!u) return
+  const providerId = u.providerData[0]?.providerId ?? 'password'
+  if (providerId === 'password') {
+    await mod.reauthenticateWithCredential(u, mod.EmailAuthProvider.credential(u.email ?? '', password))
+  } else {
+    await mod.reauthenticateWithPopup(u, buildProvider(mod, PROVIDER_IDS[providerId] ?? 'google'), mod.browserPopupRedirectResolver)
+  }
+  await mod.deleteUser(u)
+  markRefused()
+  setAgeNotice('deleted')
+  await mod.signOut(auth).catch(() => {})
+}
+
+/** AgeGate, step 'confirm-delete': leave instead; the account is deleted the next time it signs in here. */
+export async function leaveRefusedAccount() {
+  const { mod, auth } = await load()
+  setAgeNotice('signed-out')
   await mod.signOut(auth).catch(() => {})
 }
 
