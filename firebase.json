@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "learnvianote",
+    "target": "app",
     "public": "dist",
     "ignore": [
       "firebase.json",

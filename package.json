@@ -17,6 +17,7 @@
     "deploy:rules": "firebase deploy --only firestore",
     "deploy:functions": "firebase deploy --only functions",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy:test": "npm run build:test && firebase deploy --only firestore:rules -P test && firebase deploy --only hosting -P test",
     "emulators:auth": "EMULATORS=auth bash scripts/dev/emulators.sh",
     "dev:local": "vite --mode emulators --port 9091",
     "content:python": "python3 content-src/authoring/python/build.py && npm run content:extract",

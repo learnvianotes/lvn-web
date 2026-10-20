@@ -37,7 +37,9 @@ const MAX_DOC_BYTES = 1_000_000
 const args = new Set(process.argv.slice(2))
 const live = args.has('--live')
 const dryRun = args.has('--dry-run')
-const projectId = JSON.parse(fs.readFileSync(path.join(ROOT, '.firebaserc'), 'utf8')).projects.default as string
+// SEED_PROJECT=test (an alias in .firebaserc, or a project id) seeds another project; default: the default project.
+const firebaserc = JSON.parse(fs.readFileSync(path.join(ROOT, '.firebaserc'), 'utf8')) as { projects: Record<string, string> }
+const projectId = (process.env.SEED_PROJECT && (firebaserc.projects[process.env.SEED_PROJECT] ?? process.env.SEED_PROJECT)) || firebaserc.projects.default
 
 const log = (...a: unknown[]) => console.log(...a)
 const read = <T>(rel: string): T => JSON.parse(fs.readFileSync(path.join(SRC, rel), 'utf8')) as T
