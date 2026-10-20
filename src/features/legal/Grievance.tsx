@@ -34,11 +34,12 @@ export function Grievance() {
       <h2>How quickly we respond</h2>
       <ul>
         <li><strong>Acknowledgement:</strong> within 24 hours of receiving your complaint.</li>
-        <li><strong>Resolution:</strong> within 15 days, with our reasons.</li>
+        <li><strong>Resolution:</strong> within 7 days, with our reasons.</li>
+        <li><strong>Content that breaks the law:</strong> if you ask us to remove it, we act within 36 hours.</li>
       </ul>
       <p>
-        These are the times the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules,
-        2021 set; we apply them to every complaint.
+        These are the times rule 3(2) of the Information Technology (Intermediary Guidelines and Digital Media Ethics
+        Code) Rules, 2021 sets, as amended in February 2026; we apply them to every complaint.
       </p>
 
       <h2>If you’re not satisfied</h2>
