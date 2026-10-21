@@ -1,8 +1,14 @@
 # Releasing
 
-The live site (www.learnvianotes.in, Firebase project `learnvianotes-2e2d7`) changes only when a `v*` tag is
-pushed. The test site (Firebase project `learnvianotes-test`) follows every push to a `release/**` branch. Both
-run through `.github/workflows/deploy.yml`.
+> **Retired (2026-10-22).** The launch moved to the rewrite on Lightsail (lvn-backend ADR-0096): lvn-web `main` and
+> its `.github/workflows/deploy.yml` deploy `release/**` branches to beta and `v*` tags to production. This branch's
+> Firebase deploy workflow is removed, so no `v*` tag or `release/**` push deploys the old app any more. The old site
+> stays live on Firebase Hosting until DNS moves; changing it now is the manual fallback below, by hand only. What
+> follows is kept for that.
+
+The live site (www.learnvianotes.in, Firebase project `learnvianotes-2e2d7`) changed only when a `v*` tag was
+pushed. The test site (Firebase project `learnvianotes-test`) followed every push to a `release/**` branch. Both
+ran through `.github/workflows/deploy.yml`, now removed.
 
 | Push | Deploys to | Builds with | Firebase alias | GitHub environment |
 | --- | --- | --- | --- | --- |

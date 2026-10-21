@@ -44,8 +44,9 @@ npm run dev:local        # app on :9091 using the local emulators
 
 Launch status, owner decisions and legal notes: [docs/launch.md](docs/launch.md).
 
-- **Releases:** production deploys only from a pushed `v*` tag; `release/**` branches deploy the test project
-  ([docs/runbooks/release.md](docs/runbooks/release.md)).
+- **Releases:** retired. The launch moved to the rewrite on Lightsail (lvn-web `main`, lvn-backend ADR-0096); this
+  branch's Firebase deploy workflow is removed, and the old site changes only by hand
+  ([docs/runbooks/release.md](docs/runbooks/release.md#manual-fallback)).
 - **One-time setup:** Blaze, the test project, backups, uptime alerts and the mailbox
   ([docs/runbooks/infra.md](docs/runbooks/infra.md)).
 
@@ -55,7 +56,7 @@ The build output (`dist/`) is a static site with one HTML file per real page, ge
 
 | Host | Config | Deploy |
 |---|---|---|
-| Firebase Hosting (live) | `firebase.json`, `.firebaserc` (aliases `production`, `test`) | `.github/workflows/deploy.yml` |
+| Firebase Hosting (live) | `firebase.json`, `.firebaserc` (aliases `production`, `test`) | by hand only (the deploy workflow is retired) |
 | Netlify | `public/_redirects` (no catch-all) | build command `npm run build`, publish directory `dist` |
 | Vercel | `vercel.json` (`cleanUrls`, no catch-all) | framework "Vite" (defaults work) |
 
