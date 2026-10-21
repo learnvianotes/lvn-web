@@ -1,29 +1,39 @@
 # Launch: the College/Interview track (18+) on the rewrite
 
-The College/Interview track launches first on the old app: lvn-web `release/college-launch`, cut from `4f2a9275`. That
-branch holds the launch fixes for the old app (Vite + Firebase); its own `docs/launch.md` covers that launch.
+The College/Interview track launches on the rewrite (Next.js, with lvn-backend's API). The owner approved the plan on
+2026-10-22:
 
-This branch, `feat/college-launch-nextjs`, ports the same fixes to the rewrite (Next.js, with lvn-backend's API), so
-the rewrite meets the same bar when it replaces the old app. The ports in lvn-backend and lvn-mobile are on branches of
-the same name. Nothing here is deployed.
+- one Lightsail VM per environment running the Docker Compose stack;
+- Cloudflare R2 for files and backups, and Resend for email (lvn-backend ADR-0096).
 
-## Status of the launch fixes on the rewrite
+**Beta comes first:** `https://beta.learnvianotes.in`, on the 2 GB VM `13.204.214.142`.
 
-| Launch fix (old app) | On the rewrite | Where |
+**Production has no VM for now.** Its server was deleted on 2026-10-22; it comes back as another 2 GB VM with the same
+stack. Until then, a `v*` tag builds the images and stops before touching anything.
+
+The old app (`release/college-launch`, Vite + Firebase) is no longer deployed by CI. Its Firebase Hosting workflow is
+retired on lvn-web's branch `feat/lightsail-deploy-retire-firebase`, which takes effect once merged into
+`release/college-launch`. The live site at www.learnvianotes.in stays on Firebase Hosting until production's DNS moves
+to the new VM.
+
+## Status
+
+| Launch item | State | Where |
 | --- | --- | --- |
-| Privacy, Terms and Grievance pages, operator named in config | Built; **waiting for the operator's details** | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
+| Privacy, Terms and Grievance pages, operator named in config | Built. Operator and address are filled in. **The courts city, the Grievance Officer and the mailbox are still blank** | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
 | Grievances resolved within 7 days, removals within 36 h | Built | `features/legal/Grievance.tsx`, Terms §9 |
 | Date of birth at sign-up, refusing under-18s, every answer confirmed | Built (web, phone, API) | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE`); `lib/age.ts`, `components/auth/AgeCheck.tsx` |
 | Google Analytics only after consent, synced across tabs | Built; off until `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set | lvn-backend ADR-0092; `lib/consent.ts`, `lib/analytics.ts` |
-| Real 404s, robots.txt, sitemap | Built (404s were already real) | `app/robots.ts`, `app/sitemap.ts`, `tests/e2e/landing.spec.ts` |
-| Purple replaced with the brand blue; green for CS Fundamentals | Built across web, phone and emails | lvn-backend ADR-0094 |
+| Real 404s, robots.txt, sitemap | Built | `app/robots.ts`, `app/sitemap.ts`, `tests/e2e/landing.spec.ts` |
+| Brand blue, no purple | Built across web, phone and emails | lvn-backend ADR-0094 |
 | Page titles, descriptions, canonical links | Built | each route's metadata; `lib/page-title.ts` |
-| Separate Firebase test and production projects | Built | `config/firebase-projects.json`, `lib/launch-checks.ts` |
-| CI on every push; test deploys from release branches, production from `v*` tags | Built; **needs the GitHub environments and AWS** | `.github/workflows/`, lvn-backend ADR-0093, [runbooks/release.md](runbooks/release.md) |
-| Export my data with the age record and activity events | Built (the archive already had them; now it says so) | lvn-backend `data-export.service.ts`; Profile → Your data |
+| Separate Firebase projects for beta and production | Built; **the beta project `learnvianotes-test` is not created yet** | `config/firebase-projects.json`, `lib/launch-checks.ts`, [runbooks/infra.md](runbooks/infra.md) |
+| CI on every push; beta from `release/**`, production from `v*` tags | Built: images in GHCR, deployed over SSH to the Lightsail VM, failing unless every service is healthy over HTTPS; **needs the GitHub environments** | `.github/workflows/deploy.yml`; lvn-backend ADR-0096, `docs/runbooks/lightsail.md`; [runbooks/release.md](runbooks/release.md) |
+| Uploads off for the launch | Built: every upload control is hidden while the API says uploads are off | lvn-backend ADR-0097; `features/notes/uploads.ts` |
+| The old site's subjects, topics and Sheet 150 problems | Built: imported from its Firestore as public notes of the LearnViaNotes account; **not run on beta yet** | lvn-backend ADR-0098, `docs/runbooks/legacy-content.md` |
+| Launch copy: Exam Prep "A plan for the day", Study Groups "Learn with peers" | Built | `messages/en.json` → `home.features` |
+| Export my data with the age record and activity events | Built | lvn-backend `data-export.service.ts`; Profile → Your data |
 | Never delete an account unasked | Built | lvn-backend ADR-0091; deletion stays ADR-0088's request + 14 days |
-| PWA and SEO escaping fixes | SEO: built (a `$` in a title broke the title template here too). PWA: nothing to port (no offline service worker) | `lib/page-title.ts` |
-| Patched `@grpc/grpc-js` | Already on `main` (`pnpm.overrides`) | `package.json` |
 | Launch, release and infra runbooks | Written | this file, [runbooks/release.md](runbooks/release.md), [runbooks/infra.md](runbooks/infra.md) |
 
 A production build (`NEXT_PUBLIC_APP_ENV=production`) refuses to run until two things hold:
@@ -31,12 +41,78 @@ A production build (`NEXT_PUBLIC_APP_ENV=production`) refuses to run until two t
 - `LEGAL` is filled in;
 - it uses the production Firebase project.
 
-So nothing can go live with blank legal pages or the wrong sign-in project.
+So nothing can go live with blank legal pages or the wrong sign-in project. A beta build (`sandbox`) doesn't need
+`LEGAL`, and refuses the production Firebase project.
+
+## On Lightsail
+
+- **What runs on each VM:** api, worker, web (standalone Node), Postgres 16, Redis 7 and Caddy (automatic HTTPS for
+  the hosts in `LVN_SITE_HOSTS`). Every service has a memory cap, and the caps fit 2 GB. Not on the VM: ClamAV, the PDF
+  engine, Typesense (search runs on Postgres) and monitoring. Budget and measurements: lvn-backend
+  `docs/runbooks/lightsail.md`.
+- **Deploying:** [runbooks/release.md](runbooks/release.md). lvn-backend deploys the stack, and lvn-web deploys only
+  its own image into it. Each deploy fails unless every service is healthy and the site answers over HTTPS.
+- **Files** are in R2. The browser may reach only the R2 endpoint's origin (`NEXT_PUBLIC_STORAGE_ORIGINS`, from the
+  `LVN_R2_ENDPOINT` variable).
+- **Email** goes through Resend (`MAIL_TRANSPORT=resend`). The domain must be verified in Resend first.
+
+## Uploads are off
+
+At launch nobody can upload files (lvn-backend ADR-0097: no room for the virus scanner on a 2 GB VM). The API's
+`UPLOADS_ENABLED` is false, `Query.uploadsEnabled` says so, and the web and the phone hide every upload control:
+
+- Upload, Read a PDF and Notes from photos;
+- picture, video, audio and file cards, and voice notes;
+- note imports;
+- group pictures and resource covers from the device;
+- verification documents and teaching proof.
+
+Everything else works: notes, cards, code, sharing, groups and search.
+
+**Turning them back on** (lvn-backend ADR-0097):
+
+1. give the scanner room, or point `CLAMAV_URL` at one elsewhere;
+2. for PDF conversion, run the PDF engine;
+3. set the lvn-backend environment variable `LVN_UPLOADS_ENABLED=true`;
+4. check the R2 files bucket's CORS rule allows `PUT` from the site;
+5. deploy lvn-backend.
+
+The web needs no change: the controls come back when the API says uploads are on.
+
+## The old site's content
+
+`content:import-legacy` (lvn-backend ADR-0098, `docs/runbooks/legacy-content.md`) reads the old site's Firestore
+(`learnvianotes-2e2d7`) with a read-only service account. It writes:
+
+- the 22 subjects and their topics into the catalogue;
+- each of the 757 topics and 150 Sheet 150 problems as a public note of the LearnViaNotes account, on its topic.
+
+It is idempotent, has a dry run, and imports no accounts: people sign in again with Google. Old progress and personal
+notes are ADR-0023's separate snapshot and claim.
+
+Checked on the local stack with the full content in the Firestore emulator:
+
+- 907 notes and 21,042 cards in about 40 seconds;
+- a second run changed nothing;
+- `/subjects/dsa-basics/analysis` lists its note.
+
+## Checked on the local stack (2026-10-22)
+
+The real deploy script was run against the Compose stack on this machine:
+
+| Question | Answer |
+| --- | --- |
+| Does the API boot and serve sign-up without the worker? | **Yes.** With the worker stopped, `signUp` returned a session. |
+| Do sign-up, verification or reset emails go through the Redis queue? | **No.** The API sends them itself, through Resend. With the worker stopped, "Confirm your email" and "Reset your password" arrived at once, and no job was queued. Only notification and digest emails go through `comms.email` and need the worker. |
+| Can the PDF engine be left out on day one with uploads off? | **Yes.** With uploads off, `createUploadIntent` answers UNAVAILABLE, and nothing reaches the `notes.pdf-parse` queue. |
+
+The worker still has to run for data exports, account deletion, scheduled jobs, search indexing and notification
+emails.
 
 ## Decisions waiting for the owner
 
-1. **The operator's details:** the legal operator, the postal address, the city for disputes, the Grievance Officer and
-   the mailbox (`config/legal.ts`). These are the same as for the old app.
+1. **The rest of the legal details** (`config/legal.ts`): the courts city, the Grievance Officer and the mailbox (see
+   [infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)). The operator and address are in.
 2. **`TERMS_VERSION`.** The Privacy Policy and Terms changed materially: adults only, Google Analytics, the Grievance
    page. Bump `TERMS_VERSION` in lvn-web (`features/legal/documents.ts`) and lvn-backend
    (`contexts/users/src/domain/rules.ts`) together once the text is final, so every account accepts it again. It is
@@ -45,14 +121,18 @@ So nothing can go live with blank legal pages or the wrong sign-in project.
    - `config/firebase-projects.json` says `learnvianotes-2e2d7`: the old site's project, so returning Google users
      keep their Firebase UID (ADR-0007).
    - Development uses `learnvianotes-com`.
-   - The sandbox should use `learnvianotes-test`, still to be created ([infra.md §1](runbooks/infra.md#1-the-test-firebase-project)).
+   - Beta should use `learnvianotes-test`, still to be created ([infra.md §1](runbooks/infra.md#1-the-test-firebase-project)).
+     Until then beta offers email sign-in only.
 4. **Google Analytics on the rewrite:** keep it (set `NEXT_PUBLIC_GA_MEASUREMENT_ID` for production) or leave it off.
    §15.2 is amended only for the opt-in case (ADR-0092).
 5. **Minors already registered.** No real accounts exist on the rewrite yet. If any account under 18 exists when
    `ACCOUNT_MINIMUM_AGE=18` goes live, it keeps the §15.2 restricted-minor rules; nothing deletes it. Decide whether
    to ask such accounts to leave.
-6. **AWS (deferred):** the sandbox and production accounts, `infra/terraform/envs/production`, and the GitHub
-   environments ([release.md](runbooks/release.md)).
+6. **Production's VM:** none until it is brought back. Then repeat the beta setup for `production` (lvn-backend
+   `docs/runbooks/lightsail.md`).
+7. **When to turn uploads on** (above).
+8. **The content import on beta:** a read-only service-account key for `learnvianotes-2e2d7`, and the LearnViaNotes
+   account (lvn-backend `docs/runbooks/legacy-content.md`).
 
 ## How the age check works
 
@@ -101,3 +181,5 @@ the old app's launch and apply unchanged.
 - **Signed-in pages answer 200** before the browser sends a signed-out visitor to sign in. They are `noindex` in every
   environment.
 - **`/core` (off by default) has no analytics banner.** Turn analytics on there only together with `/core` itself.
+- **Imported notes look plainer than the old pages.** Icons, bit diagrams and Gantt charts become text, and one
+  inline SVG diagram is left out (lvn-backend ADR-0098).

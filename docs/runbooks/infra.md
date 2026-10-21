@@ -1,22 +1,24 @@
 # Infrastructure for the launch: one-time setup
 
-Each step needs the owner's sign-in (Google, AWS, GitHub or GoDaddy), so none of it has been done yet. The AWS side
-(accounts, Terraform, backups, alarms) is lvn-backend's: `docs/runbooks/aws-deployment.md`, ADR-0035 and ADR-0089.
-This page covers what the web launch adds. The old app's own setup is in its `docs/runbooks/infra.md` on
-`release/college-launch`; sections 1, 5 and 6 here are shared with it.
+Each step needs the owner's sign-in (Google, Cloudflare, GitHub or GoDaddy). The servers are lvn-backend's
+`docs/runbooks/lightsail.md` (ADR-0096): the Lightsail VMs, DNS, the R2 buckets and keys, the Resend domain, the GitHub
+environments and every secret. This page covers what the web adds. The old app's own setup is in its
+`docs/runbooks/infra.md` on `release/college-launch`; sections 1 and 5 here are shared with it.
 
 ## 1. The test Firebase project
 
-The sandbox signs in with Google through its own Firebase project, never production's. `next build` refuses a sandbox
-build with the production project id (`config/firebase-projects.json`).
+Beta signs in with Google through its own Firebase project, never production's. `next build` refuses a beta
+(`sandbox`) build with the production project id (`config/firebase-projects.json`). Until the project exists, leave
+its variables empty: beta then offers email sign-in only.
 
 1. Firebase console → Add project → `learnvianotes-test`.
    - If that id is taken, Firebase adds a suffix. Put the real id in `config/firebase-projects.json` → `test`.
-2. Add a web app. Its config goes into the sandbox's `infra/terraform/envs/sandbox/.env` (`NEXT_PUBLIC_FIREBASE_*`,
-   and `TF_VAR_firebase_project_id` for the API), which is also the `LVN_DEPLOY_ENV` secret (§4).
+2. Add a web app. Its config goes into the `beta` environment's variables: `NEXT_PUBLIC_FIREBASE_API_KEY`,
+   `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID` and `NEXT_PUBLIC_FIREBASE_APP_ID` in lvn-web,
+   and `LVN_FIREBASE_PROJECT_ID` in lvn-backend (§4).
 3. Authentication → Sign-in method: enable Google only (the launch shows email and Google; email accounts are the
    API's own).
-4. Authentication → Settings → Authorized domains: add the sandbox's CloudFront host.
+4. Authentication → Settings → Authorized domains: add `beta.learnvianotes.in`.
 
 The project can stay on the free Spark plan: only Authentication is used (ADR-0007).
 
@@ -26,50 +28,49 @@ The project can stay on the free Spark plan: only Authentication is used (ADR-00
 their accounts (ADR-0007). Confirm this before launch (see [launch.md](../launch.md)).
 
 - Add `www.learnvianotes.in` to its Authorized domains, if it isn't there already.
-- Its web config goes into production's `.env` and the `production` environment's `LVN_DEPLOY_ENV` secret.
+- Its web config goes into the `production` environment's variables, as in §1.
 - A production build accepts no other project, and no other build accepts this one.
 
 ## 3. Google Analytics (optional, ADR-0092)
 
 Leave `NEXT_PUBLIC_GA_MEASUREMENT_ID` empty and there is no analytics, no banner and no footer control. To use it:
 
-1. Create a GA4 property and a web data stream for `www.learnvianotes.in`; copy its measurement id (`G-…`) into
-   production's `.env`. Give the sandbox its own property, or none.
+1. Create a GA4 property and a web data stream for `www.learnvianotes.in`; copy its measurement id (`G-…`) into the
+   `production` environment's variable `NEXT_PUBLIC_GA_MEASUREMENT_ID`. Give beta its own property, or none.
 2. In GA4 → Admin, set:
    - **Data retention:** 2 months. This must match `config/legal.ts` → `RETENTION.analyticsMonths`.
    - **Google signals:** off.
    - **Ads personalisation:** off.
    - **Enhanced measurement:** off for site search and form interactions. Page views are sent by the app, path only.
-3. Check on the sandbox: the banner asks, nothing loads before "Allow", and "Analytics choice" in the footer asks
+3. Check on beta: the banner asks, nothing loads before "Allow", and "Analytics choice" in the footer asks
    again.
 
 ## 4. Deploy credentials
 
-The lvn-web repository needs two GitHub **environments**, `sandbox` and `production` (Settings → Environments). Give
+The lvn-web repository needs two GitHub **environments**, `beta` and `production` (Settings → Environments). Give
 `production` a required reviewer, and limit each environment's deployment branches and tags:
 
-- `sandbox`: `release/**`;
+- `beta`: `release/**`;
 - `production`: tags `v*`.
 
-Each environment needs:
+Each environment needs (names only; lvn-backend's `docs/runbooks/lightsail.md` says where each value comes from):
 
 | Kind | Name | Value |
 | --- | --- | --- |
-| secret | `LVN_DEPLOY_ENV` | the whole `infra/terraform/envs/<env>/.env` of lvn-backend (any `AWS_PROFILE` line is dropped) |
-| variable | `AWS_DEPLOY_ROLE_ARN` | an IAM role in that environment's AWS account that trusts GitHub's OIDC provider for `repo:learnvianotes/lvn-web:environment:<env>` |
-| variable | `AWS_REGION` | `ap-south-1` |
+| secret | `LVN_DEPLOY_SSH_KEY` | the VM's `deploy` user's private SSH key |
+| secret | `LVN_DEPLOY_HOST` | the VM's address (beta: `13.204.214.142`; production: none yet) |
+| secret | `LVN_SSH_KNOWN_HOSTS` | the VM's SSH host key line(s) |
+| secret | `LVN_GHCR_TOKEN` | a token that can read the GHCR images, for the VM's `docker login` |
+| variable | `LVN_GHCR_USER` | that token's account |
+| variable | `LVN_PUBLIC_URL` | `https://beta.learnvianotes.in` (production: `https://www.learnvianotes.in`) |
+| variable | `LVN_APP_ENV` | `sandbox` for beta, `production` for production |
+| variable | `LVN_R2_ENDPOINT` | `https://<account id>.r2.cloudflarestorage.com`: becomes `NEXT_PUBLIC_STORAGE_ORIGINS` |
+| variable, optional | `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID` | §1 and §2; empty hides Google sign-in |
+| variable, optional | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | §3 |
+| variable, optional | `NEXT_PUBLIC_SENTRY_DSN` | browser error reports |
 
-The repository also needs the secret `LVN_BACKEND_READ_TOKEN`: a fine-grained token with read access to
-`learnvianotes/lvn-backend`, the same one CI's contract job uses. Optionally, the variable `LVN_BACKEND_REF` sets the
-lvn-backend branch the sandbox deploys with (default `main`).
-
-The OIDC role:
-
-- [GitHub's guide](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
-  covers the identity provider and the trust policy.
-- *(Unverified)* Which permissions are enough for `deploy.sh`: ECR push, ECS, SSM parameters, the Terraform state
-  bucket, and whatever the Terraform modules manage. Start from the administrator role the AWS runbook uses for
-  `deploy.sh`, and narrow it once the first deploys pass.
+The images are pushed with the workflow's own `GITHUB_TOKEN`; no registry secret is needed for that. The repository
+secret `LVN_BACKEND_READ_TOKEN` (read access to `learnvianotes/lvn-backend`) is for CI's contract check only.
 
 ## 5. The grievance mailbox
 
@@ -87,11 +88,14 @@ DNS is at GoDaddy. In either option:
 | Zoho Mail free plan | the verification TXT, MX `mx.zoho.in` / `mx2.zoho.in` / `mx3.zoho.in`, SPF TXT, DKIM TXT (exact values on Zoho's setup page) | `grievance@learnvianotes.in` |
 | Forwarding to Gmail (a forwarding service such as ImprovMX) | the service's MX records and SPF TXT | your Gmail, unless you set up “Send mail as” with SMTP |
 
-*(Unverified)* Zoho's free-plan limits, and whether forwarding services include SMTP on their free tier. If the API's
-own mail (SES) is set up for the domain first, merge its SPF include into the same record.
+*(Unverified)* Zoho's free-plan limits, and whether forwarding services include SMTP on their free tier. The API's own
+mail goes through Resend (lvn-backend ADR-0096). Its records (DKIM, and SPF and MX on a sending subdomain; the exact
+values are on Resend's Domains page) sit beside these. If one of them would touch the root SPF record, merge it in.
 
 ## 6. Uptime alerts
 
-Use lvn-backend's monitoring (ADR-0089: Grafana alerting, `ALERT_EMAIL`, still waiting on the owner). It needs checks
-on `https://www.learnvianotes.in/` and `/robots.txt`. The second one catches a broken deploy that still serves a cached
-page.
+The Lightsail VMs run no monitoring stack: there is no room in 2 GB (lvn-backend ADR-0096). Until the owner picks a
+service (Grafana Cloud, or an uptime checker), watch these from outside, emailing `ALERT_EMAIL`:
+
+- `https://beta.learnvianotes.in/health/ready`, and production's once it is back;
+- `/robots.txt` on each, which catches a broken web deploy that still serves a cached page.
