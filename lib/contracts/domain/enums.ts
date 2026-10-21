@@ -86,6 +86,8 @@ export const ErrorCode = {
   CONFLICT: 'CONFLICT', RATE_LIMITED: 'RATE_LIMITED', INTERNAL: 'INTERNAL',
   /** A service the request needs is off or out of budget for now (AI, ADR-0058); worth trying later */
   UNAVAILABLE: 'UNAVAILABLE',
+  /** Sign-up refused: the date of birth given is below ACCOUNT_MINIMUM_AGE (ADR-0091) */
+  UNDER_MINIMUM_AGE: 'UNDER_MINIMUM_AGE',
 } as const
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
 

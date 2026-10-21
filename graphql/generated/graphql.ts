@@ -404,6 +404,7 @@ export type ErrorCode =
   | 'RATE_LIMITED'
   | 'UNAUTHENTICATED'
   | 'UNAVAILABLE'
+  | 'UNDER_MINIMUM_AGE'
   | 'VALIDATION';
 
 export type ExamIdInput = {
