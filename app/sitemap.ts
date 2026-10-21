@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getCatalog } from '@/features/core-content/source'
+import { LEGAL_DOCUMENTS } from '@/features/legal/documents'
 import { listPublicNotes } from '@/features/public-notes/data'
 import { publicNotePath } from '@/features/public-notes/paths'
 import { listSubjects } from '@/features/subjects/data'
@@ -12,8 +13,9 @@ import { env } from '@/lib/env'
 export const dynamic = 'force-dynamic'
 
 /**
- * Static pages, the subjects and their topics, and public notes (/n/[slug]-[id]) from the API; /core only while the old
- * notes are on (owner, 2026-10-14). Without the API the rest still ships.
+ * Static pages (the landing page, subjects, resources and the legal pages), the subjects and their topics, and public
+ * notes (/n/[slug]-[id]) from the API; /core only while the old notes are on (owner, 2026-10-14). Without the API the
+ * rest still ships. Every address here answers 200; anything else on the site answers 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.NEXT_PUBLIC_SITE_URL
@@ -22,6 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: `${base}/` },
     { url: `${base}/subjects` },
+    { url: `${base}/resources` },
+    ...Object.values(LEGAL_DOCUMENTS).map((d) => ({ url: `${base}${d.path}` })),
     ...subjects.flatMap((s) => [{ url: `${base}/subjects/${s.slug}` }, ...s.topics.flatMap((t) => [t, ...t.children]).map((t) => ({ url: `${base}/subjects/${s.slug}/${t.slug}` }))]),
     ...(core
       ? [

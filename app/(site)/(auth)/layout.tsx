@@ -1,7 +1,11 @@
+import type { Metadata } from 'next'
 import { AuthHero } from '@/components/auth/AuthHero'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
+
+/** Sign-in pages are for people, not search results (links in emails carry tokens). */
+export const metadata: Metadata = { robots: { index: false, follow: false } }
 
 /**
  * Sign-in, sign-up, verification and reset (§12.1 `(auth)`): the night-sky hero, and the page as a sheet over it on
