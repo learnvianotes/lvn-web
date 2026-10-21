@@ -216,21 +216,23 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
             {t('useFound')}
           </label>
         ) : null}
-        <input
-          ref={fileInput}
-          type="file"
-          accept={RESOURCE_LIMITS.coverTypes.join(',')}
-          className="sr-only"
-          aria-label={t('upload')}
-          onChange={(e) => {
-            const picked = e.target.files?.[0]
-            e.target.value = ''
-            if (picked && (RESOURCE_LIMITS.coverTypes as readonly string[]).includes(picked.type) && picked.size <= RESOURCE_LIMITS.coverBytes) {
-              setFile(picked)
-              setRemoveCover(false)
-            }
-          }}
-        />
+        {uploadsOn ? (
+          <input
+            ref={fileInput}
+            type="file"
+            accept={RESOURCE_LIMITS.coverTypes.join(',')}
+            className="sr-only"
+            aria-label={t('upload')}
+            onChange={(e) => {
+              const picked = e.target.files?.[0]
+              e.target.value = ''
+              if (picked && (RESOURCE_LIMITS.coverTypes as readonly string[]).includes(picked.type) && picked.size <= RESOURCE_LIMITS.coverBytes) {
+                setFile(picked)
+                setRemoveCover(false)
+              }
+            }}
+          />
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {uploadsOn ? (
             <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()}>

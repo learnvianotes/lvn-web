@@ -131,20 +131,23 @@ export function NotesHome() {
 
   return (
     <div className="grid gap-6 md:grid-cols-[15rem_minmax(0,1fr)]">
-      <input
-        ref={pdfInput}
-        type="file"
-        accept="application/pdf,.pdf"
-        className="sr-only"
-        tabIndex={-1}
-        aria-label={t('readPdf')}
-        data-testid="read-pdf-input"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          e.target.value = ''
-          if (file) void readPdf.start(file, view.kind === 'folder' ? view.id : null)
-        }}
-      />
+      {/* The file picker behind Read a PDF: screen readers list it as a button, so it is there only with uploads on. */}
+      {uploadsOn ? (
+        <input
+          ref={pdfInput}
+          type="file"
+          accept="application/pdf,.pdf"
+          className="sr-only"
+          tabIndex={-1}
+          aria-label={t('readPdf')}
+          data-testid="read-pdf-input"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) void readPdf.start(file, view.kind === 'folder' ? view.id : null)
+          }}
+        />
+      ) : null}
       {capture ? <CaptureDialog open onClose={() => setCapture(false)} folderId={view.kind === 'folder' ? view.id : null} /> : null}
       <aside className="hidden flex-col gap-5 md:sticky md:top-20 md:flex md:self-start">
         <Button size="lg" className="w-full gap-2 shadow-lg shadow-accent/20" disabled={creating.loading || view.kind === 'trash'} onClick={() => void newNote()}>

@@ -90,7 +90,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
   return (
     <NodeViewWrapper className={cn('lvn-card rounded-2xl border bg-surface p-3', selected ? 'border-accent ring-2 ring-accent/30' : 'border-border')} data-card={type}>
       <div contentEditable={false} className="flex flex-col gap-3">
-        {pick}
+        {uploadsOn ? pick : null}
         {progress ? (
           <div role="status" className="flex flex-col gap-2 rounded-xl bg-surface-2 px-4 py-5">
             <p className="truncate text-sm font-medium">{t('media.uploading', { name: progress.name })}</p>
