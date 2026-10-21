@@ -77,8 +77,9 @@ test('every public page has its own title, description and canonical link', asyn
   const titles = new Set<string>()
   for (const path of ['/', '/subjects', '/subjects/dsa', '/subjects/dsa/graphs', '/resources', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) {
     await page.goto(path)
+    // Next streams the title in with the page; on a busy machine it can land just after the load event.
+    await expect(page, path).toHaveTitle(/LearnViaNotes/)
     const title = await page.title()
-    expect(title, path).toMatch(/LearnViaNotes/)
     titles.add(title)
     expect(await page.locator('meta[name="description"]').getAttribute('content'), path).toMatch(/\w{20,}|\w+ \w+ \w+/)
     expect(await page.locator('link[rel="canonical"]').getAttribute('href'), path).toMatch(new RegExp(`^https?://[^/]+${path === '/' ? '/?' : path}$`))
