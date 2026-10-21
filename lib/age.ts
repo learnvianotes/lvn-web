@@ -2,9 +2,12 @@
  * Accounts are for adults (lvn-backend ADR-0091). The API decides — the forms never name the cut-off — and this module
  * keeps what the browser needs:
  * - a refusal is remembered on this device for a day, so going back and answering again doesn't reopen sign-up. It
- *   closes the sign-up forms here and nothing else: it never deletes or signs out anyone;
+ *   closes the sign-up forms here and turns Google Analytics off on the device (no tracking of children, ADR-0092), and
+ *   nothing else: it never deletes or signs out anyone;
  * - the date of birth in words, for the "Is this right?" step every answer goes through.
  */
+
+import { setAnalyticsConsent } from './consent'
 
 const KEY = 'lvn.age-refused'
 export const REFUSED_FOR_MS = 24 * 60 * 60 * 1000
@@ -28,6 +31,7 @@ export function markAgeRefused(now = Date.now(), store: Store | null = browserSt
   } catch {
     // Private mode or a full disk: the API still refuses each attempt.
   }
+  setAnalyticsConsent('denied', store)
   emit()
 }
 

@@ -24,8 +24,8 @@ const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { versio
  * Content Security Policy (lvn-backend ADR-0090, Phase 9). Pages are cached (ISR), so scripts cannot carry a per-request
  * nonce: inline scripts stay allowed (Next's own and the theme script). Everything else is shut: plugins, other sites
  * framing us, a changed base URL, forms posting elsewhere and frames other than Google sign-in. Connections go only to
- * the site, the API and its live updates, storage (NEXT_PUBLIC_STORAGE_ORIGINS), Google sign-in and Sentry; without
- * storage origins (development, tests) to any origin. Images and media come by pre-signed URL, itself the permission,
+ * the site, the API and its live updates, storage (NEXT_PUBLIC_STORAGE_ORIGINS), Google sign-in, Sentry and, where it
+ * is configured, Google Analytics (ADR-0092); without storage origins (development, tests) to any origin. Images and media come by pre-signed URL, itself the permission,
  * so they allow any HTTPS origin (and plain HTTP or WebSocket only where the site itself runs on HTTP, the local
  * environment).
  */
@@ -41,6 +41,10 @@ const originOf = (url: string | undefined) => {
   }
 }
 const storageOrigins = process.env.NEXT_PUBLIC_STORAGE_ORIGINS?.trim()
+// Google Analytics, only where it is configured (lvn-backend ADR-0092): its tag, and where it sends hits.
+const analytics = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+  ? { script: ' https://www.googletagmanager.com', connect: ['https://www.googletagmanager.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'] }
+  : { script: '', connect: [] }
 const connections = storageOrigins
   ? [
       "'self'",
@@ -53,6 +57,7 @@ const connections = storageOrigins
       'https://*.googleapis.com',
       'https://*.firebaseapp.com',
       originOf(process.env.NEXT_PUBLIC_SENTRY_DSN),
+      ...analytics.connect,
     ]
       .filter((o): o is string => !!o && o !== 'null')
       .join(' ')
@@ -60,7 +65,7 @@ const connections = storageOrigins
 const contentSecurityPolicy = [
   "default-src 'self'",
   // 'wasm-unsafe-eval': pdf.js decodes JPEG 2000 and colour profiles with WebAssembly (public/pdfjs/<version>/wasm).
-  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com${analytics.script}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${anyOrigin}`,
   `media-src 'self' blob: ${anyOrigin}`,

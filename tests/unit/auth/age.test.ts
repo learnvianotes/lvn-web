@@ -13,7 +13,13 @@ describe('the refusal remembered on the device (lvn-backend ADR-0091)', () => {
     markAgeRefused(1_000, store)
     expect(ageRefusedAt(1_000 + REFUSED_FOR_MS - 1, store)).toBe(1_000)
     expect(ageRefusedAt(1_000 + REFUSED_FOR_MS, store)).toBeNull()
-    expect(store.m.size).toBe(0)
+    expect(store.m.has('lvn.age-refused')).toBe(false)
+  })
+
+  it('turns Google Analytics off on the device (lvn-backend ADR-0092)', () => {
+    const store = memory()
+    markAgeRefused(1_000, store)
+    expect(JSON.parse(store.getItem('lvn.consent')!)).toMatchObject({ analytics: 'denied' })
   })
 
   it('ignores a record it cannot read, or one from the future', () => {

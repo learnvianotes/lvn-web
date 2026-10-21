@@ -120,8 +120,8 @@ export function Privacy() {
         <li><strong>Correct it:</strong> edit your details on your profile page, or email us.</li>
         <li><strong>Delete it:</strong> your profile page → Delete account, or email us.</li>
         <li>
-          <strong>Withdraw consent:</strong> turn Google Analytics off on your profile page or in the banner at any time;
-          withdrawing is as easy as giving it. Deleting your account withdraws everything else.
+          <strong>Withdraw consent:</strong> turn Google Analytics off at any time from “Analytics choice” at the foot of
+          every page; withdrawing is as easy as giving it. Deleting your account withdraws everything else.
         </li>
         <li><strong>Nominate someone</strong> to use these rights for you if you die or can no longer act: email us.</li>
         <li>

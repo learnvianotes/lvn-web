@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
+import { Analytics } from '@/components/analytics/Analytics'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { env } from '@/lib/env'
 import { THEME_KEY } from '@/lib/theme'
@@ -52,7 +53,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="antialiased">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          {children}
+          <Analytics />
+        </NextIntlClientProvider>
       </body>
     </html>
   )
