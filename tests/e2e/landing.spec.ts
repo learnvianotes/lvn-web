@@ -10,6 +10,13 @@ test('landing page leads to the subjects, the app’s own (no /core)', async ({ 
   await expect(page.getByRole('link', { name: /Operating Systems/ })).toHaveAttribute('href', '/subjects/os')
 })
 
+test('the feature tiles say what each part is for (launch copy)', async ({ page }) => {
+  await page.goto('/')
+  const tiles = page.getByRole('region', { name: 'What you can do' })
+  await expect(tiles.getByText('Learn with peers')).toBeVisible()
+  await expect(tiles.getByText('A plan for the day')).toBeVisible()
+})
+
 test('a subject card opens the subject; a topic lists its public notes, with the way back', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('main').getByRole('link', { name: /Data Structures and Algorithms/ }).click()
