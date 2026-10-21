@@ -24,6 +24,10 @@ pnpm graphql:sync && pnpm codegen   # after the API schema changes (needs lvn-ba
 
 Sign-in needs lvn-backend running (`NEXT_PUBLIC_API_URL`, its `CORS_ORIGINS` must include this site's origin).
 
+Releases and the launch: [docs/launch.md](docs/launch.md), [docs/runbooks/release.md](docs/runbooks/release.md). A
+production build refuses to run while `config/legal.ts` has blank details or uses another Firebase project than
+production's (`lib/launch-checks.ts`).
+
 Error reporting: set `NEXT_PUBLIC_SENTRY_DSN` to send unexpected browser and server errors to Sentry
 (`instrumentation*.ts`, `lib/observability.ts`). Without it nothing loads; with it the SDK is fetched after start-up,
 and events leave without query strings (emailed links carry tokens), cookies, headers, user details or console output.
@@ -34,7 +38,9 @@ and events leave without query strings (emailed links carry tokens), cookies, he
 | --- | --- | --- |
 | `tests/unit/core` | Vitest | `/core` data documents, page titles, the HTML converter, and the fidelity check: every content fragment rendered by the old `ContentView` must match its source HTML |
 | `tests/unit/site` | Vitest | the landing page's catalog loader |
-| `tests/unit/auth` | Vitest | redirects after sign-in (no open redirects), mapping API field errors onto forms |
+| `tests/unit/auth` | Vitest | redirects after sign-in (no open redirects), mapping API field errors onto forms, the age refusal kept on the device |
+| `tests/unit/legal` | Vitest | the launch checks: blank legal details and the Firebase project a build may use |
+| `tests/unit/analytics` | Vitest | Google Analytics only after consent, path-only page views, the choice shared across tabs |
 | `tests/e2e` | Playwright (desktop + Pixel 7) | `/core` as a guest (navigation, code tabs, search, theme, 404, redirects, accessibility), the landing page, and sign-up / sign-in / verify / reset / OAuth callback against a mocked API |
 | `tests/support` | — | shared helpers (`fidelity.ts`) |
 

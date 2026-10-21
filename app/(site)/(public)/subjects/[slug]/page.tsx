@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getShelf, getSubject } from '@/features/subjects/data'
 import { Shelf } from '@/features/subjects/Shelf'
+import { templated } from '@/lib/page-title'
 
 export const revalidate = 3600
 
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const subject = await getSubject(slug).catch(() => null)
   const t = await getTranslations('subjects')
-  return subject ? { title: subject.title, description: t('subjectLead', { subject: subject.title }), alternates: { canonical: `/subjects/${slug}` } } : {}
+  return subject ? { title: templated(subject.title), description: t('subjectLead', { subject: subject.title }), alternates: { canonical: `/subjects/${slug}` } } : {}
 }
 
 /** A subject: its topics, each with its own page, and the public notes and resources on it. */

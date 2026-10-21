@@ -1,10 +1,15 @@
-# lvn-web CI (lvn-backend spec §16.4): checks, unit and Playwright tests, the API contract, and the container image.
+# lvn-web CI (lvn-backend spec §16.4, ADR-0093): on every push and pull request — checks, unit and Playwright tests, the
+# API contract, the container image, and whether a production build would pass its launch checks. Deploys are
+# deploy.yml's, from release branches and v* tags only.
 name: ci
 
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: ['**']
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -77,6 +82,24 @@ jobs:
             NEXT_PUBLIC_API_URL=https://api.sandbox.learnvianotes.in/graphql
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  launch-readiness:
+    # A production build runs the launch checks (lib/launch-checks.ts): the operator's details in config/legal.ts and the
+    # production Firebase project. It fails, without blocking anything, until the site is ready to go live.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.example .env
+      - name: Build for production
+        run: |
+          export NEXT_PUBLIC_APP_ENV=production NEXT_PUBLIC_SITE_URL=https://www.learnvianotes.in
+          export NEXT_PUBLIC_FIREBASE_PROJECT_ID="$(jq -r .production config/firebase-projects.json)"
+          pnpm build
 
   secrets:
     runs-on: ubuntu-latest

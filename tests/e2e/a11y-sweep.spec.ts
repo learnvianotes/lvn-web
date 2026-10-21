@@ -39,7 +39,7 @@ async function report(findings: Finding[], info: { attach: (name: string, o: { b
 }
 
 test('every public page has no serious or critical WCAG 2.2 AA violation', async ({ page }, info) => {
-  const paths = ['/', '/sign-in', '/sign-up', '/reset', '/subjects', '/legal/terms', '/legal/privacy', '/legal/content-licence']
+  const paths = ['/', '/sign-in', '/sign-up', '/reset', '/subjects', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']
   const findings: Finding[] = []
   watchCsp(page, findings)
   for (const path of paths) findings.push(...(await audit(page, path)))
@@ -67,6 +67,8 @@ test('every page a learner uses has no serious or critical WCAG 2.2 AA violation
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  // Every date of birth is confirmed in words before it is sent (lvn-backend ADR-0091).
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   const paths = [

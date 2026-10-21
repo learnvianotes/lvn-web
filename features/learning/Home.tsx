@@ -14,11 +14,11 @@ type Rec = RecommendationsQuery['recommendations'][number]
 /** A picture for each kind of recommendation (board A's illustrated cards): a gradient and the kind's sign. */
 const ART: Record<RecommendationKind, { icon: typeof BookOpen; from: string; to: string }> = {
   EXAM_TOPIC: { icon: CalendarClock, from: '#EA580C', to: '#DB2777' },
-  REVISE_TOPIC: { icon: RotateCcw, from: '#4F46E5', to: '#7C3AED' },
-  CONTINUE_NOTE: { icon: BookOpen, from: '#0284C7', to: '#4F46E5' },
+  REVISE_TOPIC: { icon: RotateCcw, from: '#2563EB', to: '#0891B2' },
+  CONTINUE_NOTE: { icon: BookOpen, from: '#0284C7', to: '#2563EB' },
   QUIZ_ON_TOPIC: { icon: ListChecks, from: '#059669', to: '#0284C7' },
-  POPULAR_NOTE: { icon: TrendingUp, from: '#7C3AED', to: '#DB2777' },
-  RESOURCE: { icon: Library, from: '#0D9488', to: '#4F46E5' },
+  POPULAR_NOTE: { icon: TrendingUp, from: '#0891B2', to: '#DB2777' },
+  RESOURCE: { icon: Library, from: '#0D9488', to: '#2563EB' },
 }
 const coreName = (key: string) => key.replace(/^core:/, '').replace('/', ' / ').replace(/-/g, ' ')
 const hrefOf = (r: Rec) => (r.note ? `/notes/${r.note.id}` : r.resource ? `/resources/${r.resource.id}` : r.topic ? `/search?topic=${r.topic.id}&topicTitle=${encodeURIComponent(r.topicTitle ?? '')}` : `/search?q=${encodeURIComponent(r.topicTitle ?? coreName(r.topicKey ?? ''))}`)

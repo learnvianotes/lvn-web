@@ -41,6 +41,8 @@ test('a new learner signs up with email, keeps the session across a reload, sign
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  // Every date of birth is confirmed in words before it is sent (lvn-backend ADR-0091).
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('heading', { name: 'Live Test' })).toBeVisible()
 
@@ -77,6 +79,7 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -140,6 +143,7 @@ test('a learner adds a picture to a note: it goes to storage, and is there after
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await page.goto('/notes')
@@ -168,6 +172,7 @@ test('a learner reads a PDF beside a new note: a highlight and a passage in the 
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await page.goto('/notes')
@@ -210,6 +215,7 @@ test('a learner converts a PDF into cards with the real engine, and checks them 
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await page.goto('/notes')
@@ -236,6 +242,7 @@ test('a notification reaches the bell live: the data export the worker builds (l
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible()
 
@@ -256,6 +263,7 @@ test('a new learner opens their own profile from their account, rendered by the 
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await page.getByRole('link', { name: 'Followers, following and blocked people' }).click()
   await expect(page.getByText('Nobody follows you yet.')).toBeVisible()
@@ -302,6 +310,7 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   // Asking to join needs a verified account (ADR-0017).
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
@@ -376,6 +385,7 @@ test('a learner starts a project workspace, a teacher mentors it and answers a d
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -435,6 +445,7 @@ test('a group’s owner hides a reported post from the Reports tab, and puts it 
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -498,6 +509,7 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -537,6 +549,7 @@ test('a platform admin suspends a learner, who reads why on their account and is
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
   const learnerId = execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT id FROM users.\\"User\\" WHERE email = '${email}'"`]).toString().trim()
@@ -586,6 +599,7 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   await page.getByLabel('Date of birth').fill('2004-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await page.getByRole('button', { name: 'Ask a teacher' }).click()
   await page.getByLabel('Find your teacher').fill(`Vouching Teacher ${stamp}`)
@@ -632,6 +646,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   // "kruskl" is a typo of a word in the notes, not their titles: only Typesense forgives that.
@@ -664,6 +679,7 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -709,6 +725,7 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -776,6 +793,7 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -806,6 +824,7 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -949,6 +968,7 @@ test('a learner’s reading reaches the learning events: the note opened and the
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
@@ -978,6 +998,7 @@ test('a learner reviews the flashcard of their note, and the day shows in their 
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
@@ -1019,6 +1040,7 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await page.getByRole('main').getByRole('link', { name: /^Rhythm/ }).click()
   await expect(page).toHaveURL(/\/rhythm$/)
@@ -1055,6 +1077,7 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
   // An exam ten days away on a curated topic.
@@ -1105,6 +1128,7 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   await page.getByText('Teach', { exact: true }).click()
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/teach$/)
   const form = page.getByRole('form', { name: 'Apply to teach' })
   await form.getByLabel('Where you teach').fill('Govt. Junior College, Guntur')
@@ -1154,6 +1178,7 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -1214,6 +1239,7 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -1255,6 +1281,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   const entries: [string, RegExp][] = [
     ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
@@ -1299,6 +1326,7 @@ test('a learner saves someone’s public note and finds it in Bookmarks (lvn-bac
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await page.goto(`/notes/${id}`)
   await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -1336,6 +1364,7 @@ test('a learner follows a topic and finds someone’s public note on it in For Y
   await page.getByLabel('Date of birth').fill('2000-01-01')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   // No topics yet: For You leads to choosing some, on the account.
   await fromSidebar(page, 'Community')

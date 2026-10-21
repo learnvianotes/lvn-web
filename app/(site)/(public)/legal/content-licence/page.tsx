@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { LEGAL_DOCUMENTS } from '@/features/legal/documents'
+import { legalMetadata } from '@/features/legal/documents'
 import { LegalPage } from '@/features/legal/LegalPage'
 import { Licence } from '@/features/legal/Licence'
 
-export const metadata: Metadata = { title: LEGAL_DOCUMENTS.licence.title }
+export const metadata: Metadata = legalMetadata('licence')
 
 export default function Page() {
   return (

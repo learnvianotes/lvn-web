@@ -67,7 +67,7 @@ const splash = `<div id="splash" role="status" aria-label="Loading ${APP_NAME}">
   .splash-glow { position: absolute; inset: -18px; border-radius: 50%; background: radial-gradient(circle, rgb(37 99 235 / .22), transparent 70%); animation: splash-pulse 1.6s ease-in-out infinite; }
   .splash-name { animation: splash-in .4s .06s cubic-bezier(.2,.8,.2,1) both; }
   .splash-bar { width: 120px; height: 3px; border-radius: 3px; overflow: hidden; background: rgb(127 127 127 / .18); animation: splash-in .4s .1s both; }
-  .splash-bar span { display: block; width: 40%; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2563eb, #8b5cf6); animation: splash-slide 1s ease-in-out infinite; }
+  .splash-bar span { display: block; width: 40%; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: splash-slide 1s ease-in-out infinite; }
   @keyframes splash-in { from { opacity: 0; transform: translateY(6px) scale(.97); } }
   @keyframes splash-float { 50% { transform: translateY(-4px); } }
   @keyframes splash-pulse { 50% { transform: scale(1.12); opacity: .6; } }

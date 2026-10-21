@@ -3,6 +3,7 @@
     "name": "LearnViaNotes",
     "tagline": "A student-first learning community",
     "description": "LearnViaNotes: write notes, study them with AI, and learn together in groups and classes — notes, flashcards, quizzes, exams and more, free for students and teachers.",
+    "homeTitle": "LearnViaNotes — notes, study tools and a learning community for students",
     "skip": "Skip to content",
     "nav": {
       "notes": "Subjects",
@@ -140,7 +141,8 @@
       "title": "Almost there",
       "lead": "One quick step — we ask once, then you are in.",
       "submit": "Continue",
-      "titleNamed": "Almost there, {name}"
+      "titleNamed": "Almost there, {name}",
+      "signOut": "Sign out"
     },
     "providers": {
       "or": "or",
@@ -193,6 +195,16 @@
       "myNotes": "My notes",
       "community": "Community",
       "askAi": "Ask AI"
+    },
+    "age": {
+      "confirmTitle": "Is this right?",
+      "confirmLead": "Your date of birth:",
+      "confirm": "Yes, that’s right",
+      "change": "Change it",
+      "refusedTitle": "Sorry, you can’t create an account",
+      "refusedLead": "LearnViaNotes accounts are only for adults. You can still read every public note and subject without one.",
+      "browse": "Read the public notes",
+      "signOut": "Sign out"
     }
   },
   "profile": {
@@ -965,7 +977,7 @@
     "title": "Your data",
     "export": {
       "heading": "Download your data",
-      "lead": "An archive of everything about you: your notes as Markdown and JSON with their pictures and files, and your account data. One a day; we email you when it is ready.",
+      "lead": "An archive of everything we hold about you: your account with your date of birth and the terms you accepted, your notes as Markdown and JSON with their pictures and files, your posts and comments, your study progress and every learning activity event. One a day; we email you when it is ready.",
       "request": "Prepare my archive",
       "preparing": "Preparing your archive… you can leave this page; we will email you.",
       "ready": "Your archive is ready ({size}). You can download it until {date}.",
@@ -1045,7 +1057,7 @@
       "GREEN": "green",
       "BLUE": "blue",
       "PINK": "pink",
-      "PURPLE": "purple"
+      "PURPLE": "orange"
     },
     "addToNotes": "Add to notes",
     "addAgain": "Add to notes again",
@@ -2803,5 +2815,12 @@
     "delete": "Delete draft",
     "cancel": "Cancel",
     "failed": "That didn’t work. Try again."
+  },
+  "consent": {
+    "region": "Analytics cookies",
+    "text": "Can we use <strong>Google Analytics</strong>? It sets cookies to count visits and show which pages help. Nothing is collected unless you allow it, and you can change your mind any time from “Analytics choice” at the foot of every page. <privacy>Privacy Policy</privacy>",
+    "deny": "Don’t allow",
+    "allow": "Allow",
+    "change": "Analytics choice"
   }
 }

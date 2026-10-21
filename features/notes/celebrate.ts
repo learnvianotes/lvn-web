@@ -15,7 +15,7 @@ export function celebrate(origin?: { x: number; y: number }): void {
   document.body.appendChild(canvas)
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
-  const colours = ['#4F46E5', '#818CF8', '#A5B4FC', '#F59E0B', '#10B981', '#F43F5E']
+  const colours = ['#2563EB', '#60A5FA', '#93C5FD', '#F59E0B', '#10B981', '#F43F5E']
   const x0 = origin?.x ?? window.innerWidth / 2
   const y0 = origin?.y ?? window.innerHeight / 3
   const parts = Array.from({ length: 90 }, () => {

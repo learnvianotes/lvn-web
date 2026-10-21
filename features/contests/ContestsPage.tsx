@@ -47,7 +47,7 @@ export function ContestHero({ contest: c }: { contest: Item }) {
   const t = useTranslations('contests')
   const done = c.viewerAttempt?.finished
   return (
-    <section aria-label={c.title} className="flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1C1A3A] to-[#2B2560] p-6 text-white shadow-sm">
+    <section aria-label={c.title} className="flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1220] to-[#1E3A8A] p-6 text-white shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-white/70">{t('weekly')}</p>

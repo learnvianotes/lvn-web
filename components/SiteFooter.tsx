@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { AnalyticsChoiceButton } from '@/components/analytics/Analytics'
 import { LEGAL_DOCUMENTS } from '@/features/legal/documents'
 
 export async function SiteFooter() {
@@ -15,6 +16,7 @@ export async function SiteFooter() {
               {d.title}
             </Link>
           ))}
+          <AnalyticsChoiceButton />
         </nav>
       </div>
     </footer>

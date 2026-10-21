@@ -50,7 +50,7 @@ function Actions() {
       </div>
       <p className="text-sm text-muted dark:text-white/75">
         {t('haveAccount')}{' '}
-        <Link href="/sign-in" className="font-semibold text-accent hover:underline dark:text-[#C7D2FE]">
+        <Link href="/sign-in" className="font-semibold text-accent hover:underline dark:text-[#BFDBFE]">
           {t('signIn')}
         </Link>
       </p>

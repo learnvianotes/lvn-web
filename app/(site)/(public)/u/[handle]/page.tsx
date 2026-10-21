@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { env } from '@/lib/env'
 import { getProfile } from '@/features/people/data'
 import { ProfileView } from '@/features/people/ProfileView'
+import { templated } from '@/lib/page-title'
 
 /**
  * A person's profile (lvn-backend ADR-0043): rendered on the server from what they made public, cached a few minutes;
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = `${env.NEXT_PUBLIC_SITE_URL}/u/${person.handle}`
   const teacher = person.globalRole === 'TEACHER'
   return {
-    title: `${person.displayName} (@${person.handle})`,
+    title: templated(`${person.displayName} (@${person.handle})`),
     description: teacher ? `Notes and writing by ${person.displayName}, a teacher on LearnViaNotes.` : `What ${person.displayName} shares on LearnViaNotes.`,
     alternates: { canonical: url },
     robots: { index: teacher, follow: teacher },

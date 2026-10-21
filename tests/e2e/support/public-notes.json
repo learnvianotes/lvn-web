@@ -120,6 +120,44 @@
           ]
         }
       ]
+    },
+    {
+      "id": "01920000-0000-7000-8000-00000000d002",
+      "title": "Costs $& $' $1 </script><b>bold</b>",
+      "slug": "costs-1-script-b-bold-b",
+      "kind": "NOTE",
+      "publishedAt": "2026-10-01T10:00:00.000Z",
+      "owner": {
+        "displayName": "Ravi Kumar",
+        "handle": "ravi"
+      },
+      "topics": [
+        {
+          "id": "01920000-0000-7000-8000-00000000e101",
+          "title": "Shortest paths",
+          "subject": {
+            "title": "Algorithms"
+          }
+        }
+      ],
+      "forkedFrom": null,
+      "cards": [
+        {
+          "id": "01920000-0000-7000-8000-00000000c101",
+          "type": "heading",
+          "content": {
+            "level": 2,
+            "content": [
+              {
+                "type": "text",
+                "text": "The idea"
+              }
+            ]
+          },
+          "media": null
+        }
+      ],
+      "aiInsights": []
     }
   ]
 }

@@ -15,15 +15,15 @@ export default async function Image({ params }: { params: Promise<{ slugId: stri
   const title = note?.title || 'A note on LearnViaNotes'
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, color: 'white', background: 'radial-gradient(circle at 80% 10%, #6366F1 0%, transparent 45%), linear-gradient(160deg, #1C1A3A 0%, #312E81 100%)' }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, color: 'white', background: 'radial-gradient(circle at 80% 10%, #3B82F6 0%, transparent 45%), linear-gradient(160deg, #0B1220 0%, #1E3A8A 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 34, fontWeight: 700 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 14, background: 'linear-gradient(135deg, #818CF8, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>📘</div>
+          <div style={{ width: 56, height: 56, borderRadius: 14, background: 'linear-gradient(135deg, #60A5FA, #2563EB)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>📘</div>
           <span>
-            LearnVia<span style={{ color: '#A5B4FC' }}>Notes</span>
+            LearnVia<span style={{ color: '#93C5FD' }}>Notes</span>
           </span>
         </div>
         <div style={{ display: 'flex', fontSize: title.length > 60 ? 56 : 72, fontWeight: 800, lineHeight: 1.1, letterSpacing: -1.5 }}>{title.slice(0, 120)}</div>
-        <div style={{ display: 'flex', fontSize: 30, color: '#C7D2FE' }}>{note ? `by ${note.owner.displayName}` : 'Notes that help you learn'}</div>
+        <div style={{ display: 'flex', fontSize: 30, color: '#BFDBFE' }}>{note ? `by ${note.owner.displayName}` : 'Notes that help you learn'}</div>
       </div>
     ),
     size,

@@ -43,11 +43,44 @@ test('unknown URLs get the site 404', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 
-test('sitemap lists the subjects and their topics, not /core', async ({ request }) => {
+test('sitemap lists the subjects and their topics, resources and the legal pages, not /core', async ({ request }) => {
   const xml = await (await request.get('/sitemap.xml')).text()
   expect(xml).toContain('/subjects/dsa</loc>')
   expect(xml).toContain('/subjects/dsa/shortest-paths</loc>')
+  expect(xml).toContain('/resources</loc>')
+  for (const path of ['/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) expect(xml).toContain(`${path}</loc>`)
   expect(xml).not.toContain('/core')
+  // Every listed address is a real page.
+  const paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]!).pathname).slice(0, 25)
+  for (const path of paths) expect((await request.get(path)).status(), path).toBe(200)
+})
+
+test('every kind of public address answers a real 404 when there is nothing there', async ({ request }) => {
+  for (const path of ['/no-such-page', '/subjects/nope', '/subjects/dsa/nope', '/n/nothing-01920000-0000-7000-8000-0000000000ff', '/u/nobody-here', '/legal/nope', '/subjects/dsa/graphs/extra']) {
+    expect((await request.get(path)).status(), path).toBe(404)
+  }
+})
+
+test('outside production, robots.txt keeps the whole site out of search engines', async ({ request }) => {
+  // The e2e build is a development build (production: allow and the sitemap, app/robots.ts).
+  expect(await (await request.get('/robots.txt')).text()).toMatch(/User-Agent: \*\s+Disallow: \//)
+})
+
+test('every public page has its own title, description and canonical link', async ({ page }) => {
+  const titles = new Set<string>()
+  for (const path of ['/', '/subjects', '/subjects/dsa', '/subjects/dsa/graphs', '/resources', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) {
+    await page.goto(path)
+    const title = await page.title()
+    expect(title, path).toMatch(/LearnViaNotes/)
+    titles.add(title)
+    expect(await page.locator('meta[name="description"]').getAttribute('content'), path).toMatch(/\w{20,}|\w+ \w+ \w+/)
+    expect(await page.locator('link[rel="canonical"]').getAttribute('href'), path).toMatch(new RegExp(`^https?://[^/]+${path === '/' ? '/?' : path}$`))
+  }
+  expect(titles.size).toBe(9)
+  // The landing page names the site for search results, with a "<" in no position to end the script.
+  await page.goto('/')
+  const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent())!) as { '@type': string }[]
+  expect(ld.map((x) => x['@type'])).toEqual(['WebSite', 'Organization'])
 })
 
 test('landing page has no serious accessibility violations', async ({ page }) => {

@@ -3,10 +3,10 @@
  * a greeting for the time of day, and reading time.
  */
 
-/** Soft accents from the brand palette (ui-reference: one indigo accent, warm tints for tiles). */
+/** Soft accents from the brand palette (ui-reference: one blue accent, warm tints for tiles; no purples, ADR-0094). */
 export const ACCENTS = [
-  { name: 'indigo', from: '#6366F1', to: '#A5B4FC', tint: 'rgb(99 102 241 / 0.10)' },
-  { name: 'violet', from: '#8B5CF6', to: '#C4B5FD', tint: 'rgb(139 92 246 / 0.10)' },
+  { name: 'blue', from: '#3B82F6', to: '#93C5FD', tint: 'rgb(59 130 246 / 0.10)' },
+  { name: 'teal', from: '#14B8A6', to: '#5EEAD4', tint: 'rgb(20 184 166 / 0.10)' },
   { name: 'sky', from: '#0EA5E9', to: '#7DD3FC', tint: 'rgb(14 165 233 / 0.10)' },
   { name: 'emerald', from: '#10B981', to: '#6EE7B7', tint: 'rgb(16 185 129 / 0.10)' },
   { name: 'amber', from: '#F59E0B', to: '#FCD34D', tint: 'rgb(245 158 11 / 0.12)' },
