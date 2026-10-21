@@ -43,6 +43,19 @@ test('Your data downloads everything, and offers no import', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Import notes' })).toHaveCount(0)
 })
 
+test('verification offers asking a teacher only, and its lead does not mention documents', async ({ page }) => {
+  await mockApi(page, { ...off, ...exportRow, MyVerificationRequests: () => ({ myVerificationRequests: [] }) }, {
+    profile: null,
+    legacyImport: { __typename: 'LegacyImport', status: 'NOT_FOUND', claimedAt: null, counts: null },
+    verified: false,
+    verificationMethod: null,
+  })
+  await page.goto('/profile')
+  await expect(page.getByRole('button', { name: 'Ask a teacher' })).toBeVisible()
+  await expect(page.getByText('No college email? Ask a teacher who knows you to vouch for you.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Send proof of study' })).toHaveCount(0)
+})
+
 test('with uploads on, the same places offer them (development, and once turned on)', async ({ page }) => {
   await mockApi(page, {
     Organise: () => ({ myFolders: [], myTags: [] }),

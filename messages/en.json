@@ -1873,6 +1873,7 @@
   },
   "verification": {
     "lead": "No college email? Ask a teacher who knows you to vouch for you, or send proof that you study (an ID card or a fee receipt) for our team to check.",
+    "leadTeacherOnly": "No college email? Ask a teacher who knows you to vouch for you.",
     "askTeacher": "Ask a teacher",
     "sendDocuments": "Send proof of study",
     "findTeacher": "Find your teacher",
