@@ -27,8 +27,9 @@ test('the Grievance page names the officer and commits to 24 hours, 7 days and 3
   await expect(page.getByText('within 24 hours of receiving your complaint')).toBeVisible()
   await expect(page.getByText('within 7 days, with our reasons')).toBeVisible()
   await expect(page.getByText('we act within 36 hours')).toBeVisible()
-  // Until config/legal.ts is filled in, every gap shows and the draft note lists them.
-  await expect(page.getByRole('note')).toContainText('Still to be filled in: operator’s legal name, postal address')
+  // Until config/legal.ts is filled in, every gap shows and the draft note lists them: the operator and address are in,
+  // the city for disputes, the Grievance Officer and the mailbox are not yet.
+  await expect(page.getByRole('note')).toContainText('Still to be filled in: city for disputes, Grievance Officer’s name, grievance email.')
   await expect(page.locator('mark', { hasText: '[Grievance Officer’s name]' })).toBeVisible()
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Grievance Redressal' })).toHaveAttribute('href', '/legal/grievance')
 })
