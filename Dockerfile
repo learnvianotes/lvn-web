@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1.7
 # The web image (lvn-backend spec §16.2): Next's standalone server on :3000. NEXT_PUBLIC_* values are compiled into the
 # browser code, so they are build arguments and the image is built per environment (lvn-backend
-# infra/terraform/README.md). Nothing is read from a .env file.
+# docs/runbooks/lightsail.md). Nothing is read from a .env file.
 #   docker build -t lvn-web --build-arg NEXT_PUBLIC_APP_ENV=sandbox \
-#     --build-arg NEXT_PUBLIC_SITE_URL=https://sandbox.learnvianotes.in \
-#     --build-arg NEXT_PUBLIC_API_URL=https://api.sandbox.learnvianotes.in/graphql .
+#     --build-arg NEXT_PUBLIC_SITE_URL=https://beta.learnvianotes.in \
+#     --build-arg NEXT_PUBLIC_API_URL=https://beta.learnvianotes.in/graphql .
+# deploy.yml builds it per environment and pushes it to GHCR (lvn-backend ADR-0096).
 
 ARG NODE_IMAGE=node:22-bookworm-slim
 

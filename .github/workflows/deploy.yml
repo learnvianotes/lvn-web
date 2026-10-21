@@ -1,17 +1,14 @@
-# Deploys — the only way the sandbox and the live site change (lvn-backend ADR-0093, docs/runbooks/release.md).
+# Deploys lvn-web to its Lightsail VM (lvn-backend ADR-0096) — the only way the beta and production sites change.
 #
-#   push to release/**   → the sandbox (the test site)   GitHub environment "sandbox"
-#   push a tag v*        → production (the live site)    GitHub environment "production" (give it a required reviewer)
+#   push to release/**   → beta         GitHub environment "beta"         (https://beta.learnvianotes.in)
+#   push a tag v*        → production   GitHub environment "production"   (give it a required reviewer)
 #
-# The deploy itself is lvn-backend's infra/scripts/deploy.sh: Terraform, the API and web images, migrations, then the
-# services. It refuses production unless both repositories' HEADs carry a v* tag, so lvn-backend is checked out at the
-# same tag (production) or at vars.LVN_BACKEND_REF, default main (sandbox).
-#
-# Each environment needs:
-#   secrets.LVN_DEPLOY_ENV          its infra/terraform/envs/<env>/.env (any AWS_PROFILE line is dropped here)
-#   vars.AWS_DEPLOY_ROLE_ARN        an IAM role this repository may assume through GitHub's OIDC provider
-#   vars.AWS_REGION                 e.g. ap-south-1
-# and the repository secret LVN_BACKEND_READ_TOKEN (read access to learnvianotes/lvn-backend).
+# The web image is built per environment, because NEXT_PUBLIC_* values are compiled in (the production build runs the
+# launch checks: lib/launch-checks.ts), and pushed to GHCR as ghcr.io/<owner>/lvn-web:<env>-<sha>. Then, over SSH, the
+# VM's /opt/lvn/lvn.sh — installed by lvn-backend's deploy, which must have run once — points the stack at it and runs
+# `docker compose pull && docker compose up -d`, failing unless every service is healthy and the site answers over
+# HTTPS. Every secret and variable is listed in lvn-backend docs/runbooks/lightsail.md and docs/runbooks/release.md;
+# values reach the shell through env, never written into the script text.
 name: deploy
 
 on:
@@ -21,50 +18,94 @@ on:
 
 permissions:
   contents: read
-  id-token: write # OIDC → the AWS role
+  packages: write
 
 concurrency:
-  group: deploy-${{ github.ref_type == 'tag' && 'production' || 'sandbox' }}
+  group: deploy-${{ github.ref_type == 'tag' && 'production' || 'beta' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_type == 'tag' && 'production' || 'sandbox' }}
+    environment: ${{ github.ref_type == 'tag' && 'production' || 'beta' }}
     env:
-      TARGET: ${{ github.ref_type == 'tag' && 'production' || 'sandbox' }}
+      LVN_ENV: ${{ github.ref_type == 'tag' && 'production' || 'beta' }}
     steps:
       - uses: actions/checkout@v4
-        with: { path: lvn-web }
-      - uses: actions/checkout@v4
-        with:
-          repository: learnvianotes/lvn-backend
-          path: lvn-backend
-          ref: ${{ github.ref_type == 'tag' && github.ref_name || vars.LVN_BACKEND_REF || 'main' }}
-          token: ${{ secrets.LVN_BACKEND_READ_TOKEN }}
       - uses: pnpm/action-setup@v4
-        with: { package_json_file: lvn-web/package.json }
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm, cache-dependency-path: lvn-web/pnpm-lock.yaml }
+        with: { node-version: 22, cache: pnpm }
       - name: Checks
-        working-directory: lvn-web
         run: |
           pnpm install --frozen-lockfile
           cp .env.example .env
           pnpm lint
           pnpm typecheck
           pnpm test
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: The image's name and the storage origin
+        id: name
+        env:
+          OWNER: ${{ github.repository_owner }}
+          LVN_R2_ENDPOINT: ${{ vars.LVN_R2_ENDPOINT }}
+          LVN_PUBLIC_URL: ${{ vars.LVN_PUBLIC_URL }}
+        run: |
+          echo "image=ghcr.io/${OWNER,,}/lvn-web:${LVN_ENV}-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+          [[ $LVN_PUBLIC_URL =~ ^https://[^/]+$ ]] || { echo "LVN_PUBLIC_URL must be https://<host>" >&2; exit 1; }
+          # Live updates (ADR-0042) through the same entrance: wss://<host>/graphql/live.
+          echo "live=wss://${LVN_PUBLIC_URL#https://}/graphql/live" >> "$GITHUB_OUTPUT"
+          # Pre-signed URLs point at the R2 endpoint; the Content Security Policy lets the browser reach only that origin.
+          origin=$(printf '%s' "$LVN_R2_ENDPOINT" | sed -E 's#^(https://[^/]+).*#\1#')
+          [[ $origin == https://* ]] || { echo "LVN_R2_ENDPOINT must be https://<account>.r2.cloudflarestorage.com" >&2; exit 1; }
+          echo "storage=$origin" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
         with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-      - uses: hashicorp/setup-terraform@v3
-        with: { terraform_wrapper: false }
-      - name: Environment settings
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and push (a production build runs the launch checks)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.name.outputs.image }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=${{ env.LVN_ENV }}
+          cache-to: type=gha,mode=max,scope=${{ env.LVN_ENV }}
+          build-args: |
+            NEXT_PUBLIC_APP_ENV=${{ vars.LVN_APP_ENV }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.LVN_PUBLIC_URL }}
+            NEXT_PUBLIC_API_URL=${{ vars.LVN_PUBLIC_URL }}/graphql
+            NEXT_PUBLIC_LIVE_URL=${{ steps.name.outputs.live }}
+            NEXT_PUBLIC_STORAGE_ORIGINS=${{ steps.name.outputs.storage }}
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+            NEXT_PUBLIC_FIREBASE_APP_ID=${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+      - name: Deploy on the VM (fails unless the stack is healthy)
         env:
-          LVN_DEPLOY_ENV: ${{ secrets.LVN_DEPLOY_ENV }}
-        run: printf '%s\n' "$LVN_DEPLOY_ENV" | grep -v '^AWS_PROFILE=' > "lvn-backend/infra/terraform/envs/$TARGET/.env"
-      - name: Deploy (the web build runs its launch checks)
-        env:
-          LVN_WEB_DIR: ${{ github.workspace }}/lvn-web
-        run: lvn-backend/infra/scripts/deploy.sh "$TARGET"
+          IMAGE: ${{ steps.name.outputs.image }}
+          LVN_DEPLOY_HOST: ${{ secrets.LVN_DEPLOY_HOST }}
+          LVN_DEPLOY_SSH_KEY: ${{ secrets.LVN_DEPLOY_SSH_KEY }}
+          LVN_SSH_KNOWN_HOSTS: ${{ secrets.LVN_SSH_KNOWN_HOSTS }}
+          LVN_GHCR_USER: ${{ vars.LVN_GHCR_USER }}
+          LVN_GHCR_TOKEN: ${{ secrets.LVN_GHCR_TOKEN }}
+          LVN_PUBLIC_URL: ${{ vars.LVN_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          for v in LVN_DEPLOY_HOST LVN_DEPLOY_SSH_KEY LVN_SSH_KNOWN_HOSTS LVN_GHCR_USER LVN_GHCR_TOKEN LVN_PUBLIC_URL; do
+            [ -n "${!v}" ] || { echo "$v is not set in the $LVN_ENV environment" >&2; exit 1; }
+          done
+          umask 077
+          printf '%s\n' "$LVN_DEPLOY_SSH_KEY" > "$RUNNER_TEMP/key"
+          printf '%s\n' "$LVN_SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/known_hosts"
+          remote() { ssh -i "$RUNNER_TEMP/key" -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=20 "deploy@$LVN_DEPLOY_HOST" "$@"; }
+          remote 'test -x /opt/lvn/lvn.sh' || { echo "/opt/lvn/lvn.sh is missing: deploy lvn-backend to $LVN_ENV first" >&2; exit 1; }
+          printf '%s' "$LVN_GHCR_TOKEN" | remote "docker login ghcr.io -u '$LVN_GHCR_USER' --password-stdin >/dev/null"
+          remote "/opt/lvn/lvn.sh set-image web '$IMAGE' && /opt/lvn/lvn.sh up"
+          curl -fsS --retry 10 --retry-delay 6 --retry-all-errors --max-time 10 "$LVN_PUBLIC_URL/robots.txt" >/dev/null ||
+            { echo "$LVN_PUBLIC_URL does not answer from outside the VM" >&2; exit 1; }
+          echo "Deployed $IMAGE to $LVN_ENV ($LVN_PUBLIC_URL)"
