@@ -66,6 +66,23 @@ test('outside production, robots.txt keeps the whole site out of search engines'
   expect(await (await request.get('/robots.txt')).text()).toMatch(/User-Agent: \*\s+Disallow: \//)
 })
 
+test('every public page has its own title, description and canonical link', async ({ page }) => {
+  const titles = new Set<string>()
+  for (const path of ['/', '/subjects', '/subjects/dsa', '/subjects/dsa/graphs', '/resources', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) {
+    await page.goto(path)
+    const title = await page.title()
+    expect(title, path).toMatch(/LearnViaNotes/)
+    titles.add(title)
+    expect(await page.locator('meta[name="description"]').getAttribute('content'), path).toMatch(/\w{20,}|\w+ \w+ \w+/)
+    expect(await page.locator('link[rel="canonical"]').getAttribute('href'), path).toMatch(new RegExp(`^https?://[^/]+${path === '/' ? '/?' : path}$`))
+  }
+  expect(titles.size).toBe(9)
+  // The landing page names the site for search results, with a "<" in no position to end the script.
+  await page.goto('/')
+  const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent())!) as { '@type': string }[]
+  expect(ld.map((x) => x['@type'])).toEqual(['WebSite', 'Organization'])
+})
+
 test('landing page has no serious accessibility violations', async ({ page }) => {
   // Checked as it settles: fade-ins would be measured half-transparent.
   await page.emulateMedia({ reducedMotion: 'reduce' })
