@@ -78,7 +78,7 @@ test.describe('sign up', () => {
     })
     await page.goto('/sign-up')
     await fillSignUp(page)
-    await page.getByRole('button', { name: 'Create account' }).click()
+    await createAccount(page)
     await expect(page.getByText('An account with this email already exists. Sign in instead.')).toBeVisible()
   })
 
@@ -86,7 +86,7 @@ test.describe('sign up', () => {
     const calls = await mockApi(page, { SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: session(), userErrors: [] } }), Viewer: () => ({ viewer: viewer() }) })
     await page.goto('/sign-up')
     await fillSignUp(page)
-    await page.getByRole('button', { name: 'Create account' }).click()
+    await createAccount(page)
     await expect(page).toHaveURL(/\/profile$/)
     await expect(page.getByRole('heading', { name: 'Asha Rao' })).toBeVisible()
     const input = calls.find((c) => c.op === 'SignUp')!.variables.input as Record<string, unknown>
@@ -100,7 +100,7 @@ test.describe('sign up', () => {
     await page.getByText('Teach', { exact: true }).click()
     await expect(page.getByRole('radio', { name: 'Teach' })).toBeChecked()
     await expect(page.getByText('After sign-up, tell us where you teach.', { exact: false })).toBeVisible()
-    await page.getByRole('button', { name: 'Create account' }).click()
+    await createAccount(page)
     await expect(page).toHaveURL(/\/teach$/)
     await expect(page.getByRole('form', { name: 'Apply to teach' })).toBeVisible()
   })
@@ -114,12 +114,89 @@ test.describe('sign up', () => {
     await page.goto('/sign-up')
     await fillSignUp(page)
     await page.getByLabel('College or organisation email (optional)').fill('asha@iitb.ac.in')
-    await page.getByRole('button', { name: 'Create account' }).click()
+    await createAccount(page)
     await expect(page).toHaveURL(/\/verify$/)
     await expect(page.getByText('We sent a 6-digit code to asha@iitb.ac.in.')).toBeVisible()
     await page.getByLabel('Code').fill('000000')
     await page.getByRole('button', { name: 'Verify' }).click()
     await expect(page.getByText('That code is not right. 4 tries left.')).toBeVisible()
+  })
+})
+
+test.describe('the age check (lvn-backend ADR-0091)', () => {
+  test('every date of birth is shown in words and confirmed before anything is sent', async ({ page }) => {
+    const calls = await mockApi(page, { SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: session(), userErrors: [] } }), Viewer: () => ({ viewer: viewer() }) })
+    await page.goto('/sign-up')
+    await fillSignUp(page)
+    await expect(page.getByText('1 May 2004', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Create account' }).click()
+    const confirm = page.getByRole('dialog', { name: 'Is this right?' })
+    await expect(confirm).toContainText('1 May 2004')
+    await confirm.getByRole('button', { name: 'Change it' }).click()
+    await expect(confirm).toBeHidden()
+    await expect(page.getByLabel('Date of birth')).toBeFocused()
+    expect(calls.filter((c) => c.op === 'SignUp')).toHaveLength(0)
+    // Nothing on the form names the cut-off.
+    await expect(page.getByRole('main')).not.toContainText('18')
+    await createAccount(page)
+    await expect(page).toHaveURL(/\/profile$/)
+  })
+
+  test('a refusal closes sign-up on this device for a day, and deletes or signs out nobody', async ({ page }) => {
+    const calls = await mockApi(page, {
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'dateOfBirth'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')] } }),
+    })
+    await page.goto('/sign-up')
+    await fillSignUp(page)
+    await page.getByLabel('Date of birth').fill('2012-05-01')
+    await createAccount(page, '1 May 2012')
+    await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Read the public notes' })).toHaveAttribute('href', '/subjects')
+    // Going back and answering again doesn't reopen it.
+    await page.reload()
+    await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
+    await expect(page.getByLabel('Date of birth')).toHaveCount(0)
+    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions'].includes(op))).toEqual(['SignUp'])
+    // A day later the form is back.
+    await page.evaluate(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() - 86_400_001 })))
+    await page.reload()
+    await expect(page.getByLabel('Date of birth')).toBeVisible()
+  })
+
+  test('an under-age answer on a new provider account leaves it, signed out, at the refusal', async ({ page }) => {
+    let completed = 0
+    const calls = await mockApi(
+      page,
+      {
+        Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
+        CompleteRegistration: () => {
+          completed++
+          return { completeRegistration: fail(problem(['input', 'dateOfBirth'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')) }
+        },
+        SignOut: () => ({ signOut: ok }),
+      },
+      'signed-in',
+    )
+    await page.goto('/sign-up/details')
+    await page.getByLabel('Date of birth').fill('2011-02-03')
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page).toHaveURL(/\/sign-up$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
+    expect(completed).toBe(1)
+    expect(calls.some((c) => c.op === 'SignOut')).toBe(true)
+  })
+
+  test('a refusal already on the device only closes the details form; the account is left alone', async ({ page }) => {
+    const calls = await mockApi(page, { Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }), SignOut: () => ({ signOut: ok }) }, 'signed-in')
+    await page.addInitScript(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() })))
+    await page.goto('/sign-up/details')
+    await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
+    await expect(page.getByLabel('Date of birth')).toHaveCount(0)
+    expect(calls.filter((c) => c.op === 'CompleteRegistration' || c.op === 'RequestAccountDeletion')).toHaveLength(0)
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await expect(page).toHaveURL(/\/$/)
   })
 })
 
@@ -236,6 +313,14 @@ test('sign-in and sign-up have no serious accessibility violations', async ({ pa
     expect(violations.filter((v) => v.impact === 'critical' || v.impact === 'serious').map((v) => `${path}: ${v.id}`)).toEqual([])
   }
 })
+
+/** Create account, then "Is this right?" about the date of birth (shown in words) → yes. */
+async function createAccount(page: Page, words = '1 May 2004') {
+  await page.getByRole('button', { name: 'Create account' }).click()
+  const confirm = page.getByRole('dialog', { name: 'Is this right?' })
+  await expect(confirm).toContainText(words)
+  await confirm.getByRole('button', { name: 'Yes, that’s right' }).click()
+}
 
 async function fillSignUp(page: Page) {
   await page.getByLabel('Your name').fill('Asha Rao')

@@ -140,7 +140,8 @@
       "title": "Almost there",
       "lead": "One quick step — we ask once, then you are in.",
       "submit": "Continue",
-      "titleNamed": "Almost there, {name}"
+      "titleNamed": "Almost there, {name}",
+      "signOut": "Sign out"
     },
     "providers": {
       "or": "or",
@@ -193,6 +194,16 @@
       "myNotes": "My notes",
       "community": "Community",
       "askAi": "Ask AI"
+    },
+    "age": {
+      "confirmTitle": "Is this right?",
+      "confirmLead": "Your date of birth:",
+      "confirm": "Yes, that’s right",
+      "change": "Change it",
+      "refusedTitle": "Sorry, you can’t create an account",
+      "refusedLead": "LearnViaNotes accounts are only for adults. You can still read every public note and subject without one.",
+      "browse": "Read the public notes",
+      "signOut": "Sign out"
     }
   },
   "profile": {
