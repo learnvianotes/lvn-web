@@ -32,6 +32,19 @@ test('anyone reads a public note without an account', async ({ page }) => {
   expect(ld).toMatchObject({ '@type': 'Article', headline: "Dijkstra's algorithm", author: { name: 'Ravi Kumar' } })
 })
 
+test('a "$" or a "</script>" in a title stays text, in the page, its head and its schema.org data', async ({ page }) => {
+  await page.route('**/graphql', (route) => route.fulfill({ json: { data: { refreshSession: null } } }))
+  const tricky = "Costs $& $' $1 </script><b>bold</b>"
+  const res = await page.goto('/n/costs-1-script-b-bold-b-01920000-0000-7000-8000-00000000d002')
+  expect(res?.status()).toBe(200)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(tricky)
+  expect(await page.title()).toContain(tricky)
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', tricky)
+  const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!) as Record<string, unknown>
+  expect(ld.headline).toBe(tricky)
+  await expect(page.locator('b', { hasText: 'bold' })).toHaveCount(0)
+})
+
 test('one address per note: a missing or old slug moves to the current one', async ({ page }) => {
   await page.goto(`/n/${note.id}`)
   await expect(page).toHaveURL(new RegExp(`${path}$`))

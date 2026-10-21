@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { env } from '@/lib/env'
 import { getResource, resourceJsonLd } from '@/features/resources/data'
 import { ResourcePage } from '@/features/resources/ResourceView'
+import { templated } from '@/lib/page-title'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!r) return { title: 'Resource', robots: { index: false, follow: false } }
   const url = `${env.NEXT_PUBLIC_SITE_URL}/resources/${r.id}`
   return {
-    title: r.title,
+    title: templated(r.title),
     description: r.description?.slice(0, 160) ?? `${r.title} on LearnViaNotes`,
     alternates: { canonical: url },
     robots: { index: r.indexable, follow: false },

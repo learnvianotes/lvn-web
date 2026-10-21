@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getShelf, getSubject, type SubjectSummary } from '@/features/subjects/data'
 import { Shelf } from '@/features/subjects/Shelf'
+import { templated } from '@/lib/page-title'
 
 export const revalidate = 3600
 
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const subject = await getSubject(slug).catch(() => null)
   const found = subject ? find(subject, topic) : null
   const t = await getTranslations('subjects')
-  return found && subject ? { title: `${found.topic.title} · ${subject.title}`, description: t('topicLead', { topic: found.topic.title }), alternates: { canonical: `/subjects/${slug}/${topic}` } } : {}
+  return found && subject ? { title: templated(`${found.topic.title} · ${subject.title}`), description: t('topicLead', { topic: found.topic.title }), alternates: { canonical: `/subjects/${slug}/${topic}` } } : {}
 }
 
 /** A topic: its subtopics, and the public notes and resources on it. */

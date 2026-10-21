@@ -5,6 +5,7 @@ import { env } from '@/lib/env'
 import { getPublicNote } from '@/features/public-notes/data'
 import { parsePublicNoteSegment, publicNotePath } from '@/features/public-notes/paths'
 import { PublicNoteView } from '@/features/public-notes/PublicNoteView'
+import { templated } from '@/lib/page-title'
 
 /**
  * A public note (P2d): rendered on the server the first time it is asked for, then served from the cache; the API asks
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = note.cards.map((c) => cardPlainText(c.type, c.content)).join(' ').replace(/\s+/g, ' ').trim().slice(0, 160)
   const url = `${env.NEXT_PUBLIC_SITE_URL}${publicNotePath(note)}`
   return {
-    title: note.title || 'Untitled note',
+    title: templated(note.title || 'Untitled note'),
     description,
     alternates: { canonical: url },
     authors: [{ name: note.owner.displayName }],
