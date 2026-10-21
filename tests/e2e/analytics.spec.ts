@@ -44,7 +44,7 @@ test.describe('with Google Analytics configured', () => {
     await other.goto('/legal/terms')
     await expect(other.getByRole('region', { name: 'Analytics cookies' })).toBeVisible()
 
-    await banner.getByRole('button', { name: 'Allow' }).click()
+    await banner.getByRole('button', { name: 'Allow', exact: true }).click()
     await expect(banner).toBeHidden()
     await expect.poll(() => hits.some((u) => u.includes(`gtag/js?id=${id}`))).toBe(true)
     // The other tab follows without a reload.
