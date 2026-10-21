@@ -1,0 +1,70 @@
+# Deploys — the only way the sandbox and the live site change (lvn-backend ADR-0093, docs/runbooks/release.md).
+#
+#   push to release/**   → the sandbox (the test site)   GitHub environment "sandbox"
+#   push a tag v*        → production (the live site)    GitHub environment "production" (give it a required reviewer)
+#
+# The deploy itself is lvn-backend's infra/scripts/deploy.sh: Terraform, the API and web images, migrations, then the
+# services. It refuses production unless both repositories' HEADs carry a v* tag, so lvn-backend is checked out at the
+# same tag (production) or at vars.LVN_BACKEND_REF, default main (sandbox).
+#
+# Each environment needs:
+#   secrets.LVN_DEPLOY_ENV          its infra/terraform/envs/<env>/.env (any AWS_PROFILE line is dropped here)
+#   vars.AWS_DEPLOY_ROLE_ARN        an IAM role this repository may assume through GitHub's OIDC provider
+#   vars.AWS_REGION                 e.g. ap-south-1
+# and the repository secret LVN_BACKEND_READ_TOKEN (read access to learnvianotes/lvn-backend).
+name: deploy
+
+on:
+  push:
+    branches: ['release/**']
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write # OIDC → the AWS role
+
+concurrency:
+  group: deploy-${{ github.ref_type == 'tag' && 'production' || 'sandbox' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_type == 'tag' && 'production' || 'sandbox' }}
+    env:
+      TARGET: ${{ github.ref_type == 'tag' && 'production' || 'sandbox' }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: lvn-web }
+      - uses: actions/checkout@v4
+        with:
+          repository: learnvianotes/lvn-backend
+          path: lvn-backend
+          ref: ${{ github.ref_type == 'tag' && github.ref_name || vars.LVN_BACKEND_REF || 'main' }}
+          token: ${{ secrets.LVN_BACKEND_READ_TOKEN }}
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: lvn-web/package.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: lvn-web/pnpm-lock.yaml }
+      - name: Checks
+        working-directory: lvn-web
+        run: |
+          pnpm install --frozen-lockfile
+          cp .env.example .env
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_wrapper: false }
+      - name: Environment settings
+        env:
+          LVN_DEPLOY_ENV: ${{ secrets.LVN_DEPLOY_ENV }}
+        run: printf '%s\n' "$LVN_DEPLOY_ENV" | grep -v '^AWS_PROFILE=' > "lvn-backend/infra/terraform/envs/$TARGET/.env"
+      - name: Deploy (the web build runs its launch checks)
+        env:
+          LVN_WEB_DIR: ${{ github.workspace }}/lvn-web
+        run: lvn-backend/infra/scripts/deploy.sh "$TARGET"
