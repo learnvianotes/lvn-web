@@ -2,7 +2,10 @@ import { expect, test } from '@playwright/test'
 import { TERMS_VERSION } from '../../features/legal/documents'
 import { mockApi } from './support/notes-api'
 
-/** §15.2: the Terms, Privacy Policy and content licence — readable, linked where people accept them, accepted again on change. */
+/**
+ * §15.2: the Terms, Privacy Policy, content licence and Grievance page — readable, linked where people accept them,
+ * accepted again on change.
+ */
 
 test('the three documents are public, versioned and linked from every page', async ({ page }) => {
   await page.goto('/legal/terms')
@@ -16,6 +19,18 @@ test('the three documents are public, versioned and linked from every page', asy
   // The footer of every page.
   await page.goto('/')
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', '/legal/terms')
+})
+
+test('the Grievance page names the officer and commits to 24 hours, 7 days and 36 hours', async ({ page }) => {
+  await page.goto('/legal/grievance')
+  await expect(page.getByRole('heading', { level: 1, name: 'Grievance Redressal' })).toBeVisible()
+  await expect(page.getByText('within 24 hours of receiving your complaint')).toBeVisible()
+  await expect(page.getByText('within 7 days, with our reasons')).toBeVisible()
+  await expect(page.getByText('we act within 36 hours')).toBeVisible()
+  // Until config/legal.ts is filled in, every gap shows and the draft note lists them.
+  await expect(page.getByRole('note')).toContainText('Still to be filled in: operator’s legal name, postal address')
+  await expect(page.locator('mark', { hasText: '[Grievance Officer’s name]' })).toBeVisible()
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Grievance Redressal' })).toHaveAttribute('href', '/legal/grievance')
 })
 
 test('sign-up links the documents it asks people to accept', async ({ page }) => {

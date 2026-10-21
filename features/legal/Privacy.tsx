@@ -1,84 +1,161 @@
 import Link from 'next/link'
+import { ACCOUNTS_FROM_AGE, RETENTION } from '@/config/legal'
+import { ContactList, Fact } from './Fact'
+import { LEGAL_DOCUMENTS } from './documents'
 
-/** Privacy Policy — draft for the owner's review (§15.2, India's DPDP Act 2023). */
+/**
+ * Privacy Policy — draft for the owner's review (§15.2; India's IT Act 2000 and SPDI Rules 2011, the DPDP Act 2023).
+ * Every claim here must match what the apps do: change both together. Numbers come from config/legal.ts.
+ */
 export function Privacy() {
   return (
     <>
       <p>
-        This policy explains what [operator’s legal name] (“we”) collects when you use LearnViaNotes, why, and the choices
-        you have. We do not sell your personal data and we do not show you advertising.
+        LearnViaNotes is run by <Fact field="operator" /> (“we”, “us”). This policy explains what personal data we collect
+        when you use the website and the apps, why, who processes it for us, how long we keep it and how you can use your
+        rights. We do not sell your personal data and we do not show you advertising.
       </p>
+
+      <h2>The short version</h2>
+      <ul>
+        <li>You can read public notes and subjects without an account.</li>
+        <li>Accounts are for adults ({ACCOUNTS_FROM_AGE} or older).</li>
+        <li>With an account, we keep your details, your notes and your study activity so LearnViaNotes works for you on every device.</li>
+        <li>Google Analytics runs only if you allow it, and you can change your mind at any time.</li>
+        <li>You can download all your data or delete your account from your profile page.</li>
+      </ul>
 
       <h2>1. What we collect</h2>
       <ul>
-        <li>Account: your name, email address, handle, date of birth, password (stored only as a secure hash) or your Google sign-in.</li>
-        <li>Optional details: a college or organisation email to verify your account, your department and year of study.</li>
-        <li>Your content: notes, the files you upload to them, folders, tags, shares and copies.</li>
-        <li>Learning activity: what you study and revise, so that the app can plan your week.</li>
-        <li>Technical data: sign-in sessions, the device you use, and error and security logs.</li>
+        <li>
+          <strong>Account:</strong> your name, email address, handle and date of birth; your password, stored only as a
+          secure hash, or the Google account you sign in with.
+        </li>
+        <li>
+          <strong>What you agreed to:</strong> when you registered and which versions of the Terms, this policy and the
+          content licence you accepted, and when.
+        </li>
+        <li>
+          <strong>Optional details:</strong> a college or organisation email to verify your account, your department, year
+          of study and interests, a profile photo, and for teachers their profile and skills.
+        </li>
+        <li>
+          <strong>Your content:</strong> notes and the files in them, folders, tags, shares and copies; what you post,
+          comment and answer in groups and classes; quiz and contest answers; reports you make.
+        </li>
+        <li>
+          <strong>Learning activity events:</strong> what you open, study and revise, for how long, your reviews, focus
+          sessions and exam plans — so the app can plan your week and suggest what to study next.
+        </li>
+        <li>
+          <strong>AI features:</strong> the text you ask an AI feature to work on, and its answers.
+        </li>
+        <li>
+          <strong>Technical data:</strong> your sign-in sessions (device and browser), your IP address in security logs, and
+          error reports — sent without your name, email, cookies or the query part of addresses.
+        </li>
+        <li>
+          <strong>Google Analytics</strong>, only if you choose “Allow” when we ask: the pages you view (their address
+          without its query), your approximate location worked out from your IP address, and your device and browser,
+          through cookies.
+        </li>
       </ul>
 
       <h2>2. Why we use it</h2>
       <ul>
         <li>To run your account and show your notes to you and to the people you choose.</li>
-        <li>To keep the community safe: moderation, preventing abuse, and protecting younger users.</li>
+        <li>To keep the community safe: moderation, preventing abuse, and keeping accounts to adults.</li>
+        <li>To plan your studying and recommend what to learn next, from your own learning activity.</li>
         <li>To fix problems and keep the service secure.</li>
-        <li>To send you emails you need (confirming your address, security notices) and the ones you asked for.</li>
+        <li>To send you the emails you need (confirming your address, security notices) and the ones you asked for.</li>
+        <li>With your consent, to count visits and see which pages help (Google Analytics).</li>
       </ul>
       <p>We process your data with your consent and, where the law allows, for these legitimate uses.</p>
 
-      <h2>3. Who else sees it</h2>
+      <h2>3. Who can have an account</h2>
+      <p>
+        Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. We ask your date of birth when you create an
+        account and keep it with your account; it is never shown to anyone. If the date you give is under {ACCOUNTS_FROM_AGE},
+        we don’t create the account and don’t keep the date; if a sign-in with Google had already created it, we delete it
+        straight away. If we learn that an account belongs to someone under {ACCOUNTS_FROM_AGE}, we delete it.
+      </p>
+
+      <h2>4. Who else sees it</h2>
       <ul>
-        <li>The people you share notes with, and anyone, for notes you make public.</li>
+        <li>The people you share notes with, your groups and classes, and anyone, for what you make public.</li>
         <li>
-          Service providers that run parts of LearnViaNotes for us, under contract: hosting and storage (Amazon Web
-          Services, in India), email delivery, Google for Google sign-in, and error reporting.
+          Service providers that run parts of LearnViaNotes for us, under contract and only for that:
+          <ul>
+            <li>Amazon Web Services — hosting, storage and email delivery, in India;</li>
+            <li>Google — Google sign-in, push notifications to the phone app, and Google Analytics if you allow it;</li>
+            <li>our error-reporting service, which receives error reports as described above.</li>
+          </ul>
         </li>
-        <li>
-          AI features, when they arrive, send only the text needed for the task to the AI provider — never your name or
-          account details.
-        </li>
+        <li>AI providers receive only the text needed for the task you asked for — never your name or account details.</li>
         <li>Authorities, when the law requires it.</li>
       </ul>
 
-      <h2>4. Younger users</h2>
-      <p>
-        We ask for your date of birth. Accounts of people under 18 stay limited (private notes and classes only) until a
-        parent, guardian or school confirms consent, and we do not use their activity for behavioural recommendations.
-      </p>
-
       <h2>5. How long we keep it</h2>
       <ul>
-        <li>Your notes and files: until you delete them (deleted notes stay in the trash for 30 days).</li>
-        <li>Learning activity: 24 months, then only as totals.</li>
-        <li>Security and moderation records: up to 7 years. Technical logs: 30 days.</li>
-        <li>When you delete your account, we delete your personal data and files, except what the law requires us to keep.</li>
+        <li>Your account, notes and files: until you delete them. Deleted notes stay in the trash for {RETENTION.trashDays} days.</li>
+        <li>
+          When you delete your account, it goes {RETENTION.deletionGraceDays} days after you ask (you can change your mind
+          until then). What you made public stays, shown as by “Deleted user”; everything else is deleted. Copies in our
+          backups are overwritten within {RETENTION.backupDays} days.
+        </li>
+        <li>Learning activity events: {RETENTION.learningEventsMonths} months, then only as totals.</li>
+        <li>Data exports you download: {RETENTION.exportDays} days.</li>
+        <li>Server logs: {RETENTION.logsDays} days. Security and moderation records: up to {RETENTION.auditYears} years.</li>
+        <li>Google Analytics data: {RETENTION.analyticsMonths} months.</li>
+        <li>We may keep a record longer when the law requires it, for example to deal with a legal claim.</li>
       </ul>
 
       <h2>6. Your rights</h2>
       <ul>
-        <li>See and download your data (account page → Export).</li>
-        <li>Correct your details, and delete your account.</li>
-        <li>Withdraw consent — some features may then stop working.</li>
-        <li>Complain to our grievance officer, and then to the Data Protection Board of India.</li>
+        <li>
+          <strong>See and take your data:</strong> your profile page → Your data → Download your data gives you an archive
+          of everything we hold about you: your account with your date of birth and the terms you accepted, your notes and
+          files, your posts and comments, your study progress and every learning activity event.
+        </li>
+        <li><strong>Correct it:</strong> edit your details on your profile page, or email us.</li>
+        <li><strong>Delete it:</strong> your profile page → Delete account, or email us.</li>
+        <li>
+          <strong>Withdraw consent:</strong> turn Google Analytics off on your profile page or in the banner at any time;
+          withdrawing is as easy as giving it. Deleting your account withdraws everything else.
+        </li>
+        <li><strong>Nominate someone</strong> to use these rights for you if you die or can no longer act: email us.</li>
+        <li>
+          <strong>Complain:</strong> write to our Grievance Officer (below). If you are not satisfied with the answer you
+          may complain to the Data Protection Board of India.
+        </li>
       </ul>
-
-      <h2>7. Cookies</h2>
       <p>
-        We use only the cookies the service needs, such as the one that keeps you signed in. There are no third-party
-        trackers or advertising cookies.
+        We answer within the times on the <Link href={LEGAL_DOCUMENTS.grievance.path}>Grievance Redressal</Link> page.
+      </p>
+
+      <h2>7. Cookies and your device</h2>
+      <p>
+        We use the cookies and device storage the service needs: the cookie that keeps you signed in, and your theme, your
+        analytics choice and similar settings on your device. We don’t ask consent for those. Google Analytics sets its own
+        cookies only after you allow it, and we delete them when you turn it off. There are no advertising cookies.
       </p>
 
       <h2>8. Security</h2>
       <p>
-        Data is encrypted in transit and at rest. Access inside our team is limited to people who need it. If a breach
-        affects you, we tell you and the authorities as the law requires.
+        Data is encrypted in transit and at rest. Access inside our team is limited to people who need it. No system is
+        perfectly secure; if a breach affects your personal data we will tell you and the authorities as the law requires.
       </p>
 
-      <h2>9. Changes and contact</h2>
+      <h2>9. Changes</h2>
       <p>
-        We update the version above when this policy changes and ask you to accept important changes. Grievance officer:
-        [name], [grievance email]. See also the <Link href="/legal/terms">Terms of Service</Link>.
+        We update the version above when this policy changes and ask you to accept important changes before you continue
+        using your account.
+      </p>
+
+      <h2>10. Contact</h2>
+      <ContactList operatorLabel="Data fiduciary" />
+      <p>
+        See also the <Link href={LEGAL_DOCUMENTS.terms.path}>Terms of Service</Link>.
       </p>
     </>
   )

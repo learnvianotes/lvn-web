@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { AcceptTermsDocument, TermsStatusDocument } from '@/graphql/generated/graphql'
-import { LEGAL_DOCUMENTS } from '@/features/legal/documents'
+import { ACCEPTED_DOCUMENTS, LEGAL_DOCUMENTS } from '@/features/legal/documents'
 
 /**
  * Re-prompt on material change (§15.2): when the Terms, Privacy Policy and content licence have a new version, signed-in
@@ -36,7 +36,7 @@ export function TermsGate() {
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted">{t('lead')}</p>
         <ul className="flex flex-col gap-2">
-          {Object.values(LEGAL_DOCUMENTS).map((d) => (
+          {ACCEPTED_DOCUMENTS.map((key) => LEGAL_DOCUMENTS[key]).map((d) => (
             <li key={d.path}>
               <Link href={d.path} target="_blank" className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium hover:border-accent hover:text-accent">
                 <FileText className="size-4" aria-hidden />
