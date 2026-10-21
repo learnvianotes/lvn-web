@@ -14,8 +14,8 @@ export async function Highlights({ className }: { className?: string }) {
     <ul className={cn('flex flex-col gap-2.5', className)}>
       {items.map(({ Icon, text }, i) => (
         <li key={text} className="flex w-fit animate-rise items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-[15px] font-medium" style={{ animationDelay: `${180 + i * 110}ms` }}>
-          <span className="grid size-8 place-items-center rounded-xl bg-[#A5B4FC]/20">
-            <Icon className="size-[18px] text-[#C7D2FE]" aria-hidden />
+          <span className="grid size-8 place-items-center rounded-xl bg-[#93C5FD]/20">
+            <Icon className="size-[18px] text-[#BFDBFE]" aria-hidden />
           </span>
           {text}
         </li>

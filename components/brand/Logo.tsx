@@ -1,7 +1,7 @@
 import logo from '@/branding/logo-paths.json'
 
 /**
- * The LearnViaNotes mark on its indigo tile, drawn inline from branding/logo-paths.json (the same shapes as the
+ * The LearnViaNotes mark on its blue tile, drawn inline from branding/logo-paths.json (the same shapes as the
  * favicons and the mobile app). Decorative: the visible name next to it carries the meaning.
  * `idPrefix` keeps gradient ids unique if the logo appears more than once on a page.
  */

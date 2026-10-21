@@ -10,12 +10,13 @@ import type { OutlineItem } from './PdfViewer'
 /** The pieces of the PDF reader (./ReaderPage): actions on a selection, a highlight's card, the side lists. */
 
 export const COLORS: HighlightColor[] = ['YELLOW', 'GREEN', 'BLUE', 'PINK', 'PURPLE']
+/** The API's PURPLE keeps its name, so stored highlights stay as they are; it is drawn and named orange (ADR-0094). */
 export const SWATCH: Record<HighlightColor, string> = {
   YELLOW: 'bg-yellow-300',
   GREEN: 'bg-green-400',
   BLUE: 'bg-blue-400',
   PINK: 'bg-pink-400',
-  PURPLE: 'bg-violet-400',
+  PURPLE: 'bg-orange-400',
 }
 
 export function ToolButton({ icon: Icon, label, onClick, pressed, disabled, className, showLabel }: { icon: LucideIcon; label: string; onClick: () => void; pressed?: boolean; disabled?: boolean; className?: string; showLabel?: boolean }) {

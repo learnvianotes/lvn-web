@@ -4,37 +4,38 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* Brand palette from the LearnViaNotes UI reference (lvn-backend docs/design/ui-reference.md). */
-  --bg: #f7f7fb;
+  /* Brand palette from the LearnViaNotes UI reference (lvn-backend docs/design/ui-reference.md): the brand blue, and no
+     purple, lavender, indigo or violet anywhere (lvn-backend ADR-0094). */
+  --bg: #f6f8fb;
   --surface: #ffffff;
-  --surface-2: #f1f1f7;
-  --fg: #1e1b2e;
-  --muted: #5f5f73;
-  --border: #e6e6ef;
-  --accent: #4f46e5;
+  --surface-2: #f1f4f8;
+  --fg: #111827;
+  --muted: #5b6475;
+  --border: #e3e8ef;
+  --accent: #2563eb;
   --accent-fg: #ffffff;
-  --accent-soft: #eef2ff;
+  --accent-soft: #eff6ff;
   --good: #166534;
   --warn: #92400e;
   --bad: #991b1b;
-  --def: #6d28d9;
+  --def: #0f766e;
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #0e0e12;
-  --surface: #17171c;
-  --surface-2: #1f1f26;
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #1f2630;
   --fg: #f4f4f5;
   --muted: #a1a1aa;
-  --border: #2c2c35;
-  --accent: #818cf8;
-  --accent-fg: #0e0e12;
-  --accent-soft: #1e1b4b;
+  --border: #2d3440;
+  --accent: #60a5fa;
+  --accent-fg: #0d1117;
+  --accent-soft: #172554;
   --good: #4ade80;
   --warn: #fbbf24;
   --bad: #f87171;
-  --def: #c4b5fd;
+  --def: #5eead4;
   color-scheme: dark;
 }
 
@@ -101,13 +102,14 @@ body { font-family: var(--font-sans); min-height: 100dvh; }
 .lvn-mark-highlight[data-color='GREEN'] { background: rgb(74 222 128 / 0.45); }
 .lvn-mark-highlight[data-color='BLUE'] { background: rgb(96 165 250 / 0.45); }
 .lvn-mark-highlight[data-color='PINK'] { background: rgb(244 114 182 / 0.45); }
-.lvn-mark-highlight[data-color='PURPLE'] { background: rgb(167 139 250 / 0.5); }
-.lvn-mark-anchor { background: rgb(79 70 229 / 0.08); border-bottom: 2px solid rgb(79 70 229 / 0.75); }
-.lvn-mark-pending { outline: 2px dashed rgb(79 70 229); background: rgb(79 70 229 / 0.1); }
-.lvn-mark-flash { background: rgb(79 70 229 / 0.35); animation: lvn-flash 1.8s ease-out forwards; }
+/* The API's PURPLE highlight is drawn, and named, orange (lvn-backend ADR-0094). */
+.lvn-mark-highlight[data-color='PURPLE'] { background: rgb(251 146 60 / 0.45); }
+.lvn-mark-anchor { background: rgb(37 99 235 / 0.08); border-bottom: 2px solid rgb(37 99 235 / 0.75); }
+.lvn-mark-pending { outline: 2px dashed rgb(37 99 235); background: rgb(37 99 235 / 0.1); }
+.lvn-mark-flash { background: rgb(37 99 235 / 0.35); animation: lvn-flash 1.8s ease-out forwards; }
 @keyframes lvn-flash { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
 .lvn-snipping, .lvn-snipping .textLayer { cursor: crosshair; user-select: none; touch-action: none; }
-.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: rgb(79 70 229 / 0.12); pointer-events: none; }
+.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: rgb(37 99 235 / 0.12); pointer-events: none; }
 .lvn-anchor-chip { align-self: flex-end; display: inline-flex; align-items: center; gap: 0.25rem; margin-top: -0.5rem; border-radius: 9999px; border: 1px solid var(--border); background: var(--surface); padding: 0.125rem 0.6rem; font-size: 0.75rem; line-height: 1.2rem; color: var(--muted); cursor: pointer; user-select: none; }
 .lvn-anchor-chip:hover { border-color: var(--accent); color: var(--accent); }
 .lvn-card-flash { animation: lvn-card-flash 1.8s ease-out; }

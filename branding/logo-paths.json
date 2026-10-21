@@ -11,14 +11,14 @@
   "spark": "M660 222 C 665 252 672 258 700 262 C 672 266 665 272 660 302 C 655 272 648 266 620 262 C 648 258 655 252 660 222 Z",
   "colors": {
     "gradient": [
-      "#6D5DF6",
-      "#4F46E5",
-      "#3730A3"
+      "#3B82F6",
+      "#2563EB",
+      "#1E40AF"
     ],
     "page": "#FFFFFF",
-    "pageShade": "#E0E7FF",
-    "line": "#C7D2FE",
-    "check": "#4F46E5",
+    "pageShade": "#DBEAFE",
+    "line": "#BFDBFE",
+    "check": "#2563EB",
     "spark": "#FDE68A"
   },
   "tileRadius": 236

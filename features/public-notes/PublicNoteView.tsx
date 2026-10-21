@@ -95,7 +95,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
       <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
-            <p className="flex items-center gap-1.5 text-sm font-medium text-[#C7D2FE]">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-[#BFDBFE]">
               <Sparkles className="size-4" aria-hidden />
               {t('ctaKicker')}
             </p>
@@ -103,7 +103,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
             <p className="text-sm text-white/80">{t('ctaLead')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1C1A3A] hover:bg-white/90">
+            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0B1220] hover:bg-white/90">
               <NotebookPen className="size-4" aria-hidden />
               {t('ctaStart')}
             </Link>

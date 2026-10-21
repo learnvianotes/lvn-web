@@ -60,7 +60,7 @@ export const AREAS: Area[] = [
       { id: 'cpp', title: 'C++', badge: 'C++', color: '#00599c', subjectId: 'cpp', description: 'STL, pointers, references, memory, templates and competitive-coding tricks.' },
       { id: 'java', title: 'Java', badge: 'Jv', color: '#e76f00', subjectId: 'java', description: 'Collections, OOP, JVM, exceptions, generics and multithreading.' },
       { id: 'javascript', title: 'JavaScript', badge: 'JS', color: '#c9a400', subjectId: 'javascript', description: 'Closures, prototypes, event loop, promises, async/await and ES features.' },
-      { id: 'c', title: 'C', badge: 'C', color: '#5c6bc0', subjectId: 'c', description: 'Pointers, arrays, structs, memory management and the compilation model.' },
+      { id: 'c', title: 'C', badge: 'C', color: '#4c78a8', subjectId: 'c', description: 'Pointers, arrays, structs, memory management and the compilation model.' },
       { id: 'sql', title: 'SQL', badge: 'SQL', color: '#0f9d8a', subjectId: 'sql', description: 'Joins, grouping, subqueries, window functions and query practice.' },
     ],
   },
