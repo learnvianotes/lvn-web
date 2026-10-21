@@ -3976,6 +3976,11 @@ type Query {
   unreadNotificationCount: Int!
 
   """
+  ADR-0097: whether people may upload files here. Off, clients hide every upload control and createUploadIntent answers UNAVAILABLE.
+  """
+  uploadsEnabled: Boolean!
+
+  """
   A person by handle (with or without @) or by id; null when there is none, or when they have no public profile (restricted minors, ADR-0043)
   """
   userByHandle(handle: String!): User

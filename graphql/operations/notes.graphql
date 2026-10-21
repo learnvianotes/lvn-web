@@ -563,3 +563,8 @@ query SavedNotes($first: Int, $after: String) {
     }
   }
 }
+
+# lvn-backend ADR-0097: whether people may upload here; while not, every upload control is hidden.
+query UploadsEnabled {
+  uploadsEnabled
+}

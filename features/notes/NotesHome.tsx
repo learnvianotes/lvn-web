@@ -31,6 +31,7 @@ import { accentOf, ago, daypart } from './look'
 import { TEMPLATE_KEYS, templateCards, type TemplateKey } from './templates'
 import { useReadPdf } from '@/features/reader/readPdf'
 import { CaptureDialog } from './capture/CaptureDialog'
+import { useUploadsEnabled } from './uploads'
 
 type View = { kind: 'all' } | { kind: 'unfiled' } | { kind: 'shared' } | { kind: 'trash' } | { kind: 'folder'; id: string } | { kind: 'tag'; id: string }
 
@@ -74,6 +75,8 @@ export function NotesHome() {
   const readPdf = useReadPdf()
   const pdfInput = useRef<HTMLInputElement>(null)
   const [capture, setCapture] = useState(false)
+  // Reading a PDF and notes from photos upload files: only while uploads are on (lvn-backend ADR-0097).
+  const uploadsOn = useUploadsEnabled()
   const folders = organise.data?.myFolders ?? []
   const tags = organise.data?.myTags ?? []
   const all = useMemo<(NoteListFieldsFragment | SharedNote)[]>(() => connection?.edges.map((e) => e.node) ?? [], [connection])
@@ -148,14 +151,18 @@ export function NotesHome() {
           <Plus className="size-5" aria-hidden />
           {t('newNote')}
         </Button>
-        <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={!!readPdf.uploading || view.kind === 'trash'} onClick={() => pdfInput.current?.click()}>
-          <BookOpenText className="size-5" aria-hidden />
-          {t('readPdf')}
-        </Button>
-        <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={view.kind === 'trash'} onClick={() => setCapture(true)}>
-          <Camera className="size-5" aria-hidden />
-          {t('fromPhotos')}
-        </Button>
+        {uploadsOn ? (
+          <>
+            <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={!!readPdf.uploading || view.kind === 'trash'} onClick={() => pdfInput.current?.click()}>
+              <BookOpenText className="size-5" aria-hidden />
+              {t('readPdf')}
+            </Button>
+            <Button variant="secondary" size="lg" className="-mt-3 w-full gap-2" disabled={view.kind === 'trash'} onClick={() => setCapture(true)}>
+              <Camera className="size-5" aria-hidden />
+              {t('fromPhotos')}
+            </Button>
+          </>
+        ) : null}
         <NewKinds teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading || view.kind === 'trash'} onNew={(kind) => void newNote(undefined, kind)} className="-mt-3" />
         <nav aria-label={t('views.label')} className="flex flex-col gap-0.5">
           {navItem({ kind: 'all' }, t('views.all'), BookOpen)}
@@ -229,14 +236,18 @@ export function NotesHome() {
                     <Plus className="size-5" aria-hidden />
                     {t('newNote')}
                   </Button>
-                  <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" disabled={!!readPdf.uploading} onClick={() => pdfInput.current?.click()}>
-                    <BookOpenText className="size-5" aria-hidden />
-                    {t('readPdf')}
-                  </Button>
-                  <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" onClick={() => setCapture(true)}>
-                    <Camera className="size-5" aria-hidden />
-                    {t('fromPhotos')}
-                  </Button>
+                  {uploadsOn ? (
+                    <>
+                      <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" disabled={!!readPdf.uploading} onClick={() => pdfInput.current?.click()}>
+                        <BookOpenText className="size-5" aria-hidden />
+                        {t('readPdf')}
+                      </Button>
+                      <Button size="lg" className="w-fit gap-2 bg-white/10 ring-1 ring-white/30 hover:bg-white/20" onClick={() => setCapture(true)}>
+                        <Camera className="size-5" aria-hidden />
+                        {t('fromPhotos')}
+                      </Button>
+                    </>
+                  ) : null}
                   <NewKinds onDark teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading} onNew={(kind) => void newNote(undefined, kind)} className="w-full" />
                 </div>
                 {latest ? (

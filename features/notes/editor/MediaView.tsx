@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn'
 import { acceptFor, pendingFiles, UploadError, useMedia, type MediaCardType } from '../media'
 import { MediaBlock, type MediaContent } from '../render/MediaBlock'
 import { writeCard } from './views'
+import { useUploadsEnabled } from '../uploads'
 
 const ICONS = { image: ImagePlus, video: Video, audio: Mic, file: FileUp } as const
 
@@ -31,6 +32,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
   const altId = useId()
   const captionId = useId()
   const Icon = ICONS[type]
+  const uploadsOn = useUploadsEnabled()
 
   const start = useCallback(
     async (file: File) => {
@@ -119,13 +121,21 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
                     />
                   </label>
                 </div>
-                <button type="button" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent" onClick={() => input.current?.click()}>
-                  <RefreshCw className="size-4" aria-hidden />
-                  {t('media.replace')}
-                </button>
+                {uploadsOn ? (
+                  <button type="button" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent" onClick={() => input.current?.click()}>
+                    <RefreshCw className="size-4" aria-hidden />
+                    {t('media.replace')}
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </>
+        ) : !uploadsOn ? (
+          // Uploads are off (lvn-backend ADR-0097): an empty media card says so instead of offering a picker.
+          <p className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border px-4 py-8 text-center text-sm text-muted">
+            <Icon className="size-6" aria-hidden />
+            {t('media.uploadsOff')}
+          </p>
         ) : (
           <button
             type="button"

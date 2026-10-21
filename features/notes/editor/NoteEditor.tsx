@@ -23,7 +23,8 @@ import { useAutosave, type SaveStatus, type SendSave } from './autosave'
 import { CARD_NODES, CONVERTIBLE, convertCard, currentCard, deleteCard, duplicateCard, insertCardAfter, insertMediaCards, moveCard, selectCard } from './nodes'
 import { AnchorChips } from './anchors'
 import { ReadingHighlight, setReadingCard } from './reading'
-import { CARD_MENU, SlashMenu } from './slash'
+import { uploads, useUploadsEnabled } from '../uploads'
+import { cardMenu, SlashMenu } from './slash'
 import { RecordDialog } from './Recorder'
 import { CardRail } from '../view/CardRail'
 
@@ -67,6 +68,8 @@ const SAFE_LINK = /^(https?:\/\/|mailto:)/i
  */
 export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion, onAnchor, onEditor, compact = false, tabs, panel, contentPanel, aside }: NoteEditorProps) {
   const t = useTranslations('notes.editor')
+  // Keeps `uploads.enabled` current for the slash menu, drop and paste (lvn-backend ADR-0097).
+  useUploadsEnabled()
   const anchorRef = useRef(onAnchor)
   anchorRef.current = onAnchor
   const [title, setTitle] = useState(initialTitle)
@@ -99,9 +102,18 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
     content: doc,
     editorProps: {
       attributes: { class: 'lvn-editor-content focus:outline-none', 'aria-label': t('content'), 'aria-multiline': 'true', role: 'textbox' },
-      // Pictures, video, audio and PDFs dropped or pasted into the note become media cards that upload them.
-      handleDrop: (view, event, _slice, moved) => !moved && insertMediaCards(view, [...(event.dataTransfer?.files ?? [])], view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos),
-      handlePaste: (view, event) => insertMediaCards(view, [...(event.clipboardData?.files ?? [])]),
+      // Pictures, video, audio and PDFs dropped or pasted into the note become media cards that upload them. While uploads
+      // are off (lvn-backend ADR-0097) a dropped or pasted file is ignored, not opened by the browser.
+      handleDrop: (view, event, _slice, moved) => {
+        const files = [...(event.dataTransfer?.files ?? [])]
+        if (!uploads.enabled) return files.length > 0
+        return !moved && insertMediaCards(view, files, view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos)
+      },
+      handlePaste: (view, event) => {
+        const files = [...(event.clipboardData?.files ?? [])]
+        if (!uploads.enabled) return files.length > 0
+        return insertMediaCards(view, files)
+      },
     },
     onUpdate: ({ editor: e }) => autosave.changed(titleRef.current, e.getJSON()),
   })
@@ -361,6 +373,7 @@ function Toolbar({ editor, sticky }: { editor: Editor | null; sticky: 'top-0' | 
  */
 function CardHandle({ editor }: { editor: Editor }) {
   const t = useTranslations('notes.editor')
+  const uploadsOn = useUploadsEnabled()
   const [at, setAt] = useState<{ pos: number; top: number } | null>(null)
   const [menu, setMenu] = useState<'add' | 'card' | null>(null)
   const box = useRef<HTMLDivElement>(null)
@@ -407,6 +420,7 @@ function CardHandle({ editor }: { editor: Editor }) {
   }
   const node = at ? editor.state.doc.nodeAt(at.pos) : null
   const convertible = node && ['textCard', 'headingCard', 'quoteCard', 'calloutCard'].includes(node.type.name)
+  const menuItems = cardMenu(uploadsOn)
 
   return (
     <div ref={box} contentEditable={false} className="absolute left-1.5 z-10 flex flex-col items-center gap-0.5 transition-[top] duration-150 sm:left-3" style={{ top: (at?.top ?? 24) + 2, opacity: at ? 1 : 0 }}>
@@ -420,7 +434,7 @@ function CardHandle({ editor }: { editor: Editor }) {
         <div className="absolute left-9 top-0 z-30 w-64 animate-rise rounded-2xl border border-border bg-surface p-1.5 shadow-2xl shadow-black/15" onKeyDown={(e) => e.key === 'Escape' && setMenu(null)}>
           {menu === 'add' ? (
             <ul className="grid max-h-80 grid-cols-1 overflow-y-auto">
-              {CARD_MENU.map((item) => (
+              {menuItems.map((item) => (
                 <li key={item.type}>
                   <button type="button" className="flex w-full flex-col rounded-xl px-3 py-1.5 text-left hover:bg-surface-2" onClick={() => act(() => insertCardAfter(editor, item.type))}>
                     <span className="text-sm font-medium">{t(`cards.${item.type}`)}</span>
@@ -488,6 +502,7 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
   const tRecord = useTranslations('notes.record')
   const [open, setOpen] = useState(false)
   const [recording, setRecording] = useState(false)
+  const uploadsOn = useUploadsEnabled()
   if (!editor) return null
   const add = (type: CardType) => {
     setOpen(false)
@@ -502,7 +517,7 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
       </button>
       {open ? (
         <ul className="absolute z-30 mt-2 grid w-full max-w-xl animate-rise gap-1 rounded-2xl border border-border bg-surface p-2 shadow-2xl shadow-black/10 sm:grid-cols-2">
-          {CARD_MENU.map((item) => (
+          {cardMenu(uploadsOn).map((item) => (
             <li key={item.type}>
               <button type="button" className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-2" onClick={() => add(item.type)}>
                 <span className="text-sm font-medium">{t(`cards.${item.type}`)}</span>
@@ -510,8 +525,9 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
               </button>
             </li>
           ))}
-          {/* A voice note (lvn-backend ADR-0062): recorded here, then an audio card like a dropped file. */}
-          <li>
+          {/* A voice note (lvn-backend ADR-0062): recorded here, then an audio card like a dropped file. An upload, so only
+              while uploads are on (ADR-0097). */}
+          {uploadsOn ? <li>
             <button
               type="button"
               className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-2"
@@ -526,7 +542,7 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
               </span>
               <span className="text-xs text-muted">{tRecord('menuHint')}</span>
             </button>
-          </li>
+          </li> : null}
         </ul>
       ) : null}
       <RecordDialog

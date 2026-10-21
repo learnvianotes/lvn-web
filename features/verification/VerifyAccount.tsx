@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { putToStorage, UploadError } from '@/features/notes/media'
 import { CompleteNoteUploadDocument, CreateNoteUploadDocument, FindTeachersDocument, MyVerificationRequestsDocument, RequestDocumentVerificationDocument, RequestTeacherVerificationDocument, WithdrawVerificationRequestDocument } from '@/graphql/generated/graphql'
+import { useUploadsEnabled } from '@/features/notes/uploads'
 
 /** What proof of enrolment may be (lvn-backend files.service: pictures or PDF), at most three files. */
 const DOCUMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -27,6 +28,8 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
   const [withdraw] = useMutation(WithdrawVerificationRequestDocument)
   const [mode, setMode] = useState<'teacher' | 'documents' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Documents are uploads: offered only while uploads are on (lvn-backend ADR-0097); asking a teacher always works.
+  const uploadsOn = useUploadsEnabled()
   // Account verification only: applications to teach have their own page (lvn-backend ADR-0073).
   const requests = (mine.data?.myVerificationRequests ?? []).filter((r) => r.purpose === 'ACCOUNT')
   const pending = requests.find((r) => r.status === 'PENDING')
@@ -79,7 +82,7 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
           <GraduationCap className="size-4" aria-hidden />
           {t('askTeacher')}
         </Button>
-        {!restrictedMinor ? (
+        {!restrictedMinor && uploadsOn ? (
           <Button size="sm" variant={mode === 'documents' ? 'primary' : 'secondary'} className="gap-1.5" onClick={() => setMode(mode === 'documents' ? null : 'documents')}>
             <FileUp className="size-4" aria-hidden />
             {t('sendDocuments')}
