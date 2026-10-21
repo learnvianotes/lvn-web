@@ -24,6 +24,8 @@ test('prepares an archive and offers it for download', async ({ page }) => {
     viewerExtras,
   )
   await page.goto('/profile')
+  // What the Privacy Policy promises the archive holds: the age record and the activity events too.
+  await expect(page.getByText(/your account with your date of birth and the terms you accepted, .* every learning activity event/)).toBeVisible()
   await page.getByRole('button', { name: 'Prepare my archive' }).click()
   await expect(page.getByText('Preparing your archive…')).toBeVisible()
   const download = page.getByRole('link', { name: 'Download' })

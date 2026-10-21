@@ -977,7 +977,7 @@
     "title": "Your data",
     "export": {
       "heading": "Download your data",
-      "lead": "An archive of everything about you: your notes as Markdown and JSON with their pictures and files, and your account data. One a day; we email you when it is ready.",
+      "lead": "An archive of everything we hold about you: your account with your date of birth and the terms you accepted, your notes as Markdown and JSON with their pictures and files, your posts and comments, your study progress and every learning activity event. One a day; we email you when it is ready.",
       "request": "Prepare my archive",
       "preparing": "Preparing your archive… you can leave this page; we will email you.",
       "ready": "Your archive is ready ({size}). You can download it until {date}.",
