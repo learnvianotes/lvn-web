@@ -4,6 +4,8 @@
  *   it, so a test site can't sign anyone into live accounts (ids: config/firebase-projects.json);
  * - a production build stops while the site isn't ready to go live: the Privacy Policy, Terms and Grievance pages need
  *   the operator's details (config/legal.ts → LEGAL). Other builds show those gaps on the pages instead.
+ * A production build for this machine (NEXT_PUBLIC_SITE_URL on localhost: scripts/lighthouse.mjs) skips them: its
+ * addresses are compiled in, so it can never be deployed.
  * Relative imports only: next.config.ts loads this file without the @/ alias.
  */
 import { readFileSync } from 'node:fs'
@@ -12,6 +14,8 @@ import { LEGAL, LEGAL_FIELD_LABELS, missingLegalFields, type LegalField } from '
 export interface BuildFacts {
   /** NEXT_PUBLIC_APP_ENV */
   appEnv: string
+  /** NEXT_PUBLIC_SITE_URL */
+  siteUrl?: string
   /** NEXT_PUBLIC_FIREBASE_PROJECT_ID; empty when this build has no Google sign-in */
   firebaseProject?: string
   /** The production project's id (config/firebase-projects.json) */
@@ -35,8 +39,12 @@ export function firebaseProblem(appEnv: string, project: string, production: str
   return ''
 }
 
+/** Whether the site's address is this machine: such a build serves only here (audits), never a deployment. */
+export const isLocalSite = (siteUrl: string): boolean => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(siteUrl)
+
 /** Why this build may not go ahead; empty when it may. */
-export function launchProblems({ appEnv, firebaseProject = '', productionProject = productionFirebaseProject(), legal = LEGAL }: BuildFacts): string[] {
+export function launchProblems({ appEnv, siteUrl = '', firebaseProject = '', productionProject = productionFirebaseProject(), legal = LEGAL }: BuildFacts): string[] {
+  if (appEnv === 'production' && isLocalSite(siteUrl)) return []
   const problems: string[] = []
   const firebase = firebaseProblem(appEnv, firebaseProject, productionProject)
   if (firebase) problems.push(firebase)

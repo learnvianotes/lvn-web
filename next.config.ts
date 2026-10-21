@@ -141,7 +141,11 @@ const withIntl = createNextIntlPlugin('./i18n/request.ts')
 /** `next build` runs the launch checks first (lib/launch-checks.ts, lvn-backend ADR-0093); dev and start don't. */
 export default function nextConfig(phase: string): NextConfig {
   if (phase === PHASE_PRODUCTION_BUILD) {
-    const problems = launchProblems({ appEnv: process.env.NEXT_PUBLIC_APP_ENV ?? 'development', firebaseProject: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '' })
+    const problems = launchProblems({
+      appEnv: process.env.NEXT_PUBLIC_APP_ENV ?? 'development',
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? '',
+      firebaseProject: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+    })
     if (problems.length) throw new Error(`Launch check failed:\n  - ${problems.join('\n  - ')}`)
   }
   return withIntl(config)

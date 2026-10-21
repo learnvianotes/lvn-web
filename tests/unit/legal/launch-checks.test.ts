@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { missingLegalFields } from '@/config/legal'
-import { firebaseProblem, launchProblems, productionFirebaseProject } from '@/lib/launch-checks'
+import { firebaseProblem, isLocalSite, launchProblems, productionFirebaseProject } from '@/lib/launch-checks'
 
 const filled = { operator: 'Asha Rao', address: '1 MG Road, Bengaluru, Karnataka 560001', courtsCity: 'Bengaluru', grievanceOfficer: 'Asha Rao', email: 'grievance@learnvianotes.in' }
 
@@ -45,6 +45,15 @@ describe('launchProblems (lvn-backend ADR-0093)', () => {
 
   it('reports a wrong project beside blank details', () => {
     expect(launchProblems({ appEnv: 'production', firebaseProject: 'learnvianotes-test', legal: { ...filled, email: '' } })).toHaveLength(2)
+  })
+
+  it('a production build for this machine (Lighthouse) is not a launch, and passes', () => {
+    expect(launchProblems({ appEnv: 'production', siteUrl: 'http://localhost:3102', legal: { ...filled, operator: '' } })).toEqual([])
+    expect(isLocalSite('http://127.0.0.1:3000/')).toBe(true)
+    expect(isLocalSite('https://www.learnvianotes.in')).toBe(false)
+    expect(isLocalSite('https://localhost.example.com')).toBe(false)
+    // A real address is checked whatever else is set.
+    expect(launchProblems({ appEnv: 'production', siteUrl: 'https://www.learnvianotes.in', firebaseProject: prod, legal: { ...filled, operator: '' } })).toHaveLength(1)
   })
 
   it('lets other builds through with the gaps shown on the pages', () => {
