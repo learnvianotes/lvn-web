@@ -18,6 +18,18 @@
       "menuClose": "Close browse"
     },
     "theme": {
+      "appearance": "Appearance",
+      "hint": "Saved on this device. System follows your device.",
+      "mode": "Mode",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark",
+      "accent": "Accent",
+      "navy": "Navy",
+      "teal": "Teal",
+      "forest": "Forest",
+      "slate": "Slate",
+      "amber": "Amber",
       "toLight": "Switch to light theme",
       "toDark": "Switch to dark theme"
     },

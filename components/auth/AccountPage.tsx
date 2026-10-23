@@ -29,6 +29,7 @@ import { ReviewRequests } from '@/features/verification/ReviewRequests'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
 import { AiAccountSection } from '@/features/ai/AiPanel'
 import { Interests } from '@/features/community/Interests'
+import { AppearanceSettings } from '@/components/theme/AppearanceSettings'
 
 type Viewer = NonNullable<ViewerQuery['viewer']>
 const YEARS: YearOfStudy[] = ['YEAR_1', 'YEAR_2', 'YEAR_3', 'YEAR_4', 'YEAR_5', 'POSTGRADUATE', 'GRADUATED', 'SCHOOL', 'NOT_STUDYING']
@@ -52,6 +53,7 @@ export function AccountPage() {
         </div>
         <SignOutButton />
       </header>
+      <AppearanceSettings />
       <AccountStanding userId={viewer.id} />
       {viewer.globalRole === 'PLATFORM_ADMIN' ? (
         <Link href="/admin/verification" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">

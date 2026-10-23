@@ -35,7 +35,9 @@ Palette rule already in the product (ADR-0094): no purple, violet, indigo, or la
 
 ## Needs backend
 
-Nothing in this revamp needs a backend or contract change.
+Persisting the chosen mode and accent on the account, so the same appearance follows the person to another device, needs a profile or settings field on the API. This change stores the choice only in `localStorage` on this device (`cnote:theme`, `cnote:accent`). No GraphQL field was added.
+
+Nothing else in this revamp needs a backend or contract change.
 
 - Session refresh already returns a session or it does not. A transport failure is handled in the client (timeout, then an on-page error). A real "no cookie" answer still signs the person out.
 - Subject pages tell "missing" from "request failed" with the existing GraphQL result (`null` versus a thrown HTTP or timeout). No new field.

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { APP_NAME } from '@core/config'
 import { SITE_DESCRIPTION } from '@core/app/title'
 import { env } from '@/lib/env'
+import { PAPER, themeBootScript } from '@/lib/theme'
 // The old site's global styles, in its order; feature styles are imported by their components.
 import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import '@core/shared/styles/base.css'
@@ -38,13 +39,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#17171a' },
+    { media: '(prefers-color-scheme: light)', color: PAPER.light },
+    { media: '(prefers-color-scheme: dark)', color: PAPER.dark },
   ],
 }
 
-// Apply the saved theme before first paint (no flash).
-const themeScript = `try{var t=JSON.parse(localStorage.getItem('cnote:theme'));if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)}catch(e){}`
+// Same pre-paint script as the product site, so accent and mode survive a full load into /core.
+const themeScript = themeBootScript()
 
 // Launch splash: shown only while the app is actually loading (removed by core-app/src/app/splash.ts).
 // Inner HTML, so React never owns the nodes the app removes.

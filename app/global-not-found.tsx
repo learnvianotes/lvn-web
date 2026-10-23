@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
-import { THEME_KEY } from '@/lib/theme'
+import { themeBootScript } from '@/lib/theme'
 import './globals.css'
 
 /** 404 for URLs outside every route: / and /core have separate root layouts, so neither can render it. */
@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title'), robots: { index: false } }
 }
 
-const themeScript = `try{var t=JSON.parse(localStorage.getItem('${THEME_KEY}'));if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}`
+const themeScript = themeBootScript()
 
 export default async function GlobalNotFound() {
   const [locale, t] = await Promise.all([getLocale(), getTranslations('notFound')])

@@ -2,11 +2,34 @@
 
 Normative values live in [`tokens.json`](./tokens.json). Web maps them to CSS variables in `app/globals.css` (product) and `core-app/src/shared/styles/base.css` (reader). Mobile should read `tokens.json` and this document, not Tailwind class names.
 
-The product is a study tool for college and interview preparation, 18+, global audience. One navy, ink, and paper. No purple, violet, indigo, lavender, pink gradients, sparkle marks, dummy testimonials, or invented statistics.
+The product is a study tool for college and interview preparation, 18+, global audience. Ink and paper stay fixed. The brand accent is one of five themes (navy by default). No purple, violet, indigo, lavender, pink gradients, sparkle marks, dummy testimonials, or invented statistics.
 
 ## Themes
 
-`data-theme` on the root is `light` or `dark`, chosen before first paint from `cnote:theme` (JSON `"light"` or `"dark"`), otherwise the system preference. The toggle writes that key. Do not use a third theme.
+Two choices, stored on this device only:
+
+| Choice | Key | Values | Default |
+| --- | --- | --- | --- |
+| Mode | `cnote:theme` | JSON `"system"`, `"light"`, `"dark"` | `system` |
+| Accent | `cnote:accent` | JSON `"navy"`, `"teal"`, `"forest"`, `"slate"`, `"amber"` | `navy` |
+
+A missing or unknown mode is system. A missing or unknown accent is navy. An existing stored `"light"` or `"dark"` stays that mode. Core still treats any value other than `"light"` or `"dark"` as system, so `"system"` is safe to share with `/core`.
+
+Before first paint, an inline script sets three attributes on the root:
+
+| Attribute | Meaning |
+| --- | --- |
+| `data-mode` | The saved mode, including `system` |
+| `data-theme` | The resolved scheme: `light` or `dark`. System uses `prefers-color-scheme`. |
+| `data-accent` | The accent id |
+
+The script re-reads both keys when the OS scheme changes. It does not write colors itself. Brand colors come from CSS: `[data-accent="teal"]` and `[data-theme="dark"][data-accent="teal"]` (and the same for every accent). Navy is also the fallback on `:root` when `data-accent` is missing. Do not set accent custom properties from JavaScript; a later scheme change would leave them stale.
+
+`color.base` is shared (paper, ink, lines, success, warning, danger, info, inverse). `color.themes.<id>.light` and `.dark` override only `brand`, `brandHover`, `brandForeground`, `brandSoft`, and `codeTitle`.
+
+Contrast, every accent, both schemes: brand on paper, brand on brandSoft, brandForeground on brand, ink on paper, and inkMuted on paper are at least 4.5:1. Amber's light brand is a dark brown (`#8a4b08`) so white label text passes. Do not use a bright yellow as a fill.
+
+Browser `theme-color` follows the resolved paper (`#f4f6f8` / `#0e1520`), including when the saved mode disagrees with the OS.
 
 | Token | CSS variable | Use |
 | --- | --- | --- |
@@ -151,15 +174,27 @@ Sidebar (from 1024px): wordmark, then nav "Main":
 
 Current item: brandSoft background, brand text, `aria-current="page"`. Others: muted, hover surfaceMuted. Footer of the nav: "Upload a PDF" when uploads are on, then primary "Create Note".
 
-Top bar: Menu (below 1024, `aria-expanded`), search field "Search notes, topics, people, or ask AI…", theme, notifications, avatar (first letter of the display name) to `/profile`, name "Your account". Drawer name "Menu", close "Close the menu". Opening the drawer moves focus to Close and locks body scroll. Escape or Close returns focus to Menu.
+Top bar: Menu (below 1024, `aria-expanded`), search field "Search notes, topics, people, or ask AI…", Appearance, notifications, avatar (first letter of the display name) to `/profile`, name "Your account". Drawer name "Menu", close "Close the menu". Opening the drawer moves focus to Close and locks body scroll. Escape or Close returns focus to Menu.
 
 ### Public header
 
-Same wordmark rule. From 768px: Features (`/#features`), Subjects (`/subjects`), Community (`/community`), Get Started (`/sign-up`, hidden once signed in). Resources from 1024px. Search, notifications, account or "Sign in", theme. Below 768px a "Browse" button opens those links plus Resources and Get Started. It is not named "Menu" (that name is the signed-in app drawer).
+Same wordmark rule. From 768px: Features (`/#features`), Subjects (`/subjects`), Community (`/community`), Get Started (`/sign-up`, hidden once signed in). Resources from 1024px. Search, notifications, account or "Sign in", Appearance. Below 768px a "Browse" button opens those links plus Resources and Get Started. It is not named "Menu" (that name is the signed-in app drawer). The Appearance control is not named "Menu" either.
 
-### Theme toggle
+### Appearance
 
-Name "Switch to dark theme" or "Switch to light theme". Moon in light, sun in dark.
+One control in the public header and the signed-in top bar, and the same controls inline on `/profile`.
+
+Header button: 40×40 ghost icon, accessible name "Appearance", `aria-haspopup="dialog"`, `aria-expanded`. Icon is a monitor for System (and before hydration), a sun for Light, a moon for Dark. It opens a panel anchored to the end of the header, width 288, surface, line border, radius 2xl, shadow md, role dialog, name "Appearance". Escape closes and returns focus to the button. A pointer outside closes it. Choosing a value does not close it. The panel must not widen the header; it overlays.
+
+`/profile` shows the same groups in a surface card under the name, before the other account links. Heading "Appearance". Hint "Saved on this device. System follows your device."
+
+**Mode** — label "Mode", radiogroup, three options in one row: "System", "Light", "Dark". Minimum height 40. Selected: brandSoft fill, brand text, `aria-checked="true"`.
+
+**Accent** — label "Accent", radiogroup, five options in one row: "Navy", "Teal", "Forest", "Slate", "Amber". Each option shows a 16px circle filled with that theme's *light* brand (so the swatch stays recognisable in dark mode) and the name. Selected: brandSoft fill, brand text, 2px brand ring, `aria-checked="true"`.
+
+Writing the choice updates `localStorage` and the three root attributes immediately. Account sync across devices is not implemented (see AUDIT.md, Needs backend).
+
+The `/core` header still has its own light/dark switch (name "Switch to dark mode" or "Switch to light mode"). That switch writes `cnote:theme` as `"light"` or `"dark"` and leaves `data-accent` alone, so the accent follows. Do not rename that core button.
 
 ## States
 
@@ -263,7 +298,7 @@ Ask: the question field is labelled "Your question". Answers list shows Loading 
 
 ### Profile, people, skills, notifications, achievements, history, teach
 
-`/profile` and its tabs (notifications, people, skills). Skills does not render the form until the profile has loaded. Achievements h1 "Achievements" with the real points copy (no invented totals). History and teach follow the same header, list, empty, and error pattern.
+`/profile` starts with the Appearance card (mode and accent), then the existing account links and tabs (notifications, people, skills). Skills does not render the form until the profile has loaded. Achievements h1 "Achievements" with the real points copy (no invented totals). History and teach follow the same header, list, empty, and error pattern.
 
 ### Admin
 
@@ -275,7 +310,8 @@ Reader shell: sticky header 56px, wordmark to the reader home, search, help, the
 
 ## What mobile must match
 
-- Every token in `tokens.json`, both themes.
+- Every token in `tokens.json`: shared `color.base`, and each accent in `color.themes` for light and dark.
+- Mode System (default, follow the OS), Light, and Dark. Accent Navy (default), Teal, Forest, Slate, Amber. Same storage keys and the same English labels.
 - The same English strings (or the same keys once mobile has a catalogue).
 - Wordmark destination: marketing home vs app home.
 - The same nav order and routes.

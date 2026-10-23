@@ -1,10 +1,11 @@
 @import 'tailwindcss';
 
-/* Theme: data-theme on <html> is set before first paint (app/layout.tsx) and by state/theme.ts. */
+/* Theme: data-theme, data-accent, and data-mode are set before first paint (lib/theme.ts).
+   Navy is the default accent. Other accents override brand only; paper and ink stay shared.
+   No purple, lavender, indigo, or violet (ADR-0094). Values: docs/ui-revamp/tokens.json. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* Study palette (docs/ui-revamp/tokens.json). Ink, paper, one navy. No purple, lavender, indigo or violet (ADR-0094). */
   --bg: #f4f6f8;
   --surface: #ffffff;
   --surface-2: #e8edf3;
@@ -51,6 +52,68 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
   --shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
   color-scheme: dark;
+}
+
+/* Accent overrides. The dark rule follows the light rule so it wins (higher specificity). */
+[data-accent='navy'] {
+  --accent: #1e4d8c;
+  --accent-hover: #163e73;
+  --accent-fg: #ffffff;
+  --accent-soft: #e7f0fa;
+}
+[data-theme='dark'][data-accent='navy'] {
+  --accent: #9dc0ea;
+  --accent-hover: #c5d9f4;
+  --accent-fg: #0e1520;
+  --accent-soft: #1a2c44;
+}
+[data-accent='teal'] {
+  --accent: #0c5c66;
+  --accent-hover: #094850;
+  --accent-fg: #ffffff;
+  --accent-soft: #e5f4f6;
+}
+[data-theme='dark'][data-accent='teal'] {
+  --accent: #7ecfcb;
+  --accent-hover: #b6ebe8;
+  --accent-fg: #0e1520;
+  --accent-soft: #123033;
+}
+[data-accent='forest'] {
+  --accent: #0f6b45;
+  --accent-hover: #0b5235;
+  --accent-fg: #ffffff;
+  --accent-soft: #e7f6ee;
+}
+[data-theme='dark'][data-accent='forest'] {
+  --accent: #6ee7a8;
+  --accent-hover: #b6f5d4;
+  --accent-fg: #0e1520;
+  --accent-soft: #123226;
+}
+[data-accent='slate'] {
+  --accent: #334155;
+  --accent-hover: #1e293b;
+  --accent-fg: #ffffff;
+  --accent-soft: #e8edf3;
+}
+[data-theme='dark'][data-accent='slate'] {
+  --accent: #cbd5e1;
+  --accent-hover: #e2e8f0;
+  --accent-fg: #0e1520;
+  --accent-soft: #1c2633;
+}
+[data-accent='amber'] {
+  --accent: #8a4b08;
+  --accent-hover: #6b3a06;
+  --accent-fg: #ffffff;
+  --accent-soft: #fbf3e4;
+}
+[data-theme='dark'][data-accent='amber'] {
+  --accent: #f5c16c;
+  --accent-hover: #f8d7a0;
+  --accent-fg: #0e1520;
+  --accent-soft: #3a2a10;
 }
 
 @theme inline {

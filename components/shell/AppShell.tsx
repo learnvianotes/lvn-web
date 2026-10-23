@@ -28,7 +28,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Logo } from '@/components/brand/Logo'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { AppearanceMenu } from '@/components/theme/AppearanceMenu'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { useReadPdf } from '@/features/reader/readPdf'
 import { OPEN_SEARCH_EVENT } from '@/features/search/SearchPalette'
@@ -203,7 +203,6 @@ function Nav() {
 /** The top bar: the menu (below 1024 px), search (opens the palette), the theme, the bell and the avatar. */
 function TopBar({ onMenu, open, menuButton }: { onMenu: () => void; open: boolean; menuButton: RefObject<HTMLButtonElement | null> }) {
   const t = useTranslations('shell')
-  const ts = useTranslations('site')
   const router = useRouter()
   const viewer = useQuery(ViewerDocument).data?.viewer
   return (
@@ -226,7 +225,7 @@ function TopBar({ onMenu, open, menuButton }: { onMenu: () => void; open: boolea
           <kbd className="ml-auto hidden rounded border border-border px-1.5 text-[10px] sm:inline">Ctrl K</kbd>
         </button>
         <div className="ml-auto flex items-center gap-0.5">
-          <ThemeToggle labels={{ toLight: ts('theme.toLight'), toDark: ts('theme.toDark') }} />
+          <AppearanceMenu />
           <NotificationBell />
           <Link href="/profile" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
             {(viewer?.displayName ?? '?').slice(0, 1).toUpperCase()}

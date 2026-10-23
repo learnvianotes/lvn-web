@@ -6,7 +6,7 @@ import { Logo } from './brand/Logo'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { SearchButton } from '@/features/search/SearchButton'
 import { AccountLink } from './auth/AccountLink'
-import { ThemeToggle } from './ThemeToggle'
+import { AppearanceMenu } from './theme/AppearanceMenu'
 import { GuestNav } from './landing/GuestNav'
 import { PublicMenu } from './landing/PublicMenu'
 
@@ -38,7 +38,7 @@ export async function SiteHeader() {
           <SearchButton label={t('nav.search')} />
           <NotificationBell />
           <AccountLink labels={{ signIn: ta('signIn'), account: ta('account'), notes: ta('myNotes'), community: ta('community'), askAi: ta('askAi') }} />
-          <ThemeToggle labels={{ toLight: t('theme.toLight'), toDark: t('theme.toDark') }} />
+          <AppearanceMenu />
         </nav>
       </div>
     </header>
