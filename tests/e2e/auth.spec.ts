@@ -224,6 +224,74 @@ test.describe('sign in', () => {
     await expect(page.getByLabel('Your name')).toHaveValue('Asha Rao')
   })
 
+  test('email sign-in opens Home and remembers it for the next visit to /', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.goto('/sign-in')
+    await page.getByLabel('Email').fill('asha@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+    // The mark the landing page reads before paint. The session itself stays in memory and the refresh cookie.
+    expect(await page.evaluate(() => localStorage.getItem('lvn.signed-in'))).toBe('1')
+  })
+
+  test('a deep link in next still wins, and next=/ finishes on Home', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.goto('/sign-in?next=/subjects/dsa')
+    await page.getByLabel('Email').fill('asha@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page).toHaveURL(/\/subjects\/dsa$/)
+
+    await page.goto('/sign-in?next=/')
+    await page.getByLabel('Email').fill('asha@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+  })
+
+  test('a provider sign-in opens Home, and keeps a return path (Google finishes the same way)', async ({ page }) => {
+    await mockApi(page, {
+      OAuthExchange: () => ({ oauthExchange: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.addInitScript(() => sessionStorage.setItem('lvn:oauth', JSON.stringify({ provider: 'GITHUB', verifier: 'verifier', state: 'state-1', next: '/subjects/dsa' })))
+    await page.goto('/oauth/callback?code=abc&state=state-1')
+    await expect(page).toHaveURL(/\/subjects\/dsa$/)
+
+    await page.addInitScript(() => sessionStorage.setItem('lvn:oauth', JSON.stringify({ provider: 'GITHUB', verifier: 'verifier', state: 'state-2' })))
+    await page.goto('/oauth/callback?code=def&state=state-2')
+    await expect(page).toHaveURL(/\/home$/)
+  })
+
+  test('finishing a new provider account opens Home, or the page they were sent to', async ({ page }) => {
+    await mockApi(page, {
+      Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
+      CompleteRegistration: () => ({ completeRegistration: ok }),
+    }, 'signed-in')
+    await page.goto('/sign-up/details')
+    await page.getByLabel('Date of birth').fill('2004-05-01')
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page).toHaveURL(/\/home$/)
+
+    await page.goto('/sign-up/details?next=/subjects/dsa')
+    await page.getByLabel('Date of birth').fill('2004-05-01')
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page).toHaveURL(/\/subjects\/dsa$/)
+  })
+
   test('sends signed-out visitors of the account page to sign in and back', async ({ page }) => {
     await mockApi(page, {})
     await page.goto('/profile')
@@ -291,14 +359,25 @@ test.describe('Google first', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Create your account')
   })
 
-  test('someone signed in is offered their account instead', async ({ page }) => {
+  test('someone signed in who opens / is sent to Home, without the landing page being shown', async ({ page }) => {
+    await watchLanding(page)
+    await page.addInitScript(() => localStorage.setItem('lvn.signed-in', '1'))
     await mockApi(page, { Viewer: () => ({ viewer: viewer() }) }, 'signed-in')
     await page.goto('/')
-    const main = page.getByRole('main')
-    await expect(main.getByRole('link', { name: 'Open your home' })).toHaveAttribute('href', '/home')
-    await expect(main.getByRole('link', { name: 'Get Started Free' })).toHaveCount(0)
-    await main.getByRole('link', { name: 'Your account' }).click()
-    await expect(page).toHaveURL(/\/profile$/)
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+    expect(await page.evaluate(() => sessionStorage.getItem('lvn.landing-shown'))).toBeNull()
+    // Home does not send them back.
+    await expect(page).toHaveURL(/\/home$/)
+  })
+
+  test('a signed-out visitor still sees the landing page, even with a leftover hint', async ({ page }) => {
+    await mockApi(page, {})
+    await page.addInitScript(() => localStorage.setItem('lvn.signed-in', '1'))
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Your Learning Community for a Brighter Tomorrow' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Get Started Free' })).toBeVisible()
   })
 })
 
@@ -313,6 +392,19 @@ test('sign-in and sign-up have no serious accessibility violations', async ({ pa
     expect(violations.filter((v) => v.impact === 'critical' || v.impact === 'serious').map((v) => `${path}: ${v.id}`)).toEqual([])
   }
 })
+
+/** Records a visible landing headline across the redirect to Home (sessionStorage survives the navigation). */
+async function watchLanding(page: Page) {
+  await page.addInitScript(() => {
+    const watch = () => {
+      const h1 = document.querySelector('h1')
+      if (!h1 || !/Brighter Tomorrow/.test(h1.textContent ?? '')) return
+      if (getComputedStyle(h1).visibility !== 'hidden') sessionStorage.setItem('lvn.landing-shown', '1')
+    }
+    new MutationObserver(watch).observe(document.documentElement, { subtree: true, childList: true, attributes: true })
+    watch()
+  })
+}
 
 /** Create account, then "Is this right?" about the date of birth (shown in words) → yes. */
 async function createAccount(page: Page, words = '1 May 2004') {

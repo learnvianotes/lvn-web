@@ -14,7 +14,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { CompleteRegistrationDocument, SignInOptionsDocument, SignOutDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { markAgeRefused } from '@/lib/age'
-import { safeNext } from '@/lib/auth/destination'
+import { signedInDestination } from '@/lib/auth/destination'
 import { signedOut } from '@/lib/auth/session'
 import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
 import { applyProblems } from './forms'
@@ -59,7 +59,7 @@ export function DetailsForm() {
     if (name && !form.getValues('displayName')) form.setValue('displayName', name)
   }, [name, form])
   useEffect(() => {
-    if (viewer?.viewer?.registrationComplete) router.replace(safeNext(next) ?? '/profile')
+    if (viewer?.viewer?.registrationComplete) router.replace(signedInDestination(next))
   }, [viewer, router, next])
 
   const onSubmit = form.handleSubmit((values) => {
@@ -87,7 +87,7 @@ export function DetailsForm() {
       }
       if (!payload.ok) return setGeneral(applyProblems(payload.userErrors, form.setError, FIELDS))
       await client.refetchQueries({ include: [ViewerDocument] })
-      router.replace(institutionalEmail ? '/verify' : (safeNext(next) ?? '/profile'))
+      router.replace(institutionalEmail ? '/verify' : signedInDestination(next))
     } catch {
       setGeneral(te('generic'))
     } finally {

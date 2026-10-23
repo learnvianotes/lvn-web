@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server'
 import { FeatureTiles } from '@/components/landing/FeatureTiles'
 import { HeroActions } from '@/components/landing/HeroActions'
 import { HeroArt } from '@/components/landing/HeroArt'
+import { RedirectSignedInHome } from '@/components/landing/RedirectSignedInHome'
 import { listSubjects } from '@/features/subjects/data'
 import { SubjectGrid } from '@/features/subjects/SubjectGrid'
 import { env } from '@/lib/env'
@@ -33,6 +34,7 @@ export default async function HomePage() {
   ]
   return (
     <>
+      <RedirectSignedInHome />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <section className="relative isolate overflow-hidden bg-[linear-gradient(160deg,#F0F9FF_0%,#EFF6FF_55%,#FFFFFF_100%)] pb-16 text-fg dark:bg-[linear-gradient(160deg,#0B1220_0%,#1E3A8A_55%,#2563EB_100%)] dark:text-white">
         <span aria-hidden className="pointer-events-none absolute -right-24 -top-16 -z-10 size-72 rounded-full bg-[#BFDBFE]/50 dark:bg-[#60A5FA]/20" />

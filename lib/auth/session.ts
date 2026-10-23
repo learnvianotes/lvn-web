@@ -1,5 +1,6 @@
 'use client'
 
+import { SIGNED_IN_HINT_KEY } from '@/lib/auth/hint'
 import { env } from '@/lib/env'
 import { useSession } from '@/state/session'
 
@@ -49,6 +50,7 @@ export function refreshSession(): Promise<boolean> {
 /** Stores a fresh access token and schedules its refresh. */
 export function signedIn(accessToken: string, expiresAt: string): void {
   useSession.getState().set(accessToken, expiresAt)
+  setSignedInHint(true)
   clearTimeout(timer)
   timer = setTimeout(() => void refreshSession(), Math.max(5_000, Date.parse(expiresAt) - Date.now() - EARLY_MS))
 }
@@ -56,4 +58,15 @@ export function signedIn(accessToken: string, expiresAt: string): void {
 export function signedOut(): void {
   clearTimeout(timer)
   useSession.getState().clear()
+  setSignedInHint(false)
+}
+
+/** Remember or forget the landing-page hint. It is not the session; losing it only allows one flash of `/`. */
+function setSignedInHint(on: boolean): void {
+  try {
+    if (on) localStorage.setItem(SIGNED_IN_HINT_KEY, '1')
+    else localStorage.removeItem(SIGNED_IN_HINT_KEY)
+  } catch {
+    // Private mode, or no window. The session itself does not depend on the hint.
+  }
 }
