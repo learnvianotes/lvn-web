@@ -34,6 +34,9 @@ vi.mock('next/link', async () => {
 })
 
 const SECTIONS: [group: string, label: string, href: string][] = [
+  ['Platform', 'Overview', '/admin'],
+  ['Platform', 'Configuration', '/admin/settings'],
+  ['Platform', 'Plans & pricing', '/admin/plans'],
   ['People', 'Proof of study to review', '/admin/verification'],
   ['Content', 'Moderation queue', '/admin/moderation'],
   ['Content', 'Weekly contests', '/admin/contests'],
@@ -100,6 +103,9 @@ describe('admin settings sidebar', () => {
   })
 
   it('marks the open section and nothing else', async () => {
+    expect(activeAdminSection('/admin')?.key).toBe('overview')
+    expect(activeAdminSection('/admin/settings')?.key).toBe('settings')
+    expect(activeAdminSection('/admin/plans')?.key).toBe('plans')
     expect(activeAdminSection('/admin/ai')?.href).toBe('/admin/ai')
     expect(activeAdminSection('/admin/ai/models')?.href).toBe('/admin/ai')
     expect(activeAdminSection('/admin/moderation')?.key).toBe('moderation')
