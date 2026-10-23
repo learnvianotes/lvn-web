@@ -183,10 +183,14 @@
       "failed": "That sign-in could not be completed. Start again from the sign-in page.",
       "back": "Back to sign in"
     },
+    "invite": {
+      "notice": "This beta is invite-only. Sign in with Google or email if an admin has added your address."
+    },
     "errors": {
       "generic": "Something went wrong. Try again.",
       "required": "Required",
-      "email": "Enter a valid email address."
+      "email": "Enter a valid email address.",
+      "inviteOnly": "LearnViaNotes beta is invite-only. Ask an admin to add your email."
     },
     "nav": {
       "signIn": "Sign in",
@@ -277,6 +281,7 @@
     "review": "Review flashcards",
     "resources": "Your resources",
     "savedResources": "Bookmarks: your saved notes and resources",
+    "plan": "Your plan",
     "adminContests": "Write weekly contests"
   },
   "notes": {
@@ -2630,6 +2635,7 @@
     "upload": "Upload a PDF",
     "uploading": "Uploading…",
     "createNote": "Create Note",
+    "createFailed": "The note could not be created. Try again.",
     "entries": {
       "home": "Home",
       "notes": "My Notes",
@@ -2942,7 +2948,8 @@
       "search_hybrid": "Hybrid search",
       "search_timeout_ms": "Search timeout",
       "account_minimum_age": "Minimum account age",
-      "digital_consent_age": "Digital consent age"
+      "digital_consent_age": "Digital consent age",
+      "access_allowlist_enabled": "Beta allowlist"
     },
     "default": "Default",
     "custom": "Custom",
@@ -2978,6 +2985,7 @@
       "uploads_enabled": "Turn off uploads? People will not be able to upload files until you turn this back on.",
       "ai_public_pipeline": "Turn off the public AI pipeline? Public notes will stop getting AI study aids until you turn it back on.",
       "search_hybrid": "Turn off hybrid search? Search will stop combining words and meaning until you turn it back on.",
+      "access_allowlist_enabled": "Turn on the beta allowlist? Only emails on the list will be able to sign in or create an account.",
       "account_minimum_age": "Change the minimum account age to {value}? People younger than that cannot register. It can never be below 18.",
       "digital_consent_age": "Change the digital consent age to {value}?",
       "generic": "Save this change to {name}?"
@@ -3023,6 +3031,7 @@
       "PLATFORM_ADMIN": "Platform admins"
     },
     "limitKeys": {
+      "AI_REQUESTS_DAILY": "AI asks a day",
       "AI_TOKENS_DAILY": "AI tokens a day",
       "CLASSROOMS_OWNED": "Classes owned",
       "CLASSROOM_MEMBERS": "People in a class",
@@ -3030,6 +3039,7 @@
       "GROUPS_OWNED": "Groups owned",
       "GROUP_MEMBERS": "People in a group",
       "IMPORTS_DAILY": "Imports a day",
+      "NOTES_OWNED": "Notes you can keep",
       "ORG_SEATS": "Organisation seats",
       "PDF_PAGES_MONTHLY": "PDF pages a month",
       "PROJECT_WORKSPACES": "Project workspaces",
@@ -3072,6 +3082,81 @@
       "free": "The free plan stays active."
     }
   },
+  "adminAccess": {
+    "title": "Beta access",
+    "lead": "While the allowlist is on, only these emails can sign in or create an account, with Google or with email. Each role is applied when they join, and updated if they already have an account.",
+    "loading": "Loading…",
+    "failed": "The allowlist could not load. Try again.",
+    "notAllowed": "Only platform admins manage beta access.",
+    "settingTitle": "Invite-only beta",
+    "settingOn": "On. Only the emails below can sign in or sign up.",
+    "settingOff": "Off. Anyone can sign in or sign up.",
+    "settingMissing": "This setting was not in configuration. Open configuration to add it, or turn it on there.",
+    "settingFailed": "The setting could not load. You can still edit it in configuration.",
+    "settingLink": "Open in configuration",
+    "settingConfirmTitle": "Change beta access",
+    "settingOnConfirm": "Turn the allowlist on? Only the emails on this list will be able to sign in or create an account.",
+    "settingOffConfirm": "Turn the allowlist off? Anyone will be able to sign in or create an account.",
+    "settingConfirm": "Save",
+    "search": "Search emails",
+    "searchPlaceholder": "Search by email",
+    "none": "No one is on the list yet.",
+    "noneSearch": "No emails match that search.",
+    "addTitle": "Add emails",
+    "emails": "Email addresses",
+    "emailsHint": "One address, or several separated by commas, spaces or new lines.",
+    "emailRequired": "Enter an email address.",
+    "invalidEmails": "These are not email addresses: {emails}",
+    "role": "Role",
+    "note": "Note",
+    "noteHint": "Optional. The same note is saved on every address you add together.",
+    "add": "Add",
+    "adding": "Adding…",
+    "hasAccount": "Has an account",
+    "noAccount": "No account yet",
+    "added": "Added {date}",
+    "addedBy": "Added by {email}",
+    "roleFor": "Role for {email}",
+    "remove": "Remove",
+    "removeNamed": "Remove {email}",
+    "removeTitle": "Remove {email}",
+    "removeConfirm": "Remove {email} from the beta? They will not be able to sign in while the allowlist is on.",
+    "removing": "Removing…",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "roles": {
+      "STUDENT": "Student",
+      "TEACHER": "Teacher",
+      "PLATFORM_ADMIN": "Platform admin"
+    }
+  },
+  "plans": {
+    "title": "Plans",
+    "lead": "What each plan includes. Saving or viewing a price does not charge anyone.",
+    "loading": "Loading…",
+    "failed": "Plans could not load. Try again.",
+    "none": "No plans are available right now.",
+    "yours": "Your plan",
+    "yoursFailed": "Your plan could not load. The plans below are still shown.",
+    "signIn": "Sign in to see how much of your plan you have used.",
+    "free": "Free",
+    "current": "Current plan",
+    "features": "Features",
+    "noFeatures": "No features listed.",
+    "limits": "Limits",
+    "noLimits": "No limits listed.",
+    "unlimited": "Unlimited",
+    "noUsage": "Nothing is counted against this plan yet.",
+    "resets": "Resets {when}",
+    "perMonth": "month",
+    "perYear": "year",
+    "contact": "Contact us to change plan",
+    "intervals": {
+      "MONTH": "Monthly",
+      "YEAR": "Yearly",
+      "NONE": "One-time"
+    }
+  },
   "adminNav": {
     "label": "Admin settings",
     "open": "Admin settings",
@@ -3086,6 +3171,7 @@
       "overview": "Overview",
       "settings": "Configuration",
       "plans": "Plans & pricing",
+      "access": "Beta access",
       "verification": "Proof of study to review",
       "moderation": "Moderation queue",
       "contests": "Weekly contests",

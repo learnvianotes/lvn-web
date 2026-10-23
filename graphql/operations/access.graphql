@@ -1,0 +1,60 @@
+# Beta allowlist (lvn-backend contracts 0.69.0).
+
+query AccessPolicy {
+  accessPolicy {
+    inviteOnly
+  }
+}
+
+fragment AccessAllowlistFields on AccessAllowlistEntry {
+  id
+  email
+  role
+  note
+  hasAccount
+  addedByEmail
+  createdAt
+}
+
+query AdminAccessAllowlist($search: String) {
+  adminAccessAllowlist(search: $search) {
+    ...AccessAllowlistFields
+  }
+}
+
+mutation AddAccessAllowlistEntry($input: AddAccessAllowlistEntryInput!) {
+  addAccessAllowlistEntry(input: $input) {
+    entry {
+      ...AccessAllowlistFields
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+mutation UpdateAccessAllowlistEntry($input: UpdateAccessAllowlistEntryInput!) {
+  updateAccessAllowlistEntry(input: $input) {
+    entry {
+      ...AccessAllowlistFields
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+mutation RemoveAccessAllowlistEntry($id: UUID!) {
+  removeAccessAllowlistEntry(id: $id) {
+    ok
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

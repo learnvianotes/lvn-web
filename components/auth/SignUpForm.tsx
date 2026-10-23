@@ -15,7 +15,9 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { SignInOptionsDocument, SignUpDocument } from '@/graphql/generated/graphql'
 import { markAgeRefused } from '@/lib/age'
+import { refusalMessage } from '@/lib/limit-error'
 import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
+import { InviteOnlyNotice } from './InviteOnlyNotice'
 import { applyProblems } from './forms'
 import { ProviderButtons } from './ProviderButtons'
 import { useFinishSignIn } from './useFinishSignIn'
@@ -38,11 +40,14 @@ const FIELDS = ['displayName', 'email', 'password', 'dateOfBirth', 'institutiona
 export function SignUpForm() {
   const t = useTranslations('auth.signUp')
   const te = useTranslations('auth.errors')
-  const next = useSearchParams().get('next')
+  const params = useSearchParams()
+  const next = params.get('next')
+  const inviteFromQuery = params.get('error') === 'invite_only'
   const { data: options } = useQuery(SignInOptionsDocument)
   const [signUp] = useMutation(SignUpDocument)
   const finish = useFinishSignIn()
   const [general, setGeneral] = useState<string | null>(null)
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null)
   // "I teach" leads to the application to teach after sign-up (lvn-backend ADR-0073).
   const [teaches, setTeaches] = useState(false)
   const refused = useAgeRefused()
@@ -58,6 +63,7 @@ export function SignUpForm() {
 
   const onSubmit = form.handleSubmit((values) => {
     setGeneral(null)
+    setInviteMessage(null)
     setPending(values)
   })
 
@@ -72,9 +78,12 @@ export function SignUpForm() {
       if (payload.session) return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'))
       // Too young for an account: nothing was created; this device keeps the form closed for a day.
       if (payload.userErrors.some((e) => e.code === 'UNDER_MINIMUM_AGE')) return markAgeRefused()
-      setGeneral(applyProblems(payload.userErrors, form.setError, FIELDS))
-    } catch {
-      setGeneral(te('generic'))
+      const blocked = payload.userErrors.find((error) => error.code === 'FORBIDDEN')
+      const rest = blocked ? payload.userErrors.filter((error) => error !== blocked) : payload.userErrors
+      if (blocked) setInviteMessage(blocked.message)
+      setGeneral(applyProblems(rest, form.setError, FIELDS))
+    } catch (error) {
+      setGeneral(refusalMessage(error) ?? te('generic'))
     } finally {
       setPending(null)
       setSending(false)
@@ -95,6 +104,8 @@ export function SignUpForm() {
         <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
+      <InviteOnlyNotice />
+      {inviteFromQuery || inviteMessage ? <Alert tone="error">{inviteMessage ?? te('inviteOnly')}</Alert> : null}
       <ProviderButtons next={next} />
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {general ? <Alert tone="error">{general}</Alert> : null}

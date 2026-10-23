@@ -7,6 +7,7 @@ export const PLAN_CODE = /^[A-Z][A-Z0-9_]{1,31}$/
 export const FREE_PLAN_CODE = 'FREE'
 
 export const LIMIT_KEYS = [
+  'AI_REQUESTS_DAILY',
   'AI_TOKENS_DAILY',
   'CLASSROOMS_OWNED',
   'CLASSROOM_MEMBERS',
@@ -14,6 +15,7 @@ export const LIMIT_KEYS = [
   'GROUPS_OWNED',
   'GROUP_MEMBERS',
   'IMPORTS_DAILY',
+  'NOTES_OWNED',
   'ORG_SEATS',
   'PDF_PAGES_MONTHLY',
   'PROJECT_WORKSPACES',

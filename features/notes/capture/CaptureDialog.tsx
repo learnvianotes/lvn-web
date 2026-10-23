@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { CreateNoteDocument, RunAiTaskDocument, UpdateNoteDraftDocument } from '@/graphql/generated/graphql'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { QuickNoteLimits } from '@/lib/contracts/domain/enums'
 import { positionBetween } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
@@ -86,8 +87,9 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
         setBusy({ upload: 0, of: items.length, progress: 0 })
         const when = new Date().toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
         const created = await client.mutate({ mutation: CreateNoteDocument, variables: { input: { title: t('noteTitle', { when }), ...(folderId ? { folderId } : {}) } } })
+        const createdProblem = created.data?.createNote.userErrors[0]
         const noteId = created.data?.createNote.note?.id
-        if (!noteId) throw new UploadError(created.data?.createNote.userErrors[0]?.message ?? t('failed'))
+        if (!noteId) throw new UploadError(createdProblem?.message ?? t('failed'), isLimitCode(createdProblem?.code))
         made.current = { noteId, carded: new Set(), last: null }
       }
       const state = made.current
@@ -106,7 +108,8 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
       })
       if (ops.length) {
         const saved = await client.mutate({ mutation: UpdateNoteDraftDocument, variables: { input: { noteId: state.noteId, ops } } })
-        if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(saved.data.updateNoteDraft.userErrors[0]!.message)
+        const savedProblem = saved.data?.updateNoteDraft.userErrors[0]
+        if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(savedProblem!.message, isLimitCode(savedProblem?.code))
         list.forEach((item) => state.carded.add(item.key))
         state.last = last
       }
@@ -115,7 +118,8 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
       await client.mutate({ mutation: RunAiTaskDocument, variables: { input: { noteId: state.noteId, task: 'QUICK_NOTE' } } })
       router.push(`/notes/${state.noteId}?ai=1`)
     } catch (e) {
-      setProblems([e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : t('failed')])
+      const refused = e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : refusalMessage(e)
+      setProblems([refused ?? t('failed')])
       setBusy(null)
     }
   }

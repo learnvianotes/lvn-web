@@ -6042,3 +6042,110 @@ enum YearOfStudy {
   YEAR_4
   YEAR_5
 }
+
+# Local extensions until lvn-backend contracts 0.69.0 (beta allowlist) and 0.70.0 (public plans)
+# are in the exported schema. `pnpm graphql:sync` replaces this file from that export.
+
+extend enum LimitKey {
+  AI_REQUESTS_DAILY
+  NOTES_OWNED
+}
+
+"""Whether sign-up and sign-in are limited to the allowlist. Public, no auth needed."""
+type AccessPolicy {
+  inviteOnly: Boolean!
+}
+
+"""An email allowed to sign up or sign in while the beta allowlist is on."""
+type AccessAllowlistEntry {
+  addedByEmail: String
+  createdAt: DateTime!
+  """Lowercased."""
+  email: String!
+  hasAccount: Boolean!
+  id: UUID!
+  note: String
+  """Applied on sign-up, and on update when the account already exists."""
+  role: GlobalRole!
+}
+
+type AccessAllowlistPayload {
+  entry: AccessAllowlistEntry
+  userErrors: [UserError!]!
+}
+
+input AddAccessAllowlistEntryInput {
+  email: String!
+  note: String
+  role: GlobalRole!
+}
+
+input UpdateAccessAllowlistEntryInput {
+  id: UUID!
+  note: String
+  role: GlobalRole
+}
+
+"""A plan limit for the viewer's role. limit is a decimal string; null means unlimited."""
+type PlanLimit {
+  key: LimitKey!
+  label: String!
+  limit: String
+}
+
+"""An active plan. current is false when nobody is signed in."""
+type PublicPlan {
+  code: String!
+  currency: String!
+  current: Boolean!
+  features: [String!]!
+  id: UUID!
+  interval: PlanInterval!
+  limits: [PlanLimit!]!
+  name: String!
+  priceMinor: Int!
+}
+
+"""used and limit are decimal strings. resetsAt is null when the limit is not periodic."""
+type PlanUsage {
+  key: LimitKey!
+  label: String!
+  limit: String
+  resetsAt: DateTime
+  used: String!
+}
+
+"""The signed-in viewer's plan. People with no subscription are on FREE."""
+type MyPlan {
+  plan: PublicPlan!
+  usage: [PlanUsage!]!
+}
+
+extend type Query {
+  """Public."""
+  accessPolicy: AccessPolicy!
+
+  """Platform admins."""
+  adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!
+
+  """Signed in. People with no subscription are on FREE."""
+  myPlan: MyPlan!
+
+  """Active plans only, ordered by price. Works signed out."""
+  plans: [PublicPlan!]!
+}
+
+extend type Mutation {
+  """CONFLICT when the email is already listed. VALIDATION for a bad email."""
+  addAccessAllowlistEntry(input: AddAccessAllowlistEntryInput!): AccessAllowlistPayload!
+
+  """
+  FORBIDDEN when this would remove your own entry, or the last platform admin.
+  """
+  removeAccessAllowlistEntry(id: UUID!): OkPayload!
+
+  """
+  FORBIDDEN when this would demote your own entry, or the last platform admin.
+  """
+  updateAccessAllowlistEntry(input: UpdateAccessAllowlistEntryInput!): AccessAllowlistPayload!
+}

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { SignInOptionsDocument, SignInWithGoogleDocument } from '@/graphql/generated/graphql'
 import { googleIdToken } from '@/lib/auth/google'
 import { firebaseConfig } from '@/lib/env'
+import { refusalMessage } from '@/lib/limit-error'
 import { useFinishSignIn } from './useFinishSignIn'
 
 /**
@@ -29,10 +30,11 @@ export function useGoogleSignIn(next?: string | null) {
       const { data: res } = await exchange({ variables: { idToken } })
       const payload = res?.signInWithGoogle
       // The API's messages are written for people; Firebase's and the network's are not.
-      if (!payload?.session) return setError(payload?.userErrors[0]?.message ?? t('failed'))
+      const blocked = payload?.userErrors.find((error) => error.code === 'FORBIDDEN')
+      if (!payload?.session) return setError(blocked?.message ?? payload?.userErrors[0]?.message ?? t('failed'))
       await finish(payload.session, next)
-    } catch {
-      setError(t('failed'))
+    } catch (error) {
+      setError(refusalMessage(error) ?? t('failed'))
     } finally {
       setBusy(false)
     }

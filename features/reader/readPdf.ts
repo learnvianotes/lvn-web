@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { CreateNoteDocument, UpdateNoteDraftDocument } from '@/graphql/generated/graphql'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { UploadLimits } from '@/lib/contracts/domain/enums'
 import { positionBetween } from '@/lib/contracts/validation'
 import { mimeOf, uploadToNote, UploadError } from '@/features/notes/media'
@@ -25,25 +26,31 @@ export function useReadPdf() {
   const router = useRouter()
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [limit, setLimit] = useState(false)
 
   const start = async (file: File, folderId?: string | null) => {
     setError(null)
+    setLimit(false)
     if (mimeOf(file) !== 'application/pdf') return setError(t('readPdfNotPdf'))
     if (file.size > UploadLimits.document) return setError(t('readPdfTooLarge', { mb: UploadLimits.document / 1024 ** 2 }))
     setUploading({ name: file.name, progress: 0 })
     try {
       const created = await client.mutate({ mutation: CreateNoteDocument, variables: { input: { title: titleFromFileName(file.name), ...(folderId ? { folderId } : {}) } } })
+      const problem = created.data?.createNote.userErrors[0]
       const noteId = created.data?.createNote.note?.id
-      if (!noteId) throw new UploadError(created.data?.createNote.userErrors[0]?.message ?? t('readPdfFailed'))
+      if (!noteId) throw new UploadError(problem?.message ?? t('readPdfFailed'), isLimitCode(problem?.code))
       const fileId = await uploadToNote(client, noteId, file, (progress) => setUploading({ name: file.name, progress }))
       const saved = await client.mutate({ mutation: UpdateNoteDraftDocument, variables: { input: { noteId, ops: [{ kind: 'UPSERT', id: newCardId(), type: 'file', position: positionBetween(null, null), content: { fileId } }] } } })
-      if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(saved.data.updateNoteDraft.userErrors[0]!.message)
+      const savedProblem = saved.data?.updateNoteDraft.userErrors[0]
+      if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(savedProblem!.message, isLimitCode(savedProblem?.code))
       router.push(`/notes/${noteId}/read/${fileId}`)
     } catch (e) {
-      setError(e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : t('readPdfFailed'))
+      const refused = e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : refusalMessage(e)
+      setLimit(Boolean((e instanceof UploadError && e.limit) || refusalMessage(e)))
+      setError(refused ?? t('readPdfFailed'))
     } finally {
       setUploading(null)
     }
   }
-  return { start, uploading, error }
+  return { start, uploading, error, limit }
 }

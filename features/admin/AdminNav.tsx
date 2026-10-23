@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { BadgeCheck, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, Wallet, X, type LucideIcon } from 'lucide-react'
+import { BadgeCheck, KeyRound, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -15,7 +15,7 @@ export type AdminSection = {
   href: string
   group: AdminGroupKey
   /** Key under adminNav.sections */
-  key: 'overview' | 'settings' | 'plans' | 'verification' | 'moderation' | 'contests' | 'ai'
+  key: 'overview' | 'settings' | 'plans' | 'access' | 'verification' | 'moderation' | 'contests' | 'ai'
   icon: LucideIcon
 }
 
@@ -27,6 +27,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin', group: 'platform', key: 'overview', icon: LayoutDashboard },
   { href: '/admin/settings', group: 'platform', key: 'settings', icon: SlidersHorizontal },
   { href: '/admin/plans', group: 'platform', key: 'plans', icon: Wallet },
+  { href: '/admin/access', group: 'people', key: 'access', icon: KeyRound },
   { href: '/admin/verification', group: 'people', key: 'verification', icon: BadgeCheck },
   { href: '/admin/moderation', group: 'content', key: 'moderation', icon: ShieldCheck },
   { href: '/admin/contests', group: 'content', key: 'contests', icon: Trophy },

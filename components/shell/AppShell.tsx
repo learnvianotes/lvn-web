@@ -29,10 +29,12 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Logo } from '@/components/brand/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { LimitNotice } from '@/components/ui/limit-notice'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { useReadPdf } from '@/features/reader/readPdf'
 import { OPEN_SEARCH_EVENT } from '@/features/search/SearchPalette'
 import { CreateNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { cn } from '@/lib/cn'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
 import { useUploadsEnabled } from '@/features/notes/uploads'
@@ -149,10 +151,19 @@ function Nav() {
   // Upload (read a PDF) only while uploads are on (lvn-backend ADR-0097).
   const uploadsOn = useUploadsEnabled()
   const [create, creating] = useMutation(CreateNoteDocument)
+  const [createError, setCreateError] = useState<{ message: string; limit: boolean } | null>(null)
   const newNote = async () => {
-    const res = await create({ variables: { input: {} } })
-    const id = res.data?.createNote.note?.id
-    if (id) router.push(`/notes/${id}`)
+    setCreateError(null)
+    try {
+      const res = await create({ variables: { input: {} } })
+      const problem = res.data?.createNote.userErrors[0]
+      const id = res.data?.createNote.note?.id
+      if (id) router.push(`/notes/${id}`)
+      else setCreateError({ message: problem?.message ?? t('createFailed'), limit: isLimitCode(problem?.code) })
+    } catch (error) {
+      const refused = refusalMessage(error)
+      setCreateError({ message: refused ?? t('createFailed'), limit: !!refused })
+    }
   }
   return (
     <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-1">
@@ -186,9 +197,22 @@ function Nav() {
           {readPdf.uploading !== null ? t('uploading') : t('upload')}
         </button>
         {readPdf.error ? (
-          <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
-            {readPdf.error}
-          </p>
+          readPdf.limit ? (
+            <LimitNotice>{readPdf.error}</LimitNotice>
+          ) : (
+            <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
+              {readPdf.error}
+            </p>
+          )
+        ) : null}
+        {createError ? (
+          createError.limit ? (
+            <LimitNotice>{createError.message}</LimitNotice>
+          ) : (
+            <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
+              {createError.message}
+            </p>
+          )
         ) : null}
           </>
         ) : null}

@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { SignInDocument } from '@/graphql/generated/graphql'
+import { refusalMessage } from '@/lib/limit-error'
+import { InviteOnlyNotice } from './InviteOnlyNotice'
 import { applyProblems } from './forms'
 import { ProviderButtons } from './ProviderButtons'
 import { useFinishSignIn } from './useFinishSignIn'
@@ -23,22 +25,29 @@ type Values = z.infer<typeof schema>
 export function SignInForm() {
   const t = useTranslations('auth.signIn')
   const te = useTranslations('auth.errors')
-  const next = useSearchParams().get('next')
+  const params = useSearchParams()
+  const next = params.get('next')
+  const inviteFromQuery = params.get('error') === 'invite_only'
   const [signIn] = useMutation(SignInDocument)
   const finish = useFinishSignIn()
   const [general, setGeneral] = useState<string | null>(null)
+  const [refused, setRefused] = useState<string | null>(null)
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } })
   const { errors, isSubmitting } = form.formState
 
   const onSubmit = form.handleSubmit(async (values) => {
     setGeneral(null)
+    setRefused(null)
     try {
       const { data } = await signIn({ variables: { input: values } })
       const payload = data!.signIn
       if (payload.session) return finish(payload.session, next)
-      setGeneral(applyProblems(payload.userErrors, form.setError, ['email', 'password']))
-    } catch {
-      setGeneral(te('generic'))
+      const blocked = payload.userErrors.find((error) => error.code === 'FORBIDDEN')
+      const rest = blocked ? payload.userErrors.filter((error) => error !== blocked) : payload.userErrors
+      if (blocked) setRefused(blocked.message)
+      setGeneral(applyProblems(rest, form.setError, ['email', 'password']))
+    } catch (error) {
+      setGeneral(refusalMessage(error) ?? te('generic'))
     }
   })
 
@@ -48,6 +57,8 @@ export function SignInForm() {
         <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
+      <InviteOnlyNotice />
+      {inviteFromQuery || refused ? <Alert tone="error">{refused ?? te('inviteOnly')}</Alert> : null}
       <ProviderButtons next={next} />
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {general ? <Alert tone="error">{general}</Alert> : null}

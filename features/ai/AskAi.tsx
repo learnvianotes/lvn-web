@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { limitMessageFromUserErrors, refusalMessage } from '@/lib/limit-error'
 import { AiAnswerDocument, AiStateDocument, AskAiAboutDoubtDocument, AskAiDocument, DeleteAiAnswerDocument, MyAiAnswersDocument, type AiAnswerFieldsFragment, type AskAiScope } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { useLive } from '@/features/notifications/live'
@@ -46,6 +48,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
   const [askDoubt, askingDoubt] = useMutation(AskAiAboutDoubtDocument, { refetchQueries: ['MyAiAnswers'] })
   const [question, setQuestion] = useState(initialQuestion)
   const [error, setError] = useState<string | null>(null)
+  const [limit, setLimit] = useState(false)
   const status = state.data?.aiStatus
   const off = status ? !status.available : false
   const busy = asking.loading || askingDoubt.loading
@@ -53,15 +56,20 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
   const submit = async (event?: React.FormEvent) => {
     event?.preventDefault()
     setError(null)
+    setLimit(false)
     try {
       const res = doubtId ? (await askDoubt({ variables: { doubtId } })).data?.askAiAboutDoubt : (await askAi({ variables: { input: { question: question.trim(), scope, noteId } } })).data?.askAi
-      setError(problemOf(null, res, t('failed')))
+      const hit = limitMessageFromUserErrors(res?.userErrors)
+      setLimit(!!hit)
+      setError(hit ?? problemOf(null, res, t('failed')))
       if (res?.answer) {
         setQuestion('')
         onAsked?.(res.answer)
       }
     } catch (e) {
-      setError(problemOf(e, null, t('failed')))
+      const hit = refusalMessage(e)
+      setLimit(!!hit)
+      setError(hit ?? problemOf(e, null, t('failed')))
     }
   }
 
@@ -74,9 +82,11 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
         </Button>
         {off ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
+          limit ? <LimitNotice>{error}</LimitNotice> : (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          )
         ) : null}
       </div>
     )
@@ -109,9 +119,11 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
       </div>
       {off && offNotice ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
+        limit ? <LimitNotice>{error}</LimitNotice> : (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        )
       ) : null}
     </form>
   )
