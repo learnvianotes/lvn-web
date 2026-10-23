@@ -26,6 +26,7 @@ import { YourData } from '@/features/data/YourData'
 import { DeleteAccount } from '@/features/data/DeleteAccount'
 import { AccountStanding } from '@/features/moderation/Standing'
 import { ReviewRequests } from '@/features/verification/ReviewRequests'
+import { STUDENT_ID_ADMIN_PATH } from '@/features/verification/student-id'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
 import { AiAccountSection } from '@/features/ai/AiPanel'
 import { Interests } from '@/features/community/Interests'
@@ -56,6 +57,12 @@ export function AccountPage() {
       {viewer.globalRole === 'PLATFORM_ADMIN' ? (
         <Link href="/admin/verification" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
           {t('verificationQueue')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
+      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
+        <Link href={STUDENT_ID_ADMIN_PATH} className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
+          {t('studentIdQueue')}
           <span aria-hidden>→</span>
         </Link>
       ) : null}

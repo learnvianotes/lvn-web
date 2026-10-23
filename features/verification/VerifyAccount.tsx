@@ -6,6 +6,7 @@ import { FileUp, GraduationCap, X } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { CollegeIdOption } from '@/features/verification/CollegeIdOption'
 import { putToStorage, UploadError } from '@/features/notes/media'
 import { CompleteNoteUploadDocument, CreateNoteUploadDocument, FindTeachersDocument, MyVerificationRequestsDocument, RequestDocumentVerificationDocument, RequestTeacherVerificationDocument, WithdrawVerificationRequestDocument } from '@/graphql/generated/graphql'
 import { useUploadsEnabled } from '@/features/notes/uploads'
@@ -67,6 +68,7 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
             {error}
           </p>
         ) : null}
+        <CollegeIdOption restrictedMinor={restrictedMinor} />
       </div>
     )
   }
@@ -92,6 +94,7 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
       </div>
       {mode === 'teacher' ? <AskTeacher onSent={() => void done()} /> : null}
       {mode === 'documents' ? <SendDocuments onSent={() => void done()} /> : null}
+      <CollegeIdOption restrictedMinor={restrictedMinor} />
     </div>
   )
 }
