@@ -2920,6 +2920,7 @@
   "adminSettings": {
     "title": "Configuration",
     "lead": "How sign-in, verification, uploads, AI, search and accounts behave. A custom value replaces the server default until you reset it.",
+    "jump": "On this page",
     "loading": "Loading…",
     "failed": "Settings could not load. Try again.",
     "notAllowed": "Only platform admins change these settings.",
@@ -2999,6 +3000,7 @@
     "deleteNamed": "Delete {name}",
     "deleteTitle": "Delete {name}",
     "deactivate": "Deactivate",
+    "deactivateNamed": "Deactivate {name}",
     "deactivateTitle": "Deactivate {name}",
     "active": "Active",
     "inactive": "Inactive",

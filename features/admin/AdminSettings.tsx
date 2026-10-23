@@ -3,7 +3,7 @@
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
 import { useTranslations } from 'next-intl'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -18,31 +18,104 @@ type Setting = AdminSettingsQuery['adminSettings'][number]
 export function AdminSettings() {
   const t = useTranslations('adminSettings')
   const { data, error, previousData, refetch } = useQuery(AdminSettingsDocument, { fetchPolicy: 'cache-and-network' })
-  if (CombinedGraphQLErrors.is(error) && error.errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return <p className="text-muted">{t('notAllowed')}</p>
   // Keep the last list while a save refetches, so a draft in another row is not thrown away.
   const settings = data?.adminSettings ?? previousData?.adminSettings
+  const groups = settings ? groupSettings(settings) : []
+  const categoryKey = groups.map((group) => group.category).join('|')
+  const [closed, setClosed] = useState<ReadonlySet<string>>(new Set())
+  const prepared = useRef(false)
+  useEffect(() => {
+    if (!categoryKey) return
+    const hash = window.location.hash.slice(1)
+    if (!prepared.current) {
+      prepared.current = true
+      if (!window.matchMedia('(min-width: 1024px)').matches) {
+        const categories = categoryKey.split('|')
+        const keep = categories.includes(hash) ? hash : categories[0]
+        setClosed(new Set(categories.filter((category) => category !== keep)))
+      }
+    }
+    if (hash && categoryKey.split('|').includes(hash)) document.getElementById(hash)?.scrollIntoView({ block: 'start' })
+  }, [categoryKey])
+  if (CombinedGraphQLErrors.is(error) && error.errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return <p className="text-muted">{t('notAllowed')}</p>
   if (!settings) return error ? <Alert tone="error">{t('failed')}</Alert> : <p className="text-muted">{t('loading')}</p>
 
+  const reveal = (category: string) => {
+    setClosed((current) => {
+      const next = new Set(current)
+      next.delete(category)
+      return next
+    })
+    requestAnimationFrame(() => document.getElementById(category)?.scrollIntoView({ block: 'start' }))
+  }
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
-      {groupSettings(settings).map((group) => (
-        <section key={group.category} id={group.category} aria-labelledby={`settings-${group.category}`} className="flex scroll-mt-24 flex-col gap-3">
-          <h2 id={`settings-${group.category}`} className="text-lg font-semibold">
-            {t.has(`categories.${group.category}`) ? t(`categories.${group.category}`) : group.category}
-          </h2>
-          <ul className="flex flex-col gap-3">
-            {group.settings.map((setting) => (
-              <li key={setting.key}>
-                <SettingRow setting={setting} onSaved={() => void refetch()} />
+      <nav aria-label={t('jump')} className="sticky top-0 z-10 -mx-4 min-w-0 overflow-x-auto border-b border-border bg-bg/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
+        <ul className="flex w-max min-w-full gap-2">
+          {groups.map((group) => {
+            const label = t.has(`categories.${group.category}`) ? t(`categories.${group.category}`) : group.category
+            return (
+              <li key={group.category} className="shrink-0">
+                <a
+                  href={`#${group.category}`}
+                  className="inline-flex min-h-11 items-center rounded-full border border-border px-3 text-sm font-medium hover:border-accent"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    reveal(group.category)
+                  }}
+                >
+                  {label}
+                </a>
               </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+            )
+          })}
+        </ul>
+      </nav>
+      <div className="grid items-start gap-4 xl:grid-cols-2">
+        {groups.map((group) => {
+          const label = t.has(`categories.${group.category}`) ? t(`categories.${group.category}`) : group.category
+          const open = !closed.has(group.category)
+          return (
+            <section key={group.category} id={group.category} aria-labelledby={`settings-${group.category}`} className="flex scroll-mt-16 flex-col gap-3">
+              <h2 id={`settings-${group.category}`} className="text-lg font-semibold">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={`settings-panel-${group.category}`}
+                  onClick={() =>
+                    setClosed((current) => {
+                      const next = new Set(current)
+                      if (next.has(group.category)) next.delete(group.category)
+                      else next.add(group.category)
+                      return next
+                    })
+                  }
+                  className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl text-left"
+                >
+                  {label}
+                  <span aria-hidden className="text-sm font-normal text-muted">
+                    {open ? '–' : '+'}
+                  </span>
+                </button>
+              </h2>
+              {open ? (
+                <ul id={`settings-panel-${group.category}`} className="flex flex-col gap-3">
+                  {group.settings.map((setting) => (
+                    <li key={setting.key}>
+                      <SettingRow setting={setting} onSaved={() => void refetch()} />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -155,24 +228,24 @@ function SettingRow({ setting, onSaved }: { setting: Setting; onSaved: () => voi
           {shownIssue}
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" disabled={!dirty || !!clientIssue || busy} aria-label={t('saveNamed', { name: label })} onClick={save}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="button" size="sm" className="h-11 w-full sm:w-auto" disabled={!dirty || !!clientIssue || busy} aria-label={t('saveNamed', { name: label })} onClick={save}>
           {updating.loading ? t('saving') : t('save')}
         </Button>
         {setting.overridden ? (
-          <Button type="button" size="sm" variant="secondary" disabled={busy} aria-label={t('resetNamed', { name: label })} onClick={() => void restore()}>
+          <Button type="button" size="sm" variant="secondary" className="h-11 w-full sm:w-auto" disabled={busy} aria-label={t('resetNamed', { name: label })} onClick={() => void restore()}>
             {resetting.loading ? t('resetting') : t('reset')}
           </Button>
         ) : null}
       </div>
-      <Dialog open={confirming} onClose={() => setConfirming(false)} title={t('confirmTitle')}>
+      <Dialog open={confirming} onClose={() => setConfirming(false)} title={t('confirmTitle')} sheet>
         <div className="flex flex-col gap-4">
           <p className="text-sm">{riskyCopy(t, setting, value)}</p>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setConfirming(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" className="h-11 w-full sm:w-auto" onClick={() => setConfirming(false)}>
               {t('confirmCancel')}
             </Button>
-            <Button type="button" disabled={busy} onClick={() => void send(value)}>
+            <Button type="button" className="h-11 w-full sm:w-auto" disabled={busy} onClick={() => void send(value)}>
               {t('confirmSave')}
             </Button>
           </div>
@@ -198,9 +271,11 @@ function Switch({ id, label, hint, checked, invalid, onChange }: { id: string; l
         aria-describedby={hintId}
         aria-invalid={invalid || undefined}
         onClick={() => onChange(!checked)}
-        className={cn('relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-border')}
+        className="relative h-11 w-14 shrink-0"
       >
-        <span aria-hidden className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow', checked ? 'left-5' : 'left-0.5')} />
+        <span aria-hidden className={cn('absolute left-1 top-2 h-7 w-12 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-border')}>
+          <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow', checked ? 'left-5' : 'left-0.5')} />
+        </span>
       </button>
     </div>
   )

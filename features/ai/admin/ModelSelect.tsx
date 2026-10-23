@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { filterModels, groupModels, type ListedModel } from '@/features/ai/admin/catalog'
 import { cn } from '@/lib/cn'
 
-const SELECT = 'w-full rounded-xl border border-border bg-surface px-3 py-2 text-[15px] text-fg'
+const SELECT = 'w-full min-w-0 max-w-full rounded-xl border border-border bg-surface px-3 py-2 text-[15px] text-fg'
 
 /**
  * A labelled select of the models that support one use, with a search box because a provider can list dozens.
@@ -43,7 +43,7 @@ export function ModelSelect({
   const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ') || undefined
   const rows = Math.min(8, Math.max(2, shown.size + (allowEmpty || keepCurrent ? 1 : 0)))
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 max-w-full flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
@@ -53,7 +53,7 @@ export function ModelSelect({
         onChange={(e) => setQuery(e.target.value)}
         aria-label={searchLabel}
         placeholder={searchLabel}
-        className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg placeholder:text-muted"
+        className="h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg placeholder:text-muted"
       />
       <select
         id={id}

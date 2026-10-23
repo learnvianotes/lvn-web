@@ -24,9 +24,15 @@ export function ReviewRequests({ admin, title }: { admin?: boolean; title?: bool
   if (!admin && !requests.length) return null
   return (
     <section aria-labelledby="verify-requests" className="flex flex-col gap-3">
-      <h2 id="verify-requests" className={title ? 'text-2xl font-extrabold tracking-tight' : 'text-lg font-semibold'}>
-        {admin ? t('adminTitle') : t('teacherTitle')}
-      </h2>
+      {title ? (
+        <h1 id="verify-requests" className="text-2xl font-extrabold tracking-tight">
+          {admin ? t('adminTitle') : t('teacherTitle')}
+        </h1>
+      ) : (
+        <h2 id="verify-requests" className="text-lg font-semibold">
+          {admin ? t('adminTitle') : t('teacherTitle')}
+        </h2>
+      )}
       <p className="text-sm text-muted">{admin ? t('adminLead') : t('teacherLead')}</p>
       {data && !requests.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-3">
@@ -86,7 +92,7 @@ function RequestCard({ request: r, onDone }: { request: Request; onDone: () => v
         <ul className="flex flex-col gap-1">
           {r.documents.map((d) => (
             <li key={d.fileId}>
-              <button type="button" onClick={() => void open(d.fileId)} className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
+              <button type="button" onClick={() => void open(d.fileId)} className="inline-flex min-h-11 max-w-full items-center gap-2 break-all text-left text-sm font-medium text-accent hover:underline">
                 <FileText className="size-4" aria-hidden />
                 {d.fileName}
               </button>
@@ -96,13 +102,13 @@ function RequestCard({ request: r, onDone }: { request: Request; onDone: () => v
       ) : null}
       <label className="flex flex-col gap-1">
         <span className="text-xs font-semibold text-muted">{t('reason')}</span>
-        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonHint')} className="h-10 rounded-xl border border-border bg-bg px-3 text-sm" />
+        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonHint')} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3 text-sm" />
       </label>
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" disabled={reviewing.loading} onClick={() => void decide(true)}>
+        <Button size="sm" className="h-11" disabled={reviewing.loading} onClick={() => void decide(true)}>
           {t('approve')}
         </Button>
-        <Button size="sm" variant="secondary" disabled={reviewing.loading} onClick={() => void decide(false)}>
+        <Button size="sm" variant="secondary" className="h-11" disabled={reviewing.loading} onClick={() => void decide(false)}>
           {t('reject')}
         </Button>
       </div>

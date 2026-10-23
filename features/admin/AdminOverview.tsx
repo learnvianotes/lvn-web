@@ -54,7 +54,7 @@ export function AdminOverview() {
         <p className="text-sm text-muted">{t('generatedAt', { when: formatWhen(metrics.generatedAt) })}</p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))]">
         <Users metrics={metrics} />
         <Content metrics={metrics} />
         <Storage metrics={metrics} />
@@ -77,11 +77,11 @@ function Card({ title, href, link, children }: { title: string; href: string; li
   const id = title.toLowerCase().replace(/[^a-z]+/g, '-')
   return (
     <section aria-labelledby={id} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <h2 id={id} className="text-sm font-semibold text-muted">
           {title}
         </h2>
-        <Link href={href} className="shrink-0 text-sm font-medium text-accent">
+        <Link href={href} className="inline-flex min-h-11 items-center text-sm font-medium text-accent">
           {link}
         </Link>
       </div>
@@ -93,8 +93,8 @@ function Card({ title, href, link, children }: { title: string; href: string; li
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="truncate text-lg font-semibold tracking-tight">{value}</dd>
+      <dt className="text-xs break-words text-muted">{label}</dt>
+      <dd className="text-lg font-semibold tracking-tight break-words">{value}</dd>
     </div>
   )
 }
@@ -106,7 +106,7 @@ function Users({ metrics }: { metrics: Metrics }) {
   return (
     <Card title={t('users')} href="/admin/settings#accounts" link={t('usersLink')}>
       <p className="text-3xl font-extrabold tracking-tight">{n(metrics.users.total)}</p>
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-3">
         <Stat label={t('new7')} value={n(metrics.users.newLast7Days)} />
         <Stat label={t('new30')} value={n(metrics.users.newLast30Days)} />
         <Stat label={t('activeUsers')} value={n(metrics.users.active)} />
@@ -152,7 +152,7 @@ function Verification({ metrics }: { metrics: Metrics }) {
   const v = metrics.verification
   return (
     <Card title={t('verification')} href="/admin/verification" link={t('verificationLink')}>
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-3">
         <Stat label={t('studentIdQueue')} value={n(v.studentIdQueue)} />
         <Stat label={t('pendingRequests')} value={n(v.pendingRequests)} />
         <Stat label={t('domainReviews')} value={n(v.domainReviews)} />
@@ -206,13 +206,13 @@ function AiUsage({
           </h2>
           <p className="text-sm text-muted">{t('showing', { from: formatWhen(ai.from), to: formatWhen(ai.to) })}</p>
         </div>
-        <Link href="/admin/ai" className="text-sm font-medium text-accent">
+        <Link href="/admin/ai" className="inline-flex min-h-11 items-center text-sm font-medium text-accent">
           {t('aiLink')}
         </Link>
       </div>
 
       <form
-        className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+        className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
         onSubmit={(e) => {
           e.preventDefault()
           onApply()
@@ -224,11 +224,11 @@ function AiUsage({
         <Field label={t('to')}>
           <Input type="date" value={to} onChange={(e) => onTo(e.target.value)} />
         </Field>
-        <div className="flex gap-2">
-          <Button type="submit" variant="secondary">
+        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row lg:col-span-1">
+          <Button type="submit" variant="secondary" className="h-11 w-full sm:w-auto">
             {t('apply')}
           </Button>
-          <Button type="button" variant="ghost" onClick={onClear}>
+          <Button type="button" variant="ghost" className="h-11 w-full sm:w-auto" onClick={onClear}>
             {t('clear')}
           </Button>
         </div>
@@ -254,6 +254,15 @@ function AiUsage({
   )
 }
 
+function UsageStat({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
+  return (
+    <div className={wide ? 'col-span-2 min-w-0' : 'min-w-0'}>
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className="font-medium break-words">{value}</dd>
+    </div>
+  )
+}
+
 function usd(micro: string, format: ReturnType<typeof useFormatter>): string {
   const dollars = microUsdToUsd(micro)
   if (dollars == null) return micro
@@ -266,20 +275,41 @@ function UsageTable({ title, rows }: { title: string; rows: (UsageRow & { name: 
   const format = useFormatter()
   const max = Math.max(1, ...rows.map((row) => row.tasksRun))
   return (
-    <div className="flex flex-col gap-2">
+    <div className="@container flex min-w-0 flex-col gap-2">
       <h3 className="text-sm font-semibold">{title}</h3>
       {rows.length === 0 ? (
         <p className="text-sm text-muted">{t('noUsage')}</p>
       ) : (
-        <div className="overflow-x-auto" tabIndex={0} aria-label={title}>
-          <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
+        <>
+        <ul className="grid gap-2 @3xl:hidden">
+          {rows.map((row) => {
+            const width = Math.round((row.tasksRun / max) * 100)
+            return (
+              <li key={row.name} className="rounded-xl border border-border p-3">
+                <p className="font-medium break-words">{row.name}</p>
+                <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-2" role="img" aria-label={t('bar', { name: row.name, count: format.number(row.tasksRun) })}>
+                  <span className="block h-full rounded-full bg-accent" style={{ width: `${width}%` }} />
+                </span>
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                  <UsageStat label={t('tasks')} value={format.number(row.tasksRun)} />
+                  <UsageStat label={t('failures')} value={format.number(row.failures)} />
+                  <UsageStat label={t('failureRate')} value={format.number(failureRate(row.failures, row.tasksRun), { style: 'percent', maximumFractionDigits: 1 })} />
+                  <UsageStat label={t('cost')} value={usd(row.costMicroUsd, format)} />
+                  <UsageStat label={t('tokens')} value={`${formatDecimal(row.promptTokens)} + ${formatDecimal(row.completionTokens)}`} wide />
+                </dl>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="hidden min-w-0 @3xl:block">
+          <table className="w-full table-fixed border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted">
-                <th scope="col" className="py-2 pr-3 font-medium">{t('name')}</th>
-                <th scope="col" className="py-2 pr-3 font-medium">{t('tasks')}</th>
-                <th scope="col" className="py-2 pr-3 font-medium">{t('failures')}</th>
-                <th scope="col" className="py-2 pr-3 font-medium">{t('failureRate')}</th>
-                <th scope="col" className="py-2 pr-3 font-medium">{t('tokens')}</th>
+                <th scope="col" className="w-[28%] py-2 pr-2 font-medium">{t('name')}</th>
+                <th scope="col" className="py-2 pr-2 font-medium">{t('tasks')}</th>
+                <th scope="col" className="py-2 pr-2 font-medium">{t('failures')}</th>
+                <th scope="col" className="py-2 pr-2 font-medium">{t('failureRate')}</th>
+                <th scope="col" className="py-2 pr-2 font-medium">{t('tokens')}</th>
                 <th scope="col" className="py-2 font-medium">{t('cost')}</th>
               </tr>
             </thead>
@@ -288,23 +318,24 @@ function UsageTable({ title, rows }: { title: string; rows: (UsageRow & { name: 
                 const width = Math.round((row.tasksRun / max) * 100)
                 return (
                   <tr key={row.name} className="border-b border-border last:border-0">
-                    <th scope="row" className="py-2 pr-3 font-medium">
+                    <th scope="row" className="py-2 pr-2 font-medium break-words">
                       <span className="block">{row.name}</span>
                       <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface-2" role="img" aria-label={t('bar', { name: row.name, count: format.number(row.tasksRun) })}>
                         <span className="block h-full rounded-full bg-accent" style={{ width: `${width}%` }} />
                       </span>
                     </th>
-                    <td className="py-2 pr-3">{format.number(row.tasksRun)}</td>
-                    <td className="py-2 pr-3">{format.number(row.failures)}</td>
-                    <td className="py-2 pr-3">{format.number(failureRate(row.failures, row.tasksRun), { style: 'percent', maximumFractionDigits: 1 })}</td>
-                    <td className="py-2 pr-3">{formatDecimal(row.promptTokens)} + {formatDecimal(row.completionTokens)}</td>
-                    <td className="py-2">{usd(row.costMicroUsd, format)}</td>
+                    <td className="py-2 pr-2 break-words">{format.number(row.tasksRun)}</td>
+                    <td className="py-2 pr-2 break-words">{format.number(row.failures)}</td>
+                    <td className="py-2 pr-2 break-words">{format.number(failureRate(row.failures, row.tasksRun), { style: 'percent', maximumFractionDigits: 1 })}</td>
+                    <td className="py-2 pr-2 break-words">{formatDecimal(row.promptTokens)} + {formatDecimal(row.completionTokens)}</td>
+                    <td className="py-2 break-words">{usd(row.costMicroUsd, format)}</td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )

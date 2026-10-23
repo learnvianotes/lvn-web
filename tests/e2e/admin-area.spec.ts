@@ -123,6 +123,14 @@ async function shot(page: Page, name: string, project: string) {
   await page.screenshot({ path: `${dir}/${name}_${project}.png`, fullPage: true })
 }
 
+async function showCategory(page: Page, name: string) {
+  const toggle = page.getByRole('heading', { level: 2, name }).getByRole('button')
+  await expect(async () => {
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  }).toPass()
+}
+
 async function seriousViolations(page: Page) {
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
   return violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id}: ${v.help}`)
@@ -143,7 +151,8 @@ test('overview shows the figures, rejects a window past 366 days, and links to t
   await expect(page.getByText('$18.65')).toBeVisible()
   await expect(page.getByText('1.1%')).toBeVisible()
   await expect(page.getByText('84,200,120')).toBeVisible()
-  await expect(page.getByRole('rowheader', { name: /^Anthropic / })).toHaveCount(2)
+  await expect(page.getByText(/claude-sonnet-5-5/).first()).toBeVisible()
+  await expect(page.getByText('SUMMARIZE').first()).toBeVisible()
   await expect(page.getByRole('link', { name: 'Account rules' })).toHaveAttribute('href', '/admin/settings#accounts')
   await expect(page.getByRole('region', { name: 'Content' }).getByRole('link', { name: 'Moderation queue' })).toHaveAttribute('href', '/admin/moderation')
   await expect(page.getByRole('link', { name: 'Upload settings' })).toHaveAttribute('href', '/admin/settings#uploads')
@@ -172,6 +181,7 @@ test('configuration validates age, confirms a risky switch, shows a user error a
   await page.goto('/admin/settings')
   await expect(page.getByRole('heading', { name: 'Configuration', level: 1 })).toBeVisible()
   for (const name of ['Sign-in', 'Verification', 'Uploads', 'AI', 'Search', 'Accounts']) await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible()
+  await showCategory(page, 'Accounts')
   const age = page.getByRole('article', { name: 'Minimum account age' })
   await age.getByRole('spinbutton', { name: 'Minimum account age', exact: true }).fill('17')
   await expect(age.getByText('The minimum age cannot be below 18.')).toBeVisible()
@@ -189,6 +199,7 @@ test('configuration validates age, confirms a risky switch, shows a user error a
   await expect(confirmAge).toBeHidden()
   await expect.poll(() => calls.find((call) => call.op === 'UpdateAdminSetting' && (call.variables.input as { key: string }).key === 'account_minimum_age')?.variables.input).toEqual({ key: 'account_minimum_age', value: '21' })
 
+  await showCategory(page, 'Uploads')
   const uploads = page.getByRole('article', { name: 'Uploads' })
   await uploads.getByRole('switch', { name: 'Uploads' }).click()
   await uploads.getByRole('button', { name: 'Save Uploads' }).click()
@@ -202,6 +213,7 @@ test('configuration validates age, confirms a risky switch, shows a user error a
   await expect.poll(() => calls.find((call) => call.op === 'UpdateAdminSetting' && (call.variables.input as { key: string }).key === 'uploads_enabled')?.variables.input).toEqual({ key: 'uploads_enabled', value: 'false' })
   await expect(uploads.getByRole('switch', { name: 'Uploads' })).toHaveAttribute('aria-checked', 'false')
 
+  await showCategory(page, 'Search')
   const timeout = page.getByRole('article', { name: 'Search timeout' })
   await expect(timeout.getByText('Custom', { exact: true })).toBeVisible()
   const timeoutInput = timeout.getByRole('spinbutton', { name: 'Search timeout', exact: true })
@@ -237,7 +249,9 @@ test('plans show prices, keep FREE, and deactivate a plan that has subscribers i
   await expect(edit.getByRole('checkbox', { name: 'Active' })).toBeDisabled()
   await edit.getByRole('button', { name: 'Cancel' }).click()
 
-  await page.getByRole('button', { name: 'Delete Plus' }).click()
+  await expect(plus.getByRole('button', { name: 'Delete Plus' })).toBeDisabled()
+  await expect(plus.getByRole('tooltip')).toContainText('Deactivate it instead')
+  await plus.getByRole('button', { name: 'Deactivate Plus' }).click()
   const deactivate = page.getByRole('dialog', { name: 'Deactivate Plus' })
   await expect(deactivate).toContainText('cannot be deleted')
   await deactivate.getByRole('button', { name: 'Deactivate' }).click()

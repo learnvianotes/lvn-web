@@ -37,7 +37,7 @@ import {
   type EntitlementDraft,
 } from '@/features/admin/plans-model'
 
-const SELECT = 'h-11 w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg'
+const SELECT = 'h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg'
 
 type Plan = AdminPlanFieldsFragment
 
@@ -64,7 +64,7 @@ export function AdminPlans() {
         </Button>
       </header>
       {plans.length === 0 ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
-      <ul className="flex flex-col gap-3">
+      <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
         {plans.map((plan) => (
           <li key={plan.id}>
             <article aria-label={plan.name} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
@@ -82,7 +82,7 @@ export function AdminPlans() {
                 <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('subscribers', { count: plan.subscriberCount })}</span>
                 <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t(`intervals.${plan.interval}`)}</span>
               </p>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
                 <div>
                   <h3 className="text-sm font-semibold">{t('features')}</h3>
                   {plan.features.length ? (
@@ -111,14 +111,28 @@ export function AdminPlans() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" variant="secondary" aria-label={t('editNamed', { name: plan.name })} onClick={() => setEditing(plan)}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <Button type="button" size="sm" variant="secondary" className="h-11 w-full sm:w-auto" aria-label={t('editNamed', { name: plan.name })} onClick={() => setEditing(plan)}>
                   {t('edit')}
                 </Button>
                 {deleteChoice(plan) === 'blocked' ? (
-                  <p className="self-center text-sm text-muted">{t('freeDelete')}</p>
+                  <p className="text-sm text-muted">{t('freeDelete')}</p>
+                ) : deleteChoice(plan) === 'deactivate' ? (
+                  <>
+                    <Button type="button" size="sm" variant="secondary" className="h-11 w-full sm:w-auto" aria-label={t('deactivateNamed', { name: plan.name })} onClick={() => setRemoving(plan)}>
+                      {t('deactivate')}
+                    </Button>
+                    <span className="group relative flex w-full min-w-0 flex-col sm:w-auto">
+                      <Button type="button" size="sm" variant="ghost" className="h-11 w-full sm:w-auto" disabled aria-describedby={`plan-delete-${plan.id}`} aria-label={t('deleteNamed', { name: plan.name })}>
+                        {t('delete')}
+                      </Button>
+                      <span id={`plan-delete-${plan.id}`} role="tooltip" className="mt-1 block max-w-full text-xs text-muted sm:pointer-events-none sm:absolute sm:bottom-full sm:right-0 sm:z-10 sm:mb-1 sm:mt-0 sm:w-64 sm:max-w-[70vw] sm:rounded-lg sm:border sm:border-border sm:bg-surface sm:p-2 sm:text-fg sm:opacity-0 sm:shadow sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                        {t('hasSubscribers', { count: plan.subscriberCount })}
+                      </span>
+                    </span>
+                  </>
                 ) : (
-                  <Button type="button" size="sm" variant="ghost" aria-label={t('deleteNamed', { name: plan.name })} onClick={() => setRemoving(plan)}>
+                  <Button type="button" size="sm" variant="ghost" className="h-11 w-full sm:w-auto" aria-label={t('deleteNamed', { name: plan.name })} onClick={() => setRemoving(plan)}>
                     {t('delete')}
                   </Button>
                 )}
@@ -191,11 +205,11 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
   }
 
   return (
-    <Dialog open onClose={onClose} title={plan ? t('editTitle', { name: plan.name }) : t('createTitle')} wide>
+    <Dialog open onClose={onClose} title={plan ? t('editTitle', { name: plan.name }) : t('createTitle')} wide sheet>
       <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
         <p className="text-sm font-medium">{t('priceNote')}</p>
         {errors.form ? <Alert tone="error">{errors.form}</Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
           <Field label={t('code')} error={errors.code} hint={plan ? t('codeLocked') : t('codeHint')}>
             <Input value={form.code} disabled={!!plan} autoCapitalize="characters" maxLength={32} onChange={(e) => set({ code: e.target.value.toUpperCase() })} required={!plan} />
           </Field>
@@ -229,7 +243,7 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
           <p className="text-xs text-muted">{t('limitsHint')}</p>
           {errors.entitlements ? <p role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">{errors.entitlements}</p> : null}
           {form.entitlements.map((row, index) => (
-            <div key={index} className="grid gap-2 sm:grid-cols-[1fr_8rem_9rem_auto]">
+            <div key={index} className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_8rem_9rem_auto]">
               <select className={SELECT} aria-label={t('limitKey')} value={row.key} onChange={(e) => set({ entitlements: replace(form.entitlements, index, { ...row, key: e.target.value as LimitKey | '' }) })}>
                 <option value="">{t('chooseLimit')}</option>
                 {LIMIT_KEYS.map((key) => (
@@ -243,7 +257,7 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
                 <option value="TEACHER">{t('roles.TEACHER')}</option>
                 <option value="PLATFORM_ADMIN">{t('roles.PLATFORM_ADMIN')}</option>
               </select>
-              <Button type="button" size="sm" variant="ghost" aria-label={t('removeLimit', { n: index + 1 })} onClick={() => set({ entitlements: form.entitlements.filter((_, i) => i !== index) })}>
+              <Button type="button" size="sm" variant="ghost" className="h-11 w-full xl:w-auto" aria-label={t('removeLimit', { n: index + 1 })} onClick={() => set({ entitlements: form.entitlements.filter((_, i) => i !== index) })}>
                 {t('remove')}
               </Button>
             </div>
@@ -252,11 +266,11 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
             {t('addLimit')}
           </Button>
         </fieldset>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t border-border bg-bg px-4 py-3 sm:-mx-5 sm:flex-row sm:justify-end sm:px-5">
+          <Button type="button" variant="ghost" className="h-11 w-full sm:w-auto" onClick={onClose}>
             {t('cancel')}
           </Button>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" className="h-11 w-full sm:w-auto" disabled={busy}>
             {busy ? t('saving') : t('save')}
           </Button>
         </div>
@@ -290,15 +304,15 @@ function RemoveDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () => vo
     }
   }
   return (
-    <Dialog open onClose={onClose} title={choice === 'deactivate' ? t('deactivateTitle', { name: plan.name }) : t('deleteTitle', { name: plan.name })}>
+    <Dialog open onClose={onClose} title={choice === 'deactivate' ? t('deactivateTitle', { name: plan.name }) : t('deleteTitle', { name: plan.name })} sheet>
       <div className="flex flex-col gap-4">
         <p className="text-sm">{choice === 'deactivate' ? t('hasSubscribers', { count: plan.subscriberCount }) : t('confirmDelete', { name: plan.name })}</p>
         {problem ? <Alert tone="error">{problem}</Alert> : null}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" className="h-11 w-full sm:w-auto" onClick={onClose}>
             {t('cancel')}
           </Button>
-          <Button type="button" disabled={busy || choice === 'blocked'} onClick={() => void run()}>
+          <Button type="button" className="h-11 w-full sm:w-auto" disabled={busy || choice === 'blocked'} onClick={() => void run()}>
             {choice === 'deactivate' ? t('deactivate') : t('delete')}
           </Button>
         </div>

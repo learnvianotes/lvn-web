@@ -77,13 +77,13 @@ export function AdminNav() {
   return (
     <div>
       {/* The outer box is the grid cell (it stretches with the page). The inner one sticks below the top bar. */}
-      <div className="lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto">
+      <div className="lg:sticky lg:top-0 lg:max-h-[calc(100dvh-7.5rem)] lg:overflow-y-auto">
         <button
           ref={openButton}
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold hover:border-accent lg:hidden"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm font-semibold hover:border-accent lg:hidden"
         >
           <PanelLeft className="size-4" aria-hidden />
           {t('open')}
@@ -137,7 +137,7 @@ function SectionList({ pathname, idPrefix, onNavigate }: { pathname: string; idP
                     aria-current={on ? 'page' : undefined}
                     onClick={onNavigate}
                     className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium',
+                      'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium',
                       on ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg',
                     )}
                   >

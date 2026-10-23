@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Proof of enrolment for platform admins to review (lvn-backend ADR-0019), until the admin app exists. */
 export default function VerificationReviewPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <ReviewRequests admin title />
     </div>
   )

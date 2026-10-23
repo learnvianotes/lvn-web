@@ -30,7 +30,7 @@ type Connection = Settings['connections'][number]
 type Preset = Settings['presets'][number]
 type Test = { ok: boolean; message: string; latencyMs: number; models: string[] }
 
-const SELECT = 'h-11 w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg'
+const SELECT = 'h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg'
 /** Prices travel as millionths of a dollar per million tokens; people read and write dollars per million tokens. */
 const toDollars = (micro: number) => (micro ? String(micro / 1_000_000) : '')
 const toMicro = (dollars: string) => (dollars.trim() ? Math.round(Number(dollars) * 1_000_000) : 0)
@@ -165,7 +165,7 @@ export function AiProviders() {
 
       <section aria-labelledby="ai-now" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
         <h2 id="ai-now" className="text-lg font-semibold">{t('whoAnswers')}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
           <Field label={t('chats')} hint={t('chatsHint')}>
             <select className={SELECT} value={s.chatConnectionId ?? ''} disabled={settingDefaults.loading} onChange={(e) => void choose({ chatConnectionId: e.target.value || null, embedConnectionId: s.embedConnectionId ?? null })}>
               <option value="">{nameOf(null, 'chat')}</option>
@@ -221,21 +221,21 @@ export function AiProviders() {
                           <summary className="cursor-pointer opacity-80">{t('modelsListed', { count: result.models.length })}</summary>
                           <ul aria-label={t('modelsListLabel', { name: c.label })} className="mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-surface px-3 py-2 font-mono text-fg">
                             {result.models.map((m) => (
-                              <li key={m}>{m}</li>
+                              <li key={m} className="break-all">{m}</li>
                             ))}
                           </ul>
                         </details>
                       ) : null}
                     </Alert>
                   ) : null}
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="secondary" disabled={result === 'running'} onClick={() => void test(c.id)}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <Button size="sm" variant="secondary" className="h-11 w-full sm:w-auto" disabled={result === 'running'} onClick={() => void test(c.id)}>
                       {result === 'running' ? t('testing') : t('test')}
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setEditing({ kind: c.kind, connection: c })} aria-label={t('editNamed', { name: c.label })}>
+                    <Button size="sm" variant="secondary" className="h-11 w-full sm:w-auto" onClick={() => setEditing({ kind: c.kind, connection: c })} aria-label={t('editNamed', { name: c.label })}>
                       {t('edit')}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void remove(c)} aria-label={t('deleteNamed', { name: c.label })}>
+                    <Button size="sm" variant="ghost" className="h-11 w-full sm:w-auto" onClick={() => void remove(c)} aria-label={t('deleteNamed', { name: c.label })}>
                       {t('delete')}
                     </Button>
                   </div>
@@ -248,7 +248,7 @@ export function AiProviders() {
           <p className="text-sm font-medium">{t('add')}</p>
           <div className="flex flex-wrap gap-2">
             {s.presets.map((p) => (
-              <Button key={p.kind} size="sm" variant="secondary" className="h-auto min-h-9 whitespace-normal py-1.5 text-left" onClick={() => setEditing({ kind: p.kind, connection: null })}>
+              <Button key={p.kind} size="sm" variant="secondary" className="h-auto min-h-11 max-w-full whitespace-normal py-2 text-left" onClick={() => setEditing({ kind: p.kind, connection: null })}>
                 {p.name}
               </Button>
             ))}
@@ -282,7 +282,7 @@ function Row({ term, value }: { term: string; value: string }) {
   return (
     <div className="flex min-w-0 gap-2">
       <dt className="shrink-0 text-muted">{term}</dt>
-      <dd className="truncate">{value}</dd>
+      <dd className="min-w-0 break-all">{value}</dd>
     </div>
   )
 }
@@ -342,10 +342,10 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, onClose, onSa
   }
   const listNote = !c ? t('modelsAfterSave') : account.loading ? t('modelsLoading') : null
   return (
-    <Dialog open onClose={onClose} title={c ? t('editTitle', { name: c.label }) : t('addTitle', { name: preset.name })} wide>
+    <Dialog open onClose={onClose} title={c ? t('editTitle', { name: c.label }) : t('addTitle', { name: preset.name })} wide sheet>
       <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
         {errors.form ? <Alert tone="error">{errors.form}</Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
           <Field label={t('name')} error={errors.label}>
             <Input value={form.label} maxLength={60} onChange={(e) => set({ label: e.target.value })} required />
           </Field>
@@ -363,7 +363,7 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, onClose, onSa
           </label>
         ) : null}
         {listNote ? <p className="text-sm text-muted" role="status">{listNote}</p> : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
           <ModelControl
             label={t('chatModel')}
             error={errors.chatModel}
@@ -399,7 +399,7 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, onClose, onSa
             <summary className="cursor-pointer text-sm text-muted">{t('allModels', { count: account.catalog.all.length })}</summary>
             <ul aria-label={t('allModelsList', { name: c?.label ?? preset.name })} className="mt-2 max-h-60 overflow-y-auto rounded-lg border border-border bg-surface px-3 py-2 font-mono text-xs">
               {[...account.catalog.all].sort((a, b) => a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id)).map((model) => (
-                <li key={model.id}>
+                <li key={model.id} className="break-all">
                   {model.id} · {t(`kinds.${model.kind}`)} · {model.supports.map((use) => t(`uses.${use}`)).join(', ')}
                 </li>
               ))}
@@ -408,7 +408,7 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, onClose, onSa
         ) : null}
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">{t('prices')}</legend>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0 lg:grid-cols-3">
             <Field label={t('priceInput')} error={errors.input ?? errors.inputMicroUsdPerMTok}>
               <Input inputMode="decimal" value={form.input} placeholder="0" onChange={(e) => set({ input: e.target.value })} />
             </Field>
@@ -434,11 +434,11 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, onClose, onSa
           {t('enabled')}
         </label>
         {/* Kept in sight on a phone, where the form is longer than the screen. */}
-        <div className="sticky -bottom-4 -mx-5 -mb-4 flex justify-end gap-2 border-t border-border bg-bg px-5 py-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <div className="sticky -bottom-4 -mx-4 -mb-4 flex flex-col-reverse gap-2 border-t border-border bg-bg px-4 py-3 sm:-mx-5 sm:flex-row sm:justify-end sm:px-5">
+          <Button type="button" variant="ghost" className="h-11 w-full sm:w-auto" onClick={onClose}>
             {t('cancel')}
           </Button>
-          <Button type="submit" disabled={saving.loading}>
+          <Button type="submit" className="h-11 w-full sm:w-auto" disabled={saving.loading}>
             {saving.loading ? t('saving') : t('save')}
           </Button>
         </div>
@@ -503,14 +503,14 @@ function Routes({ settings: s, onSaved, onFailed }: { settings: Settings; onSave
       {s.routes.length ? (
         <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
           {s.routes.map((r) => (
-            <li key={r.task} className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
+            <li key={r.task} className="flex flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center">
               <span className="font-mono text-xs">{r.task}</span>
-              <span aria-hidden>→</span>
-              <span>{labelOf(r.connectionId)} · {r.model}</span>
+              <span aria-hidden className="hidden sm:inline">→</span>
+              <span className="min-w-0 break-all">{labelOf(r.connectionId)} · {r.model}</span>
               <Button
                 size="sm"
                 variant="ghost"
-                className="ml-auto"
+                className="h-11 w-full sm:ml-auto sm:w-auto"
                 aria-label={t('removeRoute', { task: r.task })}
                 onClick={async () => {
                   const res = await deleteRoute({ variables: { input: { task: r.task } } }).catch(onFailed)
@@ -523,7 +523,7 @@ function Routes({ settings: s, onSaved, onFailed }: { settings: Settings; onSave
           ))}
         </ul>
       ) : null}
-      <form onSubmit={(e) => void add(e)} className="grid gap-3 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2">
+      <form onSubmit={(e) => void add(e)} className="grid gap-3 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
         <Field label={t('task')}>
           <select className={SELECT} value={form.task} required onChange={(e) => setForm((f) => ({ ...f, task: e.target.value }))}>
             <option value="" disabled>

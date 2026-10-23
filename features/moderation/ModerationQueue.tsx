@@ -221,7 +221,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1">
           <span className="text-xs font-semibold text-muted">{t('reason')}</span>
-          <input className="h-10 rounded-xl border border-border bg-bg px-3 text-sm focus-visible:border-accent focus-visible:outline-none" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPlaceholder')} />
+          <input className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3 text-sm focus-visible:border-accent focus-visible:outline-none" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPlaceholder')} />
         </label>
         {actions.some((a) => a.action === 'SUSPEND') ? (
           <label className="flex items-center gap-2 text-xs font-semibold text-muted">
@@ -237,7 +237,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
         ) : null}
         <div className="flex flex-wrap gap-2">
           {actions.map(({ action, label, icon: Icon, tone }) => (
-            <Button key={action} size="sm" variant={action === 'APPROVE' ? 'primary' : 'secondary'} className={cn('gap-1.5', tone)} disabled={deciding.loading} onClick={() => void decide(action)}>
+            <Button key={action} size="sm" variant={action === 'APPROVE' ? 'primary' : 'secondary'} className={cn('h-11 gap-1.5', tone)} disabled={deciding.loading} onClick={() => void decide(action)}>
               <Icon className="size-4" aria-hidden />
               {t(`actions.${label}`)}
             </Button>
