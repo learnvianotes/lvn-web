@@ -130,3 +130,7 @@ mutation DeleteAiTaskRoute($input: AiTaskRouteInput!) {
     }
   }
 }
+
+query AiConnectionModels($input: AiConnectionIdInput!) {
+  aiConnectionModels(input: $input)
+}
