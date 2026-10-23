@@ -156,7 +156,8 @@ async function fits(page: Page, where: string) {
 }
 
 async function barAboveTitle(page: Page, heading: string) {
-  const header = await page.locator('header').first().boundingBox()
+  // The app and visitor bars are the banner. A page may also use <header> for its own title.
+  const header = await page.getByRole('banner').first().boundingBox()
   const title = await page.getByRole('heading', { level: 1, name: heading }).boundingBox()
   expect(header?.y ?? 99).toBeLessThanOrEqual(2)
   expect(title!.y).toBeGreaterThanOrEqual(header!.y + header!.height - 1)
@@ -200,8 +201,13 @@ test('admin pages fit the screen at every size, in light and dark', async ({ pag
           await page.keyboard.press('Escape')
           await expect(drawer).toHaveCount(0)
         }
-        if (dir && theme === 'light' && entry.shot && SHOT_WIDTHS.has(viewport.width)) {
-          await page.screenshot({ path: `${dir}/${entry.shot}-${viewport.width}.png` })
+        if (dir && entry.shot && SHOT_WIDTHS.has(viewport.width) && (theme === 'light' || entry.shot === 'access' || entry.shot === 'user-plans')) {
+          await page.screenshot({ path: `${dir}/${entry.shot}-${theme}-${viewport.width}.png` })
+          if ((entry.shot === 'access' || entry.shot === 'user-plans') && (viewport.width === 320 || viewport.width === 1280)) {
+            const row = page.getByRole('article').first()
+            if (await row.count()) await row.scrollIntoViewIfNeeded()
+            await page.screenshot({ path: `${dir}/${entry.shot}-list-${theme}-${viewport.width}.png` })
+          }
         }
       }
     }

@@ -9,6 +9,6 @@ import { AccessPolicyDocument } from '@/graphql/generated/graphql'
 export function InviteOnlyNotice() {
   const t = useTranslations('auth.invite')
   const { data } = useQuery(AccessPolicyDocument, { fetchPolicy: 'cache-first' })
-  if (!data?.accessPolicy.inviteOnly) return null
+  if (!data?.accessPolicy?.inviteOnly) return null
   return <Alert tone="info">{t('notice')}</Alert>
 }
