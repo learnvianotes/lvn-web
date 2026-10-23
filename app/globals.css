@@ -4,38 +4,52 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* Brand palette from the LearnViaNotes UI reference (lvn-backend docs/design/ui-reference.md): the brand blue, and no
-     purple, lavender, indigo or violet anywhere (lvn-backend ADR-0094). */
-  --bg: #f6f8fb;
+  /* Study palette (docs/ui-revamp/tokens.json). Ink, paper, one navy. No purple, lavender, indigo or violet (ADR-0094). */
+  --bg: #f4f6f8;
   --surface: #ffffff;
-  --surface-2: #f1f4f8;
-  --fg: #111827;
-  --muted: #5b6475;
-  --border: #e3e8ef;
-  --accent: #2563eb;
+  --surface-2: #e8edf3;
+  --fg: #152033;
+  --muted: #3d4b63;
+  --border: #d5dde8;
+  --accent: #1e4d8c;
+  --accent-hover: #163e73;
   --accent-fg: #ffffff;
-  --accent-soft: #eff6ff;
-  --good: #166534;
-  --warn: #92400e;
-  --bad: #991b1b;
-  --def: #0f766e;
+  --accent-soft: #e7f0fa;
+  --good: #0f6b45;
+  --warn: #8a4b08;
+  --bad: #9f1d1d;
+  --def: #0f5f6b;
+  --inverse: #152033;
+  --inverse-ink: #f4f7fb;
+  --inverse-muted: #c5d4e8;
+  --shadow-sm: 0 1px 2px rgb(21 32 51 / 0.06);
+  --shadow-md: 0 4px 16px rgb(21 32 51 / 0.08);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --surface-2: #1f2630;
-  --fg: #f4f4f5;
-  --muted: #a1a1aa;
-  --border: #2d3440;
-  --accent: #60a5fa;
-  --accent-fg: #0d1117;
-  --accent-soft: #172554;
-  --good: #4ade80;
-  --warn: #fbbf24;
-  --bad: #f87171;
-  --def: #5eead4;
+  --bg: #0e1520;
+  --surface: #171e28;
+  --surface-2: #212a36;
+  --fg: #f4f7fb;
+  --muted: #b7c3d4;
+  --border: #2e3a4a;
+  --accent: #9dc0ea;
+  --accent-hover: #c5d9f4;
+  --accent-fg: #0e1520;
+  --accent-soft: #1a2c44;
+  --good: #6ee7a8;
+  --warn: #f5c16c;
+  --bad: #f0a0a0;
+  --def: #7fd4d0;
+  --inverse: #0a1018;
+  --inverse-ink: #f4f7fb;
+  --inverse-muted: #c5d4e8;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
   color-scheme: dark;
 }
 
@@ -49,18 +63,42 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-def: var(--def);
+  --color-inverse: var(--inverse);
+  --color-inverse-ink: var(--inverse-ink);
+  --color-inverse-muted: var(--inverse-muted);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
 }
 
 @theme {
   /* Content rising into place on the welcome surfaces; off with reduced motion (below). */
   --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   @keyframes rise {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: none; }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
+
+/* Placeholder bars for the first load. Opacity only, so the block keeps its height (no layout shift). */
+.lvn-skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lvn-skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface) 37%, var(--surface-2) 63%);
+    background-size: 400% 100%;
+    animation: lvn-shimmer 1.2s ease infinite;
+  }
+}
+@keyframes lvn-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 html { background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; }
 body { font-family: var(--font-sans); min-height: 100dvh; }

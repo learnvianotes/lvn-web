@@ -230,12 +230,12 @@ export function NotesHome() {
           <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex animate-rise flex-col gap-1.5">
-                <p className="text-sm font-medium text-[#BFDBFE]">{t(`greeting.${daypart()}`, { name: firstName })}</p>
+                <p className="text-sm font-medium text-inverse-muted">{t(`greeting.${daypart()}`, { name: firstName })}</p>
                 <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                   {all.length ? t('heroWithNotes') : t('heroFirst')}
                 </h1>
                 <div className="mt-3 flex flex-wrap gap-2 md:hidden">
-                  <Button size="lg" className="w-fit gap-2 bg-white text-[#0B1220] hover:bg-white/90" disabled={creating.loading} onClick={() => void newNote()}>
+                  <Button size="lg" className="w-fit gap-2 bg-inverse-ink text-inverse hover:opacity-90" disabled={creating.loading} onClick={() => void newNote()}>
                     <Plus className="size-5" aria-hidden />
                     {t('newNote')}
                   </Button>

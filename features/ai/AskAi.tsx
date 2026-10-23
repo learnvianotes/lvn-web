@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Loading } from '@/components/ui/query-state'
 import { AiAnswerDocument, AiStateDocument, AskAiAboutDoubtDocument, AskAiDocument, DeleteAiAnswerDocument, MyAiAnswersDocument, type AiAnswerFieldsFragment, type AskAiScope } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { useLive } from '@/features/notifications/live'
@@ -194,7 +195,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
 export function AnswerList({ noteId, doubtId, compact, emptyText }: { noteId?: string; doubtId?: string; compact?: boolean; emptyText?: string }) {
   const { data, loading } = useQuery(MyAiAnswersDocument, { variables: { first: 20, noteId: noteId ?? null, doubtId: doubtId ?? null }, fetchPolicy: 'cache-and-network' })
   const answers = data?.myAiAnswers ?? []
-  if (loading && !data) return null
+  if (loading && !data) return <Loading />
   if (!answers.length) return emptyText ? <p className="text-sm text-muted">{emptyText}</p> : null
   return (
     <div className="flex flex-col gap-3">

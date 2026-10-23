@@ -7,9 +7,8 @@ import { cn } from '@/lib/cn'
  */
 export function NightSky({ as: Tag = 'div', className, children }: { as?: 'div' | 'section'; className?: string; children: ReactNode }) {
   return (
-    <Tag className={cn('relative isolate overflow-hidden bg-[linear-gradient(160deg,#0B1220_0%,#1E3A8A_55%,#2563EB_100%)] text-white', className)}>
-      <span aria-hidden className="pointer-events-none absolute -right-24 -top-16 -z-10 size-72 rounded-full bg-[#60A5FA]/20" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-24 -left-20 -z-10 size-64 rounded-full bg-white/5" />
+    <Tag className={cn('relative isolate overflow-hidden bg-inverse text-inverse-ink', className)}>
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-accent" />
       {children}
     </Tag>
   )

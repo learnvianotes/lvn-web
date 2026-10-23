@@ -10,10 +10,10 @@ import type { PostCardFieldsFragment } from '@/graphql/generated/graphql'
 
 /** A picture for each kind of public note when it has none of its own (board A's cards). */
 const ART = {
-  NOTE: { icon: BookOpen, from: '#2563EB', to: '#0891B2' },
-  BLOG: { icon: PenLine, from: '#EA580C', to: '#DB2777' },
-  POST: { icon: Megaphone, from: '#0284C7', to: '#2563EB' },
-  PROJECT: { icon: FolderGit2, from: '#059669', to: '#0284C7' },
+  NOTE: { icon: BookOpen, from: '#1e4d8c', to: '#0f5f6b' },
+  BLOG: { icon: PenLine, from: '#8a4b08', to: '#1e4d8c' },
+  POST: { icon: Megaphone, from: '#163e73', to: '#1e4d8c' },
+  PROJECT: { icon: FolderGit2, from: '#0f6b45', to: '#0f5f6b' },
 } as const
 
 /**

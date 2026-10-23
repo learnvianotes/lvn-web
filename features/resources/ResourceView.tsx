@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { LoadFailed } from '@/components/ui/query-state'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { Discussion } from '@/features/discussion/Discussion'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { DeleteResourceDocument, MyResourcesDocument, ResourceDocument, type ResourceFieldsFragment } from '@/graphql/generated/graphql'
@@ -33,7 +33,14 @@ function Page({ id }: { id: string }) {
   const { data, loading, error, refetch } = useQuery(ResourceDocument, { variables: { id }, skip: status === 'unknown', fetchPolicy: 'cache-and-network' })
   const resource = data?.resource
   if (!resource) {
-    if (loading || status === 'unknown' || (!data && !error)) return <div className="mx-auto max-w-3xl px-4 py-10" aria-busy="true" />
+    if (status === 'unreachable' && !resource) {
+      return (
+        <div className="mx-auto max-w-md px-4 py-16">
+          <LoadFailed onRetry={refetch} />
+        </div>
+      )
+    }
+    if (loading || status === 'unknown' || (!data && !error)) return <Loading className="mx-auto max-w-3xl px-4 py-10" />
     // Not there only when the API said so; a resource that could not be asked for is offered again.
     if (error && !isNotThere(error)) {
       return (
@@ -81,7 +88,7 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
       <div className="flex flex-col gap-5 sm:flex-row">
         {r.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- a short-lived read URL from storage
-          <img src={r.coverUrl} alt="" className="h-48 w-auto self-start rounded-xl border border-border object-contain" />
+          <img src={r.coverUrl} alt="" className="h-48 w-auto max-w-full self-start rounded-xl border border-border object-contain" />
         ) : null}
         <div className="flex min-w-0 flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-accent">{t(`type.${r.type}`)}</span>

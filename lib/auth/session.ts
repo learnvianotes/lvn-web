@@ -5,6 +5,8 @@ import { useSession } from '@/state/session'
 
 /** Refresh a minute before the access token expires. */
 const EARLY_MS = 60_000
+/** How long the first session check waits before the app says the API did not answer. */
+export const SESSION_CHECK_MS = 8_000
 let timer: ReturnType<typeof setTimeout> | undefined
 let inFlight: Promise<boolean> | null = null
 
@@ -21,12 +23,15 @@ const acrossTabs = <T>(fn: () => Promise<T>): Promise<T> =>
  */
 export function refreshSession(): Promise<boolean> {
   inFlight ??= (async () => {
+    const attempt = new AbortController()
+    const attemptTimer = setTimeout(() => attempt.abort(), SESSION_CHECK_MS)
     try {
       const res = await acrossTabs(() => fetch(env.NEXT_PUBLIC_API_URL, {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ query: REFRESH }),
+        signal: attempt.signal,
       }))
       const body = (await res.json()) as { data?: { refreshSession?: { session?: { accessToken: string; accessTokenExpiresAt: string } } } }
       const s = body.data?.refreshSession?.session
@@ -37,9 +42,12 @@ export function refreshSession(): Promise<boolean> {
       signedIn(s.accessToken, s.accessTokenExpiresAt)
       return true
     } catch {
-      // Offline or the API is down: keep whatever we had; the next request retries.
+      // Offline or the API is down. A person already signed in keeps that session; the first check says so instead of a blank page.
+      const state = useSession.getState()
+      if (state.status === 'unknown') state.markUnreachable()
       return useSession.getState().status === 'signed-in'
     } finally {
+      clearTimeout(attemptTimer)
       inFlight = null
     }
   })()
@@ -56,4 +64,10 @@ export function signedIn(accessToken: string, expiresAt: string): void {
 export function signedOut(): void {
   clearTimeout(timer)
   useSession.getState().clear()
+}
+
+/** Ask for the session again after the API could not be reached. */
+export function retrySession(): Promise<boolean> {
+  useSession.setState({ status: 'unknown', accessToken: null, expiresAt: null })
+  return refreshSession()
 }

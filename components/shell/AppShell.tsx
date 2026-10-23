@@ -26,7 +26,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Logo } from '@/components/brand/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
@@ -71,12 +71,22 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
   const app = !visitor
   const [open, setOpen] = useState(false)
   const path = usePathname()
+  const menuButton = useRef<HTMLButtonElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
   useEffect(() => setOpen(false), [path])
   useEffect(() => {
     if (!open) return
+    const button = menuButton.current
+    closeButton.current?.focus()
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
+      button?.focus()
+    }
   }, [open])
   return (
     <div className={cn('min-h-dvh', app && 'lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]')}>
@@ -90,7 +100,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
         </aside>
       ) : null}
       <div className="flex min-w-0 flex-col">
-        {app ? <TopBar onMenu={() => setOpen(true)} /> : visitor}
+        {app ? <TopBar menuButton={menuButton} open={open} onMenu={() => setOpen(true)} /> : visitor}
         {app ? <DeletionBanner /> : null}
         <main id="main" className={app ? 'mx-auto min-h-[70dvh] w-full max-w-6xl flex-1 px-4 py-6 sm:py-8' : 'min-h-[70dvh]'}>
           {children}
@@ -103,7 +113,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <Brand />
-              <button type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="rounded-lg p-2 text-muted hover:bg-surface-2">
+              <button ref={closeButton} type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="inline-flex size-10 items-center justify-center rounded-lg text-muted hover:bg-surface-2">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
@@ -175,13 +185,13 @@ function Nav() {
           {readPdf.uploading !== null ? t('uploading') : t('upload')}
         </button>
         {readPdf.error ? (
-          <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
+          <p role="alert" className="px-3 text-xs text-bad">
             {readPdf.error}
           </p>
         ) : null}
           </>
         ) : null}
-        <button type="button" onClick={() => void newNote()} disabled={creating.loading} className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg hover:opacity-90">
+        <button type="button" onClick={() => void newNote()} disabled={creating.loading} className="mt-1 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
           <Plus className="size-4" aria-hidden />
           {t('createNote')}
         </button>
@@ -191,15 +201,15 @@ function Nav() {
 }
 
 /** The top bar: the menu (below 1024 px), search (opens the palette), the theme, the bell and the avatar. */
-function TopBar({ onMenu }: { onMenu: () => void }) {
+function TopBar({ onMenu, open, menuButton }: { onMenu: () => void; open: boolean; menuButton: RefObject<HTMLButtonElement | null> }) {
   const t = useTranslations('shell')
   const ts = useTranslations('site')
   const router = useRouter()
   const viewer = useQuery(ViewerDocument).data?.viewer
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-bg/85 backdrop-blur supports-[backdrop-filter]:bg-bg/70">
+    <header className="sticky top-0 z-30 border-b border-border bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-bg/70">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
-        <button type="button" aria-label={t('menu')} onClick={onMenu} className="rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
+        <button ref={menuButton} type="button" aria-label={t('menu')} aria-expanded={open} onClick={onMenu} className="inline-flex size-10 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
           <Menu className="size-5" aria-hidden />
         </button>
         <button

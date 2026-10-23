@@ -1,5 +1,6 @@
 'use client'
 
+import { X } from 'lucide-react'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
@@ -37,8 +38,8 @@ export function Dialog({ open, onClose, title, children, wide, side, persistent 
               {title}
             </h2>
             {persistent ? null : (
-              <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-muted hover:bg-surface-2 hover:text-fg" aria-label="Close">
-                ✕
+              <button type="button" onClick={onClose} className="inline-flex size-10 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg" aria-label="Close">
+                <X className="size-4" aria-hidden />
               </button>
             )}
           </header>

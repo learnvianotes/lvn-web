@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { getShelf, getSubject } from '@/features/subjects/data'
+import { getShelf, getSubject, loadSubject } from '@/features/subjects/data'
+import { SubjectsDown } from '@/features/subjects/SubjectsDown'
 import { Shelf } from '@/features/subjects/Shelf'
 import { templated } from '@/lib/page-title'
 
@@ -18,8 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 /** A subject: its topics, each with its own page, and the public notes and resources on it. */
 export default async function SubjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const subject = await getSubject(slug).catch(() => null)
-  if (!subject) notFound()
+  const loaded = await loadSubject(slug)
+  if (loaded.status === 'down') return <SubjectsDown />
+  if (loaded.status === 'missing') notFound()
+  const subject = loaded.subject
   const t = await getTranslations('subjects')
   const shelf = await getShelf({ subjectId: subject.id }).catch(() => ({ notes: [], resources: [] }))
   return (

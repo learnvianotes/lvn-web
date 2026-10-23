@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn'
 import type { ButtonHTMLAttributes } from 'react'
 
 const variants = {
-  primary: 'bg-accent text-accent-fg hover:opacity-90',
+  primary: 'bg-accent text-accent-fg hover:bg-[var(--accent-hover)]',
   secondary: 'border border-border bg-surface text-fg hover:bg-surface-2',
   ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
 }
@@ -11,7 +11,7 @@ const variants = {
 const sizes = {
   md: 'h-11 px-5 text-sm',
   sm: 'h-9 px-3 text-sm',
-  icon: 'size-9',
+  icon: 'size-10',
   /** The pill of the sign-in pages, matching the Google button beside it. */
   lg: 'h-12 rounded-full px-6 text-[15px] font-semibold',
 }
