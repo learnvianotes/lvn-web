@@ -63,8 +63,9 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 })
 
 test('offers Google when the environment has it', async ({ page, request }) => {
-  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ signInOptions { google } }' } })
-  const google = ((await res.json()) as { data: { signInOptions: { google: boolean } } }).data.signInOptions.google
+  const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ authSettings { googleSignInEnabled } signInOptions { google } }' } })
+  const body = (await res.json()) as { data?: { authSettings?: { googleSignInEnabled: boolean } | null; signInOptions?: { google: boolean } | null } }
+  const google = !!body.data?.authSettings?.googleSignInEnabled && !!body.data?.signInOptions?.google
   test.skip(!google, 'Google sign-in is off in this environment')
   await page.goto('/sign-in')
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible()

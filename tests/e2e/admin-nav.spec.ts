@@ -60,6 +60,7 @@ const settings = {
 
 const SECTIONS: [label: string, href: string][] = [
   ['Proof of study to review', '/admin/verification'],
+  ['Google sign-in', '/admin/sign-in'],
   ['Moderation queue', '/admin/moderation'],
   ['Weekly contests', '/admin/contests'],
   ['AI providers', '/admin/ai'],

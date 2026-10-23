@@ -15,7 +15,9 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { SignInOptionsDocument, SignUpDocument } from '@/graphql/generated/graphql'
 import { markAgeRefused } from '@/lib/age'
+import { isEmailLinkPending } from '@/lib/auth/unified'
 import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
+import { EmailLinkPending } from './EmailLinkPending'
 import { applyProblems } from './forms'
 import { ProviderButtons } from './ProviderButtons'
 import { useFinishSignIn } from './useFinishSignIn'
@@ -43,6 +45,7 @@ export function SignUpForm() {
   const [signUp] = useMutation(SignUpDocument)
   const finish = useFinishSignIn()
   const [general, setGeneral] = useState<string | null>(null)
+  const [linkEmail, setLinkEmail] = useState<string | null>(null)
   // "I teach" leads to the application to teach after sign-up (lvn-backend ADR-0073).
   const [teaches, setTeaches] = useState(false)
   const refused = useAgeRefused()
@@ -69,6 +72,8 @@ export function SignUpForm() {
       })
       const payload = data!.signUp
       if (payload.session) return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : next)
+      // A verified account with this email and no password: the emailed link attaches this password to it.
+      if (isEmailLinkPending(payload)) return setLinkEmail(values.email)
       // Too young for an account: nothing was created; this device keeps the form closed for a day.
       if (payload.userErrors.some((e) => e.code === 'UNDER_MINIMUM_AGE')) return markAgeRefused()
       setGeneral(applyProblems(payload.userErrors, form.setError, FIELDS))
@@ -81,6 +86,7 @@ export function SignUpForm() {
   }
 
   if (refused) return <AgeRefused />
+  if (linkEmail) return <EmailLinkPending email={linkEmail} />
 
   const message = (name: (typeof FIELDS)[number] | 'terms', fallback: string) => {
     const e = errors[name]

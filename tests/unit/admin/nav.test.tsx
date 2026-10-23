@@ -35,6 +35,7 @@ vi.mock('next/link', async () => {
 
 const SECTIONS: [group: string, label: string, href: string][] = [
   ['People', 'Proof of study to review', '/admin/verification'],
+  ['People', 'Google sign-in', '/admin/sign-in'],
   ['Content', 'Moderation queue', '/admin/moderation'],
   ['Content', 'Weekly contests', '/admin/contests'],
   ['AI', 'AI providers', '/admin/ai'],

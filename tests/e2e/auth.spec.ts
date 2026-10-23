@@ -52,6 +52,11 @@ async function mockApi(page: Page, handlers: Record<string, Handler>, refresh: '
       if (refresh === 'signed-out') return route.fulfill({ json: { data: null, errors: [{ message: 'Session ended', extensions: { code: 'UNAUTHENTICATED' } }] } })
     } else if (op === 'SignInOptions') {
       data = { signInOptions: { emailPassword: true, google: !!handlers.withGoogle, github: false, linkedin: false }, termsVersion: '2026-10-08' }
+    } else if (op === 'AuthSettings' && !handlers.AuthSettings) {
+      // withGoogle means the API has left Google on. A test can still answer AuthSettings itself to switch it off.
+      data = { authSettings: { __typename: 'AuthSettings', googleSignInEnabled: !!handlers.withGoogle } }
+    } else if (op === 'SignInMethods' && !handlers.SignInMethods) {
+      data = { viewer: { __typename: 'User', id: '01920000-0000-7000-8000-00000000aaaa', signInMethods: null } }
     } else if (handlers[op]) {
       data = handlers[op]!(body.variables ?? {})
     } else {
@@ -156,7 +161,7 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await page.reload()
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
     await expect(page.getByLabel('Date of birth')).toHaveCount(0)
-    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions'].includes(op))).toEqual(['SignUp'])
+    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions', 'AuthSettings'].includes(op))).toEqual(['SignUp'])
     // A day later the form is back.
     await page.evaluate(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() - 86_400_001 })))
     await page.reload()
@@ -291,6 +296,55 @@ test.describe('Google first', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Create your account')
   })
 
+  test('hides Continue with Google when an admin has switched it off, even if sign-in options still name it', async ({ page }) => {
+    await mockApi(page, {
+      withGoogle: () => null,
+      AuthSettings: () => ({ authSettings: { __typename: 'AuthSettings', googleSignInEnabled: false } }),
+    })
+    for (const path of ['/', '/sign-in', '/sign-up']) {
+      const ready = page.waitForResponse((response) => response.url().includes('/graphql') && (response.request().postData() ?? '').includes('AuthSettings'))
+      await page.goto(path)
+      await ready
+      await expect(page.getByRole('button', { name: 'Continue with Google' })).toHaveCount(0)
+    }
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Create your account')
+  })
+
+  test('a new Google account finishes registration, including the date-of-birth check', async ({ page }) => {
+    let registered = false
+    const calls = await mockApi(page, {
+      withGoogle: () => null,
+      SignInWithGoogle: () => ({
+        signInWithGoogle: {
+          __typename: 'AuthPayload',
+          emailLinkPending: false,
+          session: session(viewer({ registrationComplete: false, displayName: 'Asha Rao', email: 'asha@gmail.com' })),
+          userErrors: [],
+        },
+      }),
+      Viewer: () => ({ viewer: viewer({ registrationComplete: registered, displayName: 'Asha Rao', email: 'asha@gmail.com' }) }),
+      CompleteRegistration: () => {
+        registered = true
+        return { completeRegistration: ok }
+      },
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-up\/details$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Almost there, Asha')
+    await expect(page.getByLabel('Your name')).toHaveValue('Asha Rao')
+    await page.getByLabel('Date of birth').fill('2004-05-01')
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    const confirm = page.getByRole('dialog', { name: 'Is this right?' })
+    await expect(confirm).toContainText('1 May 2004')
+    await confirm.getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page).toHaveURL(/\/profile$/)
+    await expect(page.getByRole('heading', { name: 'Asha Rao' })).toBeVisible()
+    expect(calls.find((c) => c.op === 'SignInWithGoogle')?.variables).toEqual({ idToken: 'e2e-google-id-token' })
+    expect(calls.some((c) => c.op === 'CompleteRegistration')).toBe(true)
+  })
+
   test('someone signed in is offered their account instead', async ({ page }) => {
     await mockApi(page, { Viewer: () => ({ viewer: viewer() }) }, 'signed-in')
     await page.goto('/')
@@ -300,6 +354,70 @@ test.describe('Google first', () => {
     await main.getByRole('link', { name: 'Your account' }).click()
     await expect(page).toHaveURL(/\/profile$/)
   })
+})
+
+test('email sign-up for an account that already signs in with Google asks them to check their email', async ({ page }) => {
+  const calls = await mockApi(page, {
+    SignUp: () => ({ signUp: { __typename: 'AuthPayload', emailLinkPending: true, session: null, userErrors: [] } }),
+  })
+  await page.goto('/sign-up')
+  await fillSignUp(page)
+  await createAccount(page)
+  await expect(page.getByRole('heading', { level: 1, name: 'Check your email to link this sign-in method' })).toBeVisible()
+  await expect(page.getByText('We sent a link to asha@example.com.')).toBeVisible()
+  await expect(page).toHaveURL(/\/sign-up$/)
+  await expect(page.getByRole('link', { name: 'Go to sign in' })).toHaveAttribute('href', '/sign-in')
+  expect(calls.filter((c) => c.op === 'SignUp')).toHaveLength(1)
+})
+
+test('the account page lists the sign-in methods linked to this account', async ({ page }) => {
+  await mockApi(
+    page,
+    {
+      Viewer: () => ({ viewer: viewer() }),
+      SignInMethods: () => ({ viewer: { __typename: 'User', id: '01920000-0000-7000-8000-00000000aaaa', signInMethods: ['GOOGLE', 'EMAIL'] } }),
+    },
+    'signed-in',
+  )
+  await page.goto('/profile')
+  const methods = page.getByRole('region', { name: 'Sign-in methods' })
+  await expect(methods).toBeVisible()
+  await expect(methods.getByRole('listitem')).toHaveText(['Email and password', 'Google'])
+})
+
+test('a platform admin turns Google sign-in on from admin settings', async ({ page }) => {
+  let enabled = false
+  const calls = await mockApi(
+    page,
+    {
+      Viewer: () => ({ viewer: viewer({ globalRole: 'PLATFORM_ADMIN' }) }),
+      AuthSettings: () => ({ authSettings: { __typename: 'AuthSettings', googleSignInEnabled: enabled } }),
+      SetGoogleSignInEnabled: (v) => {
+        enabled = !!v.enabled
+        return { setGoogleSignInEnabled: { __typename: 'AuthSettingsPayload', settings: { __typename: 'AuthSettings', googleSignInEnabled: enabled }, userErrors: [] } }
+      },
+    },
+    'signed-in',
+  )
+  await page.goto('/admin/sign-in')
+  await expect(page.getByRole('heading', { name: 'Google sign-in', level: 1 })).toBeVisible()
+  // From 1024 px the section list stays open; on a phone it is the Admin settings drawer.
+  const opener = page.getByRole('button', { name: 'Admin settings', exact: true })
+  if (await opener.isVisible()) {
+    await opener.click()
+    const drawer = page.getByRole('dialog', { name: 'Admin settings' })
+    await expect(drawer.getByRole('link', { name: 'Google sign-in' })).toHaveAttribute('aria-current', 'page')
+    await page.keyboard.press('Escape')
+    await expect(drawer).toHaveCount(0)
+  } else {
+    await expect(page.getByRole('navigation', { name: 'Admin settings' }).getByRole('link', { name: 'Google sign-in' })).toHaveAttribute('aria-current', 'page')
+  }
+  const toggle = page.getByRole('switch', { name: 'Google sign-in' })
+  await expect(toggle).not.toBeChecked()
+  await page.getByText('Off, Continue with Google is hidden and Google sign-in is refused.').click()
+  await expect(toggle).toBeChecked()
+  await expect(page.getByRole('status')).toHaveText('Saved.')
+  expect(calls.find((c) => c.op === 'SetGoogleSignInEnabled')?.variables).toEqual({ enabled: true })
 })
 
 test('sign-in and sign-up have no serious accessibility violations', async ({ page }) => {

@@ -137,6 +137,11 @@
       "teacher": "Teach",
       "teacherHint": "After sign-up, tell us where you teach. You can set up classes at once; students can join once we verify you."
     },
+    "linkPending": {
+      "title": "Check your email to link this sign-in method",
+      "lead": "We sent a link to {email}. Open it to confirm, then sign in with this email and the password you chose. That reaches the same account.",
+      "signIn": "Go to sign in"
+    },
     "details": {
       "title": "Almost there",
       "lead": "One quick step — we ask once, then you are in.",
@@ -277,7 +282,18 @@
     "review": "Review flashcards",
     "resources": "Your resources",
     "savedResources": "Bookmarks: your saved notes and resources",
-    "adminContests": "Write weekly contests"
+    "adminContests": "Write weekly contests",
+    "googleSignIn": "Google sign-in",
+    "signInMethods": {
+      "title": "Sign-in methods",
+      "lead": "This account can be opened with any of these.",
+      "method": {
+        "EMAIL": "Email and password",
+        "GOOGLE": "Google",
+        "GITHUB": "GitHub",
+        "LINKEDIN": "LinkedIn"
+      }
+    }
   },
   "notes": {
     "pageTitle": "Note",
@@ -2072,6 +2088,16 @@
       "failed": "The changes could not be applied. Try again."
     }
   },
+  "authAdmin": {
+    "title": "Google sign-in",
+    "lead": "People can always sign in with email. Google is offered only when you leave it on and this site has a Firebase project.",
+    "google": "Google sign-in",
+    "googleHint": "Off, Continue with Google is hidden and Google sign-in is refused.",
+    "saved": "Saved.",
+    "loading": "Loading…",
+    "failed": "Sign-in settings could not be loaded. Try again.",
+    "notAllowed": "Only platform admins can change this."
+  },
   "aiAdmin": {
     "title": "AI providers",
     "lead": "Choose who answers AI requests: Claude, ChatGPT, Gemini, your own OpenAI-compatible server (a LiteLLM proxy, OpenRouter, vLLM…) or an Ollama. Keys are stored encrypted and never shown again.",
@@ -2839,6 +2865,7 @@
     },
     "sections": {
       "verification": "Proof of study to review",
+      "signIn": "Google sign-in",
       "moderation": "Moderation queue",
       "contests": "Weekly contests",
       "ai": "AI providers"

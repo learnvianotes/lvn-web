@@ -634,7 +634,29 @@ input AskDoubtInput {
 }
 
 type AuthPayload {
+  """
+  Sign-up: true when this email belongs to a verified account that has no password yet (for example one created with
+  Google). No session is issued. The person opens the same /verify?token= link, then signIn reaches that account.
+  False for a new account, and when an account with a password already exists (that conflict is a userError).
+  """
+  emailLinkPending: Boolean!
   session: Session
+  userErrors: [UserError!]!
+}
+
+"""
+Whether Google sign-in is offered here. Public, so sign-in pages can hide the button. Platform admins change it.
+"""
+type AuthSettings {
+  """
+  The admin's choice. Off, clients hide Continue with Google and signInWithGoogle answers that Google sign-in is not
+  available here.
+  """
+  googleSignInEnabled: Boolean!
+}
+
+type AuthSettingsPayload {
+  settings: AuthSettings
   userErrors: [UserError!]!
 }
 
@@ -2879,6 +2901,12 @@ type Mutation {
   """
   setGlobalRole(input: SetGlobalRoleInput!): OkPayload!
 
+  """
+  Platform admins. Turns Google sign-in on or off for this site (an app setting, not an environment variable). Off,
+  signInWithGoogle answers that Google sign-in is not available here.
+  """
+  setGoogleSignInEnabled(input: SetGoogleSignInEnabledInput!): AuthSettingsPayload!
+
   """Admins and the Owner"""
   setGroupRepository(input: SetGroupRepositoryInput!): GroupPayload!
   setGroupRole(input: SetGroupRoleInput!): GroupPayload!
@@ -3735,6 +3763,12 @@ type Query {
 
   """Whether AI answers now; works signed out"""
   aiStatus: AiStatus!
+
+  """
+  Whether an admin has left Google sign-in on. Works signed out. Google is offered only when this is on and Firebase
+  is configured; otherwise the button stays hidden.
+  """
+  authSettings: AuthSettings!
 
   """A quiz of a class the viewer is in; null otherwise"""
   classQuiz(id: UUID!): ClassQuiz
@@ -4909,6 +4943,10 @@ input SetGroupRepositoryInput {
   url: String
 }
 
+input SetGoogleSignInEnabledInput {
+  enabled: Boolean!
+}
+
 input SetGroupRoleInput {
   groupId: UUID!
 
@@ -4965,6 +5003,14 @@ input ShareNoteInput {
 input SignInInput {
   email: String!
   password: String!
+}
+
+"""A way an account can sign in. Query.viewer.signInMethods lists the ones linked for the signed-in user."""
+enum SignInMethod {
+  EMAIL
+  GITHUB
+  GOOGLE
+  LINKEDIN
 }
 
 """Which sign-in methods this deployment offers"""
@@ -5511,6 +5557,11 @@ type User {
   """Viewer only"""
   email: String
   emailVerified: Boolean!
+
+  """
+  Linked ways to sign in. Null on the user inside a sign-in or sign-up session; ask Query.viewer for the list.
+  """
+  signInMethods: [SignInMethod!]
 
   """Viewer only: exact counts"""
   followerCount: Int

@@ -10,8 +10,8 @@ import { GoogleButton } from './GoogleButton'
 import { useGoogleSignIn } from './useGoogleSignIn'
 
 /**
- * Google first, then GitHub and LinkedIn — each shown only when both the API (signInOptions) and this deployment's
- * configuration offer it.
+ * Google first, then GitHub and LinkedIn. Google shows when an admin has left it on and this deployment has Firebase.
+ * GitHub and LinkedIn show when both the API (signInOptions) and this deployment's configuration offer them.
  */
 export function ProviderButtons({ next }: { next?: string | null }) {
   const t = useTranslations('auth.providers')

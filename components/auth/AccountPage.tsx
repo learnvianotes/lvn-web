@@ -14,6 +14,7 @@ import {
   ClaimLegacyDataDocument,
   DeclineLegacyDataDocument,
   SetInstitutionalEmailDocument,
+  SignInMethodsDocument,
   SignOutDocument,
   UpdateProfileDocument,
   ViewerDocument,
@@ -21,6 +22,7 @@ import {
   type YearOfStudy,
 } from '@/graphql/generated/graphql'
 import { signedOut } from '@/lib/auth/session'
+import { linkedSignInMethods } from '@/lib/auth/unified'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
 import { DeleteAccount } from '@/features/data/DeleteAccount'
@@ -52,6 +54,7 @@ export function AccountPage() {
         </div>
         <SignOutButton />
       </header>
+      <SignInMethods />
       <AccountStanding userId={viewer.id} />
       {viewer.globalRole === 'PLATFORM_ADMIN' ? (
         <Link href="/admin/verification" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
@@ -68,6 +71,12 @@ export function AccountPage() {
       {viewer.globalRole === 'PLATFORM_ADMIN' ? (
         <Link href="/admin/ai" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
           {t('aiProviders')}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
+      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
+        <Link href="/admin/sign-in" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
+          {t('googleSignIn')}
           <span aria-hidden>→</span>
         </Link>
       ) : null}
@@ -148,6 +157,24 @@ export function AccountPage() {
       <YourData />
       <DeleteAccount />
     </div>
+  )
+}
+
+function SignInMethods() {
+  const t = useTranslations('profile.signInMethods')
+  const { data } = useQuery(SignInMethodsDocument)
+  const methods = linkedSignInMethods(data?.viewer?.signInMethods)
+  if (!methods.length) return null
+  return (
+    <section className={card} aria-labelledby="sign-in-methods">
+      <h2 id="sign-in-methods" className="text-lg font-semibold">{t('title')}</h2>
+      <p className="text-sm text-muted">{t('lead')}</p>
+      <ul className="flex flex-col gap-1 text-sm">
+        {methods.map((method) => (
+          <li key={method}>{t(`method.${method}`)}</li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

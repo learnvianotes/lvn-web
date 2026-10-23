@@ -69,6 +69,7 @@ query SignInOptions {
 
 mutation SignUp($input: SignUpInput!) {
   signUp(input: $input) {
+    emailLinkPending
     session {
       ...SessionFields
     }
@@ -270,6 +271,35 @@ mutation CancelAccountDeletion {
     deletionScheduledFor
     userErrors {
       message
+    }
+  }
+}
+
+# The signed-in user's linked methods. Null on a sign-in session's user, so the account page asks viewer on its own.
+query SignInMethods {
+  viewer {
+    id
+    signInMethods
+  }
+}
+
+# Public: sign-in pages hide Continue with Google when an admin has switched it off.
+query AuthSettings {
+  authSettings {
+    googleSignInEnabled
+  }
+}
+
+# Platform admins. The choice lives in the app, not in an environment variable.
+mutation SetGoogleSignInEnabled($enabled: Boolean!) {
+  setGoogleSignInEnabled(input: { enabled: $enabled }) {
+    settings {
+      googleSignInEnabled
+    }
+    userErrors {
+      field
+      message
+      code
     }
   }
 }
