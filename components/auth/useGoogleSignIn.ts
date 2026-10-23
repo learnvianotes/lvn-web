@@ -11,7 +11,7 @@ import { useFinishSignIn } from './useFinishSignIn'
 
 /**
  * Google sign-in for any page (lvn-backend ADR-0007), offered when the API and this deployment both have it. One click
- * opens Google's popup; a returning account goes on to `next` (or its profile), a new one to its details.
+ * opens Google's popup; a returning account goes on to `next` (or Home), a new one to its details.
  */
 export function useGoogleSignIn(next?: string | null) {
   const t = useTranslations('auth.providers')

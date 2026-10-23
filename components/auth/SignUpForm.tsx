@@ -74,7 +74,8 @@ export function SignUpForm() {
         variables: { input: { ...values, institutionalEmail: institutionalEmail || null, acceptedTermsVersion: options?.termsVersion ?? '' } },
       })
       const payload = data!.signUp
-      if (payload.session) return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : next)
+      // Creating an account still opens the account page. Signing in, with nowhere else to go, opens Home.
+      if (payload.session) return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'))
       // Too young for an account: nothing was created; this device keeps the form closed for a day.
       if (payload.userErrors.some((e) => e.code === 'UNDER_MINIMUM_AGE')) return markAgeRefused()
       const blocked = payload.userErrors.find((error) => error.code === 'FORBIDDEN')

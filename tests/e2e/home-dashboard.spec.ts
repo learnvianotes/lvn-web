@@ -46,10 +46,9 @@ test('Home shows the day’s line: the chosen one while AI writes the learner’
   await expect(page.getByTestId('daily-line')).toHaveText('Ten days to Operating Systems · One topic today keeps your plan on track.', { timeout: 10_000 })
 })
 
-test('Home offers to add an exam when there is none; the signed-in landing card opens Home', async ({ page }) => {
+test('a signed-in visit to / opens Home; with no exam, Home offers to add one', async ({ page }) => {
   await mockApi(page, { Rhythm: () => ({ rhythm }), Exams: () => ({ exams: [] }), Recommendations: () => ({ recommendations: [] }) }, viewerExtras)
   await page.goto('/')
-  await page.getByRole('link', { name: 'Open your home' }).click()
   await expect(page).toHaveURL(/\/home$/)
   await expect(page.getByText(/No exam coming up/)).toBeVisible()
   await expect(page.getByRole('region', { name: 'Next exam' }).getByRole('link', { name: 'Add an exam' })).toHaveAttribute('href', '/exams')
