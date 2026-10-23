@@ -5,6 +5,7 @@ import { useApolloClient } from '@apollo/client/react'
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CompleteNoteUploadDocument, CreateNoteUploadDocument, type CardFieldsFragment, type MediaFieldsFragment } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 
 /**
  * Pictures, video, audio and files on notes (lvn-backend §8.1): uploads go straight to storage with a pre-signed PUT,
@@ -70,7 +71,23 @@ export function srcSetOf(file: MediaInfo): string | undefined {
   return parts.length ? parts.join(', ') : undefined
 }
 
-export class UploadError extends Error {}
+export class UploadError extends Error {
+  readonly limit: boolean
+  constructor(message: string, limit = false) {
+    super(message)
+    this.limit = limit
+  }
+}
+
+async function mutateUpload<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run()
+  } catch (error) {
+    const message = refusalMessage(error)
+    if (message) throw new UploadError(message, true)
+    throw error
+  }
+}
 
 /** PUTs a file to a pre-signed URL with exactly the headers the API asked for; progress is 0–1. */
 export function putToStorage(intent: { uploadUrl: string; uploadHeaders: { name: string; value: string }[] }, file: Blob, onProgress: (p: number) => void): Promise<void> {
@@ -89,12 +106,14 @@ export function putToStorage(intent: { uploadUrl: string; uploadHeaders: { name:
 
 /** Uploads a file to a note and returns its id once the API has checked it. Progress is 0–1. */
 export async function uploadToNote(client: ApolloClient, noteId: string, file: File, onProgress: (p: number) => void): Promise<string> {
-  const res = await client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: file.name || 'file', mimeType: mimeOf(file), sizeBytes: file.size, purpose: 'ATTACHMENT', parentId: noteId } } })
+  const res = await mutateUpload(() => client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: file.name || 'file', mimeType: mimeOf(file), sizeBytes: file.size, purpose: 'ATTACHMENT', parentId: noteId } } }))
+  const problem = res.data?.createUploadIntent.userErrors[0]
   const intent = res.data?.createUploadIntent.intent
-  if (!intent) throw new UploadError(res.data?.createUploadIntent.userErrors[0]?.message ?? 'upload refused')
+  if (!intent) throw new UploadError(problem?.message ?? 'upload refused', isLimitCode(problem?.code))
   await putToStorage(intent, file, onProgress)
-  const done = await client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } })
-  if (!done.data?.completeUpload.ok) throw new UploadError(done.data?.completeUpload.userErrors[0]?.message ?? 'upload not accepted')
+  const done = await mutateUpload(() => client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } }))
+  const doneProblem = done.data?.completeUpload.userErrors[0]
+  if (!done.data?.completeUpload.ok) throw new UploadError(doneProblem?.message ?? 'upload not accepted', isLimitCode(doneProblem?.code))
   return intent.fileId
 }
 

@@ -23,8 +23,9 @@ export type SettingShape = {
 
 export type SettingIssue = 'boolean' | 'required' | 'integer' | 'min' | 'max' | 'maxLength' | 'pattern' | 'minimumAge'
 
-/** Turning these off, or changing an age, is confirmed before it is saved. */
+/** Turning these off, turning the allowlist on, or changing an age, is confirmed before it is saved. */
 const RISKY_WHEN_OFF = new Set(['google_sign_in', 'student_id_verification', 'uploads_enabled', 'ai_public_pipeline', 'search_hybrid'])
+const RISKY_WHEN_ON = new Set(['access_allowlist_enabled'])
 const RISKY_WHEN_CHANGED = new Set([ACCOUNT_MINIMUM_AGE_KEY, 'digital_consent_age'])
 
 /** The lowest integer the control accepts. account_minimum_age is never below 18, whatever the server sent. */
@@ -63,6 +64,7 @@ export function validateSetting(setting: SettingShape, value: string): SettingIs
 export function isRiskyChange(setting: SettingShape, previous: string, next: string): boolean {
   if (previous === next) return false
   if (RISKY_WHEN_CHANGED.has(setting.key)) return true
+  if (setting.type === 'BOOLEAN' && RISKY_WHEN_ON.has(setting.key) && next === 'true') return true
   return setting.type === 'BOOLEAN' && RISKY_WHEN_OFF.has(setting.key) && next === 'false'
 }
 

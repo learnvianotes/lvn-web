@@ -273,8 +273,13 @@ test('plans show prices, keep FREE, and deactivate a plan that has subscribers i
   await create.getByLabel('Currency').fill('INR')
   await create.getByLabel('Features').fill('Shared seats')
   await create.getByRole('button', { name: 'Add a limit' }).click()
-  await create.getByLabel('Limit', { exact: true }).selectOption('AI_TOKENS_DAILY')
+  const limitSelects = create.getByLabel('Limit', { exact: true })
+  await expect(limitSelects.locator('option', { hasText: 'AI asks a day' })).toHaveCount(1)
+  await expect(limitSelects.locator('option', { hasText: 'Notes you can keep' })).toHaveCount(1)
+  await limitSelects.selectOption('AI_TOKENS_DAILY')
   await create.getByLabel('Amount').fill('100000')
+  await create.getByRole('button', { name: 'Add a limit' }).click()
+  await create.getByLabel('Limit', { exact: true }).nth(1).selectOption('NOTES_OWNED')
   await create.getByRole('button', { name: 'Save' }).click()
   await expect.poll(() => calls.find((call) => call.op === 'CreateAdminPlan')?.variables.input).toMatchObject({
     code: 'CAMPUS_2',
@@ -284,7 +289,10 @@ test('plans show prices, keep FREE, and deactivate a plan that has subscribers i
     interval: 'MONTH',
     active: true,
     features: ['Shared seats'],
-    entitlements: [{ key: 'AI_TOKENS_DAILY', limit: '100000', appliesToRole: null }],
+    entitlements: [
+      { key: 'AI_TOKENS_DAILY', limit: '100000', appliesToRole: null },
+      { key: 'NOTES_OWNED', limit: null, appliesToRole: null },
+    ],
   })
   await expect(page.getByRole('article', { name: 'Campus 2' })).toContainText(/₹\s?99\/month/)
   expect(await seriousViolations(page)).toEqual([])

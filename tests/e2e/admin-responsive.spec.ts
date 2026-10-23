@@ -43,10 +43,12 @@ const VIEWPORTS = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ]
-const PAGES: { path: string; heading: string; shot?: string }[] = [
+const PAGES: { path: string; heading: string; shot?: string; admin?: boolean }[] = [
   { path: '/admin', heading: 'Overview', shot: 'overview' },
   { path: '/admin/settings', heading: 'Configuration', shot: 'configuration' },
   { path: '/admin/plans', heading: 'Plans & pricing', shot: 'plans' },
+  { path: '/admin/access', heading: 'Beta access', shot: 'access' },
+  { path: '/plans', heading: 'Plans', shot: 'user-plans', admin: false },
   { path: '/admin/ai', heading: 'AI providers' },
   { path: '/admin/verification', heading: 'Proof of study to review' },
   { path: '/admin/moderation', heading: 'Moderation queue' },
@@ -81,10 +83,33 @@ async function adminApi(page: Page) {
       AdminSettings: () => ({
         adminSettings: [
           setting({ key: 'google_sign_in', type: 'BOOLEAN', category: 'auth', description: 'Let people sign in with Google.' }),
+          setting({ key: 'access_allowlist_enabled', type: 'BOOLEAN', category: 'auth', description: 'Only listed emails can sign in.', value: 'true' }),
           setting({ key: 'uploads_enabled', type: 'BOOLEAN', category: 'uploads', description: 'Allow files to be uploaded.' }),
           setting({ key: 'search_timeout_ms', type: 'INTEGER', category: 'search', description: 'How long a search may take.', value: '1500', overridden: true, constraints: constraints({ min: 100, max: 10000 }) }),
           setting({ key: 'account_minimum_age', type: 'INTEGER', category: 'accounts', description: 'Youngest age that can register.', value: '18', constraints: constraints({ min: 0, max: 120 }) }),
         ],
+      }),
+      AdminAccessAllowlist: () => ({
+        adminAccessAllowlist: [
+          { __typename: 'AccessAllowlistEntry', id: '01920000-0000-7000-8000-000000000a01', email: 'asha@example.com', role: 'PLATFORM_ADMIN', note: 'Owner', hasAccount: true, addedByEmail: null, createdAt: '2026-10-01T00:00:00.000Z' },
+          { __typename: 'AccessAllowlistEntry', id: '01920000-0000-7000-8000-000000000a02', email: 'student@college.edu', role: 'STUDENT', note: null, hasAccount: true, addedByEmail: 'asha@example.com', createdAt: '2026-10-02T00:00:00.000Z' },
+        ],
+      }),
+      Plans: () => ({
+        plans: [
+          { __typename: 'PublicPlan', id: '01920000-0000-7000-8000-000000000f01', code: 'FREE', name: 'Free', priceMinor: 0, currency: 'INR', interval: 'NONE', features: ['Read public notes'], current: true, limits: [{ __typename: 'PlanLimit', key: 'NOTES_OWNED', label: 'Notes you can keep', limit: '20' }] },
+          { __typename: 'PublicPlan', id: '01920000-0000-7000-8000-000000000f02', code: 'PLUS', name: 'Plus', priceMinor: 49900, currency: 'INR', interval: 'MONTH', features: ['AI on your notes'], current: false, limits: [{ __typename: 'PlanLimit', key: 'AI_REQUESTS_DAILY', label: 'AI asks a day', limit: null }] },
+        ],
+      }),
+      MyPlan: () => ({
+        myPlan: {
+          __typename: 'MyPlan',
+          plan: { __typename: 'PublicPlan', id: '01920000-0000-7000-8000-000000000f01', code: 'FREE', name: 'Free', priceMinor: 0, currency: 'INR', interval: 'NONE', features: ['Read public notes'], current: true, limits: [{ __typename: 'PlanLimit', key: 'NOTES_OWNED', label: 'Notes you can keep', limit: '20' }] },
+          usage: [
+            { __typename: 'PlanUsage', key: 'NOTES_OWNED', label: 'Notes you can keep', used: '12', limit: '20', resetsAt: null },
+            { __typename: 'PlanUsage', key: 'AI_REQUESTS_DAILY', label: 'AI asks a day', used: '7', limit: '20', resetsAt: '2026-10-24T00:00:00.000Z' },
+          ],
+        },
       }),
       AdminPlans: () => ({
         adminPlans: [
@@ -155,9 +180,13 @@ test('admin pages fit the screen at every size, in light and dark', async ({ pag
         await fits(page, `${theme} ${viewport.width} ${entry.path}`)
         const opener = page.getByRole('button', { name: 'Admin settings', exact: true })
         const nav = page.getByRole('navigation', { name: 'Admin settings' })
-        if (wide) {
+        if (entry.admin === false) {
+          await expect(opener).toHaveCount(0)
+          if (!wide) await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeVisible()
+        } else if (wide) {
           await expect(opener).toBeHidden()
           await expect(nav.getByRole('link', { name: 'Overview' })).toBeVisible()
+          await expect(nav.getByRole('link', { name: 'Beta access' })).toBeVisible()
           await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeHidden()
         } else {
           await expect(opener).toBeVisible()
@@ -166,6 +195,7 @@ test('admin pages fit the screen at every size, in light and dark', async ({ pag
           await opener.click()
           const drawer = page.getByRole('dialog', { name: 'Admin settings' })
           await expect(drawer.getByRole('link', { name: 'Plans & pricing' })).toBeVisible()
+          await expect(drawer.getByRole('link', { name: 'Beta access' })).toBeVisible()
           await fits(page, `${theme} ${viewport.width} ${entry.path} drawer`)
           await page.keyboard.press('Escape')
           await expect(drawer).toHaveCount(0)

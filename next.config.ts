@@ -131,6 +131,8 @@ const config: NextConfig = {
             { source: '/core', destination: '/subjects', permanent: false },
             { source: '/core/:subject/:rest*', destination: '/subjects/:subject', permanent: false },
           ]),
+      // The Google callback sends a blocked beta sign-in to /signin?error=invite_only.
+      { source: '/signin', destination: '/sign-in', permanent: false },
       ...retiredPages.map((page) => ({ source: `/${page}`, destination: '/', permanent: false })),
     ]
   },

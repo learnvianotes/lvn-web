@@ -52,6 +52,8 @@ async function mockApi(page: Page, handlers: Record<string, Handler>, refresh: '
       if (refresh === 'signed-out') return route.fulfill({ json: { data: null, errors: [{ message: 'Session ended', extensions: { code: 'UNAUTHENTICATED' } }] } })
     } else if (op === 'SignInOptions') {
       data = { signInOptions: { emailPassword: true, google: !!handlers.withGoogle, github: false, linkedin: false }, termsVersion: '2026-10-08' }
+    } else if (op === 'AccessPolicy') {
+      data = handlers.AccessPolicy ? handlers.AccessPolicy(body.variables ?? {}) : { accessPolicy: { __typename: 'AccessPolicy', inviteOnly: false } }
     } else if (handlers[op]) {
       data = handlers[op]!(body.variables ?? {})
     } else {
@@ -80,6 +82,20 @@ test.describe('sign up', () => {
     await fillSignUp(page)
     await createAccount(page)
     await expect(page.getByText('An account with this email already exists. Sign in instead.')).toBeVisible()
+  })
+
+  test('a forbidden sign-up names the invite, and the notice shows when the beta is closed', async ({ page }) => {
+    const message = 'LearnViaNotes beta is invite-only. Ask an admin to add your email.'
+    await mockApi(page, {
+      AccessPolicy: () => ({ accessPolicy: { __typename: 'AccessPolicy', inviteOnly: true } }),
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'email'], message, 'FORBIDDEN')] } }),
+    })
+    await page.goto('/sign-up')
+    await expect(page.getByRole('status')).toHaveText(/invite-only/)
+    await fillSignUp(page)
+    await createAccount(page)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('Something went wrong')).toHaveCount(0)
   })
 
   test('signs up with the current terms version and lands on the account page', async ({ page }) => {
@@ -156,7 +172,7 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await page.reload()
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
     await expect(page.getByLabel('Date of birth')).toHaveCount(0)
-    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions'].includes(op))).toEqual(['SignUp'])
+    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions', 'AccessPolicy'].includes(op))).toEqual(['SignUp'])
     // A day later the form is back.
     await page.evaluate(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() - 86_400_001 })))
     await page.reload()
@@ -208,6 +224,29 @@ test.describe('sign in', () => {
     await page.getByLabel('Password').fill('wrong password')
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(page.getByRole('main').getByRole('alert')).toHaveText('Email or password is incorrect.')
+  })
+
+  test('says the beta is invite-only, and a forbidden sign-in is that message', async ({ page }) => {
+    const message = 'LearnViaNotes beta is invite-only. Ask an admin to add your email.'
+    await mockApi(page, {
+      AccessPolicy: () => ({ accessPolicy: { __typename: 'AccessPolicy', inviteOnly: true } }),
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'email'], message, 'FORBIDDEN')] } }),
+    })
+    await page.goto('/sign-in')
+    await expect(page.getByRole('status')).toHaveText(/invite-only/)
+    await page.getByLabel('Email').fill('outsider@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('Something went wrong')).toHaveCount(0)
+  })
+
+  test('a Google callback that was blocked lands on a clear invite-only message', async ({ page }) => {
+    await mockApi(page, {})
+    await page.goto('/signin?error=invite_only')
+    await expect(page).toHaveURL(/\/sign-in\?error=invite_only$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText('LearnViaNotes beta is invite-only. Ask an admin to add your email.')
+    await expect(page.getByText('That sign-in did not work')).toHaveCount(0)
   })
 
   test('asks a new provider account for its registration details', async ({ page }) => {

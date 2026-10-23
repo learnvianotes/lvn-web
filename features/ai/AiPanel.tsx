@@ -33,6 +33,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { limitMessageFromUserErrors, refusalMessage } from '@/lib/limit-error'
 import { Dialog } from '@/components/ui/dialog'
 import {
   AiArtifactDocument,
@@ -122,11 +124,13 @@ export function useRunAiTask(noteId: string, enabled = true) {
   const state = useQuery(AiStateDocument, { skip: !enabled, fetchPolicy: 'cache-and-network' })
   const [runTask, running] = useMutation(RunAiTaskDocument)
   const [error, setError] = useState<string | null>(null)
+  const [limit, setLimit] = useState(false)
   const status = state.data?.aiStatus
   const allowance = state.data?.myAiAllowance
   const spent = allowance?.limitToday != null && allowance.usedToday >= allowance.limitToday
   const run = async (task: AiTask, lang: AiLanguage = 'ENGLISH', cardIds?: string[]) => {
     setError(null)
+    setLimit(false)
     const { result, error } = await attempt(() =>
       runTask({
         variables: { input: { noteId, task, language: lang, ...(cardIds ? { cardIds } : {}) } },
@@ -141,13 +145,15 @@ export function useRunAiTask(noteId: string, enabled = true) {
       }),
     )
     const payload = result?.data?.runAiTask
-    setError(problemOf(error, payload, t('runFailed')))
+    const hit = limitMessageFromUserErrors(payload?.userErrors) ?? refusalMessage(error)
+    setLimit(!!hit)
+    setError(hit ?? problemOf(error, payload, t('runFailed')))
     // The allowance changed, or AI turned out to be off: ask again.
     if (payload?.userErrors.length) void state.refetch()
   }
   /** Unknown (not answered yet, or failed) counts as off: no control is offered that cannot work. */
   const available = !!status?.available
-  return { status, allowance, spent, off: status ? !status.available : false, available, run, running: running.loading, error }
+  return { status, allowance, spent, off: status ? !status.available : false, available, run, running: running.loading, error, limit }
 }
 
 export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAddedToNote, onTextMended }: AiPanelProps) {
@@ -156,7 +162,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
   const list = useQuery(NoteAiArtifactsDocument, { variables: { noteId }, skip: !open, fetchPolicy: 'cache-and-network' })
   const ai = useRunAiTask(noteId, open)
   const [language, setLanguage] = useState<AiLanguage>('HINDI')
-  const { status, allowance, spent, off, run, error } = ai
+  const { status, allowance, spent, off, run, error, limit } = ai
   const running = { loading: ai.running }
   const artifacts = list.data?.note?.aiArtifacts ?? []
   const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : EDITORS_ONLY.has(task) ? canEdit : true))
@@ -229,9 +235,11 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
             </Button>
           </div>
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
+            limit ? <LimitNotice>{error}</LimitNotice> : (
+              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+                {error}
+              </p>
+            )
           ) : null}
         </section>
 

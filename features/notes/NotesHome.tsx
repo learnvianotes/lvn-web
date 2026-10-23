@@ -24,6 +24,8 @@ import {
   type NoteListFieldsFragment,
   type SharedWithMeQuery,
 } from '@/graphql/generated/graphql'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { cn } from '@/lib/cn'
 import { NotebookArt } from './art'
 import { VisibilityBadge } from './ShareDialog'
@@ -71,6 +73,7 @@ export function NotesHome() {
   const [restore] = useMutation(RestoreNoteDocument)
   const [destroy] = useMutation(DeleteNoteForeverDocument)
   const [error, setError] = useState<string | null>(null)
+  const [errorLimit, setErrorLimit] = useState(false)
   const [query, setQuery] = useState('')
   const readPdf = useReadPdf()
   const pdfInput = useRef<HTMLInputElement>(null)
@@ -85,13 +88,25 @@ export function NotesHome() {
   const refresh = () => Promise.all([organise.refetch(), mine.refetch()])
   const firstName = viewer.data?.viewer?.displayName.split(' ')[0] ?? ''
 
+  const fail = (message: string, limit = false) => {
+    setError(message)
+    setErrorLimit(limit)
+  }
   const newNote = async (template?: TemplateKey, kind?: 'PROJECT' | 'BLOG' | 'POST') => {
-    const res = await create({
-      variables: { input: { ...(view.kind === 'folder' ? { folderId: view.id } : {}), ...(template ? { title: t(`templates.${template}.title`), cards: templateCards(template) } : {}), ...(kind ? { kind } : {}) } },
-    })
-    const id = res.data?.createNote.note?.id
-    if (id) router.push(`/notes/${id}`)
-    else setError(res.data?.createNote.userErrors[0]?.message ?? t('createFailed'))
+    setError(null)
+    setErrorLimit(false)
+    try {
+      const res = await create({
+        variables: { input: { ...(view.kind === 'folder' ? { folderId: view.id } : {}), ...(template ? { title: t(`templates.${template}.title`), cards: templateCards(template) } : {}), ...(kind ? { kind } : {}) } },
+      })
+      const problem = res.data?.createNote.userErrors[0]
+      const id = res.data?.createNote.note?.id
+      if (id) router.push(`/notes/${id}`)
+      else fail(problem?.message ?? t('createFailed'), isLimitCode(problem?.code))
+    } catch (e) {
+      const refused = refusalMessage(e)
+      fail(refused ?? t('createFailed'), !!refused)
+    }
   }
   const addFolder = async (parentId: string | null) => {
     const name = window.prompt(t('folderName'))
@@ -340,9 +355,13 @@ export function NotesHome() {
             ) : null}
           </div>
           {error || readPdf.error ? (
-            <p role="alert" className="rounded-xl border border-red-600/30 bg-red-50 px-4 py-3 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-200">
-              {error ?? readPdf.error}
-            </p>
+            errorLimit || readPdf.limit ? (
+              <LimitNotice>{error ?? readPdf.error}</LimitNotice>
+            ) : (
+              <p role="alert" className="rounded-xl border border-red-600/30 bg-red-50 px-4 py-3 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-200">
+                {error ?? readPdf.error}
+              </p>
+            )
           ) : null}
           {readPdf.uploading ? (
             <div role="status" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">

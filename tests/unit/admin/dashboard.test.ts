@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { filterModels, groupModels, modelsForUse, pickerModels, presetsAsModels, routeModelUse, type ListedModel } from '@/features/ai/admin/catalog'
 import { aiRangeIssue, aiRangeVariables, failureRate, formatBytes, formatDecimal, microUsdToUsd, providerLabel } from '@/features/admin/metrics'
-import { currencyIssue, deleteChoice, entitlementIssues, formatPlanPrice, isFreePlan, majorToMinor, minorUnitsText, planCodeIssue, priceMinorIssue } from '@/features/admin/plans-model'
+import { LIMIT_KEYS, currencyIssue, deleteChoice, entitlementIssues, formatPlanPrice, isFreePlan, majorToMinor, minorUnitsText, planCodeIssue, priceMinorIssue } from '@/features/admin/plans-model'
 import { effectiveIntegerMin, groupSettings, isRiskyChange, validateSetting, type SettingShape } from '@/features/admin/settings-model'
 
 const setting = (over: Partial<SettingShape> & Pick<SettingShape, 'key' | 'type'>): SettingShape => ({
@@ -63,6 +63,9 @@ describe('admin settings', () => {
     expect(isRiskyChange(uploads, 'true', 'false')).toBe(true)
     expect(isRiskyChange(uploads, 'false', 'true')).toBe(false)
     expect(isRiskyChange(uploads, 'true', 'true')).toBe(false)
+    const allowlist = setting({ key: 'access_allowlist_enabled', type: 'BOOLEAN' })
+    expect(isRiskyChange(allowlist, 'false', 'true')).toBe(true)
+    expect(isRiskyChange(allowlist, 'true', 'false')).toBe(false)
     expect(isRiskyChange(age, '18', '21')).toBe(true)
     expect(isRiskyChange(budget, '1', '2')).toBe(false)
   })
@@ -107,6 +110,10 @@ describe('admin plans', () => {
       { key: 'STORAGE_BYTES', limit: '', role: '' },
       { key: 'STORAGE_BYTES', limit: '1', role: 'STUDENT' },
     ])).toBe('duplicate')
+    expect(entitlementIssues([{ key: 'NOTES_OWNED', limit: '', role: '' }])).toBeNull()
+    expect(entitlementIssues([{ key: 'AI_REQUESTS_DAILY', limit: '', role: '' }])).toBeNull()
+    expect(LIMIT_KEYS).toContain('NOTES_OWNED')
+    expect(LIMIT_KEYS).toContain('AI_REQUESTS_DAILY')
   })
 })
 
