@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { Analytics } from '@/components/analytics/Analytics'
+import { ReleaseLandingHold } from '@/components/landing/ReleaseLandingHold'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { landingHoldScript } from '@/lib/auth/hint'
 import { env } from '@/lib/env'
 import { THEME_KEY } from '@/lib/theme'
 import '../globals.css'
@@ -51,8 +53,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Hides `/` before first paint when this browser has signed in, so the landing page does not flash on the way to Home. */}
+        <script dangerouslySetInnerHTML={{ __html: landingHoldScript() }} />
       </head>
       <body className="antialiased">
+        <ReleaseLandingHold />
         <NextIntlClientProvider>
           {children}
           <Analytics />

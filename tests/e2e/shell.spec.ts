@@ -79,10 +79,12 @@ test('public pages keep a signed-in learner in the app’s frame; a visitor gets
     await page.getByRole('button', { name: 'Menu' }).click()
     await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Resources' })).toHaveAttribute('aria-current', 'page')
   } else await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Resources' })).toHaveAttribute('aria-current', 'page')
-  // The landing stays the way in, even signed in.
+  // The landing page is for visitors. Someone signed in is sent to Home, in the app's frame.
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Menu' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Open your home' })).toBeVisible()
+  await expect(page).toHaveURL(/\/home$/)
+  const frame = info.project.name === 'phone' ? page.getByRole('dialog', { name: 'Menu' }) : page
+  if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
+  await expect(frame.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   const visitor = await browser.newPage()
   await visitor.goto('/resources')
   await expect(visitor.getByRole('link', { name: 'Sign in' }).first()).toBeVisible()
