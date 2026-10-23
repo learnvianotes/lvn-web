@@ -87,7 +87,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.27",
     "happy-dom": "^21.0.4",
-    "java-parser": "^2.3.4",
+    "java-parser": "^3.0.1",
     "lighthouse": "13.5.0",
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
