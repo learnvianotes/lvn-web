@@ -10,6 +10,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
+  AiConnectionModelsDocument,
   AiSettingsDocument,
   DeleteAiConnectionDocument,
   DeleteAiTaskRouteDocument,
@@ -30,6 +31,17 @@ const SELECT = 'h-11 w-full rounded-xl border border-border bg-surface px-3 text
 /** Prices travel as millionths of a dollar per million tokens; people read and write dollars per million tokens. */
 const toDollars = (micro: number) => (micro ? String(micro / 1_000_000) : '')
 const toMicro = (dollars: string) => (dollars.trim() ? Math.round(Number(dollars) * 1_000_000) : 0)
+/** The provider's own hints first, then every model the account lists, each once. */
+const merged = (...lists: (readonly string[] | undefined)[]) => [...new Set(lists.flatMap((l) => l ?? []))]
+
+/**
+ * Every model a saved connection's account lists (lvn-backend Query.aiConnectionModels): asked once per connection and
+ * kept for the visit; nothing is asked for a connection not saved yet.
+ */
+function useAccountModels(connectionId: string | null | undefined) {
+  const { data, loading } = useQuery(AiConnectionModelsDocument, { variables: { input: { id: connectionId ?? '' } }, skip: !connectionId, fetchPolicy: 'cache-first' })
+  return { models: data?.aiConnectionModels ?? [], loading: !!connectionId && loading }
+}
 
 /**
  * The AI providers page (lvn-backend ADR-0065), for platform admins: connections to Claude, ChatGPT, Gemini, an
@@ -47,6 +59,7 @@ export function AiProviders() {
   const [testConnection] = useMutation(TestAiConnectionDocument)
   const [deleteConnection] = useMutation(DeleteAiConnectionDocument)
   const [setDefaults, settingDefaults] = useMutation(SetAiDefaultsDocument)
+  const [saveConnection, allowing] = useMutation(SaveAiConnectionDocument)
 
   if (CombinedGraphQLErrors.is(error) && error.errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return <p className="text-muted">{t('notAllowed')}</p>
   const s = data?.aiSettings
@@ -74,12 +87,48 @@ export function AiProviders() {
   }
   const remove = async (c: Connection) => {
     if (!window.confirm(t('confirmDelete', { name: c.label }))) return
-    const res = await deleteConnection({ variables: { input: { id: c.id } } })
-    show(res.data?.deleteAiConnection.settings, res.data?.deleteAiConnection.userErrors[0]?.message)
+    const res = await deleteConnection({ variables: { input: { id: c.id } } }).catch((e: unknown) => failure(e))
+    if (res) show(res.data?.deleteAiConnection.settings, res.data?.deleteAiConnection.userErrors[0]?.message)
   }
   const choose = async (input: { chatConnectionId: string | null; embedConnectionId: string | null }) => {
-    const res = await setDefaults({ variables: { input } })
-    show(res.data?.setAiDefaults.settings, res.data?.setAiDefaults.userErrors[0]?.message)
+    const res = await setDefaults({ variables: { input } }).catch((e: unknown) => failure(e))
+    if (res) show(res.data?.setAiDefaults.settings, res.data?.setAiDefaults.userErrors[0]?.message)
+  }
+  /**
+   * Connections that answer something here but may not see private notes: with one of them choosing, an owner's AI on
+   * their own private note says "AI cannot work on private notes here." (ADR-0065). Saying so is the fix the admin can act on.
+   */
+  const inUse = new Set([s.chatConnectionId, s.embedConnectionId, ...s.routes.map((r) => r.connectionId)].filter(Boolean))
+  const closed = s.connections.filter((c) => c.enabled && !c.mayReceivePrivate && inUse.has(c.id))
+  const allowPrivate = async (c: Connection) => {
+    if (!window.confirm(t('confirmPrivate', { name: c.label }))) return
+    // Everything as it is, with private notes allowed; an empty key keeps the saved one.
+    const input = {
+      id: c.id,
+      kind: c.kind,
+      label: c.label,
+      baseUrl: c.baseUrl ?? null,
+      apiKey: null,
+      clearApiKey: false,
+      chatModel: c.chatModel ?? null,
+      embedModel: c.embedModel ?? null,
+      inputMicroUsdPerMTok: c.inputMicroUsdPerMTok,
+      outputMicroUsdPerMTok: c.outputMicroUsdPerMTok,
+      embedMicroUsdPerMTok: c.embedMicroUsdPerMTok,
+      mayReceivePrivate: true,
+      enabled: c.enabled,
+    }
+    const res = await saveConnection({ variables: { input } }).catch((e: unknown) => failure(e))
+    if (!res) return
+    const userError = res.data?.saveAiConnection.userErrors[0]?.message
+    if (userError) return setProblem(userError)
+    setProblem(null)
+    void client.refetchQueries({ include: [AiSettingsDocument] })
+  }
+  /** A request that failed outright (offline, a server error): say so instead of doing nothing. */
+  const failure = (e: unknown) => {
+    setProblem(CombinedGraphQLErrors.is(e) ? (e.errors[0]?.message ?? t('failed')) : t('failed'))
+    return null
   }
 
   return (
@@ -91,6 +140,20 @@ export function AiProviders() {
 
       {!s.keysCanBeSaved ? <Alert tone="error">{t('noSecret')}</Alert> : null}
       {problem ? <Alert tone="error">{problem}</Alert> : null}
+      {closed.length ? (
+        <section aria-labelledby="ai-private" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft p-4 text-sm">
+          <h2 id="ai-private" className="font-semibold">{t('privateBlockedTitle')}</h2>
+          <p>{t('privateBlocked', { names: closed.map((c) => c.label).join(', ') })}</p>
+          <p className="text-muted">{t('privateBlockedHow')}</p>
+          <div className="flex flex-wrap gap-2">
+            {closed.map((c) => (
+              <Button key={c.id} size="sm" variant="secondary" disabled={allowing.loading} onClick={() => void allowPrivate(c)}>
+                {t('allowPrivate', { name: c.label })}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section aria-labelledby="ai-now" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
         <h2 id="ai-now" className="text-lg font-semibold">{t('whoAnswers')}</h2>
@@ -145,7 +208,16 @@ export function AiProviders() {
                   {result && result !== 'running' ? (
                     <Alert tone={result.ok ? 'success' : 'error'}>
                       <p>{result.message}</p>
-                      {result.models.length ? <p className="mt-1 text-xs opacity-80">{t('modelsListed', { count: result.models.length, models: result.models.slice(0, 12).join(', ') })}</p> : null}
+                      {result.models.length ? (
+                        <details className="mt-1 text-xs">
+                          <summary className="cursor-pointer opacity-80">{t('modelsListed', { count: result.models.length })}</summary>
+                          <ul aria-label={t('modelsListLabel', { name: c.label })} className="mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-surface px-3 py-2 font-mono text-fg">
+                            {result.models.map((m) => (
+                              <li key={m}>{m}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : null}
                     </Alert>
                   ) : null}
                   <div className="flex flex-wrap gap-2">
@@ -176,7 +248,7 @@ export function AiProviders() {
         </div>
       </section>
 
-      <Routes settings={s} onSaved={show} />
+      <Routes settings={s} onSaved={show} onFailed={failure} tested={tests} />
 
       {editing ? (
         <ConnectionDialog
@@ -209,9 +281,12 @@ function Row({ term, value }: { term: string; value: string }) {
 }
 
 /** Adding or changing one connection; the key field is write-only. */
-function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models, onClose, onSaved }: { preset: Preset; connection: Connection | null; keysCanBeSaved: boolean; models: string[]; onClose: () => void; onSaved: () => void }) {
+function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models: tested, onClose, onSaved }: { preset: Preset; connection: Connection | null; keysCanBeSaved: boolean; models: string[]; onClose: () => void; onSaved: () => void }) {
   const t = useTranslations('aiAdmin')
-  const listId = useId()
+  const chatListId = useId()
+  const embedListId = useId()
+  const account = useAccountModels(c?.id)
+  const models = merged(account.models, tested)
   const [save, saving] = useMutation(SaveAiConnectionDocument)
   const [form, setForm] = useState({
     label: c?.label ?? preset.name.split(' (')[0]!,
@@ -259,7 +334,10 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models, onClo
       setErrors({ form: CombinedGraphQLErrors.is(err) ? (err.errors[0]?.message ?? t('failed')) : t('failed') })
     }
   }
-  const suggestions = [...new Set([...preset.chatModels, ...preset.embedModels, ...models])]
+  // Both fields offer every model the account lists; each field's own hints come first.
+  const chatSuggestions = merged(preset.chatModels, models, preset.embedModels)
+  const embedSuggestions = merged(preset.embedModels, models, preset.chatModels)
+  const listNote = !c ? t('modelsAfterSave') : account.loading ? t('modelsLoading') : models.length ? t('modelsOffered', { count: models.length }) : t('modelsNone')
   return (
     <Dialog open onClose={onClose} title={c ? t('editTitle', { name: c.label }) : t('addTitle', { name: preset.name })} wide>
       <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
@@ -281,18 +359,16 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models, onClo
             {t('clearKey')}
           </label>
         ) : null}
-        <datalist id={listId}>
-          {suggestions.map((m) => (
-            <option key={m} value={m} />
-          ))}
-        </datalist>
+        <ModelList id={chatListId} models={chatSuggestions} />
+        <ModelList id={embedListId} models={embedSuggestions} />
+        <p className="text-sm text-muted" role="status">{listNote}</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('chatModel')} error={errors.chatModel} hint={t('chatModelHint')}>
-            <Input value={form.chatModel} list={listId} onChange={(e) => set({ chatModel: e.target.value })} />
+            <Input value={form.chatModel} list={chatListId} autoComplete="off" onChange={(e) => set({ chatModel: e.target.value })} />
           </Field>
           {preset.canEmbed ? (
             <Field label={t('embedModel')} error={errors.embedModel} hint={t('embedModelHint')}>
-              <Input value={form.embedModel} list={listId} onChange={(e) => set({ embedModel: e.target.value })} />
+              <Input value={form.embedModel} list={embedListId} autoComplete="off" onChange={(e) => set({ embedModel: e.target.value })} />
             </Field>
           ) : (
             <p className="self-end text-sm text-muted">{t('noEmbeddings', { name: preset.name })}</p>
@@ -339,16 +415,35 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models, onClo
   )
 }
 
+/** Suggestions for a model field: any name may still be typed. */
+function ModelList({ id, models }: { id: string; models: string[] }) {
+  return (
+    <datalist id={id}>
+      {models.map((m) => (
+        <option key={m} value={m} />
+      ))}
+    </datalist>
+  )
+}
+
 /** Tasks sent to another connection or model than the default: transcription to Gemini, say. */
-function Routes({ settings: s, onSaved }: { settings: Settings; onSaved: (next: Settings | null | undefined, problem?: string) => void }) {
+function Routes({ settings: s, onSaved, onFailed, tested }: { settings: Settings; onSaved: (next: Settings | null | undefined, problem?: string) => void; onFailed: (e: unknown) => null; tested: Record<string, Test | 'running'> }) {
   const t = useTranslations('aiAdmin')
+  const modelListId = useId()
   const [saveRoute, saving] = useMutation(SaveAiTaskRouteDocument)
   const [deleteRoute] = useMutation(DeleteAiTaskRouteDocument)
   const [form, setForm] = useState({ task: '', connectionId: '', model: '', input: '', output: '' })
   const labelOf = (id: string | null | undefined) => (id ? (s.connections.find((c) => c.id === id)?.label ?? '—') : t('theDefault'))
+  // The models of the connection the task goes to: the chosen one, else the default for chats or for embeddings.
+  const via = s.connections.find((c) => c.id === (form.connectionId || (form.task === 'EMBED' ? s.embedConnectionId : s.chatConnectionId)))
+  const account = useAccountModels(via?.id)
+  const viaTest = via ? tested[via.id] : undefined
+  const viaPreset = via ? s.presets.find((p) => p.kind === via.kind) : undefined
+  const routeModels = merged(form.task === 'EMBED' ? viaPreset?.embedModels : viaPreset?.chatModels, account.models, viaTest && viaTest !== 'running' ? viaTest.models : [])
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
-    const res = await saveRoute({ variables: { input: { task: form.task, connectionId: form.connectionId || null, model: form.model, inputMicroUsdPerMTok: toMicro(form.input), outputMicroUsdPerMTok: toMicro(form.output) } } })
+    const res = await saveRoute({ variables: { input: { task: form.task, connectionId: form.connectionId || null, model: form.model, inputMicroUsdPerMTok: toMicro(form.input), outputMicroUsdPerMTok: toMicro(form.output) } } }).catch(onFailed)
+    if (!res) return
     const problem = res.data?.saveAiTaskRoute.userErrors[0]?.message
     onSaved(res.data?.saveAiTaskRoute.settings, problem)
     if (!problem) setForm({ task: '', connectionId: '', model: '', input: '', output: '' })
@@ -370,8 +465,8 @@ function Routes({ settings: s, onSaved }: { settings: Settings; onSaved: (next: 
                 className="ml-auto"
                 aria-label={t('removeRoute', { task: r.task })}
                 onClick={async () => {
-                  const res = await deleteRoute({ variables: { input: { task: r.task } } })
-                  onSaved(res.data?.deleteAiTaskRoute.settings, res.data?.deleteAiTaskRoute.userErrors[0]?.message)
+                  const res = await deleteRoute({ variables: { input: { task: r.task } } }).catch(onFailed)
+                  if (res) onSaved(res.data?.deleteAiTaskRoute.settings, res.data?.deleteAiTaskRoute.userErrors[0]?.message)
                 }}
               >
                 {t('remove')}
@@ -399,9 +494,10 @@ function Routes({ settings: s, onSaved }: { settings: Settings; onSaved: (next: 
             ))}
           </select>
         </Field>
-        <Field label={t('model')}>
-          <Input value={form.model} required onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} />
+        <Field label={t('model')} hint={via ? (account.loading ? t('modelsLoading') : routeModels.length ? t('modelsOffered', { count: routeModels.length }) : undefined) : undefined}>
+          <Input value={form.model} required list={modelListId} autoComplete="off" onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} />
         </Field>
+        <ModelList id={modelListId} models={routeModels} />
         <div className="grid grid-cols-2 gap-3">
           <Field label={t('priceInput')}>
             <Input inputMode="decimal" value={form.input} placeholder="0" onChange={(e) => setForm((f) => ({ ...f, input: e.target.value }))} />
