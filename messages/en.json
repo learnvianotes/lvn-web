@@ -2828,6 +2828,22 @@
     "cancel": "Cancel",
     "failed": "That didn’t work. Try again."
   },
+  "adminNav": {
+    "label": "Admin settings",
+    "open": "Admin settings",
+    "close": "Close admin settings",
+    "groups": {
+      "people": "People",
+      "content": "Content",
+      "ai": "AI"
+    },
+    "sections": {
+      "verification": "Proof of study to review",
+      "moderation": "Moderation queue",
+      "contests": "Weekly contests",
+      "ai": "AI providers"
+    }
+  },
   "consent": {
     "region": "Analytics cookies",
     "text": "Can we use <strong>Google Analytics</strong>? It sets cookies to count visits and show which pages help. Nothing is collected unless you allow it, and you can change your mind any time from “Analytics choice” at the foot of every page. <privacy>Privacy Policy</privacy>",
