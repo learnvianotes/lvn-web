@@ -144,7 +144,8 @@ test('a teacher proves a GitHub account, then publishes or discards what was imp
   expect(calls.find((c) => c.op === 'PublishTeacherSkills')?.variables).toEqual({ skillIds: ['d1'] })
   await expect(importing.getByRole('list', { name: 'Imported, on your profile' })).toContainText('tiny-os')
   await review.getByRole('button', { name: 'Discard C' }).click()
-  expect(calls.find((c) => c.op === 'DiscardTeacherSkills')?.variables).toEqual({ skillIds: ['d2'] })
+  // The click starts the mutation and returns before the request is recorded when the phone run is busy.
+  await expect.poll(() => calls.find((c) => c.op === 'DiscardTeacherSkills')?.variables).toEqual({ skillIds: ['d2'] })
   await expect(importing.getByRole('list', { name: 'Drafts to review' })).toHaveCount(0)
 })
 
