@@ -175,6 +175,71 @@ input AddWeeklyTaskInput {
   topicId: UUID
 }
 
+"""Token sums and cost are decimal strings. Cost is micro-USD."""
+type AdminAiMetrics {
+  byModel: [AdminAiModelUsage!]!
+  byProvider: [AdminAiProviderUsage!]!
+  byTask: [AdminAiTaskUsage!]!
+
+  """Decimal string"""
+  completionTokens: String!
+
+  """Micro-USD"""
+  costMicroUsd: String!
+  failures: Int!
+
+  """Start of the AI usage window"""
+  from: DateTime!
+
+  """Decimal string"""
+  promptTokens: String!
+  tasksRun: Int!
+
+  """End of the AI usage window"""
+  to: DateTime!
+}
+
+"""One model's AI usage inside the metrics window"""
+type AdminAiModelUsage {
+  completionTokens: String!
+  costMicroUsd: String!
+  failures: Int!
+  model: String!
+  promptTokens: String!
+  provider: String!
+  tasksRun: Int!
+}
+
+"""One provider's AI usage inside the metrics window"""
+type AdminAiProviderUsage {
+  completionTokens: String!
+  costMicroUsd: String!
+  failures: Int!
+  promptTokens: String!
+  provider: String!
+  tasksRun: Int!
+}
+
+"""One task's AI usage inside the metrics window"""
+type AdminAiTaskUsage {
+  completionTokens: String!
+  costMicroUsd: String!
+  failures: Int!
+  promptTokens: String!
+  task: String!
+  tasksRun: Int!
+}
+
+"""Notes, subjects and the places people learn together"""
+type AdminContentMetrics {
+  classrooms: Int!
+  groups: Int!
+  notes: Int!
+  publicNotes: Int!
+  subjects: Int!
+  topics: Int!
+}
+
 """A contest as its writers see it"""
 type AdminContest {
   """How many have started it"""
@@ -202,6 +267,118 @@ type AdminContestQuestion {
   explanation: String!
   id: UUID!
   prompt: String!
+}
+
+"""
+Platform-admin figures. from and to on adminMetrics bound AI usage only; leave them out for the last 30 days.
+The window is at most 366 days. The result is cached for about a minute.
+"""
+type AdminMetrics {
+  ai: AdminAiMetrics!
+  content: AdminContentMetrics!
+  generatedAt: DateTime!
+  moderation: AdminModerationMetrics!
+  storage: AdminStorageMetrics!
+  users: AdminUserMetrics!
+  verification: AdminVerificationMetrics!
+}
+
+"""Open platform moderation work"""
+type AdminModerationMetrics {
+  openAppeals: Int!
+  openReports: Int!
+}
+
+"""
+A plan's price is what it costs. Saving a price charges nobody.
+priceMinor is minor units (49900 INR with interval MONTH is ₹499 a month).
+"""
+type AdminPlan {
+  active: Boolean!
+  code: String!
+  currency: String!
+  entitlements: [AdminPlanEntitlement!]!
+  features: [String!]!
+  id: UUID!
+  interval: PlanInterval!
+  name: String!
+  priceMinor: Int!
+  subscriberCount: Int!
+}
+
+"""limit is a decimal string, or null when the entitlement is unlimited"""
+type AdminPlanEntitlement {
+  appliesToRole: GlobalRole
+  key: LimitKey!
+  limit: String
+}
+
+input AdminPlanEntitlementInput {
+  appliesToRole: GlobalRole
+  key: LimitKey!
+  limit: String
+}
+
+type AdminPlanPayload {
+  plan: AdminPlan
+  userErrors: [UserError!]!
+}
+
+"""
+A platform setting. value is "true" or "false", a decimal integer, text, or "" when a nullable integer is cleared.
+overridden is false when the environment default is in effect.
+Categories: auth, verification, uploads, ai, search, accounts.
+"""
+type AdminSetting {
+  category: String!
+  constraints: AdminSettingConstraints!
+  description: String!
+  key: String!
+  overridden: Boolean!
+  type: AdminSettingType!
+  updatedAt: DateTime
+  value: String!
+}
+
+type AdminSettingConstraints {
+  max: Int
+  maxLength: Int
+  min: Int
+  nullable: Boolean!
+  pattern: String
+}
+
+type AdminSettingPayload {
+  setting: AdminSetting
+  userErrors: [UserError!]!
+}
+
+enum AdminSettingType {
+  BOOLEAN
+  INTEGER
+  STRING
+}
+
+"""Stored bytes and how many files they are"""
+type AdminStorageMetrics {
+  """Decimal string of bytes"""
+  bytes: String!
+  files: Int!
+}
+
+"""People with accounts"""
+type AdminUserMetrics {
+  active: Int!
+  newLast30Days: Int!
+  newLast7Days: Int!
+  total: Int!
+}
+
+"""Proof of study waiting for a platform admin"""
+type AdminVerificationMetrics {
+  domainReviews: Int!
+  pendingRequests: Int!
+  studentIdQueue: Int!
 }
 
 """
@@ -337,6 +514,15 @@ input AiConnectionIdInput {
   id: UUID!
 }
 
+"""
+Every model a connection's account lists, and the same models split into the pickers the admin selects from.
+Bind each select to the picker for that use. An empty picker is not shown.
+"""
+type AiConnectionModels {
+  all: [AiListedModel!]!
+  pickers: [AiModelPicker!]!
+}
+
 type AiConnectionPayload {
   connection: AiConnection
   userErrors: [UserError!]!
@@ -393,6 +579,41 @@ enum AiLanguage {
   ENGLISH
   HINDI
   TELUGU
+}
+
+"""A model the provider lists for a connection"""
+type AiListedModel {
+  id: String!
+  kind: AiModelKind!
+  supports: [AiModelUse!]!
+}
+
+enum AiModelKind {
+  AUDIO
+  CHAT
+  EMBEDDING
+  IMAGE
+  MODERATION
+  OTHER
+  REALTIME
+  TTS
+}
+
+"""Models that support one use, for one select"""
+type AiModelPicker {
+  models: [AiListedModel!]!
+  use: AiModelUse!
+}
+
+enum AiModelUse {
+  AUDIO
+  CHAT
+  EMBEDDING
+  IMAGE
+  MODERATION
+  REALTIME
+  TRANSCRIBE
+  TTS
 }
 
 """Who answers AI calls"""
@@ -1399,6 +1620,21 @@ type CoreTopicProgress {
   revisit: Boolean!
   secondsStudied: Int!
   topicKey: String!
+}
+
+"""
+code is 2–32 characters, A–Z, digits and _, starting with a letter, stored uppercase.
+priceMinor is 0..2000000000. currency is ISO 4217.
+"""
+input CreateAdminPlanInput {
+  active: Boolean
+  code: String!
+  currency: String!
+  entitlements: [AdminPlanEntitlementInput!]
+  features: [String!]
+  interval: PlanInterval!
+  name: String!
+  priceMinor: Int!
 }
 
 input CreateClassroomInput {
@@ -2614,6 +2850,12 @@ type Mutation {
   """
   convertPdfToNote(input: ConvertPdfInput!): PdfConversionPayload!
 
+  """
+  Platform admins. code is 2–32 characters, A–Z, digits and _, starting with a letter, stored uppercase.
+  priceMinor is 0..2000000000. currency is ISO 4217. Saving a price charges nobody.
+  """
+  createAdminPlan(input: CreateAdminPlanInput!): AdminPlanPayload!
+
   """Teachers"""
   createClassroom(input: CreateClassroomInput!): ClassroomPayload!
 
@@ -2633,6 +2875,11 @@ type Mutation {
 
   """Decline the old site's data, or remove it after it was attached"""
   declineLegacyData: OkPayload!
+
+  """
+  Platform admins. FREE cannot be deleted. A plan with subscribers cannot be deleted (deactivate it instead).
+  """
+  deleteAdminPlan(id: UUID!): OkPayload!
   deleteAiAnswer(id: UUID!): OkPayload!
   deleteAiArtifact(id: UUID!): OkPayload!
 
@@ -2806,6 +3053,9 @@ type Mutation {
   """Every other group: the admins accept or reject"""
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
+
+  """Platform admins: put a setting back to its environment default"""
+  resetAdminSetting(key: String!): AdminSettingPayload!
 
   """The card starts again as new"""
   resetCardReview(input: CardIdInput!): OkPayload!
@@ -2986,6 +3236,15 @@ type Mutation {
   No sign-in: the token in an email's unsubscribe link turns off that kind of email
   """
   unsubscribeEmail(input: UnsubscribeEmailInput!): UnsubscribePayload!
+
+  """
+  Platform admins. features and entitlements replace the whole list when given. code is immutable.
+  FREE cannot be deactivated. Saving a price charges nobody.
+  """
+  updateAdminPlan(input: UpdateAdminPlanInput!): AdminPlanPayload!
+
+  """Platform admins. account_minimum_age cannot be set below 18."""
+  updateAdminSetting(input: UpdateAdminSettingInput!): AdminSettingPayload!
   updateClassroom(input: UpdateClassroomInput!): ClassroomPayload!
   updateExam(input: UpdateExamInput!): ExamPayload!
   updateFolder(input: UpdateFolderInput!): FolderPayload!
@@ -3630,6 +3889,13 @@ input PinGroupPostInput {
   postId: UUID!
 }
 
+"""How often a plan's price is charged. NONE is a one-time price. Saving a price charges nobody."""
+enum PlanInterval {
+  MONTH
+  NONE
+  YEAR
+}
+
 enum Platform {
   ANDROID
   IOS
@@ -3717,6 +3983,17 @@ type Query {
 
   """Platform admins: every contest, drafts included"""
   adminContests: [AdminContest!]!
+
+  """
+  Platform admins. from and to bound AI usage only; omit them for the last 30 days. At most 366 days. Cached about a minute.
+  """
+  adminMetrics(from: DateTime, to: DateTime): AdminMetrics!
+
+  """Platform admins: plans and what they cost. Saving a price charges nobody."""
+  adminPlans: [AdminPlan!]!
+
+  """Platform admins: configuration, grouped by category"""
+  adminSettings: [AdminSetting!]!
   aiAnswer(id: UUID!): AiAnswer
 
   """
@@ -3725,10 +4002,11 @@ type Query {
   aiArtifact(id: UUID!): AiArtifact
 
   """
-  Platform admins only: every model the connection's account lists, sorted, for its chat and embedding model fields.
+  Platform admins only: models the connection's account lists, and pickers by use.
+  all is everything the provider lists. Each select uses pickers for that use and leaves the rest out.
   Empty when the provider does not list its models, cannot be reached or the key cannot be read. Spends no tokens.
   """
-  aiConnectionModels(input: AiConnectionIdInput!): [String!]!
+  aiConnectionModels(input: AiConnectionIdInput!): AiConnectionModels!
 
   """Platform admins only"""
   aiSettings: AiSettings!
@@ -5344,6 +5622,26 @@ type UnsubscribePayload {
   """What was turned off"""
   kind: EmailKind
   userErrors: [UserError!]!
+}
+
+"""
+features and entitlements replace the whole list when given. code is immutable.
+FREE cannot be deactivated or deleted. A plan with subscribers cannot be deleted.
+"""
+input UpdateAdminPlanInput {
+  active: Boolean
+  currency: String
+  entitlements: [AdminPlanEntitlementInput!]
+  features: [String!]
+  id: UUID!
+  interval: PlanInterval
+  name: String
+  priceMinor: Int
+}
+
+input UpdateAdminSettingInput {
+  key: String!
+  value: String!
 }
 
 input UpdateClassroomInput {

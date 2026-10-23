@@ -59,6 +59,9 @@ const settings = {
 }
 
 const SECTIONS: [label: string, href: string][] = [
+  ['Overview', '/admin'],
+  ['Configuration', '/admin/settings'],
+  ['Plans & pricing', '/admin/plans'],
   ['Proof of study to review', '/admin/verification'],
   ['Moderation queue', '/admin/moderation'],
   ['Weekly contests', '/admin/contests'],
@@ -91,6 +94,7 @@ test('a platform admin sees every settings section, with the open one marked', a
   const nav = page.getByRole('navigation', { name: 'Admin settings' })
   await expect(nav.getByRole('link')).toHaveText(SECTIONS.map(([label]) => label))
   for (const [label, href] of SECTIONS) await expect(nav.getByRole('link', { name: label, exact: true })).toHaveAttribute('href', href)
+  await expect(nav.getByText('Platform', { exact: true })).toBeVisible()
   await expect(nav.getByText('People', { exact: true })).toBeVisible()
   await expect(nav.getByText('Content', { exact: true })).toBeVisible()
   await expect(nav.getByText('AI', { exact: true })).toBeVisible()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { BadgeCheck, PanelLeft, ShieldCheck, Sparkles, Trophy, X, type LucideIcon } from 'lucide-react'
+import { BadgeCheck, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -9,13 +9,13 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ViewerDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 
-export type AdminGroupKey = 'people' | 'content' | 'ai'
+export type AdminGroupKey = 'platform' | 'people' | 'content' | 'ai'
 
 export type AdminSection = {
   href: string
   group: AdminGroupKey
   /** Key under adminNav.sections */
-  key: 'verification' | 'moderation' | 'contests' | 'ai'
+  key: 'overview' | 'settings' | 'plans' | 'verification' | 'moderation' | 'contests' | 'ai'
   icon: LucideIcon
 }
 
@@ -24,17 +24,24 @@ export type AdminSection = {
  * out of this list, so the sidebar stays the whole admin area.
  */
 export const ADMIN_SECTIONS: AdminSection[] = [
+  { href: '/admin', group: 'platform', key: 'overview', icon: LayoutDashboard },
+  { href: '/admin/settings', group: 'platform', key: 'settings', icon: SlidersHorizontal },
+  { href: '/admin/plans', group: 'platform', key: 'plans', icon: Wallet },
   { href: '/admin/verification', group: 'people', key: 'verification', icon: BadgeCheck },
   { href: '/admin/moderation', group: 'content', key: 'moderation', icon: ShieldCheck },
   { href: '/admin/contests', group: 'content', key: 'contests', icon: Trophy },
   { href: '/admin/ai', group: 'ai', key: 'ai', icon: Sparkles },
 ]
 
-export const ADMIN_GROUP_ORDER: AdminGroupKey[] = ['people', 'content', 'ai']
+export const ADMIN_GROUP_ORDER: AdminGroupKey[] = ['platform', 'people', 'content', 'ai']
 
-/** The section this path belongs to: the page itself, or a page under it. */
+/**
+ * The section this path belongs to. Overview is only `/admin` itself; a longer path wins when several could match.
+ */
 export function activeAdminSection(pathname: string): AdminSection | undefined {
-  return ADMIN_SECTIONS.find((section) => pathname === section.href || pathname.startsWith(`${section.href}/`))
+  return ADMIN_SECTIONS.filter((section) => (section.href === '/admin' ? pathname === '/admin' : pathname === section.href || pathname.startsWith(`${section.href}/`))).sort(
+    (a, b) => b.href.length - a.href.length,
+  )[0]
 }
 
 /** The sidebar is chrome for platform admins. Each page still refuses everyone else, as it did before. */
@@ -70,13 +77,13 @@ export function AdminNav() {
   return (
     <div>
       {/* The outer box is the grid cell (it stretches with the page). The inner one sticks below the top bar. */}
-      <div className="lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto">
+      <div className="lg:sticky lg:top-0 lg:max-h-[calc(100dvh-7.5rem)] lg:overflow-y-auto">
         <button
           ref={openButton}
           type="button"
           aria-expanded={open}
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold hover:border-accent lg:hidden"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm font-semibold hover:border-accent lg:hidden"
         >
           <PanelLeft className="size-4" aria-hidden />
           {t('open')}
@@ -130,7 +137,7 @@ function SectionList({ pathname, idPrefix, onNavigate }: { pathname: string; idP
                     aria-current={on ? 'page' : undefined}
                     onClick={onNavigate}
                     className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium',
+                      'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium',
                       on ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg',
                     )}
                   >

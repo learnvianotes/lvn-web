@@ -132,5 +132,19 @@ mutation DeleteAiTaskRoute($input: AiTaskRouteInput!) {
 }
 
 query AiConnectionModels($input: AiConnectionIdInput!) {
-  aiConnectionModels(input: $input)
+  aiConnectionModels(input: $input) {
+    all {
+      id
+      kind
+      supports
+    }
+    pickers {
+      use
+      models {
+        id
+        kind
+        supports
+      }
+    }
+  }
 }

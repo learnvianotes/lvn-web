@@ -20,10 +20,39 @@ const presets = [
 ]
 // More models than any list used to show (it stopped at 12), as Anthropic's /v1/models gives them.
 const CLAUDE_MODELS = Array.from({ length: 30 }, (_, i) => `claude-model-${String(i).padStart(2, '0')}`)
-const GEMINI_MODELS = ['gemini-2.5-pro', 'gemini-3.8-flash', 'gemini-embedding-001', 'text-embedding-004']
-const accountModels = (v: Record<string, unknown>) => ({ aiConnectionModels: (v.input as { id: string }).id === CLAUDE ? CLAUDE_MODELS : GEMINI_MODELS })
-/** The values a model field's datalist offers. */
-const offered = (input: import('@playwright/test').Locator) => input.evaluate((el) => [...((el as HTMLInputElement).list?.options ?? [])].map((o) => o.value))
+const listed = (id: string, kind: string, supports: string[]) => ({ __typename: 'AiListedModel', id, kind, supports })
+const GEMINI_CHAT = [listed('gemini-2.5-pro', 'CHAT', ['CHAT']), listed('gemini-3.8-flash', 'CHAT', ['CHAT', 'TRANSCRIBE'])]
+const GEMINI_EMBED = [listed('gemini-embedding-001', 'EMBEDDING', ['EMBEDDING']), listed('text-embedding-004', 'EMBEDDING', ['EMBEDDING'])]
+const GEMINI_TTS = [listed('gemini-2.5-flash-tts', 'TTS', ['TTS'])]
+const catalog = (all: ReturnType<typeof listed>[], pickers: [string, ReturnType<typeof listed>[]][]) => ({
+  __typename: 'AiConnectionModels',
+  all,
+  pickers: pickers.map(([use, models]) => ({ __typename: 'AiModelPicker', use, models })),
+})
+const GEMINI_CATALOG = catalog([...GEMINI_CHAT, ...GEMINI_EMBED, ...GEMINI_TTS], [
+  ['CHAT', GEMINI_CHAT],
+  ['EMBEDDING', GEMINI_EMBED],
+  ['TRANSCRIBE', [GEMINI_CHAT[1]!]],
+  ['IMAGE', []],
+  ['TTS', GEMINI_TTS],
+  ['AUDIO', []],
+  ['REALTIME', []],
+  ['MODERATION', []],
+])
+const CLAUDE_LISTED = CLAUDE_MODELS.map((id) => listed(id, 'CHAT', ['CHAT']))
+const CLAUDE_CATALOG = catalog(CLAUDE_LISTED, [
+  ['CHAT', CLAUDE_LISTED],
+  ['EMBEDDING', []],
+  ['TRANSCRIBE', []],
+  ['IMAGE', []],
+  ['TTS', []],
+  ['AUDIO', []],
+  ['REALTIME', []],
+  ['MODERATION', []],
+])
+const accountModels = (v: Record<string, unknown>) => ({ aiConnectionModels: (v.input as { id: string }).id === CLAUDE ? CLAUDE_CATALOG : GEMINI_CATALOG })
+/** The values a model select offers, ignoring the empty "choose" row. */
+const offered = (input: import('@playwright/test').Locator) => input.locator('option').evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value).filter(Boolean))
 const connection = (over: Record<string, unknown>) => ({ __typename: 'AiConnection', baseUrl: null, hasKey: true, keyHint: null, mayReceivePrivate: false, enabled: true, chatModel: null, embedModel: null, inputMicroUsdPerMTok: 0, outputMicroUsdPerMTok: 0, embedMicroUsdPerMTok: 0, updatedAt: '2026-10-13T10:00:00.000Z', ...over })
 const settings = (over: Record<string, unknown> = {}) => ({
   __typename: 'AiSettings',
@@ -79,7 +108,7 @@ test('a platform admin adds Claude, tests it, makes it answer, sends transcripti
 
   await page.getByRole('button', { name: 'Claude (Anthropic)' }).click()
   const dialog = page.getByRole('dialog', { name: 'Add Claude (Anthropic)' })
-  await expect(dialog.getByLabel('Chat model')).toHaveValue('claude-sonnet-5-5')
+  await expect(dialog.getByLabel('Chat model', { exact: true })).toHaveValue('claude-sonnet-5-5')
   await expect(dialog.getByText('Claude (Anthropic) makes no embeddings.')).toBeVisible()
   await expect(dialog.getByLabel(/Private notes may go to it/)).not.toBeChecked()
   await dialog.getByLabel('API key').fill('sk-ant-secret-7777')
@@ -106,9 +135,10 @@ test('a platform admin adds Claude, tests it, makes it answer, sends transcripti
 
   await page.getByLabel('Task', { exact: true }).selectOption('TRANSCRIBE')
   await page.getByLabel('Connection', { exact: true }).selectOption(GEMINI)
-  // The route's model field offers every model of the connection the task goes to.
-  await expect.poll(() => offered(page.getByLabel('Model', { exact: true }))).toEqual(expect.arrayContaining(GEMINI_MODELS))
-  await page.getByLabel('Model', { exact: true }).fill('gemini-3.8-flash')
+  // Transcription offers only models that support it. Embeddings and speech stay out.
+  const model = page.getByLabel('Model', { exact: true })
+  await expect.poll(() => offered(model)).toEqual(['gemini-3.8-flash'])
+  await model.selectOption('gemini-3.8-flash')
   await page.getByRole('button', { name: 'Send this task there' }).click()
   const route = page.getByRole('listitem').filter({ hasText: 'TRANSCRIBE' })
   await expect(route).toContainText('Gemini · gemini-3.8-flash')
@@ -148,15 +178,19 @@ test('editing a connection offers every model its account has, in the chat and t
   // Not tested in this visit: the dialog asks for the account's models itself.
   await page.getByRole('button', { name: 'Edit Gemini' }).click()
   const dialog = page.getByRole('dialog', { name: 'Edit Gemini' })
-  await expect(dialog.getByText('4 models from the account to choose from.')).toBeVisible()
+  await expect(dialog.getByText('2 models support this')).toHaveCount(2)
   expect(calls.find((c) => c.op === 'AiConnectionModels')!.variables).toEqual({ input: { id: GEMINI } })
-  const chat = await offered(dialog.getByLabel('Chat model'))
-  const embed = await offered(dialog.getByLabel('Embedding model'))
-  expect(chat).toEqual(expect.arrayContaining(GEMINI_MODELS))
-  expect(embed).toEqual(expect.arrayContaining(GEMINI_MODELS))
-  // Each field's own hints first.
-  expect(chat[0]).toBe('gemini-3.8-flash')
-  expect(embed[0]).toBe('gemini-embedding-001')
+  const chat = dialog.getByLabel('Chat model', { exact: true })
+  const embed = dialog.getByLabel('Embedding model', { exact: true })
+  await expect.poll(() => offered(chat)).toEqual(['gemini-2.5-pro', 'gemini-3.8-flash'])
+  await expect.poll(() => offered(embed)).toEqual(['gemini-embedding-001', 'text-embedding-004'])
+  await dialog.getByRole('searchbox', { name: 'Search chat models' }).fill('pro')
+  await expect.poll(() => offered(chat)).toEqual(['gemini-2.5-pro'])
+  await dialog.getByRole('searchbox', { name: 'Search chat models' }).fill('')
+  await dialog.getByText('All models this provider lists (5)').click()
+  await expect(dialog.getByRole('list', { name: 'All models Gemini lists' })).toContainText('gemini-2.5-flash-tts')
+  await expect(dialog.getByRole('searchbox', { name: 'Search image models' })).toHaveCount(0)
+  await expect(dialog.getByRole('searchbox', { name: 'Search speech models' })).toHaveCount(0)
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   // A new connection has no account to ask yet, and says so.
   await page.getByRole('button', { name: 'ChatGPT (OpenAI)' }).click()
@@ -202,6 +236,38 @@ test('says why AI does not work on private notes, and lets the admin allow them 
     inputMicroUsdPerMTok: 3_000_000, outputMicroUsdPerMTok: 15_000_000, embedMicroUsdPerMTok: 0, mayReceivePrivate: true, enabled: true,
   })
   await expect(page.getByRole('article', { name: 'Claude' }).getByText('May see private notes')).toBeVisible()
+})
+
+test('a model the provider does not offer for that use is rejected, and an empty picker stays hidden', async ({ page }) => {
+  const local = '01920000-0000-7000-8000-0000000a1c03'
+  const state = settings({
+    connections: [
+      connection({ id: GEMINI, kind: 'GEMINI', label: 'Gemini', keyHint: 'x9Qa', chatModel: 'retired-model', embedModel: 'gemini-embedding-001' }),
+      connection({ id: local, kind: 'OLLAMA', label: 'Local', chatModel: 'gemma4', embedModel: null, hasKey: false }),
+    ],
+  })
+  await mockApi(
+    page,
+    {
+      AiSettings: () => ({ aiSettings: state }),
+      AiConnectionModels: (v) => ({ aiConnectionModels: (v.input as { id: string }).id === local ? catalog([listed('gemma4', 'CHAT', ['CHAT'])], [['CHAT', [listed('gemma4', 'CHAT', ['CHAT'])]], ['EMBEDDING', []]]) : GEMINI_CATALOG }),
+      SaveAiConnection: () => ({ saveAiConnection: { __typename: 'AiConnectionPayload', connection: null, userErrors: [{ __typename: 'UserError', code: 'VALIDATION', field: ['input', 'chatModel'], message: 'That model is not offered for chat.' }] } }),
+    },
+    { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
+  )
+  await page.goto('/admin/ai')
+  await page.getByRole('button', { name: 'Edit Gemini' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Edit Gemini' })
+  await expect(dialog.getByLabel('Chat model', { exact: true })).toContainText('retired-model (not offered for this)')
+  await dialog.getByLabel('Name').fill('Gemini west')
+  await dialog.getByRole('button', { name: 'Save' }).click()
+  await expect(dialog.getByText('That model is not offered for chat.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+
+  await page.getByRole('button', { name: 'Edit Local' }).click()
+  const localDialog = page.getByRole('dialog', { name: 'Edit Local' })
+  await expect(localDialog.getByText('This provider lists no embedding models.')).toBeVisible()
+  await expect(localDialog.getByLabel('Embedding model')).toHaveCount(0)
 })
 
 test('nothing is saved when the admin does not confirm allowing private notes', async ({ page }) => {

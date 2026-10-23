@@ -71,6 +71,9 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
   const app = !visitor
   const [open, setOpen] = useState(false)
   const path = usePathname()
+  // Admin keeps the top bar in the frame and scrolls the page under it. A sticky bar inside a document that also
+  // overflows sideways is painted over the content (and over a full-page screenshot).
+  const admin = path.startsWith('/admin')
   useEffect(() => setOpen(false), [path])
   useEffect(() => {
     if (!open) return
@@ -79,7 +82,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
   return (
-    <div className={cn('min-h-dvh', app && 'lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]')}>
+    <div className={cn('min-h-dvh', app && 'lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]', admin && 'h-dvh max-h-dvh overflow-hidden')}>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2">
         {t('skip')}
       </a>
@@ -89,13 +92,21 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
           <Nav />
         </aside>
       ) : null}
-      <div className="flex min-w-0 flex-col">
-        {app ? <TopBar onMenu={() => setOpen(true)} /> : visitor}
+      <div className={cn('flex min-w-0 flex-col', admin && 'h-dvh max-h-dvh min-h-0 overflow-hidden')}>
+        {app ? <TopBar onMenu={() => setOpen(true)} pinned={admin} /> : visitor}
         {app ? <DeletionBanner /> : null}
-        <main id="main" className={app ? 'mx-auto min-h-[70dvh] w-full max-w-6xl flex-1 px-4 py-6 sm:py-8' : 'min-h-[70dvh]'}>
+        <main
+          id="main"
+          className={
+            app
+              ? cn('mx-auto w-full min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8', admin ? 'max-w-none overflow-y-auto' : 'min-h-[70dvh] max-w-6xl')
+              : 'min-h-[70dvh]'
+          }
+        >
           {children}
+          {admin ? footer : null}
         </main>
-        {footer}
+        {admin ? null : footer}
       </div>
       {app && open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('menu')}>
@@ -191,15 +202,15 @@ function Nav() {
 }
 
 /** The top bar: the menu (below 1024 px), search (opens the palette), the theme, the bell and the avatar. */
-function TopBar({ onMenu }: { onMenu: () => void }) {
+function TopBar({ onMenu, pinned }: { onMenu: () => void; pinned?: boolean }) {
   const t = useTranslations('shell')
   const ts = useTranslations('site')
   const router = useRouter()
   const viewer = useQuery(ViewerDocument).data?.viewer
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-bg/85 backdrop-blur supports-[backdrop-filter]:bg-bg/70">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
-        <button type="button" aria-label={t('menu')} onClick={onMenu} className="rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
+    <header className={cn('z-30 shrink-0 border-b border-border bg-bg/85 backdrop-blur supports-[backdrop-filter]:bg-bg/70', pinned ? 'relative' : 'sticky top-0')}>
+      <div className={cn('mx-auto flex h-14 min-w-0 items-center gap-1 px-3 sm:gap-2 sm:px-4', pinned ? 'max-w-none' : 'max-w-6xl')}>
+        <button type="button" aria-label={t('menu')} onClick={onMenu} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
           <Menu className="size-5" aria-hidden />
         </button>
         <button
@@ -209,13 +220,13 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
             // The palette on the page takes the event; without one, the search page.
             if (window.dispatchEvent(new Event(OPEN_SEARCH_EVENT, { cancelable: true }))) router.push('/search')
           }}
-          className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
+          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" aria-hidden />
           <span className="truncate">{t('searchPlaceholder')}</span>
           <kbd className="ml-auto hidden rounded border border-border px-1.5 text-[10px] sm:inline">Ctrl K</kbd>
         </button>
-        <div className="ml-auto flex items-center gap-0.5">
+        <div className="ml-auto flex shrink-0 items-center">
           <ThemeToggle labels={{ toLight: ts('theme.toLight'), toDark: ts('theme.toDark') }} />
           <NotificationBell />
           <Link href="/profile" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
