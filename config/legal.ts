@@ -5,9 +5,9 @@
  */
 export const LEGAL = {
   /** Legal name of the person or company that operates LearnViaNotes (the data fiduciary). */
-  operator: '',
+  operator: 'K Manideep & K Thrishank',
   /** Postal address for notices: street, city, state, PIN. */
-  address: '',
+  address: 'Bengaluru 560046',
   /** City whose courts hear disputes under the Terms. */
   courtsCity: '',
   /** The Grievance Officer's name (IT Rules 2021, rule 3(2); SPDI Rules 2011, rule 5(9)). */

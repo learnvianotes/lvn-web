@@ -7,7 +7,9 @@ import Suggestion, { type SuggestionProps } from '@tiptap/suggestion'
 import { useTranslations } from 'next-intl'
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { cn } from '@/lib/cn'
+import { isMediaType } from '../media'
 import type { CardType } from '../model/doc'
+import { uploads } from '../uploads'
 import { replaceCurrentCard } from './nodes'
 
 /** The cards the slash menu and the Add-card menu offer, with words people search for. */
@@ -29,6 +31,9 @@ export const CARD_MENU: { type: CardType; keywords: string }[] = [
   { type: 'audio', keywords: 'audio sound voice recording music upload' },
   { type: 'file', keywords: 'file pdf document attachment upload' },
 ]
+
+/** CARD_MENU without the media cards while uploads are off (lvn-backend ADR-0097). */
+export const cardMenu = (uploadsOn: boolean) => (uploadsOn ? CARD_MENU : CARD_MENU.filter((i) => !isMediaType(i.type)))
 
 export interface SlashListHandle {
   onKeyDown: (event: KeyboardEvent) => boolean
@@ -101,7 +106,7 @@ export const SlashMenu = Extension.create({
         },
         items: ({ query }) => {
           const q = query.toLowerCase().trim()
-          return CARD_MENU.filter((i) => !q || i.type.includes(q) || i.keywords.split(' ').some((k) => k.startsWith(q)))
+          return cardMenu(uploads.enabled).filter((i) => !q || i.type.includes(q) || i.keywords.split(' ').some((k) => k.startsWith(q)))
         },
         command: ({ editor, range, props }) => {
           editor.chain().focus().deleteRange(range).run()

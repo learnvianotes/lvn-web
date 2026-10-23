@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { QueryState } from '@/components/ui/query-state'
 import { putToStorage, UploadError } from '@/features/notes/media'
 import { ApplyToTeachDocument, CompleteNoteUploadDocument, CreateNoteUploadDocument, MyTeacherApplicationDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { useUploadsEnabled } from '@/features/notes/uploads'
 
 const PROOF_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_PROOF = 3
@@ -72,6 +73,8 @@ export function Teach() {
 
 function ApplyForm({ onSent }: { onSent: () => void }) {
   const t = useTranslations('teach')
+  // Proof files are uploads and optional (0–3): offered only while uploads are on (lvn-backend ADR-0097).
+  const uploadsOn = useUploadsEnabled()
   const client = useApolloClient()
   const input = useRef<HTMLInputElement>(null)
   const [institution, setInstitution] = useState('')
@@ -123,6 +126,7 @@ function ApplyForm({ onSent }: { onSent: () => void }) {
         <span className="font-medium">{t('message')}</span>
         <textarea maxLength={500} rows={2} value={message} onChange={(e) => setMessage(e.target.value)} className="rounded-xl border border-border bg-bg px-3 py-2" />
       </label>
+      {uploadsOn ? (
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">{t('proof')}</span>
         <input
@@ -154,6 +158,7 @@ function ApplyForm({ onSent }: { onSent: () => void }) {
           </ul>
         ) : null}
       </div>
+      ) : null}
       {error ? <Alert tone="error">{error}</Alert> : null}
       <Button type="submit" className="self-start" disabled={busy || institution.trim().length < 2}>
         {t('submit')}

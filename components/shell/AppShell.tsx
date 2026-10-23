@@ -35,6 +35,7 @@ import { OPEN_SEARCH_EVENT } from '@/features/search/SearchPalette'
 import { CreateNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
+import { useUploadsEnabled } from '@/features/notes/uploads'
 
 type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp }
 
@@ -134,6 +135,8 @@ function Nav() {
   const router = useRouter()
   const readPdf = useReadPdf()
   const pdf = useRef<HTMLInputElement>(null)
+  // Upload (read a PDF) only while uploads are on (lvn-backend ADR-0097).
+  const uploadsOn = useUploadsEnabled()
   const [create, creating] = useMutation(CreateNoteDocument)
   const newNote = async () => {
     const res = await create({ variables: { input: {} } })
@@ -152,6 +155,8 @@ function Nav() {
         )
       })}
       <div className="mt-auto flex flex-col gap-1 pt-4">
+        {uploadsOn ? (
+          <>
         <input
           ref={pdf}
           type="file"
@@ -173,6 +178,8 @@ function Nav() {
           <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
             {readPdf.error}
           </p>
+        ) : null}
+          </>
         ) : null}
         <button type="button" onClick={() => void newNote()} disabled={creating.loading} className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg hover:opacity-90">
           <Plus className="size-4" aria-hidden />

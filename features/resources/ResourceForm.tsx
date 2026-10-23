@@ -22,6 +22,7 @@ import {
   type ResourceType,
 } from '@/graphql/generated/graphql'
 import { RESOURCE_LIMITS } from '@/lib/contracts/validation'
+import { useUploadsEnabled } from '@/features/notes/uploads'
 
 export const RESOURCE_TYPES: ResourceType[] = ['BOOK', 'COURSE', 'TOOL', 'SOFTWARE', 'HARDWARE', 'OTHER']
 type Topic = { id: string; title: string }
@@ -37,6 +38,8 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
   const router = useRouter()
   const client = useApolloClient()
   const fileInput = useRef<HTMLInputElement>(null)
+  // A cover from this device is an upload (lvn-backend ADR-0097); a cover found at the link or ISBN is not.
+  const uploadsOn = useUploadsEnabled()
   const [url, setUrl] = useState(resource?.url ?? '')
   const [isbn, setIsbn] = useState(resource?.isbn ?? '')
   const [type, setType] = useState<ResourceType | ''>(resource?.type ?? '')
@@ -213,25 +216,29 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
             {t('useFound')}
           </label>
         ) : null}
-        <input
-          ref={fileInput}
-          type="file"
-          accept={RESOURCE_LIMITS.coverTypes.join(',')}
-          className="sr-only"
-          aria-label={t('upload')}
-          onChange={(e) => {
-            const picked = e.target.files?.[0]
-            e.target.value = ''
-            if (picked && (RESOURCE_LIMITS.coverTypes as readonly string[]).includes(picked.type) && picked.size <= RESOURCE_LIMITS.coverBytes) {
-              setFile(picked)
-              setRemoveCover(false)
-            }
-          }}
-        />
+        {uploadsOn ? (
+          <input
+            ref={fileInput}
+            type="file"
+            accept={RESOURCE_LIMITS.coverTypes.join(',')}
+            className="sr-only"
+            aria-label={t('upload')}
+            onChange={(e) => {
+              const picked = e.target.files?.[0]
+              e.target.value = ''
+              if (picked && (RESOURCE_LIMITS.coverTypes as readonly string[]).includes(picked.type) && picked.size <= RESOURCE_LIMITS.coverBytes) {
+                setFile(picked)
+                setRemoveCover(false)
+              }
+            }}
+          />
+        ) : null}
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()}>
-            {t('upload')}
-          </Button>
+          {uploadsOn ? (
+            <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()}>
+              {t('upload')}
+            </Button>
+          ) : null}
           {showsCover ? (
             <Button
               type="button"

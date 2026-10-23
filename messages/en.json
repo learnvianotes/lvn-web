@@ -55,11 +55,11 @@
       },
       "groups": {
         "title": "Study Groups",
-        "lead": "Learn with your class"
+        "lead": "Learn with peers"
       },
       "exams": {
         "title": "Exam Prep",
-        "lead": "A plan to the day"
+        "lead": "A plan for the day"
       },
       "quizzes": {
         "title": "Quizzes & Flashcards",
@@ -533,7 +533,8 @@
         "pages": "{count, plural, one {# page} other {# pages}}",
         "open": "Open",
         "read": "Read & make notes",
-        "readLead": "Open it beside this note: highlight, snip and write as you read"
+        "readLead": "Open it beside this note: highlight, snip and write as you read",
+        "uploadsOff": "Files can’t be added for now: uploads are off."
       },
       "anchorPage": "p. {page}",
       "fromPage": "From page {page} of the PDF"
@@ -1872,6 +1873,7 @@
   },
   "verification": {
     "lead": "No college email? Ask a teacher who knows you to vouch for you, or send proof that you study (an ID card or a fee receipt) for our team to check.",
+    "leadTeacherOnly": "No college email? Ask a teacher who knows you to vouch for you.",
     "askTeacher": "Ask a teacher",
     "sendDocuments": "Send proof of study",
     "findTeacher": "Find your teacher",

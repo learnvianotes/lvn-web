@@ -66,7 +66,8 @@ jobs:
       - run: pnpm typecheck
 
   image:
-    # The image the sandbox runs (Dockerfile); pushed to ECR by the deploy workflow once the AWS account exists.
+    # The image beta runs (Dockerfile), built as a check; deploy.yml builds and pushes the real one to GHCR (lvn-backend
+    # ADR-0096).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,8 +79,8 @@ jobs:
           tags: lvn-web:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_APP_ENV=sandbox
-            NEXT_PUBLIC_SITE_URL=https://sandbox.learnvianotes.in
-            NEXT_PUBLIC_API_URL=https://api.sandbox.learnvianotes.in/graphql
+            NEXT_PUBLIC_SITE_URL=https://beta.learnvianotes.in
+            NEXT_PUBLIC_API_URL=https://beta.learnvianotes.in/graphql
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -10,6 +10,13 @@ test('landing page leads to the subjects, the app’s own (no /core)', async ({ 
   await expect(page.getByRole('link', { name: /Operating Systems/ })).toHaveAttribute('href', '/subjects/os')
 })
 
+test('the feature tiles say what each part is for (launch copy)', async ({ page }) => {
+  await page.goto('/')
+  const tiles = page.getByRole('region', { name: 'What you can do' })
+  await expect(tiles.getByText('Learn with peers')).toBeVisible()
+  await expect(tiles.getByText('A plan for the day')).toBeVisible()
+})
+
 test('a subject card opens the subject; a topic lists its public notes, with the way back', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('main').getByRole('link', { name: /Data Structures and Algorithms/ }).click()
@@ -70,8 +77,9 @@ test('every public page has its own title, description and canonical link', asyn
   const titles = new Set<string>()
   for (const path of ['/', '/subjects', '/subjects/dsa', '/subjects/dsa/graphs', '/resources', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) {
     await page.goto(path)
+    // Next streams the title in with the page; on a busy machine it can land just after the load event.
+    await expect(page, path).toHaveTitle(/LearnViaNotes/)
     const title = await page.title()
-    expect(title, path).toMatch(/LearnViaNotes/)
     titles.add(title)
     expect(await page.locator('meta[name="description"]').getAttribute('content'), path).toMatch(/\w{20,}|\w+ \w+ \w+/)
     expect(await page.locator('link[rel="canonical"]').getAttribute('href'), path).toMatch(new RegExp(`^https?://[^/]+${path === '/' ? '/?' : path}$`))

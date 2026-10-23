@@ -17,6 +17,7 @@ import {
   type NoteImportFieldsFragment,
 } from '@/graphql/generated/graphql'
 import { formatBytes, putToStorage, UploadError } from '@/features/notes/media'
+import { useUploadsEnabled } from '@/features/notes/uploads'
 
 const IMPORT_TYPES: Record<string, string> = { zip: 'application/zip', md: 'text/markdown', markdown: 'text/markdown', txt: 'text/plain' }
 
@@ -26,14 +27,20 @@ const IMPORT_TYPES: Record<string, string> = { zip: 'application/zip', md: 'text
  */
 export function YourData() {
   const t = useTranslations('data')
+  // Importing uploads the file: only while uploads are on (lvn-backend ADR-0097). Downloading never needs them.
+  const uploadsOn = useUploadsEnabled()
   return (
     <section id="your-data" aria-labelledby="your-data-heading" className="flex scroll-mt-20 flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
       <h2 id="your-data-heading" className="text-lg font-bold">
         {t('title')}
       </h2>
       <ExportPart />
-      <hr className="border-border" />
-      <ImportPart />
+      {uploadsOn ? (
+        <>
+          <hr className="border-border" />
+          <ImportPart />
+        </>
+      ) : null}
     </section>
   )
 }

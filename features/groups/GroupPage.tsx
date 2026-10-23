@@ -50,6 +50,7 @@ import { Doubts } from '@/features/workspaces/Doubts'
 import { Ideas } from '@/features/workspaces/Ideas'
 import { InviteMentor, ShowcaseSetting, WorkspaceHeader } from '@/features/workspaces/Workspace'
 import { attempt, textToDoc } from './shared'
+import { useUploadsEnabled } from '@/features/notes/uploads'
 
 type Tab = 'posts' | 'ideas' | 'doubts' | 'notes' | 'resources' | 'members' | 'requests' | 'reports' | 'settings'
 
@@ -516,6 +517,8 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
   const [update] = useMutation(UpdateGroupDocument)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  // A new picture is an upload (lvn-backend ADR-0097): while uploads are off only removing one is offered.
+  const uploadsOn = useUploadsEnabled()
   const save = async (input: { pictureFileId?: string; removePicture?: boolean }, done: string) => {
     const problem = await attempt(() => update({ variables: { input: { groupId: group.id, ...input } } }), t('failed'))
     setMessage(problem ? { ok: false, text: problem } : { ok: true, text: done })
@@ -538,6 +541,7 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
       setBusy(false)
     }
   }
+  if (!uploadsOn && !group.pictureUrl) return null
   return (
     <section aria-labelledby="group-picture" className="flex flex-col gap-2">
       <h3 id="group-picture" className="text-sm font-semibold">
@@ -550,6 +554,7 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
         <p className="text-sm text-muted">{t('noPicture')}</p>
       )}
       <div className="flex flex-wrap items-center gap-3">
+        {uploadsOn ? (
         <label className={cn('inline-flex h-9 cursor-pointer items-center rounded-xl border border-border bg-surface px-3 text-sm font-medium hover:bg-surface-2', busy && 'pointer-events-none opacity-50')}>
           {busy ? t('pictureUploading') : group.pictureUrl ? t('pictureChange') : t('pictureChoose')}
           <input
@@ -564,13 +569,14 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
             }}
           />
         </label>
+        ) : null}
         {group.pictureUrl ? (
           <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => void save({ removePicture: true }, t('pictureRemoved'))}>
             {t('pictureRemove')}
           </Button>
         ) : null}
       </div>
-      <p className="text-xs text-muted">{t('pictureHint')}</p>
+      {uploadsOn ? <p className="text-xs text-muted">{t('pictureHint')}</p> : null}
       {message ? (
         <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
           {message.text}

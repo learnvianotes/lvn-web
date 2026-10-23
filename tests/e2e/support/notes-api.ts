@@ -58,6 +58,8 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
     if (op === 'MyStanding' && !handlers[op]) return route.fulfill({ json: { data: { myStanding: { __typename: 'AccountStanding', suspendedUntil: null, suspensionReason: null, canAppeal: false, warnings: [] } } } })
     // Every signed-in page tells the API the browser's time zone once (lvn-backend ADR-0070).
     if (op === 'SetLearningTimeZone' && !handlers[op]) return route.fulfill({ json: { data: { setLearningTimeZone: { __typename: 'OkPayload', ok: true, userErrors: [] } } } })
+    // Uploads are on in development and in these tests unless a test says otherwise (lvn-backend ADR-0097).
+    if (op === 'UploadsEnabled' && !handlers[op]) return route.fulfill({ json: { data: { uploadsEnabled: true } } })
     if (op === 'TermsStatus' && !handlers[op]) return route.fulfill({ json: { data: { termsVersion: '2026-10-08', viewer: { __typename: 'User', id: USER, termsAccepted: true } } } })
     const handler = handlers[op]
     if (!handler) return route.fulfill({ status: 500, json: { errors: [{ message: `unmocked ${op}` }] } })
