@@ -1921,6 +1921,7 @@
       "loading": "Loading requests…",
       "adminOnly": "Only a platform admin can decide an application to teach.",
       "confidence": "{percent}% confidence",
+      "checkedAt": "Checked {when}",
       "extractedName": "Name on the card",
       "extractedInstitution": "Institution on the card",
       "idPresent": "An ID number is on the card. It is not stored.",
@@ -3003,6 +3004,10 @@
     "keys": {
       "google_sign_in": "Google sign-in",
       "student_id_verification": "Student ID verification",
+      "student_id_ai_check": "Run the AI check",
+      "student_id_ai_auto_approve": "Auto-approve a high-confidence match",
+      "student_id_ai_confidence_threshold": "Confidence threshold",
+      "student_id_image_retention_days": "Days to keep the card image",
       "uploads_enabled": "Uploads",
       "ai_public_pipeline": "Public AI pipeline",
       "ai_monthly_budget_micro_usd": "Monthly AI budget",
@@ -3249,9 +3254,12 @@
     "title": "ID card check",
     "lead": "When a student sends a college ID, a vision model can read it and attach a verdict for reviewers. A confident match can be approved on its own. A low score always waits for a person, and nothing is rejected automatically.",
     "check": "Run the AI check",
-    "checkHint": "Store the verdict, confidence, the name and institution it read, and the reason.",
+    "checkHint": "Store the verdict, confidence and the reasons on the request.",
     "auto": "Auto-approve a high-confidence match",
-    "autoHint": "Only when the check is on and the card matches the profile.",
+    "autoHint": "Only when the check is on and the score is at least the threshold. A low score always waits for a person.",
+    "threshold": "Confidence threshold",
+    "retention": "Days to keep the card image",
+    "save": "Save",
     "failed": "Those settings could not be saved. Try again."
   },
   "adminRoles": {

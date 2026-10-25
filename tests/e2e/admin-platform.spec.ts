@@ -83,8 +83,8 @@ const reviewRequest = {
   documents: [{ __typename: 'VerificationDocument', fileId, fileName: 'id-card.png', mimeType: 'image/png', sizeBytes: 400 }],
   aiVerdict: 'MATCH',
   aiConfidence: 0.82,
-  aiReason: 'The name and college on the card match the profile.',
-  aiExtracted: { __typename: 'AiExtractedId', name: 'Ravi Kumar', institution: 'IIT Hyderabad', idNumberPresent: true },
+  aiReasons: ['The name and college on the card match the profile.'],
+  aiCheckedAt: '2026-10-20T08:05:00.000Z',
 }
 
 test('an admin sees Admin in the sidebar; a student does not', async ({ page }, info) => {
@@ -123,7 +123,7 @@ test('a manager reviews proof, and only sees the admin sections they are allowed
   await expect(card.getByText('MATCH', { exact: true })).toBeVisible()
   await expect(card.getByText('82% confidence')).toBeVisible()
   await expect(card.getByText('The name and college on the card match the profile.')).toBeVisible()
-  await expect(card.getByText('matches the profile').first()).toBeVisible()
+  await expect(card.getByText(/Checked/)).toBeVisible()
   await card.getByRole('button', { name: 'id-card.png' }).click()
   await expect(card.getByRole('img', { name: 'id-card.png' })).toBeVisible()
   await expect(card.getByRole('link', { name: 'Open in a new tab' })).toHaveAttribute('href', 'http://storage.test/doc')
@@ -143,7 +143,26 @@ test('a teacher sees the review sections and cannot assign roles', async ({ page
 test('an admin assigns a role, decides a domain, and turns on the ID-card check', async ({ page }, info) => {
   test.skip(info.project.name === 'phone', 'the forms are the same')
   let domains = [{ __typename: 'DomainReview', domain: 'newcollege.edu', status: 'NEEDS_REVIEW', requests: 4, firstSeenAt: '2026-10-01T00:00:00.000Z' }]
-  let ai = { aiCheckEnabled: false, autoApproveOnHighConfidence: false }
+  const constraints = { __typename: 'AdminSettingConstraints', min: null, max: null, maxLength: null, pattern: null, nullable: false }
+  const setting = (key: string, type: string, value: string, description: string, extra: Record<string, unknown> = {}) => ({
+    __typename: 'AdminSetting',
+    key,
+    type,
+    category: 'verification',
+    description,
+    value,
+    overridden: false,
+    updatedAt: '2026-10-01T00:00:00.000Z',
+    constraints,
+    ...extra,
+  })
+  let catalog = [
+    setting('uploads_enabled', 'BOOLEAN', 'true', 'Allow files to be uploaded.', { category: 'uploads' }),
+    setting('student_id_ai_check', 'BOOLEAN', 'false', 'Store the verdict, confidence and the reasons on the request.'),
+    setting('student_id_ai_auto_approve', 'BOOLEAN', 'false', 'Approve on its own when the score is at least the threshold.'),
+    setting('student_id_ai_confidence_threshold', 'INTEGER', '80', 'Lowest score that can be approved on its own.', { constraints: { ...constraints, min: 0, max: 100 } }),
+    setting('student_id_image_retention_days', 'INTEGER', '7', 'How long a card image is kept after it is read.', { constraints: { ...constraints, min: 0, max: 365 } }),
+  ]
   const calls = await mockApi(
     page,
     {
@@ -158,32 +177,18 @@ test('an admin assigns a role, decides a domain, and turns on the ID-card check'
           classes: [],
         },
       }),
-      SetStaffRole: () => ({ setGlobalRole: { __typename: 'OkPayload', ok: true, ...none } }),
-      InstitutionDomains: () => ({ domainReviews: domains }),
-      DecideInstitutionDomain: (v) => {
+      SetGlobalRole: () => ({ setGlobalRole: { __typename: 'OkPayload', ok: true, ...none } }),
+      DomainReviews: () => ({ domainReviews: domains }),
+      DecideDomainReview: (v) => {
         const input = v.input as { domain: string; approve: boolean }
         domains = domains.map((row) => (row.domain === input.domain ? { ...row, status: input.approve ? 'APPROVED' : 'REJECTED' } : row))
         return { decideDomainReview: { __typename: 'OkPayload', ok: true, ...none } }
       },
-      AdminSettings: () => ({
-        adminSettings: [
-          {
-            __typename: 'AdminSetting',
-            key: 'uploads_enabled',
-            type: 'BOOLEAN',
-            category: 'uploads',
-            description: 'Allow files to be uploaded.',
-            value: 'true',
-            overridden: false,
-            updatedAt: '2026-10-01T00:00:00.000Z',
-            constraints: { __typename: 'AdminSettingConstraints', min: null, max: null, maxLength: null, pattern: null, nullable: false },
-          },
-        ],
-      }),
-      AiVerificationSettings: () => ({ aiVerificationSettings: { __typename: 'AiVerificationSettings', ...ai } }),
-      UpdateAiVerificationSettings: (v) => {
-        ai = v.input as typeof ai
-        return { updateAiVerificationSettings: { __typename: 'AiVerificationSettingsPayload', settings: { __typename: 'AiVerificationSettings', ...ai }, ...none } }
+      AdminSettings: () => ({ adminSettings: catalog }),
+      UpdateAdminSetting: (v) => {
+        const input = v.input as { key: string; value: string }
+        catalog = catalog.map((row) => (row.key === input.key ? { ...row, value: input.value, overridden: true } : row))
+        return { updateAdminSetting: { __typename: 'AdminSettingPayload', setting: catalog.find((row) => row.key === input.key), ...none } }
       },
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
@@ -195,21 +200,23 @@ test('an admin assigns a role, decides a domain, and turns on the ID-card check'
   await expect(person.getByText('Student')).toBeVisible()
   await person.getByRole('button', { name: 'Make manager' }).click()
   await expect(person.getByText('@ravi · Manager')).toBeVisible()
-  expect(calls.find((call) => call.op === 'SetStaffRole')?.variables).toEqual({ input: { userId: raviId, role: 'MANAGER' } })
+  expect(calls.find((call) => call.op === 'SetGlobalRole')?.variables).toEqual({ input: { userId: raviId, role: 'MANAGER' } })
 
   await page.goto('/admin/domains')
   await expect(page.getByText('newcollege.edu')).toBeVisible()
   await page.getByRole('button', { name: 'Approve' }).click()
   await expect(page.getByText('No domains are waiting.')).toBeVisible()
   await expect(page.getByRole('list').getByText('newcollege.edu')).toBeVisible()
-  expect(calls.find((call) => call.op === 'DecideInstitutionDomain')?.variables).toEqual({ input: { domain: 'newcollege.edu', approve: true } })
+  expect(calls.find((call) => call.op === 'DecideDomainReview')?.variables).toEqual({ input: { domain: 'newcollege.edu', approve: true } })
 
   await page.goto('/admin/settings')
   const check = page.getByRole('switch', { name: 'Run the AI check' })
   await expect(check).toHaveAttribute('aria-checked', 'false')
   await check.click()
   await expect(check).toHaveAttribute('aria-checked', 'true')
-  await expect.poll(() => calls.find((call) => call.op === 'UpdateAiVerificationSettings')?.variables).toEqual({ input: { aiCheckEnabled: true, autoApproveOnHighConfidence: false } })
+  await expect.poll(() => calls.find((call) => call.op === 'UpdateAdminSetting')?.variables).toEqual({ input: { key: 'student_id_ai_check', value: 'true' } })
+  await expect(page.getByLabel('Confidence threshold')).toHaveValue('80')
+  await expect(page.getByLabel('Days to keep the card image')).toHaveValue('7')
 })
 
 test('errors group by type and open the people who hit them', async ({ page }, info) => {

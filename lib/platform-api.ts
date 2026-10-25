@@ -1,13 +1,17 @@
 /**
  * Contracts for the verification, roles, institution-domain, error and usage APIs
- * (lvn-backend branch feat/verification-manager-ai-analytics).
+ * (lvn-backend PR #27, branch feat/verification-manager-ai-analytics).
  *
- * The operations live in this file so the web app can line up with that branch in one place
- * when its schema is published. Existing fields (`domainReviews`, `decideDomainReview`,
- * `setGlobalRole`, `verificationRequestsToReview`) are called by the names the API already uses.
- * New fields (`aiVerdict`, `aiVerificationSettings`, `adminErrors`, `adminUsage`, `usersByIds`,
- * `ingestEvents`, `analyticsOptOut`) use the names from that branch. A query that the running API
- * does not know yet falls back where a slimmer query still answers.
+ * Field and argument names that already exist in graphql/schema.graphql are used as written there:
+ * `domainReviews`, `decideDomainReview`, `setGlobalRole`, `verificationRequestsToReview`,
+ * `updateAdminSetting`. The ID-card check is those admin setting keys, not a separate mutation.
+ * Verdict fields follow the approved columns `aiVerdict`, `aiConfidence`, `aiReasons`, `aiCheckedAt`.
+ * A query the running API does not know yet falls back to the slimmer document.
+ *
+ * `adminErrors`, `adminUsage`, `adminUserTimeline`, `usersByIds`, `ingestEvents` and
+ * `analyticsOptOut` are not in the schema copied into this repo. PR #27 could not be read from
+ * here (the backend repository is private to this token), so those names are still the ones from
+ * the brief and may not match the published schema.
  */
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { parse, type DocumentNode } from 'graphql'
@@ -16,18 +20,26 @@ import { apolloClient } from '@/lib/apollo'
 export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 export type AssignableRole = 'MANAGER' | 'TEACHER' | 'STUDENT'
 
-export type AiExtractedFields = {
-  name: string | null
-  institution: string | null
-  idNumberPresent: boolean | null
-}
-
 export type AiVerdictView = {
   verdict: string
   confidence: number | null
-  reason: string | null
-  extracted: AiExtractedFields
+  /** `aiReasons`, whether the API sends one string or a list. */
+  reasons: string | null
+  checkedAt: string | null
 }
+
+/** Admin setting catalog keys for the college-ID vision check (not a separate settings type). */
+export const STUDENT_ID_AI_CHECK = 'student_id_ai_check'
+export const STUDENT_ID_AI_AUTO_APPROVE = 'student_id_ai_auto_approve'
+export const STUDENT_ID_AI_CONFIDENCE_THRESHOLD = 'student_id_ai_confidence_threshold'
+export const STUDENT_ID_IMAGE_RETENTION_DAYS = 'student_id_image_retention_days'
+
+export const STUDENT_ID_AI_SETTING_KEYS = [
+  STUDENT_ID_AI_CHECK,
+  STUDENT_ID_AI_AUTO_APPROVE,
+  STUDENT_ID_AI_CONFIDENCE_THRESHOLD,
+  STUDENT_ID_IMAGE_RETENTION_DAYS,
+] as const
 
 export type ReviewDocument = {
   fileId: string
@@ -65,11 +77,6 @@ export type StudentIdReviewItem = {
   createdAt: string
   requester: ReviewRequestView['requester']
   ai: AiVerdictView | null
-}
-
-export type AiCheckSettings = {
-  aiCheckEnabled: boolean
-  autoApproveOnHighConfidence: boolean
 }
 
 export type DomainStatus = 'ACADEMIC_QUEUED' | 'APPROVED' | 'NEEDS_REVIEW' | 'REJECTED'
@@ -156,8 +163,8 @@ const REVIEW_QUEUE = documentOf(/* GraphQL */ `
       createdAt
       aiVerdict
       aiConfidence
-      aiReason
-      aiExtracted { name institution idNumberPresent }
+      aiReasons
+      aiCheckedAt
       requester { id displayName handle email institution { name } profile { department } }
       documents { fileId fileName mimeType sizeBytes }
     }
@@ -206,8 +213,8 @@ const STUDENT_ID_QUEUE = documentOf(/* GraphQL */ `
       createdAt
       aiVerdict
       aiConfidence
-      aiReason
-      aiExtracted { name institution idNumberPresent }
+      aiReasons
+      aiCheckedAt
       requester { id displayName handle email institution { name } profile { department } }
     }
   }
@@ -231,35 +238,20 @@ const STUDENT_ID_URL = documentOf(/* GraphQL */ `
   }
 `)
 
-const AI_SETTINGS = documentOf(/* GraphQL */ `
-  query AiVerificationSettings {
-    aiVerificationSettings { aiCheckEnabled autoApproveOnHighConfidence }
-  }
-`)
-
-const SAVE_AI_SETTINGS = documentOf(/* GraphQL */ `
-  mutation UpdateAiVerificationSettings($input: AiVerificationSettingsInput!) {
-    updateAiVerificationSettings(input: $input) {
-      settings { aiCheckEnabled autoApproveOnHighConfidence }
-      userErrors { message code }
-    }
-  }
-`)
-
 const DOMAINS = documentOf(/* GraphQL */ `
-  query InstitutionDomains($status: DomainReviewStatus) {
+  query DomainReviews($status: DomainReviewStatus) {
     domainReviews(status: $status) { domain status requests firstSeenAt }
   }
 `)
 
 const DECIDE_DOMAIN = documentOf(/* GraphQL */ `
-  mutation DecideInstitutionDomain($input: DecideDomainReviewInput!) {
+  mutation DecideDomainReview($input: DecideDomainReviewInput!) {
     decideDomainReview(input: $input) { ok userErrors { message code } }
   }
 `)
 
 const SET_ROLE = documentOf(/* GraphQL */ `
-  mutation SetStaffRole($input: SetGlobalRoleInput!) {
+  mutation SetGlobalRole($input: SetGlobalRoleInput!) {
     setGlobalRole(input: $input) { ok userErrors { message code } }
   }
 `)
@@ -347,19 +339,22 @@ async function run<T>(document: DocumentNode, variables: Record<string, unknown>
   }
 }
 
-type RawAi = { aiVerdict?: string | null; aiConfidence?: number | null; aiReason?: string | null; aiExtracted?: { name?: string | null; institution?: string | null; idNumberPresent?: boolean | null } | null }
+type RawAi = { aiVerdict?: string | null; aiConfidence?: number | null; aiReasons?: unknown; aiCheckedAt?: string | null }
+
+function reasonsOf(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() || null
+  if (!Array.isArray(value)) return null
+  const text = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).join(' ')
+  return text || null
+}
 
 function aiOf(raw: RawAi): AiVerdictView | null {
   if (!raw.aiVerdict) return null
   return {
     verdict: raw.aiVerdict,
     confidence: typeof raw.aiConfidence === 'number' ? raw.aiConfidence : null,
-    reason: raw.aiReason ?? null,
-    extracted: {
-      name: raw.aiExtracted?.name ?? null,
-      institution: raw.aiExtracted?.institution ?? null,
-      idNumberPresent: raw.aiExtracted?.idNumberPresent ?? null,
-    },
+    reasons: reasonsOf(raw.aiReasons),
+    checkedAt: raw.aiCheckedAt ?? null,
   }
 }
 
@@ -456,17 +451,6 @@ export async function loadStudentIdQueue(first = 30): Promise<StudentIdReviewIte
 export async function studentIdCardUrl(requestId: string): Promise<string | null> {
   const data = await run<{ studentIdCardUrl: { url: string } | null }>(STUDENT_ID_URL, { requestId }, 'query')
   return data.studentIdCardUrl?.url ?? null
-}
-
-export async function loadAiCheckSettings(): Promise<AiCheckSettings> {
-  const data = await run<{ aiVerificationSettings: AiCheckSettings }>(AI_SETTINGS, undefined, 'query')
-  return data.aiVerificationSettings
-}
-
-export async function saveAiCheckSettings(input: AiCheckSettings): Promise<string | null> {
-  const settings = { aiCheckEnabled: input.aiCheckEnabled, autoApproveOnHighConfidence: input.autoApproveOnHighConfidence }
-  const data = await run<{ updateAiVerificationSettings: { userErrors: { message: string }[] } }>(SAVE_AI_SETTINGS, { input: settings }, 'mutation')
-  return data.updateAiVerificationSettings.userErrors[0]?.message ?? null
 }
 
 export async function listInstitutionDomains(status?: DomainStatus): Promise<InstitutionDomain[]> {
