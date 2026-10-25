@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown, ChevronUp, Copy, MessageSquareText, NotebookPen, Search, Trash2, X, type LucideIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp, Copy, MessageSquareText, NotebookPen, Search, Trash, X, type LucideIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { HighlightColor, HighlightFieldsFragment } from '@/graphql/generated/graphql'
@@ -140,7 +140,7 @@ export function HighlightCard({ highlight, at, onColor, onComment, onAdd, onRemo
       <div className="flex flex-wrap items-center gap-1">
         {changed ? <ToolButton icon={MessageSquareText} label={t('saveComment')} onClick={() => onComment(comment)} showLabel className="bg-accent text-accent-fg hover:bg-accent/90" /> : null}
         <ToolButton icon={NotebookPen} label={highlight.cardId ? t('addAgain') : t('addToNotes')} onClick={onAdd} showLabel />
-        <ToolButton icon={Trash2} label={t('remove')} onClick={onRemove} className="ml-auto text-red-600 dark:text-red-400" />
+        <ToolButton icon={Trash} label={t('remove')} onClick={onRemove} className="ml-auto text-red-600 dark:text-red-400" />
       </div>
     </Floating>
   )

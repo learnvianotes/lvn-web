@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Ban, Bot, Check, EyeOff, Flag, MessageSquareWarning, ShieldCheck, Trash2, User, Users, VolumeX } from 'lucide-react'
+import { Ban, Bot, Check, EyeOff, Flag, MessageSquareWarning, ShieldCheck, Trash, User, Users, VolumeX } from 'lucide-react'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -91,7 +91,7 @@ function choicesFor(c: Case): Choice[] {
   const dismiss: Choice = { action: 'DISMISS', label: keep ? 'KEEP' : 'DISMISS', icon: Flag, tone: '' }
   const warn: Choice = { action: 'WARN', label: 'WARN', icon: MessageSquareWarning, tone: '' }
   const hide: Choice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
-  const remove: Choice = { action: 'REMOVE', label: 'REMOVE', icon: Trash2, tone: 'text-red-600 dark:text-red-400' }
+  const remove: Choice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-red-600 dark:text-red-400' }
   const approve: Choice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
   // A new resource is approved or rejected (ADR-0074); people's reports on one in the catalogue are dismissed, or it is removed.
   if (c.entityType === 'RESOURCE') return c.reports.some((x) => x.reporter) ? [dismiss, remove] : [approve, { ...remove, label: 'REJECT' }]

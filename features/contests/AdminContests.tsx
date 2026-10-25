@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
@@ -155,7 +155,7 @@ function Editor({ draft, onDone }: { draft: Draft; onDone: () => void }) {
               <span className="text-sm font-semibold">{t('question', { n: i + 1 })}</span>
               {d.questions.length > 1 ? (
                 <button type="button" aria-label={t('removeQuestion', { n: i + 1 })} className="rounded-lg p-1.5 text-muted hover:text-fg" onClick={() => setD({ ...d, questions: d.questions.filter((_, j) => j !== i) })}>
-                  <Trash2 className="size-4" />
+                  <Trash className="size-4" />
                 </button>
               ) : null}
             </div>

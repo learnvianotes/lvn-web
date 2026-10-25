@@ -8,7 +8,7 @@ import { Placeholder } from '@tiptap/extensions'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
-import { AlertCircle, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, Loader2, type LucideIcon, Maximize2, Mic, Minimize2, MoreHorizontal, Plus, Redo2, Strikethrough, Trash2, Underline, Undo2, Volume2, Wand2 } from 'lucide-react'
+import { CircleAlert, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, LoaderCircle, type LucideIcon, Maximize2, Mic, Minimize2, Ellipsis, Plus, Redo2, Strikethrough, Trash, Underline, Undo2, Volume2, WandSparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
@@ -253,10 +253,10 @@ function SavePill({ status }: { status: SaveStatus }) {
   const t = useTranslations('notes.editor.status')
   const look: Record<SaveStatus, { icon: LucideIcon; className: string; spin?: boolean }> = {
     saved: { icon: Check, className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
-    pending: { icon: Loader2, className: 'bg-surface-2 text-muted', spin: false },
-    saving: { icon: Loader2, className: 'bg-accent-soft text-accent', spin: true },
+    pending: { icon: LoaderCircle, className: 'bg-surface-2 text-muted', spin: false },
+    saving: { icon: LoaderCircle, className: 'bg-accent-soft text-accent', spin: true },
     offline: { icon: CloudOff, className: 'bg-amber-500/15 text-amber-800 dark:text-amber-300' },
-    error: { icon: AlertCircle, className: 'bg-red-500/10 text-red-700 dark:text-red-400' },
+    error: { icon: CircleAlert, className: 'bg-red-500/10 text-red-700 dark:text-red-400' },
   }
   const { icon: Icon, className, spin } = look[status]
   return (
@@ -271,7 +271,7 @@ function Banner({ tone, children, onClose }: { tone: 'warning' | 'error'; childr
   const t = useTranslations('notes.editor')
   return (
     <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-red-600/30 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200' : 'border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100')}>
-      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="flex-1">{children}</div>
       {onClose ? (
         <button type="button" className="text-xs underline" onClick={onClose}>
@@ -358,7 +358,7 @@ function Toolbar({ editor, sticky }: { editor: Editor | null; sticky: 'top-0' | 
       <IconButton icon={ArrowUp} label={t('moveUp')} onClick={() => moveCard(editor, -1)} />
       <IconButton icon={ArrowDown} label={t('moveDown')} onClick={() => moveCard(editor, 1)} />
       <IconButton icon={Copy} label={t('duplicateCard')} onClick={() => duplicateCard(editor)} />
-      <IconButton icon={Trash2} label={t('deleteCard')} onClick={() => deleteCard(editor)} />
+      <IconButton icon={Trash} label={t('deleteCard')} onClick={() => deleteCard(editor)} />
       <span className="ml-auto flex shrink-0 items-center gap-0.5">
         <IconButton icon={Undo2} label={t('undo')} onClick={() => editor.chain().focus().undo().run()} />
         <IconButton icon={Redo2} label={t('redo')} onClick={() => editor.chain().focus().redo().run()} />
@@ -451,7 +451,7 @@ function CardHandle({ editor }: { editor: Editor }) {
               {convertible ? (
                 <>
                   <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-                    <Wand2 className="size-3.5" aria-hidden />
+                    <WandSparkles className="size-3.5" aria-hidden />
                     {t('turnInto')}
                   </p>
                   {CONVERTIBLE.map((type: CardType) => (
@@ -460,7 +460,7 @@ function CardHandle({ editor }: { editor: Editor }) {
                 </>
               ) : null}
               <span className="my-1 h-px bg-border" aria-hidden />
-              <MenuItem icon={Trash2} label={t('deleteCard')} danger onClick={() => act(() => deleteCard(editor))} />
+              <MenuItem icon={Trash} label={t('deleteCard')} danger onClick={() => act(() => deleteCard(editor))} />
             </div>
           )}
         </div>
@@ -476,7 +476,7 @@ function MoreMenu({ items }: { items: { label: string; icon: LucideIcon; onClick
   if (!items.length) return null
   return (
     <div className="relative sm:hidden">
-      <IconButton icon={MoreHorizontal} label={t('more')} pressed={open} onClick={() => setOpen((o) => !o)} className="border border-border bg-surface" />
+      <IconButton icon={Ellipsis} label={t('more')} pressed={open} onClick={() => setOpen((o) => !o)} className="border border-border bg-surface" />
       {open ? (
         <div className="absolute right-0 z-30 mt-2 flex w-52 animate-rise flex-col rounded-2xl border border-border bg-surface p-1.5 text-sm shadow-2xl shadow-black/15">
           {items.map((item) => (

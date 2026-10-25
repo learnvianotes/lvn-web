@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { BookOpen, CircleHelp, FileText, GitBranch, GraduationCap, Lightbulb, Megaphone, MessageSquare, Users } from 'lucide-react'
+import { BookOpen, CircleQuestionMark, FileText, GitBranch, GraduationCap, Lightbulb, Megaphone, MessageSquare, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -85,7 +85,7 @@ function Activity() {
   )
 }
 
-const ICON = { GROUP_POST: MessageSquare, IDEA: Lightbulb, DOUBT: CircleHelp, CLASS_ANNOUNCEMENT: Megaphone, SHARED_NOTE: FileText, REPOSITORY: GitBranch } as const
+const ICON = { GROUP_POST: MessageSquare, IDEA: Lightbulb, DOUBT: CircleQuestionMark, CLASS_ANNOUNCEMENT: Megaphone, SHARED_NOTE: FileText, REPOSITORY: GitBranch } as const
 
 /** One thing that happened, in words written here from ids (ADR-0049). */
 function ActivityCard({ item }: { item: Item }) {

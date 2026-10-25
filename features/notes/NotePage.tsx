@@ -2,7 +2,7 @@
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import type { Editor } from '@tiptap/react'
-import { Folder, Hash, History, Rocket, Share2, SlidersHorizontal, Trash2, BookMarked, GitFork } from 'lucide-react'
+import { Folder, Hash, RotateCcwClock, Rocket, Share2, SlidersHorizontal, Trash, BookBookmark, GitFork } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -129,9 +129,9 @@ export function NotePage({ id }: { id: string }) {
   }
   const menuItems = [
     ...(meta.viewerAccess === 'OWNER' ? [{ label: t('details.button'), icon: SlidersHorizontal, onClick: () => setDetailsOpen(true) }] : []),
-    { label: t('versions.button'), icon: History, onClick: () => setVersionsOpen({ open: true }) },
+    { label: t('versions.button'), icon: RotateCcwClock, onClick: () => setVersionsOpen({ open: true }) },
     ...(meta.viewerCan.fork ? [{ label: t('share.makeCopy'), icon: GitFork, onClick: () => void copy.makeCopy() }] : []),
-    ...(meta.viewerCan.delete ? [{ label: t('trash'), icon: Trash2, onClick: () => void moveToTrash(), danger: true }] : []),
+    ...(meta.viewerCan.delete ? [{ label: t('trash'), icon: Trash, onClick: () => void moveToTrash(), danger: true }] : []),
   ]
 
   const actions = (
@@ -143,7 +143,7 @@ export function NotePage({ id }: { id: string }) {
         </Button>
       ) : null}
       <Button variant="secondary" size="sm" className="hidden gap-1.5 sm:inline-flex" onClick={() => setVersionsOpen({ open: true })}>
-        <History className="size-4" aria-hidden />
+        <RotateCcwClock className="size-4" aria-hidden />
         {t('versions.button')}
       </Button>
       <AiButton onClick={() => setAiOpen(true)} />
@@ -161,7 +161,7 @@ export function NotePage({ id }: { id: string }) {
       ) : null}
       {meta.viewerCan.delete ? (
         <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label={t('trash')} title={t('trash')} onClick={() => void moveToTrash()}>
-          <Trash2 className="size-4" aria-hidden />
+          <Trash className="size-4" aria-hidden />
         </Button>
       ) : null}
     </>
@@ -210,7 +210,7 @@ export function NotePage({ id }: { id: string }) {
         ))}
         {meta.topics.map((x) => (
           <span key={x.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1">
-            <BookMarked className="size-3.5" aria-hidden />
+            <BookBookmark className="size-3.5" aria-hidden />
             {x.title}
           </span>
         ))}

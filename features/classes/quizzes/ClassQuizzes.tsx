@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { ListChecks, Plus, Trash2 } from 'lucide-react'
+import { ListChecks, Plus, Trash } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -81,7 +81,7 @@ export function ClassQuizzes({ classroom }: { classroom: ClassroomDetailFragment
                     })
                   }}
                 >
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               ) : null}
             </li>

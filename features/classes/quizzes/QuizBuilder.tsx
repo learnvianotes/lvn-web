@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { LoaderCircle, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { LoaderCircle, Plus, Sparkles, Trash } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -163,7 +163,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
                 <span className="text-sm font-bold">{t('questionN', { n: i + 1 })}</span>
                 <span className="flex-1" />
                 <Button variant="ghost" size="icon" aria-label={t('removeQuestion', { n: i + 1 })} title={t('removeQuestion', { n: i + 1 })} onClick={() => setDrafts((all) => all.filter((x) => x.key !== d.key))}>
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </div>
               <textarea aria-label={t('questionText', { n: i + 1 })} value={d.question} rows={2} onChange={(e) => update(d.key, (x) => ({ ...x, question: e.target.value }))} className="rounded-xl border border-border bg-bg p-3 text-sm" />
@@ -185,7 +185,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
                       className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-bg px-3 text-sm"
                     />
                     <Button variant="ghost" size="icon" aria-label={t('removeChoice', { n: j + 1 })} disabled={d.choices.length <= 2} onClick={() => update(d.key, (x) => ({ ...x, choices: x.choices.filter((y) => y.id !== c.id) }))}>
-                      <Trash2 className="size-3.5" aria-hidden />
+                      <Trash className="size-3.5" aria-hidden />
                     </Button>
                   </div>
                 ))}

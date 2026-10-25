@@ -68,7 +68,8 @@ export function Review() {
           setWaiting(loadPending().length)
           const res = await send({ variables: { input: grade } }).catch(() => null)
           // Kept only when it could not go; a refusal (the card left the deck) will not change by trying again.
-          if (!res) return
+          // Break, don't return: an `online` event during this attempt sets `again` and must get another pass.
+          if (!res) break
           savePending(loadPending().filter((g) => g.clientOpId !== grade.clientOpId))
         }
       } while (sending.current.again)

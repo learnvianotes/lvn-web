@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, Globe, LoaderCircle, MessageCircleQuestion, NotebookPen, Sparkles, Trash2, Users, type LucideIcon } from 'lucide-react'
+import { BookOpen, Globe, LoaderCircle, MessageCircleQuestionMark, NotebookPen, Sparkles, Trash, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
@@ -139,11 +139,11 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
   return (
     <article aria-label={a.question} data-answer-status={a.status} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <header className="flex items-start gap-2">
-        <MessageCircleQuestion className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+        <MessageCircleQuestionMark className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
         <h3 className={cn('min-w-0 flex-1 font-semibold', compact ? 'text-sm' : 'text-base')}>{a.question}</h3>
         {pending ? null : (
           <Button variant="ghost" size="icon" aria-label={t('delete')} title={t('delete')} disabled={removing.loading} onClick={() => void remove({ variables: { id: a.id } }).catch(() => undefined)}>
-            <Trash2 className="size-4" aria-hidden />
+            <Trash className="size-4" aria-hidden />
           </Button>
         )}
       </header>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { CheckCircle2, Loader2, TriangleAlert, Wand2, X } from 'lucide-react'
+import { CircleCheck, LoaderCircle, TriangleAlert, WandSparkles, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -51,7 +51,7 @@ export function ConvertDialog({ open, onClose, noteId, fileId, fileName }: { ope
             {t('cancel')}
           </Button>
           <Button className="gap-1.5" disabled={converting.loading} onClick={() => void start()}>
-            <Wand2 className="size-4" aria-hidden />
+            <WandSparkles className="size-4" aria-hidden />
             {converting.loading ? t('starting') : t('start')}
           </Button>
         </div>
@@ -67,7 +67,7 @@ export function ConversionBanner({ conversion, onDismiss }: { conversion: Conver
   if (active) {
     return (
       <div role="status" className="flex shrink-0 items-center gap-3 border-b border-border bg-accent-soft px-3 py-2 text-sm">
-        <Loader2 className="size-4 shrink-0 animate-spin text-accent" aria-hidden />
+        <LoaderCircle className="size-4 shrink-0 animate-spin text-accent" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="font-semibold">{t(`stage.${conversion.status}`)}</span>
           {conversion.pages ? <span className="text-muted"> · {t('pages', { n: conversion.pages, scanned: conversion.scannedPages ?? 0 })}</span> : null}
@@ -81,7 +81,7 @@ export function ConversionBanner({ conversion, onDismiss }: { conversion: Conver
   const done = conversion.status === 'DONE'
   return (
     <div role="status" className="flex shrink-0 items-start gap-3 border-b border-border bg-surface px-3 py-2 text-sm">
-      {done ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />}
+      {done ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />}
       <span className="min-w-0 flex-1">
         {done ? t('done', { cards: conversion.cards ?? 0, pages: conversion.pages ?? 0 }) : (conversion.error ?? t('failed'))}
         {/* Pages the vision model read again (ADR-0063), and where scanned text may need mending. */}

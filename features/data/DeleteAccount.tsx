@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { AlertTriangle } from 'lucide-react'
+import { TriangleAlert } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -28,7 +28,7 @@ export function DeleteAccount() {
   return (
     <section id="delete-account" aria-labelledby="delete-account-heading" className="flex scroll-mt-20 flex-col gap-4 rounded-2xl border border-red-500/40 bg-surface p-5">
       <h2 id="delete-account-heading" className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400">
-        <AlertTriangle className="size-5" aria-hidden />
+        <TriangleAlert className="size-5" aria-hidden />
         {t('heading')}
       </h2>
       <p className="text-sm text-muted">{t('lead')}</p>

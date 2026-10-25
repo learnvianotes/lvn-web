@@ -5,7 +5,7 @@ const here = (p: string) => fileURLToPath(new URL(p, import.meta.url))
 
 /** Unit tests live in tests/unit; browser tests in tests/e2e run with Playwright (playwright.config.ts). */
 export default defineConfig({
-  // tsconfig keeps JSX for Next ("preserve"); tests compile it themselves.
+  // Next's tsconfig uses the automatic JSX runtime; tests compile JSX themselves.
   oxc: { jsx: { runtime: 'automatic' } },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],

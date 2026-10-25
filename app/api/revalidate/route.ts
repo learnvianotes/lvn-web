@@ -19,6 +19,8 @@ export async function POST(request: Request) {
   if (!tags.length || tags.length > 20 || !tags.every((t): t is string => typeof t === 'string' && TAG.test(t))) {
     return Response.json({ error: 'tags must be note:<id> or public-notes' }, { status: 400 })
   }
-  for (const tag of tags) revalidateTag(tag)
+  // Immediate expiry: this route is the API's webhook, and updateTag is Server Actions only.
+  // The single-argument form (Next 15) did the same; 'max' would keep serving stale pages.
+  for (const tag of tags) revalidateTag(tag, { expire: 0 })
   return Response.json({ revalidated: tags })
 }

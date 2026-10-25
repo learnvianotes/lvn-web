@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { AlertTriangle, CheckCircle2, Download, FileArchive, Loader2, Upload } from 'lucide-react'
+import { TriangleAlert, CircleCheck, Download, FileArchive, LoaderCircle, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
@@ -64,7 +64,7 @@ function ExportPart() {
       </div>
       {latest?.status === 'READY' && latest.downloadUrl ? (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
-          <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
+          <CircleCheck className="size-5 text-emerald-600" aria-hidden />
           <span className="flex-1">{t('ready', { size: formatBytes(latest.sizeBytes ?? 0), date: new Date(latest.expiresAt!).toLocaleDateString() })}</span>
           <a href={latest.downloadUrl} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
             <Download className="size-4" aria-hidden />
@@ -74,7 +74,7 @@ function ExportPart() {
       ) : null}
       {preparing ? (
         <p role="status" className="flex items-center gap-2 text-sm text-muted">
-          <Loader2 className="size-4 animate-spin" aria-hidden />
+          <LoaderCircle className="size-4 animate-spin" aria-hidden />
           {t('preparing')}
         </p>
       ) : null}
@@ -163,7 +163,7 @@ function ImportPart() {
       {running ? <Progress label={t('importing', { file: latest!.fileName })} value={latest!.progress} /> : null}
       {latest?.status === 'NEEDS_CONFIRMATION' ? (
         <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
-          <AlertTriangle className="size-5" aria-hidden />
+          <TriangleAlert className="size-5" aria-hidden />
           <span className="flex-1">{t('duplicate', { file: latest.fileName })}</span>
           <Button size="sm" disabled={confirming.loading} onClick={() => void confirm({ variables: { id: latest.id } })}>
             {t('importAgain')}

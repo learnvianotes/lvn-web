@@ -1,4 +1,4 @@
-import { BookMarked, Clock, GitFork, NotebookPen, Sparkles } from 'lucide-react'
+import { BookBookmark, Clock, GitFork, NotebookPen, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { NightSky } from '@/components/brand/NightSky'
@@ -42,7 +42,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
           <ul className="flex flex-wrap gap-1.5 text-xs" aria-label={t('topics')}>
             {note.topics.map((topic) => (
               <li key={topic.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-muted">
-                <BookMarked className="size-3.5" aria-hidden />
+                <BookBookmark className="size-3.5" aria-hidden />
                 {topic.title} · {topic.subject.title}
               </li>
             ))}
