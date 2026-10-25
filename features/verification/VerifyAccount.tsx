@@ -201,7 +201,7 @@ function SendDocuments({ onSent }: { onSent: () => void }) {
       if (problem) throw new UploadError(problem)
       onSent()
     } catch (e) {
-      setError(e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : CombinedGraphQLErrors.is(e) ? (e.errors[0]?.message ?? t('failed')) : t('failed'))
+      setError(e instanceof UploadError ? e.message : CombinedGraphQLErrors.is(e) ? (e.errors[0]?.message ?? t('failed')) : t('failed'))
     } finally {
       setBusy(false)
     }

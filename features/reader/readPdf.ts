@@ -45,7 +45,7 @@ export function useReadPdf() {
       if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(savedProblem!.message, isLimitCode(savedProblem?.code))
       router.push(`/notes/${noteId}/read/${fileId}`)
     } catch (e) {
-      const refused = e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : refusalMessage(e)
+      const refused = e instanceof UploadError ? e.message : refusalMessage(e)
       setLimit(Boolean((e instanceof UploadError && e.limit) || refusalMessage(e)))
       setError(refused ?? t('readPdfFailed'))
     } finally {

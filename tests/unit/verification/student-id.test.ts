@@ -64,7 +64,9 @@ describe('the college ID upload does not call completeUpload', () => {
 
   it('opens the card on demand and does not keep the URL', () => {
     const admin = readFileSync('features/verification/StudentIdAdmin.tsx', 'utf8')
-    expect(admin).toMatch(/fetchPolicy:\s*'no-cache'/)
+    const api = readFileSync('lib/platform-api.ts', 'utf8')
+    expect(api).toMatch(/fetchPolicy:\s*'no-cache'/)
+    expect(admin).toMatch(/studentIdCardUrl\(item\.id\)/)
     expect(admin).not.toMatch(/useQuery\(StudentIdCardUrl/)
     expect(admin).not.toMatch(/<img/)
   })

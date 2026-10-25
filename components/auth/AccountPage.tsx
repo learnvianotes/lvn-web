@@ -20,13 +20,13 @@ import {
   type ViewerQuery,
   type YearOfStudy,
 } from '@/graphql/generated/graphql'
+import { trackUsage } from '@/lib/analytics'
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
 import { DeleteAccount } from '@/features/data/DeleteAccount'
 import { AccountStanding } from '@/features/moderation/Standing'
-import { ReviewRequests } from '@/features/verification/ReviewRequests'
-import { STUDENT_ID_ADMIN_PATH } from '@/features/verification/student-id'
+import { AnalyticsOptOut } from '@/features/settings/AnalyticsOptOut'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
 import { AiAccountSection } from '@/features/ai/AiPanel'
 import { Interests } from '@/features/community/Interests'
@@ -54,74 +54,12 @@ export function AccountPage() {
         <SignOutButton />
       </header>
       <AccountStanding userId={viewer.id} />
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/verification" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('verificationQueue')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href={STUDENT_ID_ADMIN_PATH} className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('studentIdQueue')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/moderation" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('moderationQueue')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/ai" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('aiProviders')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/contests" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('adminContests')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      <Link href="/home" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('home')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/exams" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('exams')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/rhythm" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('rhythm')}
-        <span aria-hidden>→</span>
-      </Link>
       <Link href="/achievements" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('achievements')}
         <span aria-hidden>→</span>
       </Link>
-      <Link href="/review" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('review')}
-        <span aria-hidden>→</span>
-      </Link>
       <Link href="/history" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
         {t('history')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/classes" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('classes')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/groups" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('groups')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/resources/mine" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('resources')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/saved" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('savedResources')}
         <span aria-hidden>→</span>
       </Link>
       <Link href="/plans" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
@@ -149,7 +87,7 @@ export function AccountPage() {
         </Link>
       ) : null}
       <Verification viewer={viewer} />
-      {viewer.globalRole === 'TEACHER' && viewer.verified ? <ReviewRequests /> : null}
+      <AnalyticsOptOut className={card} />
       {viewer.restrictedMinor ? <Alert>{t('minor')}</Alert> : null}
       <InstitutionalEmail viewer={viewer} />
       <StudyDetails viewer={viewer} />
@@ -174,6 +112,7 @@ function SignOutButton() {
       onClick={async () => {
         // Drafts mirrored in this browser are deleted on sign-out (shared computers); unsent ones only if the user agrees.
         if ((await countDraftMirrors()) > 0 && !window.confirm(t('unsavedDrafts'))) return
+        trackUsage('sign_out')
         await clearDraftMirrors()
         await signOut().catch(() => undefined)
         signedOut()

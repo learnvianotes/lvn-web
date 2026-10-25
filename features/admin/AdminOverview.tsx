@@ -52,6 +52,10 @@ export function AdminOverview() {
         <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
         <p className="text-sm text-muted">{t('generatedAt', { when: formatWhen(metrics.generatedAt) })}</p>
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <Link href="/admin/errors" className="font-medium text-accent">{t('errorsLink')}</Link>
+          <Link href="/admin/usage" className="font-medium text-accent">{t('usageLink')}</Link>
+        </p>
       </header>
 
       <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))]">

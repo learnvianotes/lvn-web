@@ -91,10 +91,10 @@ test('a teacher verifies a student who asked, and must say why to decline', asyn
     },
     { ...viewerExtras, globalRole: 'TEACHER' },
   )
-  await page.goto('/profile')
+  await page.goto('/admin/verification')
   const raviCard = page.getByRole('article', { name: 'Ravi Kumar' })
   await expect(raviCard.getByText('I am in your Data Structures class.')).toBeVisible()
-  await raviCard.getByRole('button', { name: 'Verify' }).click()
+  await raviCard.getByRole('button', { name: 'Approve' }).click()
   await expect(raviCard).toHaveCount(0)
   expect(calls.find((c) => c.op === 'ReviewVerificationRequest')?.variables).toEqual({ input: { requestId: request().id, approve: true, reason: null } })
   const dev = page.getByRole('article', { name: 'Dev Patel' })
@@ -102,10 +102,10 @@ test('a teacher verifies a student who asked, and must say why to decline', asyn
   await expect(dev.getByRole('alert')).toHaveText('Tell the student why, so they can try again.')
   await dev.getByLabel(/^Reason/).fill('I do not teach you.')
   await dev.getByRole('button', { name: 'Decline' }).click()
-  await expect(page.getByRole('heading', { name: 'Students asking you to verify them' })).toHaveCount(0)
+  await expect(page.getByText('Nothing to review.')).toBeVisible()
 })
 
-test('platform admins open proof of study through a recorded link and verify', async ({ page, context }) => {
+test('platform admins open proof of study through a recorded link and verify', async ({ page, context }, info) => {
   const docs = { ...request({ method: 'DOCUMENTS', teacher: null }), documents: [{ __typename: 'VerificationDocument', fileId: '01920000-0000-7000-8000-00000000f0d1', fileName: 'id-card.png', mimeType: 'image/png', sizeBytes: 4 }] }
   await context.route('http://storage.test/**', (route) => route.fulfill({ status: 200, body: 'png', headers: { 'content-type': 'image/png' } }))
   const calls = await mockApi(
@@ -118,14 +118,19 @@ test('platform admins open proof of study through a recorded link and verify', a
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
   )
-  await page.goto('/profile')
-  await page.getByRole('link', { name: /Proof of study to review/ }).click()
-  await expect(page).toHaveURL(/\/admin\/verification$/)
+  await page.goto('/admin/verification')
+  if (info.project.name === 'phone') {
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Admin', exact: true })).toBeVisible()
+    await page.keyboard.press('Escape')
+  } else {
+    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Admin', exact: true })).toBeVisible()
+  }
   const card = page.getByRole('article', { name: 'Ravi Kumar' })
-  const popup = page.waitForEvent('popup')
   await card.getByRole('button', { name: 'id-card.png' }).click()
-  expect((await popup).url()).toBe('http://storage.test/doc')
+  await expect(card.getByRole('img', { name: 'id-card.png' })).toBeVisible()
+  await expect(card.getByRole('link', { name: 'Open in a new tab' })).toHaveAttribute('href', 'http://storage.test/doc')
   expect(calls.find((c) => c.op === 'VerificationDocumentUrl')?.variables).toEqual({ requestId: docs.id, fileId: docs.documents[0]!.fileId })
-  await card.getByRole('button', { name: 'Verify' }).click()
+  await card.getByRole('button', { name: 'Approve' }).click()
   await expect.poll(() => calls.find((c) => c.op === 'ReviewVerificationRequest')?.variables).toEqual({ input: { requestId: docs.id, approve: true, reason: null } })
 })

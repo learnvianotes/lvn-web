@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { AdminSettingsDocument, ResetAdminSettingDocument, UpdateAdminSettingDocument, type AdminSettingsQuery } from '@/graphql/generated/graphql'
+import { AiCheckSettingsCard } from '@/features/admin/AiCheckSettings'
 import { microUsdToUsd } from '@/features/admin/metrics'
 import { effectiveIntegerMin, groupSettings, isRiskyChange, validateSetting, type SettingIssue, type SettingShape } from '@/features/admin/settings-model'
 import { cn } from '@/lib/cn'
@@ -19,7 +20,7 @@ export function AdminSettings() {
   const t = useTranslations('adminSettings')
   const { data, error, previousData, refetch } = useQuery(AdminSettingsDocument, { fetchPolicy: 'cache-and-network' })
   // Keep the last list while a save refetches, so a draft in another row is not thrown away.
-  const settings = data?.adminSettings ?? previousData?.adminSettings
+  const settings = (data?.adminSettings ?? previousData?.adminSettings)?.filter((setting) => setting.key !== 'aiCheckEnabled' && setting.key !== 'autoApproveOnHighConfidence')
   const groups = settings ? groupSettings(settings) : []
   const categoryKey = groups.map((group) => group.category).join('|')
   const [closed, setClosed] = useState<ReadonlySet<string>>(new Set())
@@ -55,6 +56,7 @@ export function AdminSettings() {
         <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
+      <AiCheckSettingsCard />
       <nav aria-label={t('jump')} className="sticky top-0 z-10 -mx-4 min-w-0 overflow-x-auto border-b border-border bg-bg/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
         <ul className="flex w-max min-w-full gap-2">
           {groups.map((group) => {

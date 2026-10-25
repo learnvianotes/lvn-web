@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { BadgeCheck, IdCard, KeyRound, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, Wallet, X, type LucideIcon } from 'lucide-react'
+import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -11,29 +11,53 @@ import { cn } from '@/lib/cn'
 
 export type AdminGroupKey = 'platform' | 'people' | 'content' | 'ai'
 
+export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
+
+export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'access' | 'roles' | 'domains' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
+
 export type AdminSection = {
   href: string
   group: AdminGroupKey
   /** Key under adminNav.sections */
-  key: 'overview' | 'settings' | 'plans' | 'access' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
+  key: AdminSectionKey
   icon: LucideIcon
+  /** Who may open this page. The API still enforces the same rule. */
+  roles: readonly StaffRole[]
 }
+
+const ADMIN: readonly StaffRole[] = ['PLATFORM_ADMIN']
+const REVIEW: readonly StaffRole[] = ['PLATFORM_ADMIN', 'MANAGER', 'TEACHER']
+const OPS: readonly StaffRole[] = ['PLATFORM_ADMIN', 'MANAGER']
 
 /**
  * Every page under app/(site)/(app)/admin, in sidebar order. A unit test fails when a page is added there and left
  * out of this list, so the sidebar stays the whole admin area.
  */
 export const ADMIN_SECTIONS: AdminSection[] = [
-  { href: '/admin', group: 'platform', key: 'overview', icon: LayoutDashboard },
-  { href: '/admin/settings', group: 'platform', key: 'settings', icon: SlidersHorizontal },
-  { href: '/admin/plans', group: 'platform', key: 'plans', icon: Wallet },
-  { href: '/admin/access', group: 'people', key: 'access', icon: KeyRound },
-  { href: '/admin/verification', group: 'people', key: 'verification', icon: BadgeCheck },
-  { href: '/admin/student-id', group: 'people', key: 'studentId', icon: IdCard },
-  { href: '/admin/moderation', group: 'content', key: 'moderation', icon: ShieldCheck },
-  { href: '/admin/contests', group: 'content', key: 'contests', icon: Trophy },
-  { href: '/admin/ai', group: 'ai', key: 'ai', icon: Sparkles },
+  { href: '/admin', group: 'platform', key: 'overview', icon: LayoutDashboard, roles: ADMIN },
+  { href: '/admin/settings', group: 'platform', key: 'settings', icon: SlidersHorizontal, roles: ADMIN },
+  { href: '/admin/plans', group: 'platform', key: 'plans', icon: Wallet, roles: ADMIN },
+  { href: '/admin/errors', group: 'platform', key: 'errors', icon: Bug, roles: OPS },
+  { href: '/admin/usage', group: 'platform', key: 'usage', icon: Activity, roles: OPS },
+  { href: '/admin/access', group: 'people', key: 'access', icon: KeyRound, roles: ADMIN },
+  { href: '/admin/roles', group: 'people', key: 'roles', icon: UserCog, roles: ADMIN },
+  { href: '/admin/domains', group: 'people', key: 'domains', icon: Building2, roles: ADMIN },
+  { href: '/admin/verification', group: 'people', key: 'verification', icon: BadgeCheck, roles: REVIEW },
+  { href: '/admin/student-id', group: 'people', key: 'studentId', icon: IdCard, roles: REVIEW },
+  { href: '/admin/moderation', group: 'content', key: 'moderation', icon: ShieldCheck, roles: ADMIN },
+  { href: '/admin/contests', group: 'content', key: 'contests', icon: Trophy, roles: ADMIN },
+  { href: '/admin/ai', group: 'ai', key: 'ai', icon: Sparkles, roles: ADMIN },
 ]
+
+/** Sections this role may open. Students and signed-out visitors get none. */
+export function sectionsForRole(role: string | null | undefined): AdminSection[] {
+  if (role !== 'PLATFORM_ADMIN' && role !== 'MANAGER' && role !== 'TEACHER') return []
+  return ADMIN_SECTIONS.filter((section) => section.roles.includes(role))
+}
+
+export function canSeeSection(role: string | null | undefined, key: AdminSectionKey): boolean {
+  return sectionsForRole(role).some((section) => section.key === key)
+}
 
 export const ADMIN_GROUP_ORDER: AdminGroupKey[] = ['platform', 'people', 'content', 'ai']
 
@@ -46,16 +70,16 @@ export function activeAdminSection(pathname: string): AdminSection | undefined {
   )[0]
 }
 
-/** The sidebar is chrome for platform admins. Each page still refuses everyone else, as it did before. */
+/** The admin area is for platform admins, managers and teachers. Each role only sees its sections. */
 export function canSeeAdminNav(role: string | null | undefined): boolean {
-  return role === 'PLATFORM_ADMIN'
+  return sectionsForRole(role).length > 0
 }
 
 /**
  * The admin area's side navigation: every settings page, grouped, with the open one marked. From 1024 px it stays
  * on the left; below that it is a drawer opened from "Admin settings" (the app's own menu is separate).
  */
-export function AdminNav() {
+export function AdminNav({ role }: { role?: string | null }) {
   const t = useTranslations('adminNav')
   const path = usePathname()
   const [open, setOpen] = useState(false)
@@ -91,7 +115,7 @@ export function AdminNav() {
           {t('open')}
         </button>
         <aside className="hidden lg:block">
-          <SectionList pathname={path} idPrefix="admin-nav" />
+          <SectionList pathname={path} idPrefix="admin-nav" role={role} />
         </aside>
       </div>
       {open ? (
@@ -110,7 +134,7 @@ export function AdminNav() {
                 <X className="size-5" aria-hidden />
               </button>
             </div>
-            <SectionList pathname={path} idPrefix="admin-drawer" onNavigate={close} />
+            <SectionList pathname={path} idPrefix="admin-drawer" onNavigate={close} role={role} />
           </div>
         </div>
       ) : null}
@@ -118,18 +142,22 @@ export function AdminNav() {
   )
 }
 
-function SectionList({ pathname, idPrefix, onNavigate }: { pathname: string; idPrefix: string; onNavigate?: () => void }) {
+function SectionList({ pathname, idPrefix, onNavigate, role }: { pathname: string; idPrefix: string; onNavigate?: () => void; role?: string | null }) {
   const t = useTranslations('adminNav')
   const active = activeAdminSection(pathname)
+  const sections = role === undefined ? ADMIN_SECTIONS : sectionsForRole(role)
   return (
     <nav aria-label={t('label')} className="flex flex-col gap-4">
-      {ADMIN_GROUP_ORDER.map((group) => (
+      {ADMIN_GROUP_ORDER.map((group) => {
+        const items = sections.filter((section) => section.group === group)
+        if (!items.length) return null
+        return (
         <div key={group} className="flex flex-col gap-0.5">
           <p id={`${idPrefix}-${group}`} className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">
             {t(`groups.${group}`)}
           </p>
           <ul aria-labelledby={`${idPrefix}-${group}`} className="flex flex-col gap-0.5">
-            {ADMIN_SECTIONS.filter((section) => section.group === group).map((section) => {
+            {items.map((section) => {
               const Icon = section.icon
               const on = active?.href === section.href
               return (
@@ -151,7 +179,8 @@ function SectionList({ pathname, idPrefix, onNavigate }: { pathname: string; idP
             })}
           </ul>
         </div>
-      ))}
+        )
+      })}
     </nav>
   )
 }
@@ -165,7 +194,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const admin = canSeeAdminNav(role)
   return (
     <div className={admin ? 'flex flex-col gap-4 lg:grid lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-8' : undefined}>
-      {admin ? <AdminNav /> : null}
+      {admin ? <AdminNav role={role} /> : null}
       <div className={admin ? 'min-w-0' : undefined}>{children}</div>
     </div>
   )

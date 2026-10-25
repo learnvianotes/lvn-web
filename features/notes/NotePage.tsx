@@ -11,6 +11,7 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import { Button } from '@/components/ui/button'
 import { LoadFailed } from '@/components/ui/query-state'
 import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { trackUsage } from '@/lib/analytics'
 import { sendSave, type NoteMeta } from './api'
 import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
@@ -42,6 +43,9 @@ export function NotePage({ id }: { id: string }) {
   const router = useRouter()
   const viewer = useQuery(ViewerDocument)
   const userId = viewer.data?.viewer?.id
+  useEffect(() => {
+    trackUsage('note_open')
+  }, [id])
   const [generation, setGeneration] = useState(0)
   const [loaded, setLoaded] = useLoadedNote(id, userId, generation)
   const [versionsOpen, setVersionsOpen] = useState<{ open: boolean; versionId?: string }>({ open: false })

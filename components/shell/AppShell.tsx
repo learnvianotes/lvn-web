@@ -16,6 +16,7 @@ import {
   NotebookPen,
   Plus,
   Search,
+  ShieldCheck,
   Sparkles,
   Trophy,
   Upload,
@@ -34,12 +35,14 @@ import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { useReadPdf } from '@/features/reader/readPdf'
 import { OPEN_SEARCH_EVENT } from '@/features/search/SearchPalette'
 import { CreateNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { canSeeAdminNav } from '@/features/admin/AdminNav'
+import { trackUsage } from '@/lib/analytics'
 import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { cn } from '@/lib/cn'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 
-type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp }
+type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp; staff?: boolean }
 
 /**
  * Board A's left sidebar (lvn-backend ADR-0076): its Calendar is Exams, and its Quizzes and Contests are the weekly
@@ -49,6 +52,7 @@ const ENTRIES: Entry[] = [
   { href: '/home', key: 'home', icon: House },
   { href: '/notes', key: 'notes', icon: NotebookPen, match: /^\/notes(\/|$)/ },
   { href: '/search', key: 'explore', icon: Compass },
+  { href: '/admin', key: 'admin', icon: ShieldCheck, match: /^\/admin(\/|$)/, staff: true },
   { href: '/subjects', key: 'subjects', icon: BookOpen, match: /^\/subjects(\/|$)/ },
   { href: '/groups', key: 'groups', icon: Users },
   { href: '/classes', key: 'classes', icon: GraduationCap },
@@ -146,6 +150,8 @@ function Nav() {
   const t = useTranslations('shell')
   const path = usePathname()
   const router = useRouter()
+  const role = useQuery(ViewerDocument).data?.viewer?.globalRole
+  const entries = ENTRIES.filter((entry) => !entry.staff || canSeeAdminNav(role))
   const readPdf = useReadPdf()
   const pdf = useRef<HTMLInputElement>(null)
   // Upload (read a PDF) only while uploads are on (lvn-backend ADR-0097).
@@ -158,7 +164,10 @@ function Nav() {
       const res = await create({ variables: { input: {} } })
       const problem = res.data?.createNote.userErrors[0]
       const id = res.data?.createNote.note?.id
-      if (id) router.push(`/notes/${id}`)
+      if (id) {
+        trackUsage('note_create')
+        router.push(`/notes/${id}`)
+      }
       else setCreateError({ message: problem?.message ?? t('createFailed'), limit: isLimitCode(problem?.code) })
     } catch (error) {
       const refused = refusalMessage(error)
@@ -167,7 +176,7 @@ function Nav() {
   }
   return (
     <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-1">
-      {ENTRIES.map(({ href, key, icon: Icon, match }) => {
+      {entries.map(({ href, key, icon: Icon, match }) => {
         const active = match ? match.test(path) : path === href || path.startsWith(`${href}/`)
         return (
           <Link key={key} href={href} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg')}>

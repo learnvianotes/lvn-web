@@ -143,9 +143,7 @@ test('a platform admin turns college ID checks on, opens a card on demand, and a
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
   )
-  await page.goto('/profile')
-  await page.getByRole('link', { name: 'College ID cards', exact: true }).click()
-  await expect(page).toHaveURL(/\/admin\/student-id$/)
+  await page.goto('/admin/student-id')
   await expect(page.getByRole('switch', { name: 'Students can send a college ID card' })).not.toBeChecked()
   expect(calls.some((c) => c.op === 'StudentIdCardUrl')).toBe(false)
   expect(cardReads).toBe(0)
@@ -155,9 +153,8 @@ test('a platform admin turns college ID checks on, opens a card on demand, and a
   expect(calls.find((c) => c.op === 'SetStudentIdVerificationEnabled')?.variables).toEqual({ input: { enabled: true } })
 
   const raviCard = page.getByRole('article', { name: 'Ravi Kumar' })
-  const popup = page.waitForEvent('popup')
   await raviCard.getByRole('button', { name: 'View college ID card' }).click()
-  expect((await popup).url()).toBe('http://storage.test/card')
+  await expect(raviCard.getByRole('link', { name: 'Open in a new tab' })).toHaveAttribute('href', 'http://storage.test/card')
   expect(calls.filter((c) => c.op === 'StudentIdCardUrl')).toEqual([{ op: 'StudentIdCardUrl', variables: { requestId: request().id } }])
   await raviCard.getByRole('button', { name: 'Approve' }).click()
   await expect(raviCard).toHaveCount(0)

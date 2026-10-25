@@ -1,9 +1,19 @@
 'use client'
 
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client'
+import { apiProblem, reportClientError } from '@/lib/analytics'
 import { env } from '@/lib/env'
 import { useSession } from '@/state/session'
 import { refreshSession } from './auth/session'
+
+function operationName(init?: RequestInit): string | undefined {
+  if (typeof init?.body !== 'string') return undefined
+  try {
+    return (JSON.parse(init.body) as { operationName?: string }).operationName
+  } catch {
+    return undefined
+  }
+}
 
 const isUnauthenticated = (body: { errors?: { extensions?: { code?: string } }[] }) => body.errors?.some((e) => e.extensions?.code === 'UNAUTHENTICATED') ?? false
 
@@ -18,10 +28,18 @@ const authFetch: typeof fetch = async (input, init) => {
     return fetch(input, { ...init, headers, credentials: 'include' })
   }
   const token = useSession.getState().accessToken
-  const res = await send(token)
-  if (!token) return res
+  const operation = operationName(init)
+  let res: Response
+  try {
+    res = await send(token)
+  } catch (error) {
+    reportClientError({ type: 'api.network', message: error instanceof Error ? error.message : 'network' })
+    throw error
+  }
   const body = await res.clone().json().catch(() => ({}))
-  if (!isUnauthenticated(body)) return res
+  const problem = apiProblem(res.status, body, operation)
+  if (problem) reportClientError({ type: 'api', message: problem })
+  if (!token || !isUnauthenticated(body)) return res
   return (await refreshSession()) ? send(useSession.getState().accessToken) : res
 }
 

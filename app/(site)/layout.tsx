@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { Analytics } from '@/components/analytics/Analytics'
+import { UsageTracker } from '@/components/analytics/UsageTracker'
 import { ReleaseLandingHold } from '@/components/landing/ReleaseLandingHold'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { landingHoldScript } from '@/lib/auth/hint'
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NextIntlClientProvider>
           {children}
           <Analytics />
+          <UsageTracker />
         </NextIntlClientProvider>
       </body>
     </html>

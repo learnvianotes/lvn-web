@@ -62,6 +62,10 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
     if (op === 'UploadsEnabled' && !handlers[op]) return route.fulfill({ json: { data: { uploadsEnabled: true } } })
     // College ID checks are off unless a test turns them on (lvn-backend ADR-0099), so the option stays hidden.
     if (op === 'StudentIdVerificationEnabled' && !handlers[op]) return route.fulfill({ json: { data: { studentIdVerificationEnabled: false } } })
+    // First-party usage and the profile opt-out. Tests that do not care about them still answer.
+    if (op === 'AnalyticsOptOut' && !handlers[op]) return route.fulfill({ json: { data: { viewer: { __typename: 'User', id: USER, analyticsOptOut: false } } } })
+    if (op === 'IngestEvents' && !handlers[op]) return route.fulfill({ json: { data: { ingestEvents: { __typename: 'IngestEventsPayload', ok: true } } } })
+    if (op === 'AiVerificationSettings' && !handlers[op]) return route.fulfill({ json: { data: { aiVerificationSettings: { __typename: 'AiVerificationSettings', aiCheckEnabled: false, autoApproveOnHighConfidence: false } } } })
     if (op === 'TermsStatus' && !handlers[op]) return route.fulfill({ json: { data: { termsVersion: '2026-10-08', viewer: { __typename: 'User', id: USER, termsAccepted: true } } } })
     const handler = handlers[op]
     if (!handler) return route.fulfill({ status: 500, json: { errors: [{ message: `unmocked ${op}` }] } })

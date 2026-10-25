@@ -182,7 +182,7 @@ function errorCopy(t: (key: 'unavailable' | 'ratePending' | 'rateWeek' | 'rateEi
 }
 
 function shown(e: unknown, copy: StudentIdErrorCopy): string {
-  if (e instanceof UploadError && !/^(network|storage answered)/.test(e.message)) return e.message
+  if (e instanceof UploadError) return e.message
   if (CombinedGraphQLErrors.is(e)) {
     const err = e.errors[0]
     const code = typeof err?.extensions?.code === 'string' ? err.extensions.code : null

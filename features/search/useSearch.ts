@@ -3,6 +3,7 @@
 import { useQuery } from '@apollo/client/react'
 import { useEffect, useState } from 'react'
 import { SearchDocument, type NoteKind, type NoteSource, type SearchQuery, type SearchScope } from '@/graphql/generated/graphql'
+import { trackUsage } from '@/lib/analytics'
 import { track } from '@/lib/learning'
 
 /** What narrows the notes found (lvn-backend ADR-0056); a topic alone lists its notes. */
@@ -30,7 +31,9 @@ export function useSearch(query: string, first: number, filters: SearchFilters =
   }, [query])
   useEffect(() => {
     if (settled.length < 2) return
-    const timer = setTimeout(() => track('SEARCH_PERFORMED', { metadata: { scopes: scopes?.join(',') ?? 'ALL', words: settled.split(/\s+/).length } }), 2_000)
+    const words = settled.split(/\s+/).length
+    trackUsage('search', { words })
+    const timer = setTimeout(() => track('SEARCH_PERFORMED', { metadata: { scopes: scopes?.join(',') ?? 'ALL', words } }), 2_000)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settled])
