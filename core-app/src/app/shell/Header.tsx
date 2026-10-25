@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MessageCircleQuestion, Moon, PanelLeft, Sun } from 'lucide-react'
+import { MessageCircleQuestionMark, Moon, PanelLeft, Sun } from 'lucide-react'
 import { useTheme } from '@core/shared/lib/theme'
 import { APP_NAME } from '@core/config'
 import { useLayout } from '@core/app/shell/LayoutState'
@@ -39,7 +39,7 @@ export function Header() {
           aria-expanded={helpOpen}
           title="Help center"
         >
-          <MessageCircleQuestion size={18} />
+          <MessageCircleQuestionMark size={18} />
         </button>
         <button
           className="icon-btn"

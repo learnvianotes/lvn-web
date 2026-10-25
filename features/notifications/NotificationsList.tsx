@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Award, BadgeCheck, Bell, CalendarClock, CheckCheck, CircleHelp, DoorOpen, Download, FileInput, GraduationCap, Handshake, ListChecks, Megaphone, MessageSquare, School, Share2, ShieldAlert, UserPlus, Users } from 'lucide-react'
+import { Award, BadgeCheck, Bell, CalendarClock, CheckCheck, CircleQuestionMark, DoorOpen, Download, FileInput, GraduationCap, Handshake, ListChecks, Megaphone, MessageSquare, School, Share2, ShieldAlert, UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -27,7 +27,7 @@ const ICONS: Partial<Record<NotificationFieldsFragment['category'], typeof Bell>
   REVISION_REMINDER: CalendarClock,
   COMMENT: MessageSquare,
   MENTOR_INVITE: School,
-  DOUBT: CircleHelp,
+  DOUBT: CircleQuestionMark,
   MODERATION: ShieldAlert,
   ACHIEVEMENT: Award,
 }

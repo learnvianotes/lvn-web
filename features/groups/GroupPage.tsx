@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { FileText, Globe, Lock, Pin, PinOff, Plus, Trash2, Users } from 'lucide-react'
+import { FileText, Globe, Lock, Pin, PinOff, Plus, Trash, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -318,7 +318,7 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
           ) : null}
           {post.viewerCan.delete ? (
             <button type="button" onClick={onDelete} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
-              <Trash2 className="size-4" aria-hidden />
+              <Trash className="size-4" aria-hidden />
             </button>
           ) : null}
           <ReportButton look="icon" entityType="GROUP_POST" entityId={post.id} authorId={post.author.id} />

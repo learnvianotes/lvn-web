@@ -2,7 +2,7 @@
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import type { Editor } from '@tiptap/react'
-import { ArrowLeft, Crop, Highlighter, ListTree, Minus, NotebookPen, PanelRightClose, PanelRightOpen, Plus, Search, StretchHorizontal, Wand2, X } from 'lucide-react'
+import { ArrowLeft, Crop, Highlighter, ListTree, Minus, NotebookPen, PanelRightClose, PanelRightOpen, Plus, Search, StretchHorizontal, WandSparkles, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -374,7 +374,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               }}
             />
           ) : null}
-          {meta?.viewerCan.fork && !converting ? <ToolButton icon={Wand2} label={t('convert.button')} onClick={() => setConvertOpen(true)} /> : null}
+          {meta?.viewerCan.fork && !converting ? <ToolButton icon={WandSparkles} label={t('convert.button')} onClick={() => setConvertOpen(true)} /> : null}
           <ToolButton icon={panelOpen ? PanelRightClose : PanelRightOpen} label={panelOpen ? t('hidePanel') : t('showPanel')} pressed={panelOpen} onClick={() => setPanelOpen((o) => !o)} />
         </header>
         {conversion && !bannerHidden ? <ConversionBanner conversion={conversion} onDismiss={() => setBannerHidden(true)} /> : null}

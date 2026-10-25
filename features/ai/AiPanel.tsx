@@ -7,10 +7,10 @@ import {
   BookOpenCheck,
   Brain,
   Check,
-  CircleHelp,
+  CircleQuestionMark,
   CodeXml,
   Copy,
-  FilePlus2,
+  FilePlusCorner,
   Languages,
   Layers,
   Lightbulb,
@@ -21,12 +21,12 @@ import {
   Plus,
   RotateCcw,
   Mic,
-  Wand2,
+  WandSparkles,
   ScrollText,
   SearchCheck,
   SpellCheck,
   Sparkles,
-  Trash2,
+  Trash,
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -67,7 +67,7 @@ const TASKS: { task: AiTask; icon: LucideIcon }[] = [
   { task: 'SUMMARIZE', icon: ScrollText },
   { task: 'KEY_CONCEPTS', icon: Lightbulb },
   { task: 'EXPLAIN_SIMPLY', icon: Brain },
-  { task: 'PRACTICE_QUESTIONS', icon: CircleHelp },
+  { task: 'PRACTICE_QUESTIONS', icon: CircleQuestionMark },
   { task: 'FIND_MISTAKES', icon: SearchCheck },
   { task: 'EXPLAIN_CODE', icon: CodeXml },
   { task: 'FLASHCARDS', icon: Layers },
@@ -75,7 +75,7 @@ const TASKS: { task: AiTask; icon: LucideIcon }[] = [
   { task: 'REVISION_SHEET', icon: BookOpenCheck },
   { task: 'CREATE_NOTES', icon: NotebookPen },
   { task: 'OUTLINE_TO_NOTE', icon: ListTree },
-  { task: 'QUICK_NOTE', icon: Wand2 },
+  { task: 'QUICK_NOTE', icon: WandSparkles },
   { task: 'CLEAN_UP', icon: SpellCheck },
 ]
 /** Work on the person's own words: only for people who may edit the note. */
@@ -326,7 +326,7 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
         ) : null}
         {pending ? null : (
           <Button variant="ghost" size="icon" aria-label={t('delete')} title={t('delete')} disabled={removing.loading} onClick={() => void drop()}>
-            <Trash2 className="size-4" aria-hidden />
+            <Trash className="size-4" aria-hidden />
           </Button>
         )}
       </header>
@@ -416,7 +416,7 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
           </Button>
         ) : null}
         <Button size="sm" variant={intoThisNote ? 'secondary' : 'primary'} className="gap-1.5" disabled={!chosen.size || keeping.loading} onClick={() => void save('NEW_NOTE')}>
-          <FilePlus2 className="size-4" aria-hidden />
+          <FilePlusCorner className="size-4" aria-hidden />
           {t('saveAsNote', { n: chosen.size })}
         </Button>
       </div>

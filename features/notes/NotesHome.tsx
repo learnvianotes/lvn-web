@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
+import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, Ellipsis, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash, Inbox, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -186,7 +186,7 @@ export function NotesHome() {
           {navItem({ kind: 'all' }, t('views.all'), BookOpen)}
           {navItem({ kind: 'unfiled' }, t('views.unfiled'), Inbox)}
           {navItem({ kind: 'shared' }, t('views.shared'), Users)}
-          {navItem({ kind: 'trash' }, t('views.trash'), Trash2)}
+          {navItem({ kind: 'trash' }, t('views.trash'), Trash)}
         </nav>
         <section aria-labelledby="folders-heading" className="flex flex-col gap-0.5">
           <div className="flex items-center justify-between px-3 pb-1">
@@ -202,7 +202,7 @@ export function NotesHome() {
               <div className="min-w-0 flex-1">{navItem({ kind: 'folder', id: f.id }, f.name, Folder, f.noteCount)}</div>
               <details className="relative">
                 <summary className="cursor-pointer list-none rounded-lg p-1 text-muted opacity-60 hover:bg-surface-2 hover:opacity-100" aria-label={t('folderActions', { name: f.name })}>
-                  <MoreHorizontal className="size-4" aria-hidden />
+                  <Ellipsis className="size-4" aria-hidden />
                 </summary>
                 <div className="absolute right-0 z-20 mt-1 flex w-44 flex-col rounded-xl border border-border bg-surface p-1 text-sm shadow-xl">
                   <button type="button" className="rounded-lg px-3 py-1.5 text-left hover:bg-surface-2" onClick={() => void addFolder(f.id)}>
@@ -298,7 +298,7 @@ export function NotesHome() {
             { v: { kind: 'shared' } as View, label: t('views.shared'), icon: Users },
             ...folders.map((f) => ({ v: { kind: 'folder', id: f.id } as View, label: f.name, icon: Folder })),
             ...tags.map((x) => ({ v: { kind: 'tag', id: x.id } as View, label: `#${x.name}`, icon: Hash })),
-            { v: { kind: 'trash' } as View, label: t('views.trash'), icon: Trash2 },
+            { v: { kind: 'trash' } as View, label: t('views.trash'), icon: Trash },
           ].map(({ v, label, icon: Icon }) => {
             const active = hrefOf(v) === hrefOf(view)
             return (

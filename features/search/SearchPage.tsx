@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, FileText, Globe, GraduationCap, Library, Lock, Search, Users, X } from 'lucide-react'
+import { BookBookmark, FileText, Globe, GraduationCap, Library, Lock, Search, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -160,7 +160,7 @@ export function SearchPage() {
                     go({ topic: null })
                   }}
                 >
-                  <BookMarked className="size-3.5" aria-hidden />
+                  <BookBookmark className="size-3.5" aria-hidden />
                   {topic.title}
                   <X className="size-3.5" aria-hidden />
                 </button>
@@ -265,7 +265,7 @@ export function SearchPage() {
                   }}
                   className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent"
                 >
-                  <BookMarked className="size-3.5" aria-hidden />
+                  <BookBookmark className="size-3.5" aria-hidden />
                   {tp.title} <span className="text-muted">· {tp.subject.title}</span>
                 </button>
               ))}

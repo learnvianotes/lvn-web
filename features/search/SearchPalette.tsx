@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, CornerDownLeft, FileText, GraduationCap, Library, Search, Sparkles, UserRound, Users } from 'lucide-react'
+import { BookBookmark, CornerDownLeft, FileText, GraduationCap, Library, Search, Sparkles, UserRound, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -167,7 +167,7 @@ export function SearchPalette() {
                     </>
                   ) : (
                     <>
-                      <BookMarked className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
+                      <BookBookmark className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
                       <span className="text-sm">
                         {item.topic.title} <span className="text-muted">· {item.topic.subject.title}</span>
                       </span>
