@@ -16,6 +16,7 @@ import {
   RequestDataExportDocument,
   type NoteImportFieldsFragment,
 } from '@/graphql/generated/graphql'
+import { trackUsage } from '@/lib/analytics'
 import { formatBytes, putToStorage, UploadError } from '@/features/notes/media'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 
@@ -65,7 +66,7 @@ function ExportPart() {
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
           <CircleCheck className="size-5 text-emerald-600" aria-hidden />
           <span className="flex-1">{t('ready', { size: formatBytes(latest.sizeBytes ?? 0), date: new Date(latest.expiresAt!).toLocaleDateString() })}</span>
-          <a href={latest.downloadUrl} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
+          <a href={latest.downloadUrl} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
             <Download className="size-4" aria-hidden />
             {t('download')}
           </a>

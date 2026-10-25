@@ -99,9 +99,7 @@ test('a platform admin adds Claude, tests it, makes it answer, sends transcripti
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
   )
-  await page.goto('/profile')
-  await page.getByRole('link', { name: /AI providers/ }).click()
-  await expect(page).toHaveURL(/\/admin\/ai$/)
+  await page.goto('/admin/ai')
   await expect(page.getByRole('heading', { name: 'AI providers' })).toBeVisible()
   await expect(page.getByText('Spent this month: $1.25 of the $50.00 budget.')).toBeVisible()
   await expect(page.getByLabel(/Chats, tasks and Ask AI/)).toHaveValue('')

@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '@/messages/en.json'
-import { ADMIN_SECTIONS, AdminNav, activeAdminSection, canSeeAdminNav } from '@/features/admin/AdminNav'
+import { ADMIN_SECTIONS, AdminNav, activeAdminSection, canSeeAdminNav, sectionsForRole } from '@/features/admin/AdminNav'
 
 const nav = vi.hoisted(() => ({ pathname: '/admin/ai' }))
 
@@ -37,8 +37,14 @@ const SECTIONS: [group: string, label: string, href: string][] = [
   ['Platform', 'Overview', '/admin'],
   ['Platform', 'Configuration', '/admin/settings'],
   ['Platform', 'Plans & pricing', '/admin/plans'],
+  ['Platform', 'Errors', '/admin/errors'],
+  ['Platform', 'Usage', '/admin/usage'],
   ['People', 'Beta access', '/admin/access'],
+  ['People', 'Users', '/admin/users'],
+  ['People', 'Roles', '/admin/roles'],
+  ['People', 'Institution domains', '/admin/domains'],
   ['People', 'Proof of study to review', '/admin/verification'],
+  ['People', 'College ID cards', '/admin/student-id'],
   ['Content', 'Moderation queue', '/admin/moderation'],
   ['Content', 'Weekly contests', '/admin/contests'],
   ['AI', 'AI providers', '/admin/ai'],
@@ -152,11 +158,16 @@ describe('admin settings sidebar', () => {
     expect(container!.querySelector('[role="dialog"]')).toBeNull()
   })
 
-  it('is for platform admins', () => {
+  it('is for platform admins, managers and teachers, each with their own sections', () => {
     expect(canSeeAdminNav('PLATFORM_ADMIN')).toBe(true)
+    expect(canSeeAdminNav('MANAGER')).toBe(true)
+    expect(canSeeAdminNav('TEACHER')).toBe(true)
     expect(canSeeAdminNav('STUDENT')).toBe(false)
-    expect(canSeeAdminNav('TEACHER')).toBe(false)
     expect(canSeeAdminNav(undefined)).toBe(false)
     expect(canSeeAdminNav(null)).toBe(false)
+    expect(sectionsForRole('PLATFORM_ADMIN').map((section) => section.href)).toEqual(ADMIN_SECTIONS.map((section) => section.href))
+    expect(sectionsForRole('MANAGER').map((section) => section.key)).toEqual(['verification', 'studentId'])
+    expect(sectionsForRole('TEACHER').map((section) => section.key)).toEqual(['verification', 'studentId'])
+    expect(sectionsForRole('STUDENT')).toEqual([])
   })
 })

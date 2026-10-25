@@ -5,6 +5,7 @@ import { useApolloClient } from '@apollo/client/react'
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CompleteNoteUploadDocument, CreateNoteUploadDocument, type CardFieldsFragment, type MediaFieldsFragment } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
+import { reportClientError, trackUsage } from '@/lib/analytics'
 import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 
 /**
@@ -71,6 +72,12 @@ export function srcSetOf(file: MediaInfo): string | undefined {
   return parts.length ? parts.join(', ') : undefined
 }
 
+/** A sentence a person can act on when the storage PUT fails. */
+export function uploadFailureMessage(kind: 'network' | 'status', status?: number): string {
+  if (kind === 'network') return 'The file could not be uploaded. Storage did not accept the connection. Check your network and try again.'
+  return `The file could not be uploaded. Storage refused it (${status ?? 'error'}). Try again.`
+}
+
 export class UploadError extends Error {
   readonly limit: boolean
   constructor(message: string, limit = false) {
@@ -98,8 +105,19 @@ export function putToStorage(intent: { uploadUrl: string; uploadHeaders: { name:
     // Browsers set Content-Length themselves and refuse to have it set.
     for (const h of intent.uploadHeaders) if (h.name.toLowerCase() !== 'content-length') xhr.setRequestHeader(h.name, h.value)
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total)
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new UploadError(`storage answered ${xhr.status}`)))
-    xhr.onerror = () => reject(new UploadError('network'))
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve()
+      else {
+        const message = uploadFailureMessage('status', xhr.status)
+        reportClientError({ type: 'upload', message })
+        reject(new UploadError(message))
+      }
+    }
+    xhr.onerror = () => {
+      const message = uploadFailureMessage('network')
+      reportClientError({ type: 'upload', message })
+      reject(new UploadError(message))
+    }
     xhr.send(file)
   })
 }
@@ -114,6 +132,7 @@ export async function uploadToNote(client: ApolloClient, noteId: string, file: F
   const done = await mutateUpload(() => client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } }))
   const doneProblem = done.data?.completeUpload.userErrors[0]
   if (!done.data?.completeUpload.ok) throw new UploadError(doneProblem?.message ?? 'upload not accepted', isLimitCode(doneProblem?.code))
+  trackUsage('note_upload', { kind: mimeOf(file).replace(/[^a-z0-9]+/gi, '_') })
   return intent.fileId
 }
 

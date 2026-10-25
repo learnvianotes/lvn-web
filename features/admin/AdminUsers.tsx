@@ -1,0 +1,255 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { canSeeSection } from '@/features/admin/AdminNav'
+import { useViewerRole } from '@/features/admin/useViewerRole'
+import {
+  deleteAdminUser,
+  isUnknownFieldError,
+  loadAdminUsers,
+  PlatformError,
+  setAccountStanding,
+  updateAdminUser,
+  type AdminManagedUser,
+  type AdminUserStatusFilter,
+  type AgeOutcome,
+} from '@/lib/platform-api'
+
+const FILTERS: AdminUserStatusFilter[] = ['AGE_BLOCKED', 'BLOCKED_OR_SUSPENDED', 'ACTIVE']
+const DELETE_WORD = 'DELETE'
+
+/** Platform admins: search accounts, correct a date of birth, block, suspend, unblock, or delete. */
+export function AdminUsers() {
+  const t = useTranslations('adminUsers')
+  const { role, ready } = useViewerRole()
+  const [status, setStatus] = useState<AdminUserStatusFilter>('AGE_BLOCKED')
+  const [search, setSearch] = useState('')
+  const [rows, setRows] = useState<AdminManagedUser[] | null>(null)
+  const [total, setTotal] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [openUser, setOpenUser] = useState<AdminManagedUser | null>(null)
+  const load = useCallback(async () => {
+    try {
+      const list = await loadAdminUsers({ status, search })
+      setRows(list.users)
+      setTotal(list.total)
+      setError(null)
+    } catch (e) {
+      setRows([])
+      setTotal(null)
+      setError(isUnknownFieldError(e) ? t('unavailable') : e instanceof PlatformError && e.forbidden ? t('notAllowed') : t('failed'))
+    }
+  }, [status, search, t])
+  useEffect(() => {
+    if (ready && canSeeSection(role, 'users')) void load()
+  }, [ready, role, load])
+  if (!ready) return <p className="text-muted">{t('loading')}</p>
+  if (!canSeeSection(role, 'users')) return <p className="text-muted">{t('notAllowed')}</p>
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
+      </header>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <label className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-sm font-medium">{t('search')}</span>
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('searchHint')} />
+        </label>
+        <div role="group" aria-label={t('filters')} className="flex flex-wrap gap-2">
+          {FILTERS.map((filter) => (
+            <Button key={filter} type="button" size="sm" variant={status === filter ? 'primary' : 'secondary'} aria-pressed={status === filter} onClick={() => setStatus(filter)}>
+              {t(`status.${filter}`)}
+            </Button>
+          ))}
+        </div>
+      </div>
+      {total !== null ? <p className="text-sm text-muted">{t('count', { count: total })}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {rows && !rows.length && !error ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
+      <ul className="flex flex-col gap-3">
+        {(rows ?? []).map((user) => (
+          <li key={user.id}>
+            <article className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">
+              <div className="min-w-0">
+                <p className="font-semibold">{user.displayName}</p>
+                <p className="text-sm text-muted">{user.email} · {t(`status.${user.accountStatus}`)}</p>
+              </div>
+              <Button size="sm" variant="secondary" onClick={() => setOpenUser(user)}>{t('open')}</Button>
+            </article>
+          </li>
+        ))}
+      </ul>
+      <UserDialog
+        user={openUser}
+        onClose={() => setOpenUser(null)}
+        onUser={setOpenUser}
+        onChanged={() => void load()}
+      />
+    </div>
+  )
+}
+
+function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUser | null; onClose: () => void; onUser: (user: AdminManagedUser) => void; onChanged: () => void }) {
+  const t = useTranslations('adminUsers')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [dob, setDob] = useState('')
+  const [reason, setReason] = useState('')
+  const [blockReason, setBlockReason] = useState('')
+  const [until, setUntil] = useState('')
+  const [deleteReason, setDeleteReason] = useState('')
+  const [confirmText, setConfirmText] = useState('')
+  const [outcome, setOutcome] = useState<AgeOutcome | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    setName(user?.displayName ?? '')
+    setEmail(user?.email ?? '')
+    setDob(user?.dateOfBirth ?? '')
+    setReason('')
+    setBlockReason('')
+    setUntil('')
+    setDeleteReason('')
+    setConfirmText('')
+    setOutcome(null)
+    setError(null)
+    // Fill the form when a different account is opened. A later save updates these fields itself, so a list refresh must not wipe them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
+  const save = async () => {
+    if (!user) return
+    if (!reason.trim()) return setError(t('reasonNeeded'))
+    setBusy(true)
+    setError(null)
+    try {
+      const result = await updateAdminUser({ userId: user.id, reason: reason.trim(), displayName: name.trim(), email: email.trim(), dateOfBirth: dob })
+      if (result.problem) setError(result.problem)
+      else {
+        if (result.user) {
+          setName(result.user.displayName)
+          setEmail(result.user.email)
+          setDob(result.user.dateOfBirth ?? '')
+          onUser(result.user)
+        }
+        setOutcome(result.outcome)
+        onChanged()
+      }
+    } catch (e) {
+      setError(e instanceof PlatformError ? e.message : t('failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const standing = async (status: 'ACTIVE' | 'BLOCKED' | 'SUSPENDED') => {
+    if (!user) return
+    if (!blockReason.trim()) return setError(t('reasonNeeded'))
+    if (status === 'SUSPENDED' && !until) return setError(t('untilNeeded'))
+    setBusy(true)
+    setError(null)
+    try {
+      const result = await setAccountStanding({
+        userId: user.id,
+        status,
+        reason: blockReason.trim(),
+        until: status === 'SUSPENDED' ? new Date(until).toISOString() : null,
+      })
+      if (result.problem) setError(result.problem)
+      else {
+        if (result.user) onUser(result.user)
+        onChanged()
+      }
+    } catch (e) {
+      setError(e instanceof PlatformError ? e.message : t('failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const remove = async () => {
+    if (!user) return
+    if (confirmText !== DELETE_WORD || !deleteReason.trim()) return setError(t('reasonNeeded'))
+    setBusy(true)
+    setError(null)
+    try {
+      const problem = await deleteAdminUser({ userId: user.id, confirm: confirmText, reason: deleteReason.trim() })
+      if (problem) setError(problem)
+      else {
+        onChanged()
+        onClose()
+      }
+    } catch (e) {
+      setError(e instanceof PlatformError ? e.message : t('failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const held = user?.accountStatus === 'BLOCKED' || user?.accountStatus === 'SUSPENDED'
+  return (
+    <Dialog open={user !== null} onClose={onClose} title={user?.displayName ?? t('title')} side>
+      {error ? <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {user ? (
+        <div className="flex flex-col gap-6">
+          <p className="text-sm text-muted">{t(`status.${user.accountStatus}`)} · {user.globalRole}</p>
+          {user.statusReason ? (
+            <p className="text-sm">
+              <span className="font-medium">{t('statusReason')}. </span>
+              {user.statusReason}
+            </p>
+          ) : null}
+          <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void save() }}>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('name')}</span>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('email')}</span>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('dob')}</span>
+              <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('reason')}</span>
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonHint')} />
+            </label>
+            <Button type="submit" disabled={busy}>{busy ? t('saving') : t('save')}</Button>
+            {outcome ? <p role="status" className="text-sm font-medium">{outcome === 'unblocked' ? t('unblocked') : t('stillUnderAge')}</p> : null}
+          </form>
+          <form className="flex flex-col gap-3 border-t border-border pt-4" onSubmit={(e) => e.preventDefault()}>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('reason')}</span>
+              <Input value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder={t('reasonHint')} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('until')}</span>
+              <Input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('BLOCKED')}>{t('block')}</Button>
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('SUSPENDED')}>{t('suspend')}</Button>
+              {held ? <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('ACTIVE')}>{t('unblock')}</Button> : null}
+            </div>
+          </form>
+          <form className="flex flex-col gap-3 rounded-xl border border-red-300 p-3 dark:border-red-900" onSubmit={(e) => { e.preventDefault(); void remove() }}>
+            <h3 className="font-semibold text-red-700 dark:text-red-300">{t('delete')}</h3>
+            <p className="text-sm text-muted">{t('deleteLead')}</p>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('deleteConfirm')}</span>
+              <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} autoComplete="off" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('reason')}</span>
+              <Input value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} placeholder={t('reasonHint')} />
+            </label>
+            <Button type="submit" className="bg-red-600 text-white hover:bg-red-700" disabled={busy || confirmText !== DELETE_WORD || !deleteReason.trim()}>{t('deleteDo')}</Button>
+          </form>
+        </div>
+      ) : null}
+    </Dialog>
+  )
+}

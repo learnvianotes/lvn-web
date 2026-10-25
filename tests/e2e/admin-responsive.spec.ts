@@ -48,6 +48,12 @@ const PAGES: { path: string; heading: string; shot?: string; admin?: boolean }[]
   { path: '/admin/settings', heading: 'Configuration', shot: 'configuration' },
   { path: '/admin/plans', heading: 'Plans & pricing', shot: 'plans' },
   { path: '/admin/access', heading: 'Beta access', shot: 'access' },
+  { path: '/admin/users', heading: 'Users' },
+  { path: '/admin/errors', heading: 'Errors' },
+  { path: '/admin/usage', heading: 'Usage' },
+  { path: '/admin/roles', heading: 'Roles' },
+  { path: '/admin/domains', heading: 'Institution domains' },
+  { path: '/admin/student-id', heading: 'College ID cards' },
   { path: '/plans', heading: 'Plans', shot: 'user-plans', admin: false },
   { path: '/admin/ai', heading: 'AI providers' },
   { path: '/admin/verification', heading: 'Proof of study to review' },
@@ -136,6 +142,11 @@ async function adminApi(page: Page) {
       AdminContests: () => ({ adminContests: [] }),
       ContestSubjects: () => ({ subjects: [] }),
       VerificationRequestsToReview: () => ({ verificationRequestsToReview: [] }),
+      StudentIdVerificationQueue: () => ({ studentIdVerificationQueue: [] }),
+      AdminErrors: () => ({ adminErrors: [] }),
+      AdminUsage: () => ({ adminUsage: { __typename: 'AdminUsageSummary', dau: 0, wau: 0, mau: 0, from: '2026-09-25T00:00:00.000Z', to: '2026-10-25T00:00:00.000Z', topFeatures: [], topEvents: [] } }),
+      InstitutionDomains: () => ({ institutionDomains: [] }),
+      AdminUsers: () => ({ adminUsers: { __typename: 'AdminUserList', total: 0, users: [] } }),
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
   )
@@ -157,7 +168,10 @@ async function fits(page: Page, where: string) {
 
 async function barAboveTitle(page: Page, heading: string) {
   // The app and visitor bars are the banner. A page may also use <header> for its own title.
-  const header = await page.getByRole('banner').first().boundingBox()
+  // A signed-in public page swaps in the app bar after hydration, so wait until that bar is laid out.
+  const banner = page.getByRole('banner').first()
+  await expect(banner).toBeVisible()
+  const header = await banner.boundingBox()
   const title = await page.getByRole('heading', { level: 1, name: heading }).boundingBox()
   expect(header?.y ?? 99).toBeLessThanOrEqual(2)
   expect(title!.y).toBeGreaterThanOrEqual(header!.y + header!.height - 1)

@@ -15,7 +15,9 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { SignInOptionsDocument, SignUpDocument } from '@/graphql/generated/graphql'
 import { markAgeRefused } from '@/lib/age'
+import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { refusalMessage } from '@/lib/limit-error'
+import { AgeBlocked } from './AgeBlocked'
 import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
 import { InviteOnlyNotice } from './InviteOnlyNotice'
 import { applyProblems } from './forms'
@@ -47,6 +49,7 @@ export function SignUpForm() {
   const [signUp] = useMutation(SignUpDocument)
   const finish = useFinishSignIn()
   const [general, setGeneral] = useState<string | null>(null)
+  const [hold, setHold] = useState<AgeHold | null>(null)
   const [inviteMessage, setInviteMessage] = useState<string | null>(null)
   // "I teach" leads to the application to teach after sign-up (lvn-backend ADR-0073).
   const [teaches, setTeaches] = useState(false)
@@ -77,6 +80,8 @@ export function SignUpForm() {
       // Creating an account still opens the account page. Signing in, with nowhere else to go, opens Home.
       if (payload.session) return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'))
       // Too young for an account: nothing was created; this device keeps the form closed for a day.
+      const ageHold = ageHoldFromProblems(payload.userErrors)
+      if (ageHold) return setHold(ageHold)
       if (payload.userErrors.some((e) => e.code === 'UNDER_MINIMUM_AGE')) return markAgeRefused()
       const blocked = payload.userErrors.find((error) => error.code === 'FORBIDDEN')
       const rest = blocked ? payload.userErrors.filter((error) => error !== blocked) : payload.userErrors
@@ -90,6 +95,7 @@ export function SignUpForm() {
     }
   }
 
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} kind={hold.kind} />
   if (refused) return <AgeRefused />
 
   const message = (name: (typeof FIELDS)[number] | 'terms', fallback: string) => {
@@ -106,7 +112,7 @@ export function SignUpForm() {
       </header>
       <InviteOnlyNotice />
       {inviteFromQuery || inviteMessage ? <Alert tone="error">{inviteMessage ?? te('inviteOnly')}</Alert> : null}
-      <ProviderButtons next={next} />
+      <ProviderButtons next={next} onAgeHold={setHold} />
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {general ? <Alert tone="error">{general}</Alert> : null}
         <fieldset className="flex flex-col gap-2">

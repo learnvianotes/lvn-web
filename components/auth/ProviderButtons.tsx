@@ -2,10 +2,12 @@
 
 import { useQuery } from '@apollo/client/react'
 import { useTranslations } from 'next-intl'
+import { useEffect } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { SignInOptionsDocument } from '@/graphql/generated/graphql'
 import { oauthAvailable, startOAuth } from '@/lib/auth/oauth'
+import type { AgeHold } from '@/lib/age-hold'
 import { GoogleButton } from './GoogleButton'
 import { useGoogleSignIn } from './useGoogleSignIn'
 
@@ -13,9 +15,12 @@ import { useGoogleSignIn } from './useGoogleSignIn'
  * Google first, then GitHub and LinkedIn — each shown only when both the API (signInOptions) and this deployment's
  * configuration offer it.
  */
-export function ProviderButtons({ next }: { next?: string | null }) {
+export function ProviderButtons({ next, onAgeHold }: { next?: string | null; onAgeHold?: (hold: AgeHold) => void }) {
   const t = useTranslations('auth.providers')
   const google = useGoogleSignIn(next)
+  useEffect(() => {
+    if (google.hold) onAgeHold?.(google.hold)
+  }, [google.hold, onAgeHold])
   const { data } = useQuery(SignInOptionsDocument)
   const options = data?.signInOptions
   const show = { github: !!options?.github && oauthAvailable('GITHUB'), linkedin: !!options?.linkedin && oauthAvailable('LINKEDIN') }

@@ -920,8 +920,7 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
     await page.getByLabel('Password').fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(page).toHaveURL(/\/home$/)
-    await page.goto('/profile')
-    await page.getByRole('link', { name: /AI providers/ }).click()
+    await page.goto('/admin/ai')
     await expect(page.getByRole('heading', { name: 'AI providers' })).toBeVisible()
 
     await page.getByRole('button', { name: /^Custom \(OpenAI-compatible/ }).click()

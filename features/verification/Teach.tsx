@@ -108,7 +108,7 @@ function ApplyForm({ onSent }: { onSent: () => void }) {
           if (problem) throw new UploadError(problem)
           onSent()
         } catch (err) {
-          setError(err instanceof UploadError && !/^(network|storage answered)/.test(err.message) ? err.message : CombinedGraphQLErrors.is(err) ? (err.errors[0]?.message ?? t('failed')) : t('failed'))
+          setError(err instanceof UploadError ? err.message : CombinedGraphQLErrors.is(err) ? (err.errors[0]?.message ?? t('failed')) : t('failed'))
         } finally {
           setBusy(false)
         }

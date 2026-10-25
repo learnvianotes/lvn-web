@@ -1,4 +1,6 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
+# ADR-0099 (college ID cards, lvn-backend#18, contracts 0.64.0) is included here so this app typechecks before that branch is on main. `pnpm graphql:sync` replaces this file from lvn-backend.
+# lvn-backend#27 account admin is included the same way: AccountStatus, adminUsers, adminUpdateUser, adminSetAccountStanding, adminDeleteUser, and UserError.supportEmail.
 input AcceptTermsInput {
   """Query.termsVersion, as shown to the person"""
   version: String!
@@ -29,6 +31,14 @@ type AccountStanding {
 type AccountWarning {
   at: DateTime!
   reason: String!
+}
+
+"""Whether a person can sign in. AGE_BLOCKED is cleared by correcting the date of birth, not by setting it here."""
+enum AccountStatus {
+  ACTIVE
+  AGE_BLOCKED
+  BLOCKED
+  SUSPENDED
 }
 
 """An achievement: the highest tier reached of one kind (and subject)"""
@@ -289,6 +299,18 @@ type AdminModerationMetrics {
   openReports: Int!
 }
 
+"""One error code in the window, with who it affected."""
+type AdminErrorGroup {
+  code: String!
+  count: Int!
+  firstSeen: DateTime!
+  lastSeen: DateTime!
+  sampleMessage: String!
+
+  """At most 100 distinct account ids."""
+  userIds: [UUID!]!
+}
+
 """
 A plan's price is what it costs. Saving a price charges nobody.
 priceMinor is minor units (49900 INR with interval MONTH is ₹499 a month).
@@ -409,6 +431,95 @@ type AiAnswer {
 
   """Markdown citing sources as [n]"""
   text: String!
+}
+
+"""
+DAU, WAU and MAU are distinct accounts in the last 1, 7 and 30 days before `to`.
+"""
+type AdminUsageSummary {
+  dau: Int!
+  from: DateTime!
+  mau: Int!
+  to: DateTime!
+  topEvents: [UsageCount!]!
+  topFeatures: [UsageCount!]!
+  wau: Int!
+}
+
+"""
+Display name, email and role for the errors dashboard. Platform admins only.
+"""
+type AdminUserLookup {
+  displayName: String!
+  email: String!
+  globalRole: GlobalRole!
+  id: UUID!
+}
+
+"""A person a platform admin can correct, block, suspend or delete."""
+type AdminManagedUser {
+  accountStatus: AccountStatus!
+  createdAt: DateTime!
+
+  """YYYY-MM-DD. Null when the account has no date of birth on file."""
+  dateOfBirth: String
+  displayName: String!
+  email: String!
+  globalRole: GlobalRole!
+  handle: String!
+  id: UUID!
+
+  """Why the account is age-blocked, blocked or suspended. Null when active."""
+  statusReason: String
+}
+
+"""Accounts for one status tab."""
+type AdminUserList {
+  total: Int!
+  users: [AdminManagedUser!]!
+}
+
+type AdminUserPayload {
+  user: AdminManagedUser
+  userErrors: [UserError!]!
+}
+
+"""Which accounts adminUsers returns. BLOCKED_OR_SUSPENDED is both blocked and suspended accounts."""
+enum AdminUserStatusFilter {
+  ACTIVE
+  AGE_BLOCKED
+  BLOCKED_OR_SUSPENDED
+}
+
+"""Permanently deletes an account. confirm is the exact word DELETE."""
+input AdminDeleteUserInput {
+  confirm: String!
+  reason: String
+  userId: UUID!
+}
+
+"""
+ACTIVE lifts a block. until is required when status is SUSPENDED.
+AGE_BLOCKED is refused; the fix is to correct the date of birth.
+"""
+input AdminSetAccountStandingInput {
+  reason: String!
+  status: AccountStatus!
+  until: DateTime
+  userId: UUID!
+}
+
+"""
+Edits the name, email or date of birth and re-runs the age gate.
+A date of birth that passes clears AGE_BLOCKED. reason is required on every edit.
+"""
+input AdminUpdateUserInput {
+  """YYYY-MM-DD. The age gate runs again."""
+  dateOfBirth: String
+  displayName: String
+  email: String
+  reason: String!
+  userId: UUID!
 }
 
 """
@@ -1296,6 +1407,24 @@ enum ClassroomRole {
   TEACHER
 }
 
+input ClientErrorInput {
+  appVersion: String
+  code: String!
+  message: String!
+  occurredAt: DateTime
+  platform: ClientPlatform!
+  release: String
+  route: String
+}
+
+"""
+Where the client recorded the event. Backend failures are stored by the server and are not sent here.
+"""
+enum ClientPlatform {
+  MOBILE
+  WEB
+}
+
 type Comment {
   """Null when removed"""
   author: User
@@ -1702,6 +1831,13 @@ input CreateNoteInput {
   topicIds: [UUID!]
 }
 
+input CreateStudentIdUploadIntentInput {
+  """Shown to people; never part of the storage key"""
+  fileName: String!
+  mimeType: String!
+  sizeBytes: Int!
+}
+
 input CreateUploadIntentInput {
   """Shown to people; never part of the storage key"""
   fileName: String!
@@ -1893,6 +2029,7 @@ enum EmailKind {
 
 """Fixed error vocabulary (§6.2)"""
 enum ErrorCode {
+  AGE_RESTRICTED
   CONFLICT
   FORBIDDEN
   INTERNAL
@@ -2090,7 +2227,13 @@ type ForkCredit {
   title: String
 }
 
+type FunnelStep {
+  name: String!
+  users: Int!
+}
+
 enum GlobalRole {
+  MANAGER
   PLATFORM_ADMIN
   STUDENT
   TEACHER
@@ -2330,6 +2473,31 @@ enum HighlightKind {
   TEXT
 }
 
+"""
+match, mismatch or unreadable. A mismatch is never an automatic rejection.
+"""
+type IdCardCheck {
+  checkedAt: DateTime!
+  confidence: Float
+  extracted: IdCardFields!
+  reason: String
+  verdict: IdCardVerdict!
+}
+
+"""Fields read from the document. `idNumber` is null for the student."""
+type IdCardFields {
+  idNumber: String
+  institution: String
+  name: String
+  validUntil: String
+}
+
+enum IdCardVerdict {
+  MATCH
+  MISMATCH
+  UNREADABLE
+}
+
 input IdInput {
   id: UUID!
 }
@@ -2350,6 +2518,11 @@ type ImportSkip {
 type ImportedNote {
   id: UUID!
   title: String!
+}
+
+input IngestAnalyticsInput {
+  errors: [ClientErrorInput!]
+  events: [UsageEventInput!]
 }
 
 type Institution {
@@ -2774,6 +2947,19 @@ type Mutation {
 
   """Adds a task to this week (at most three)"""
   addWeeklyTask(input: AddWeeklyTaskInput!): WeeklyTaskPayload!
+
+  """Platform admins. Permanently deletes the account. confirm must be the exact word DELETE."""
+  adminDeleteUser(input: AdminDeleteUserInput!): OkPayload!
+
+  """
+  Platform admins. ACTIVE lifts a block. SUSPENDED requires until. AGE_BLOCKED is refused; correct the date of birth instead.
+  """
+  adminSetAccountStanding(input: AdminSetAccountStandingInput!): AdminUserPayload!
+
+  """
+  Platform admins. Edits the name, email or date of birth and re-runs the age gate. A passing date of birth clears AGE_BLOCKED.
+  """
+  adminUpdateUser(input: AdminUpdateUserInput!): AdminUserPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
 
   """Until the deadline or the submission; may change an answer"""
@@ -2868,6 +3054,14 @@ type Mutation {
   createGroup(input: CreateGroupInput!): GroupPayload!
   createGroupPost(input: CreateGroupPostInput!): GroupPostPayload!
   createNote(input: CreateNoteInput!): NotePayload!
+
+  """
+  A pre-signed PUT for one college ID card: JPEG, PNG, WebP or PDF, at most 5 MB.
+  PUT the bytes, then submitStudentIdVerification. Do not call completeUpload.
+  UNAVAILABLE when college ID checks are off. RATE_LIMITED when one request is already
+  waiting, or three were sent in seven days. VALIDATION for the size or the type (ADR-0099).
+  """
+  createStudentIdUploadIntent(input: CreateStudentIdUploadIntentInput!): UploadIntentPayload!
   createUploadIntent(input: CreateUploadIntentInput!): UploadIntentPayload!
 
   """Platform admins"""
@@ -2952,6 +3146,11 @@ type Mutation {
 
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
+
+  """
+  Signed in. At most 40 events, 30 batches a minute. Unknown event names are refused.
+  """
+  ingestAnalytics(input: IngestAnalyticsInput!): OkPayload!
 
   """Admins and the Owner invite a teacher; the invite lasts 14 days"""
   inviteMentor(input: InviteMentorInput!): GroupPayload!
@@ -3086,7 +3285,17 @@ type Mutation {
   reviewGroupJoinRequest(input: ReviewGroupJoinRequestInput!): GroupPayload!
 
   """
-  Teachers: requests addressed to them. Platform admins: all, including documents.
+  Platform admins: approve or reject a domain, including one nobody has asked for yet.
+  """
+  reviewInstitutionDomain(input: DecideDomainReviewInput!): OkPayload!
+
+  """
+  A reviewer of this request. Approval sets the account verified with method DOCUMENTS. The card is kept until the retention window. A reason is optional.
+  """
+  reviewStudentIdVerification(input: ReviewStudentIdVerificationInput!): StudentIdVerificationPayload!
+
+  """
+  Teachers: student requests in their scope. Managers: student requests. Platform admins: all, including teacher applications.
   """
   reviewVerificationRequest(input: ReviewVerificationRequestInput!): VerificationRequestPayload!
 
@@ -3117,6 +3326,9 @@ type Mutation {
   """The note's owner only"""
   setAiInsightHidden(hidden: Boolean!, id: UUID!): OkPayload!
 
+  """Signed in. Stops or resumes usage analytics for this account."""
+  setAnalyticsOptOut(optOut: Boolean!): OkPayload!
+
   """Teachers turn their class's goal on or off"""
   setClassGoal(input: SetClassGoalInput!): OkPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
@@ -3125,7 +3337,7 @@ type Mutation {
   setContestBands(input: SetContestBandsInput!): ContestSettingsPayload!
 
   """
-  Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
+  Platform admins: TEACHER and MANAGER are granted here, not by an email address (§5, ADR-0017). Every change is audited.
   """
   setGlobalRole(input: SetGlobalRoleInput!): OkPayload!
 
@@ -3161,6 +3373,11 @@ type Mutation {
   Shows, or stops showing, the viewer's name and counted days on their classes' Rhythm ring
   """
   setRhythmSharing(input: SetRhythmSharingInput!): OkPayload!
+
+  """
+  Platform admins: whether students may send a college ID card. An app setting, not an environment variable (ADR-0099).
+  """
+  setStudentIdVerificationEnabled(input: SetStudentIdVerificationEnabledInput!): StudentIdVerificationSettingsPayload!
 
   """
   Share with one person, or change their role; a PRIVATE note becomes SHARED
@@ -3209,6 +3426,11 @@ type Mutation {
   Sends a resource to moderators (verified adults; 10 a day, 20 waiting at most)
   """
   submitResource(input: SubmitResourceInput!): ResourcePayload!
+
+  """
+  Records the card uploaded with createStudentIdUploadIntent. The bytes must already have been PUT; this checks them. Do not call completeUpload (ADR-0099).
+  """
+  submitStudentIdVerification(input: SubmitStudentIdVerificationInput!): StudentIdVerificationPayload!
 
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
@@ -3267,6 +3489,9 @@ type Mutation {
   """Returns the person who was asked"""
   withdrawConnectionRequest(input: ConnectionRequestInput!): PersonPayload!
   withdrawGroupJoinRequest(input: JoinRequestIdInput!): GroupPayload!
+
+  """The student takes back a college ID request that is still waiting (ADR-0099)"""
+  withdrawStudentIdVerification(requestId: UUID!): OkPayload!
   withdrawVerificationRequest(requestId: UUID!): OkPayload!
 }
 
@@ -3985,6 +4210,16 @@ type Query {
   adminContests: [AdminContest!]!
 
   """
+  Platform admins. Errors since `since`, or the last 90 days. Grouped by code.
+  """
+  adminErrors(since: DateTime): [AdminErrorGroup!]!
+
+  """
+  Platform admins. Ordered steps. A person counts at a step when each earlier step happened first.
+  """
+  adminFunnel(since: DateTime, steps: [String!]!): [FunnelStep!]!
+
+  """
   Platform admins. from and to bound AI usage only; omit them for the last 30 days. At most 366 days. Cached about a minute.
   """
   adminMetrics(from: DateTime, to: DateTime): AdminMetrics!
@@ -3994,6 +4229,19 @@ type Query {
 
   """Platform admins: configuration, grouped by category"""
   adminSettings: [AdminSetting!]!
+
+  """
+  Platform admins. Usage between `from` and `to`. Omit them for the last 30 days.
+  """
+  adminUsage(from: DateTime, to: DateTime): AdminUsageSummary!
+
+  """Platform admins. One account's usage, newest first."""
+  adminUserActivity(first: Int, userId: UUID!): [UserActivityEvent!]!
+
+  """
+  Platform admins. Accounts in one status filter. BLOCKED_OR_SUSPENDED returns both. search matches the name, email or handle.
+  """
+  adminUsers(first: Int, search: String, status: AdminUserStatusFilter!): AdminUserList!
   aiAnswer(id: UUID!): AiAnswer
 
   """
@@ -4081,6 +4329,11 @@ type Query {
   group(id: UUID!): Group
 
   """
+  Platform admins: the same queue, or every domain of one status. Omit status for domains still waiting.
+  """
+  institutionDomains(first: Int, status: DomainReviewStatus): [DomainReview!]!
+
+  """
   Signed in only: days before `before` (YYYY-MM-DD), `days` at a time (at most 60)
   """
   learningHistory(before: String, days: Int): LearningHistory!
@@ -4142,6 +4395,11 @@ type Query {
   The viewer's account standing: a suspension and recent warnings (ADR-0053)
   """
   myStanding: AccountStanding!
+
+  """
+  Signed in: the viewer's college ID request, when they have sent one (ADR-0099)
+  """
+  myStudentIdVerification: StudentIdVerificationRequest
   myTags: [Tag!]!
 
   """Signed in: the viewer's latest application to teach (ADR-0073)"""
@@ -4230,6 +4488,21 @@ type Query {
   """Notes other people shared with the viewer, most recently changed first"""
   sharedWithMe(after: String, first: Int): NoteConnection!
   signInOptions: SignInOptions!
+
+  """
+  A reviewer of this card: a 5-minute link. Every view is written to the audit log. The student is refused.
+  """
+  studentIdCardUrl(requestId: UUID!): SignedUrl!
+
+  """
+  ADR-0099: whether students may ask an admin to verify them with a college ID card. Public. Off, clients hide the option and the mutations answer UNAVAILABLE.
+  """
+  studentIdVerificationEnabled: Boolean!
+
+  """
+  Platform admins and managers: every pending college-ID request. A teacher: students of their institution. Oldest first. `after` is the last id seen.
+  """
+  studentIdVerificationQueue(after: UUID, first: Int): [StudentIdVerificationRequest!]!
   subject(slug: String!): Subject
   subjects: [Subject!]!
 
@@ -4270,12 +4543,17 @@ type Query {
   userByHandle(handle: String!): User
 
   """
-  Platform admins only: a 15-minute link to one document; the view is written to the audit log
+  Platform admins. Resolves account ids for the errors dashboard. Unknown and deleted accounts are omitted.
+  """
+  usersByIds(ids: [UUID!]!): [AdminUserLookup!]!
+
+  """
+  A reviewer of this request: a 15-minute link to one document. The view is written to the audit log.
   """
   verificationDocumentUrl(fileId: UUID!, requestId: UUID!): SignedUrl!
 
   """
-  Teachers: pending requests addressed to them. Platform admins: every pending request. Oldest first; `after` is the last id seen.
+  Teachers: student requests addressed to them, and students of their institution. Managers: every student request. Platform admins: every pending request. Oldest first; `after` is the last id seen.
   """
   verificationRequestsToReview(after: UUID, first: Int): [VerificationRequest!]!
 
@@ -4565,7 +4843,7 @@ input RequestAccountDeletionInput {
 }
 
 """
-fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by platform admins only, deleted 30 days after the decision
+fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by reviewers of this request, deleted 30 days after the decision
 """
 input RequestDocumentVerificationInput {
   fileIds: [UUID!]!
@@ -4851,6 +5129,14 @@ enum ReviewState {
   NEW
   RELEARNING
   REVIEW
+}
+
+input ReviewStudentIdVerificationInput {
+  approve: Boolean!
+
+  """Optional; the student reads it"""
+  reason: String
+  requestId: UUID!
 }
 
 input ReviewVerificationRequestInput {
@@ -5232,6 +5518,10 @@ input SetRhythmSharingInput {
   share: Boolean!
 }
 
+input SetStudentIdVerificationEnabledInput {
+  enabled: Boolean!
+}
+
 input ShareNoteInput {
   noteId: UUID!
 
@@ -5310,6 +5600,79 @@ input StartFocusSessionInput {
 }
 
 """
+A college ID card sent to an admin (ADR-0099). The card itself is opened with studentIdCardUrl.
+"""
+type StudentIdVerification {
+  createdAt: DateTime!
+  decidedAt: DateTime
+  id: UUID!
+
+  """Why it was refused, when a reason was given"""
+  reason: String
+  requester: User!
+  status: StudentIdVerificationStatus!
+}
+
+"""
+A college-ID request. `card` is set for a reviewer and null for the student. It is null once the card has been deleted.
+"""
+type StudentIdVerificationRequest {
+  """
+  The automated reading, once it has run. The ID number is hidden from the student.
+  """
+  aiCheck: IdCardCheck
+  card: VerificationDocument
+  createdAt: DateTime!
+  decidedAt: DateTime
+  id: UUID!
+
+  """Why it was refused, when a reason was given"""
+  reason: String
+  requester: User!
+  status: VerificationRequestStatus!
+}
+
+type StudentIdVerificationPayload {
+  request: StudentIdVerificationRequest
+  userErrors: [UserError!]!
+}
+
+"""
+Platform admins. `updatedAt` is null until someone changes the college-ID switch. The AI switches default off.
+"""
+type StudentIdVerificationSettings {
+  """student_id_ai_check. Off until an admin turns it on."""
+  aiCheckEnabled: Boolean!
+
+  """
+  student_id_ai_auto_approve. Off until an admin turns it on. Never rejects.
+  """
+  autoApproveOnHighConfidence: Boolean!
+
+  """student_id_ai_confidence_threshold, 50–100. Default 90."""
+  confidenceThreshold: Int!
+  enabled: Boolean!
+
+  """
+  student_id_image_retention_days. Default 30. A withdrawn card is deleted at once.
+  """
+  imageRetentionDays: Int!
+  updatedAt: DateTime
+}
+
+type StudentIdVerificationSettingsPayload {
+  settings: StudentIdVerificationSettings
+  userErrors: [UserError!]!
+}
+
+enum StudentIdVerificationStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  WITHDRAWN
+}
+
+"""
 Department and year are shown to others only if showOnProfile; interests stay private
 """
 type StudentProfile {
@@ -5372,6 +5735,11 @@ input SubmitResourceInput {
   topicIds: [UUID!]!
   type: ResourceType!
   url: String!
+}
+
+input SubmitStudentIdVerificationInput {
+  """fileId from createStudentIdUploadIntent, after the bytes were PUT"""
+  fileId: UUID!
 }
 
 input SyncOpInput {
@@ -5789,12 +6157,37 @@ type UploadIntentPayload {
   userErrors: [UserError!]!
 }
 
+type UsageCount {
+  count: Int!
+  name: String!
+}
+
+input UsageEventInput {
+  appVersion: String
+
+  """One of: page_view, note_open, note_upload, search, download, sign_in."""
+  name: String!
+  occurredAt: DateTime
+  platform: ClientPlatform!
+
+  """
+  A small object. A string `feature` is counted in top features. At most 1024 characters.
+  """
+  props: JSON
+  sessionId: String
+}
+
 """A person, owned by the users subgraph"""
 type User {
   """
   Achievements, the highest tier of each: the viewer's own, or an adult's who shows them; null otherwise
   """
   achievements: [Achievement!]
+
+  """
+  Viewer only. When true, usage analytics are not stored for this account.
+  """
+  analyticsOptOut: Boolean
 
   """Points and level, under the same rule as achievements"""
   contribution: Contribution
@@ -5878,6 +6271,14 @@ type User {
   verified: Boolean!
 }
 
+type UserActivityEvent {
+  appVersion: String
+  name: String!
+  occurredAt: DateTime!
+  platform: ClientPlatform!
+  props: JSON
+}
+
 """
 An expected failure of a mutation; `field` is the dotted input path, e.g. ["input", "email"]
 """
@@ -5885,6 +6286,9 @@ type UserError {
   code: ErrorCode!
   field: [String!]
   message: String!
+
+  """Set on AGE_RESTRICTED and on a blocked sign-in."""
+  supportEmail: String
 }
 
 type VerificationDocument {
@@ -5909,14 +6313,23 @@ enum VerificationPurpose {
 }
 
 """
-Shown to the requester, the addressed teacher and platform admins. Documents are listed for platform admins only.
+Shown to the requester, the addressed teacher, a teacher at the same institution, a manager and platform admins. Documents are listed for those reviewers.
 """
 type VerificationRequest {
+  """
+  The automated reading, once it has run. The ID number is hidden from the student.
+  """
+  aiCheck: IdCardCheck
+
+  """
+  True when the proof is one college ID card (ADR-0099). Kept for the retention window after a decision, and deleted at once when withdrawn.
+  """
+  collegeIdCard: Boolean!
   createdAt: DateTime!
   decidedAt: DateTime
 
   """
-  Platform admins only; open one with verificationDocumentUrl (every view is audited)
+  Reviewers who may decide this request. Open one with verificationDocumentUrl (every view is audited).
   """
   documents: [VerificationDocument!]!
   id: UUID!

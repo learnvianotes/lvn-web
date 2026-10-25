@@ -14,9 +14,7 @@ const reviewed = (v: Record<string, unknown>) => ({ reviewCard: { __typename: 'R
 
 test('a session: front, Space for the back, keys to grade; Again comes back at the end', async ({ page }) => {
   const calls = await mockApi(page, { ReviewQueue: () => ({ reviewQueue: queue }), ReviewCard: reviewed }, viewerExtras)
-  await page.goto('/profile')
-  await page.getByRole('link', { name: /Review flashcards/ }).click()
-  await expect(page).toHaveURL(/\/review$/)
+  await page.goto('/review')
   const session = page.getByRole('region', { name: 'Review session' })
   await expect(session.getByText('Front 1')).toBeVisible()
   await expect(session.getByText('1 of 2')).toBeVisible()

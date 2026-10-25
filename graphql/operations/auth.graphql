@@ -33,6 +33,7 @@ fragment Problems on UserError {
   field
   message
   code
+  supportEmail
 }
 
 query Viewer {

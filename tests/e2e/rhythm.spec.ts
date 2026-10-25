@@ -31,9 +31,7 @@ const ok = (name: string, userErrors: unknown[] = []) => ({ [name]: { __typename
 
 test('shows today’s ring with what is left, a comeback, the week and the counters', async ({ page }) => {
   await mockApi(page, { Rhythm: () => ({ rhythm: rhythm() }) }, viewerExtras)
-  await page.goto('/profile')
-  await page.getByRole('main').getByRole('link', { name: /^Rhythm/ }).click()
-  await expect(page).toHaveURL(/\/rhythm$/)
+  await page.goto('/rhythm')
   const today = page.getByRole('region', { name: 'Today' })
   await expect(today.getByRole('img', { name: 'Today’s ring: 40% of the way to a counted day' })).toBeVisible()
   await expect(today.getByText('Comeback day: the same 10 minutes put you back on rhythm.')).toBeVisible()

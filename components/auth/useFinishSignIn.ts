@@ -3,6 +3,7 @@
 import { useApolloClient } from '@apollo/client/react'
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
+import { trackUsage } from '@/lib/analytics'
 import { afterSignIn } from '@/lib/auth/destination'
 import { signedIn } from '@/lib/auth/session'
 
@@ -13,6 +14,7 @@ export function useFinishSignIn() {
   return useCallback(
     async (session: { accessToken: string; accessTokenExpiresAt: string; user: { registrationComplete: boolean } }, next?: string | null) => {
       signedIn(session.accessToken, session.accessTokenExpiresAt)
+      trackUsage('sign_in')
       await client.clearStore()
       router.replace(afterSignIn(session.user, next))
     },
