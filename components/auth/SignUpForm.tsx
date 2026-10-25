@@ -95,7 +95,7 @@ export function SignUpForm() {
     }
   }
 
-  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} />
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} kind={hold.kind} />
   if (refused) return <AgeRefused />
 
   const message = (name: (typeof FIELDS)[number] | 'terms', fallback: string) => {

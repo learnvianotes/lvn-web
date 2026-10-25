@@ -304,63 +304,61 @@ test('usage shows active people, top pages and one person’s timeline', async (
   await shot(page, 'admin_usage')
 })
 
-test('an admin filters users, corrects a date of birth, and deletes only after typing the email', async ({ page }, info) => {
+test('an admin filters users, corrects a date of birth, and deletes only after typing DELETE', async ({ page }, info) => {
   test.skip(info.project.name === 'phone', 'the drawer is the same form')
   const asha = {
-    __typename: 'AdminAccount',
+    __typename: 'AdminManagedUser',
     id: '01920000-0000-7000-8000-0000000000a1',
     displayName: 'Asha Rao',
     email: 'asha@example.com',
+    handle: 'asharao',
     dateOfBirth: '2004-05-01',
     globalRole: 'STUDENT',
-    status: 'ACTIVE',
+    accountStatus: 'ACTIVE',
     createdAt: '2026-01-01T00:00:00.000Z',
+    statusReason: null,
   }
   let accounts = [
     {
-      __typename: 'AdminAccount',
+      __typename: 'AdminManagedUser',
       id: raviId,
       displayName: 'Ravi Kumar',
       email: 'ravi@college.edu',
+      handle: 'ravik',
       dateOfBirth: '2014-04-02',
       globalRole: 'STUDENT',
-      status: 'AGE_BLOCKED',
+      accountStatus: 'AGE_BLOCKED',
       createdAt: '2026-10-01T00:00:00.000Z',
+      statusReason: 'Date of birth is under the requirement.',
     },
     asha,
   ]
+  const listed = (v: Record<string, unknown>) =>
+    accounts.filter((account) => {
+      if (account.accountStatus !== v.status) return false
+      const term = String(v.search ?? '').trim().toLowerCase()
+      return !term || account.displayName.toLowerCase().includes(term) || account.email.toLowerCase().includes(term)
+    })
   const calls = await mockApi(
     page,
     {
-      AdminAccounts: (v) => ({
-        adminAccounts: accounts.filter((account) => {
-          if (account.status !== v.status) return false
-          const term = String(v.search ?? '').trim().toLowerCase()
-          return !term || account.displayName.toLowerCase().includes(term) || account.email.toLowerCase().includes(term)
-        }),
-      }),
-      AdminAccount: () => ({
-        adminAccount: {
-          ...accounts.find((account) => account.id === raviId),
-          audit: [{ __typename: 'AccountAudit', id: 'audit-1', action: 'Marked age-blocked', reason: 'Date of birth is under the requirement.', at: '2026-10-02T08:00:00.000Z', actorName: 'System' }],
-        },
-      }),
-      UpdateAdminAccount: (v) => {
+      AdminUsers: (v) => ({ adminUsers: { __typename: 'AdminUserList', users: listed(v) } }),
+      AdminUpdateUser: (v) => {
         const input = v.input as { userId: string; displayName: string; email: string; dateOfBirth: string }
-        accounts = accounts.map((account) => (account.id === input.userId ? { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth, status: 'ACTIVE' } : account))
-        const account = accounts.find((row) => row.id === input.userId)
-        return { updateAdminAccount: { __typename: 'AdminAccountPayload', ageCheck: 'UNBLOCKED', account, ...none } }
+        accounts = accounts.map((account) => (account.id === input.userId ? { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth, accountStatus: 'ACTIVE', statusReason: null } : account))
+        const user = accounts.find((row) => row.id === input.userId)
+        return { adminUpdateUser: { __typename: 'AdminUserPayload', user, userErrors: [] } }
       },
-      SetAccountBlocked: (v) => {
-        const input = v.input as { userId: string; blocked: boolean }
-        const status = input.blocked ? 'BLOCKED' : 'ACTIVE'
-        accounts = accounts.map((account) => (account.id === input.userId ? { ...account, status } : account))
-        return { setAccountBlocked: { __typename: 'AdminAccountPayload', account: { id: input.userId, status }, ...none } }
+      AdminSetAccountStanding: (v) => {
+        const input = v.input as { userId: string; status: string; reason: string }
+        accounts = accounts.map((account) => (account.id === input.userId ? { ...account, accountStatus: input.status, statusReason: input.reason } : account))
+        const user = accounts.find((row) => row.id === input.userId)
+        return { adminSetAccountStanding: { __typename: 'AdminUserPayload', user, userErrors: [] } }
       },
-      DeleteAdminAccount: (v) => {
+      AdminDeleteUser: (v) => {
         const input = v.input as { userId: string }
         accounts = accounts.filter((account) => account.id !== input.userId)
-        return { deleteAdminAccount: { __typename: 'OkPayload', ok: true, ...none } }
+        return { adminDeleteUser: { __typename: 'OkPayload', ok: true, ...none } }
       },
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
@@ -368,37 +366,50 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   await page.goto('/admin/users')
   await expect(page.getByRole('heading', { name: 'Users', level: 1 })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Age-blocked' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Suspended' })).toBeVisible()
   await expect(page.getByText('ravi@college.edu')).toBeVisible()
   await expect(page.getByText('asha@example.com')).toHaveCount(0)
+  await page.getByRole('textbox', { name: 'Search' }).fill('nobody')
+  await expect(page.getByText('No accounts in this list.')).toBeVisible()
+  await page.getByRole('textbox', { name: 'Search' }).fill('')
+  await expect(page.getByText('ravi@college.edu')).toBeVisible()
   await page.getByRole('button', { name: 'Open' }).click()
   const drawer = page.getByRole('dialog', { name: 'Ravi Kumar' })
-  await expect(drawer.getByText('Marked age-blocked')).toBeVisible()
   await expect(drawer.getByText('Date of birth is under the requirement.')).toBeVisible()
-  await drawer.getByRole('button', { name: 'Save details' }).click()
-  await expect(drawer.getByRole('alert')).toHaveText('Add a reason first.')
   await drawer.getByLabel('Date of birth').fill('2004-04-02')
-  await drawer.getByPlaceholder('Why you are making this change').first().fill('The date of birth was typed wrong.')
   await drawer.getByRole('button', { name: 'Save details' }).click()
   await expect(drawer.getByText('Age check: unblocked.')).toBeVisible()
-  expect(calls.find((call) => call.op === 'UpdateAdminAccount')?.variables).toMatchObject({
-    input: { userId: raviId, dateOfBirth: '2004-04-02', reason: 'The date of birth was typed wrong.' },
+  expect(calls.find((call) => call.op === 'AdminUpdateUser')?.variables).toMatchObject({
+    input: { userId: raviId, dateOfBirth: '2004-04-02', displayName: 'Ravi Kumar', email: 'ravi@college.edu' },
   })
   await drawer.getByRole('button', { name: 'Block' }).click()
   await expect(drawer.getByRole('alert')).toHaveText('Add a reason first.')
-  await drawer.getByPlaceholder('Why you are making this change').nth(1).fill('Asked to pause the account.')
+  await drawer.getByPlaceholder('Why you are making this change').first().fill('Asked to pause the account.')
   await drawer.getByRole('button', { name: 'Block' }).click()
   await expect(drawer.getByRole('button', { name: 'Unblock' })).toBeVisible()
+  expect(calls.find((call) => call.op === 'AdminSetAccountStanding')?.variables).toMatchObject({
+    input: { userId: raviId, status: 'BLOCKED', reason: 'Asked to pause the account.', until: null },
+  })
+  await drawer.getByRole('button', { name: 'Suspend' }).click()
+  await expect(drawer.getByRole('alert')).toHaveText('Add when the suspension ends.')
+  await drawer.getByLabel('Suspended until').fill('2026-12-01T09:00')
+  await drawer.getByRole('button', { name: 'Suspend' }).click()
+  const suspended = calls.filter((call) => call.op === 'AdminSetAccountStanding').at(-1)?.variables as { input: { status: string; until: string } }
+  expect(suspended.input.status).toBe('SUSPENDED')
+  expect(suspended.input.until).toContain('2026-12-01')
   const remove = drawer.getByRole('button', { name: 'Delete this user' })
   await expect(remove).toBeDisabled()
-  await drawer.getByLabel('Type their email').fill('ravi@college.edu')
-  await drawer.getByPlaceholder('Why you are making this change').nth(2).fill('Duplicate account.')
+  await drawer.getByLabel('Type DELETE').fill('delete')
+  await expect(remove).toBeDisabled()
+  await drawer.getByLabel('Type DELETE').fill('DELETE')
+  await drawer.getByPlaceholder('Why you are making this change').nth(1).fill('Duplicate account.')
   await expect(remove).toBeEnabled()
   await shot(page, 'admin_users')
   await remove.click()
   await expect(drawer).toBeHidden()
   await expect(page.getByText('ravi@college.edu')).toHaveCount(0)
-  expect(calls.find((call) => call.op === 'DeleteAdminAccount')?.variables).toEqual({
-    input: { userId: raviId, confirmEmail: 'ravi@college.edu', reason: 'Duplicate account.' },
+  expect(calls.find((call) => call.op === 'AdminDeleteUser')?.variables).toEqual({
+    input: { userId: raviId, confirm: 'DELETE', reason: 'Duplicate account.' },
   })
 })
 

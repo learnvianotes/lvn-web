@@ -56,7 +56,7 @@ export function SignInForm() {
     }
   })
 
-  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} />
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} kind={hold.kind} />
 
   return (
     <div className="flex flex-col gap-6">

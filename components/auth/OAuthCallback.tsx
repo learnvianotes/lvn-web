@@ -43,7 +43,7 @@ export function OAuthCallback() {
       .catch(() => setFailed(t('failed')))
   }, [params, exchange, finish, t])
 
-  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} />
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} kind={hold.kind} />
   if (!failed) return <p role="status" className="text-sm text-muted">{t('working')}</p>
   return (
     <div className="flex flex-col gap-4">

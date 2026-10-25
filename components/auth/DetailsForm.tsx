@@ -109,7 +109,7 @@ export function DetailsForm() {
 
   const message = (n: (typeof FIELDS)[number], fallback: string) => (errors[n] ? (errors[n]!.type === 'server' ? errors[n]!.message : fallback) : undefined)
 
-  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} />
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} kind={hold.kind} />
 
   if (refused) {
     return (

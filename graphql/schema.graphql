@@ -1,5 +1,6 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
 # ADR-0099 (college ID cards, lvn-backend#18, contracts 0.64.0) is included here so this app typechecks before that branch is on main. `pnpm graphql:sync` replaces this file from lvn-backend.
+# lvn-backend#27 account admin is included the same way: AccountStatus, adminUsers, adminUpdateUser, adminSetAccountStanding, adminDeleteUser, and UserError.supportEmail.
 input AcceptTermsInput {
   """Query.termsVersion, as shown to the person"""
   version: String!
@@ -30,6 +31,14 @@ type AccountStanding {
 type AccountWarning {
   at: DateTime!
   reason: String!
+}
+
+"""Whether a person can sign in. AGE_BLOCKED is cleared by correcting the date of birth, not by setting it here."""
+enum AccountStatus {
+  ACTIVE
+  AGE_BLOCKED
+  BLOCKED
+  SUSPENDED
 }
 
 """An achievement: the highest tier reached of one kind (and subject)"""
@@ -445,6 +454,71 @@ type AdminUserLookup {
   email: String!
   globalRole: GlobalRole!
   id: UUID!
+}
+
+"""A person a platform admin can correct, block, suspend or delete."""
+type AdminManagedUser {
+  accountStatus: AccountStatus!
+  createdAt: DateTime!
+
+  """YYYY-MM-DD. Null when the account has no date of birth on file."""
+  dateOfBirth: String
+  displayName: String!
+  email: String!
+  globalRole: GlobalRole!
+  handle: String!
+  id: UUID!
+
+  """Why the account is age-blocked, blocked or suspended. Null when active."""
+  statusReason: String
+}
+
+"""Accounts for one status tab."""
+type AdminUserList {
+  users: [AdminManagedUser!]!
+}
+
+type AdminUserPayload {
+  user: AdminManagedUser
+  userErrors: [UserError!]!
+}
+
+"""One account status. adminUsers takes exactly one."""
+enum AdminUserStatusFilter {
+  ACTIVE
+  AGE_BLOCKED
+  BLOCKED
+  SUSPENDED
+}
+
+"""Permanently deletes an account. confirm is the exact word DELETE."""
+input AdminDeleteUserInput {
+  confirm: String!
+  reason: String
+  userId: UUID!
+}
+
+"""
+ACTIVE lifts a block. until is required when status is SUSPENDED.
+AGE_BLOCKED is refused; the fix is to correct the date of birth.
+"""
+input AdminSetAccountStandingInput {
+  reason: String!
+  status: AccountStatus!
+  until: DateTime
+  userId: UUID!
+}
+
+"""
+Edits the name, email or date of birth and re-runs the age gate.
+A date of birth that passes clears AGE_BLOCKED.
+"""
+input AdminUpdateUserInput {
+  """YYYY-MM-DD"""
+  dateOfBirth: String
+  displayName: String
+  email: String
+  userId: UUID!
 }
 
 """
@@ -1954,6 +2028,7 @@ enum EmailKind {
 
 """Fixed error vocabulary (§6.2)"""
 enum ErrorCode {
+  AGE_RESTRICTED
   CONFLICT
   FORBIDDEN
   INTERNAL
@@ -2871,6 +2946,19 @@ type Mutation {
 
   """Adds a task to this week (at most three)"""
   addWeeklyTask(input: AddWeeklyTaskInput!): WeeklyTaskPayload!
+
+  """Platform admins. Permanently deletes the account. confirm must be the exact word DELETE."""
+  adminDeleteUser(input: AdminDeleteUserInput!): OkPayload!
+
+  """
+  Platform admins. ACTIVE lifts a block. SUSPENDED requires until. AGE_BLOCKED is refused; correct the date of birth instead.
+  """
+  adminSetAccountStanding(input: AdminSetAccountStandingInput!): AdminUserPayload!
+
+  """
+  Platform admins. Edits the name, email or date of birth and re-runs the age gate. A passing date of birth clears AGE_BLOCKED.
+  """
+  adminUpdateUser(input: AdminUpdateUserInput!): AdminUserPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
 
   """Until the deadline or the submission; may change an answer"""
@@ -4148,6 +4236,11 @@ type Query {
 
   """Platform admins. One account's usage, newest first."""
   adminUserActivity(first: Int, userId: UUID!): [UserActivityEvent!]!
+
+  """
+  Platform admins. Accounts in one status. search matches the name, email or handle.
+  """
+  adminUsers(first: Int, search: String, status: AdminUserStatusFilter!): AdminUserList!
   aiAnswer(id: UUID!): AiAnswer
 
   """
@@ -6192,6 +6285,9 @@ type UserError {
   code: ErrorCode!
   field: [String!]
   message: String!
+
+  """Set on AGE_RESTRICTED and on a blocked sign-in."""
+  supportEmail: String
 }
 
 type VerificationDocument {

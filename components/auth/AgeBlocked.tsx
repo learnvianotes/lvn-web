@@ -6,10 +6,10 @@ import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 
 /**
- * Shown when sign-up returns AGE_RESTRICTED, or when an AGE_BLOCKED account signs in.
+ * Shown when sign-up or sign-in returns AGE_RESTRICTED, or when a blocked sign-in carries a support address.
  * The person can write to the admin and copy the address. It is not the day-long sign-up block.
  */
-export function AgeBlocked({ supportEmail }: { supportEmail: string }) {
+export function AgeBlocked({ supportEmail, kind = 'age' }: { supportEmail: string; kind?: 'age' | 'blocked' }) {
   const t = useTranslations('auth.age')
   const [copied, setCopied] = useState(false)
   const copy = async () => {
@@ -25,10 +25,10 @@ export function AgeBlocked({ supportEmail }: { supportEmail: string }) {
     <section role="status" aria-labelledby="age-blocked" className="flex flex-col gap-4">
       <h1 id="age-blocked" className="flex items-center gap-2 text-2xl font-bold tracking-tight">
         <Info className="size-6 shrink-0 text-accent" aria-hidden />
-        {t('blockedTitle')}
+        {kind === 'blocked' ? t('blockedAccountTitle') : t('blockedTitle')}
       </h1>
-      <p className="text-sm">{t('blockedLead')}</p>
-      <p className="text-sm text-muted">{supportEmail ? t('blockedWrong', { email: supportEmail }) : t('blockedNoEmail')}</p>
+      <p className="text-sm">{kind === 'blocked' ? t('blockedAccountLead') : t('blockedLead')}</p>
+      <p className="text-sm text-muted">{supportEmail ? t(kind === 'blocked' ? 'blockedContact' : 'blockedWrong', { email: supportEmail }) : t('blockedNoEmail')}</p>
       {supportEmail ? (
         <div className="flex flex-wrap items-center gap-2">
           <a href={`mailto:${supportEmail}`} className="font-medium text-accent hover:underline">

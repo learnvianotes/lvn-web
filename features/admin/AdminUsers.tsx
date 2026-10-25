@@ -1,40 +1,39 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { canSeeSection } from '@/features/admin/AdminNav'
 import { useViewerRole } from '@/features/admin/useViewerRole'
 import {
-  deleteAdminAccount,
+  deleteAdminUser,
   isUnknownFieldError,
-  loadAdminAccount,
-  loadAdminAccounts,
+  loadAdminUsers,
   PlatformError,
-  setAccountBlocked,
-  updateAdminAccount,
-  type AccountStanding,
-  type AdminAccount,
-  type AdminAccountDetail,
-  type AgeRecheck,
+  setAccountStanding,
+  updateAdminUser,
+  type AccountStatus,
+  type AdminManagedUser,
+  type AgeOutcome,
 } from '@/lib/platform-api'
 
-const FILTERS: AccountStanding[] = ['AGE_BLOCKED', 'BLOCKED', 'ACTIVE']
+const FILTERS: AccountStatus[] = ['AGE_BLOCKED', 'BLOCKED', 'SUSPENDED', 'ACTIVE']
+const DELETE_WORD = 'DELETE'
 
-/** Platform admins: search accounts, correct details, block, unblock, or delete, each with a reason. */
+/** Platform admins: search accounts, correct a date of birth, block, suspend, unblock, or delete. */
 export function AdminUsers() {
   const t = useTranslations('adminUsers')
   const { role, ready } = useViewerRole()
-  const [status, setStatus] = useState<AccountStanding>('AGE_BLOCKED')
+  const [status, setStatus] = useState<AccountStatus>('AGE_BLOCKED')
   const [search, setSearch] = useState('')
-  const [rows, setRows] = useState<AdminAccount[] | null>(null)
+  const [rows, setRows] = useState<AdminManagedUser[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [openUser, setOpenUser] = useState<AdminManagedUser | null>(null)
   const load = useCallback(async () => {
     try {
-      setRows(await loadAdminAccounts({ status, search }))
+      setRows(await loadAdminUsers({ status, search }))
       setError(null)
     } catch (e) {
       setRows([])
@@ -68,80 +67,68 @@ export function AdminUsers() {
       {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       {rows && !rows.length && !error ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-3">
-        {(rows ?? []).map((account) => (
-          <li key={account.id}>
+        {(rows ?? []).map((user) => (
+          <li key={user.id}>
             <article className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">
               <div className="min-w-0">
-                <p className="font-semibold">{account.displayName}</p>
-                <p className="text-sm text-muted">{account.email} · {t(`status.${account.status}`)}</p>
+                <p className="font-semibold">{user.displayName}</p>
+                <p className="text-sm text-muted">{user.email} · {t(`status.${user.accountStatus}`)}</p>
               </div>
-              <Button size="sm" variant="secondary" onClick={() => setOpenId(account.id)}>{t('open')}</Button>
+              <Button size="sm" variant="secondary" onClick={() => setOpenUser(user)}>{t('open')}</Button>
             </article>
           </li>
         ))}
       </ul>
-      <UserDrawer
-        id={openId}
-        onClose={() => setOpenId(null)}
+      <UserDialog
+        user={openUser}
+        onClose={() => setOpenUser(null)}
+        onUser={setOpenUser}
         onChanged={() => void load()}
       />
     </div>
   )
 }
 
-function UserDrawer({ id, onClose, onChanged }: { id: string | null; onClose: () => void; onChanged: () => void }) {
+function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUser | null; onClose: () => void; onUser: (user: AdminManagedUser) => void; onChanged: () => void }) {
   const t = useTranslations('adminUsers')
-  const format = useFormatter()
-  const [account, setAccount] = useState<AdminAccountDetail | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [dob, setDob] = useState('')
-  const [reason, setReason] = useState('')
   const [blockReason, setBlockReason] = useState('')
+  const [until, setUntil] = useState('')
   const [deleteReason, setDeleteReason] = useState('')
-  const [confirmEmail, setConfirmEmail] = useState('')
-  const [recheck, setRecheck] = useState<AgeRecheck | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [confirmText, setConfirmText] = useState('')
+  const [outcome, setOutcome] = useState<AgeOutcome | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   useEffect(() => {
-    if (!id) return
-    let gone = false
-    setAccount(null)
-    setError(null)
-    setRecheck(null)
-    setNotice(null)
-    setReason('')
+    setName(user?.displayName ?? '')
+    setEmail(user?.email ?? '')
+    setDob(user?.dateOfBirth ?? '')
     setBlockReason('')
+    setUntil('')
     setDeleteReason('')
-    setConfirmEmail('')
-    void loadAdminAccount(id)
-      .then((detail) => {
-        if (gone) return
-        setAccount(detail)
-        setName(detail.displayName)
-        setEmail(detail.email)
-        setDob(detail.dateOfBirth ?? '')
-      })
-      .catch((e) => {
-        if (!gone) setError(e instanceof PlatformError ? e.message : t('failed'))
-      })
-    return () => {
-      gone = true
-    }
-  }, [id, t])
+    setConfirmText('')
+    setOutcome(null)
+    setError(null)
+    // Fill the form when a different account is opened. A later save updates these fields itself, so a list refresh must not wipe them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
   const save = async () => {
-    if (!account) return
-    if (!reason.trim()) return setError(t('reasonNeeded'))
+    if (!user) return
     setBusy(true)
     setError(null)
     try {
-      const result = await updateAdminAccount({ userId: account.id, displayName: name.trim(), email: email.trim(), dateOfBirth: dob, reason: reason.trim() })
+      const result = await updateAdminUser({ userId: user.id, displayName: name.trim(), email: email.trim(), dateOfBirth: dob })
       if (result.problem) setError(result.problem)
       else {
-        setRecheck(result.recheck)
-        setNotice(t('saved'))
-        if (result.account) setAccount({ ...account, ...result.account, audit: account.audit })
+        if (result.user) {
+          setName(result.user.displayName)
+          setEmail(result.user.email)
+          setDob(result.user.dateOfBirth ?? '')
+          onUser(result.user)
+        }
+        setOutcome(result.outcome)
         onChanged()
       }
     } catch (e) {
@@ -150,16 +137,22 @@ function UserDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
       setBusy(false)
     }
   }
-  const block = async (blocked: boolean) => {
-    if (!account) return
+  const standing = async (status: 'ACTIVE' | 'BLOCKED' | 'SUSPENDED') => {
+    if (!user) return
     if (!blockReason.trim()) return setError(t('reasonNeeded'))
+    if (status === 'SUSPENDED' && !until) return setError(t('untilNeeded'))
     setBusy(true)
     setError(null)
     try {
-      const result = await setAccountBlocked({ userId: account.id, blocked, reason: blockReason.trim() })
+      const result = await setAccountStanding({
+        userId: user.id,
+        status,
+        reason: blockReason.trim(),
+        until: status === 'SUSPENDED' ? new Date(until).toISOString() : null,
+      })
       if (result.problem) setError(result.problem)
-      else if (result.status) {
-        setAccount({ ...account, status: result.status })
+      else {
+        if (result.user) onUser(result.user)
         onChanged()
       }
     } catch (e) {
@@ -169,12 +162,12 @@ function UserDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
     }
   }
   const remove = async () => {
-    if (!account) return
-    if (confirmEmail.trim() !== account.email || !deleteReason.trim()) return setError(t('reasonNeeded'))
+    if (!user) return
+    if (confirmText !== DELETE_WORD || !deleteReason.trim()) return setError(t('reasonNeeded'))
     setBusy(true)
     setError(null)
     try {
-      const problem = await deleteAdminAccount({ userId: account.id, confirmEmail: confirmEmail.trim(), reason: deleteReason.trim() })
+      const problem = await deleteAdminUser({ userId: user.id, confirm: confirmText, reason: deleteReason.trim() })
       if (problem) setError(problem)
       else {
         onChanged()
@@ -186,14 +179,19 @@ function UserDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
       setBusy(false)
     }
   }
-  const blocked = account?.status === 'BLOCKED' || account?.status === 'AGE_BLOCKED'
+  const held = user?.accountStatus === 'BLOCKED' || user?.accountStatus === 'SUSPENDED'
   return (
-    <Dialog open={id !== null} onClose={onClose} title={account?.displayName ?? t('title')} side>
-      {!account && !error ? <p className="text-sm text-muted">{t('loading')}</p> : null}
+    <Dialog open={user !== null} onClose={onClose} title={user?.displayName ?? t('title')} side>
       {error ? <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      {account ? (
+      {user ? (
         <div className="flex flex-col gap-6">
-          <p className="text-sm text-muted">{t(`status.${account.status}`)} · {account.globalRole}</p>
+          <p className="text-sm text-muted">{t(`status.${user.accountStatus}`)} · {user.globalRole}</p>
+          {user.statusReason ? (
+            <p className="text-sm">
+              <span className="font-medium">{t('statusReason')}. </span>
+              {user.statusReason}
+            </p>
+          ) : null}
           <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void save() }}>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('name')}</span>
@@ -207,47 +205,37 @@ function UserDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
               <span className="font-medium">{t('dob')}</span>
               <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">{t('reason')}</span>
-              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonHint')} />
-            </label>
             <Button type="submit" disabled={busy}>{busy ? t('saving') : t('save')}</Button>
-            {recheck ? <p role="status" className="text-sm font-medium">{recheck === 'unblocked' ? t('unblocked') : t('stillUnderAge')}</p> : null}
-            {notice && !recheck ? <p className="text-sm text-muted">{notice}</p> : null}
+            {outcome ? <p role="status" className="text-sm font-medium">{outcome === 'unblocked' ? t('unblocked') : t('stillUnderAge')}</p> : null}
           </form>
-          <form className="flex flex-col gap-3 border-t border-border pt-4" onSubmit={(e) => { e.preventDefault(); void block(!blocked) }}>
+          <form className="flex flex-col gap-3 border-t border-border pt-4" onSubmit={(e) => e.preventDefault()}>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('reason')}</span>
               <Input value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder={t('reasonHint')} />
             </label>
-            <Button type="submit" variant="secondary" disabled={busy}>{blocked ? t('unblock') : t('block')}</Button>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('until')}</span>
+              <Input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('BLOCKED')}>{t('block')}</Button>
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('SUSPENDED')}>{t('suspend')}</Button>
+              {held ? <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('ACTIVE')}>{t('unblock')}</Button> : null}
+            </div>
           </form>
           <form className="flex flex-col gap-3 rounded-xl border border-red-300 p-3 dark:border-red-900" onSubmit={(e) => { e.preventDefault(); void remove() }}>
             <h3 className="font-semibold text-red-700 dark:text-red-300">{t('delete')}</h3>
             <p className="text-sm text-muted">{t('deleteLead')}</p>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('deleteConfirm')}</span>
-              <Input value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} autoComplete="off" />
+              <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} autoComplete="off" />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('reason')}</span>
               <Input value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} placeholder={t('reasonHint')} />
             </label>
-            <Button type="submit" className="bg-red-600 text-white hover:bg-red-700" disabled={busy || confirmEmail.trim() !== account.email || !deleteReason.trim()}>{t('deleteDo')}</Button>
+            <Button type="submit" className="bg-red-600 text-white hover:bg-red-700" disabled={busy || confirmText !== DELETE_WORD || !deleteReason.trim()}>{t('deleteDo')}</Button>
           </form>
-          <section aria-labelledby="account-audit" className="flex flex-col gap-2">
-            <h3 id="account-audit" className="font-semibold">{t('audit')}</h3>
-            {!account.audit.length ? <p className="text-sm text-muted">{t('noAudit')}</p> : null}
-            <ol className="flex flex-col gap-2">
-              {account.audit.map((entry) => (
-                <li key={entry.id} className="rounded-xl bg-surface px-3 py-2 text-sm">
-                  <p className="font-medium">{entry.action}</p>
-                  <p>{entry.reason}</p>
-                  <p className="text-muted">{entry.actorName ? `${entry.actorName} · ` : ''}{entry.at ? format.dateTime(new Date(entry.at), { dateStyle: 'medium', timeStyle: 'short' }) : ''}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
         </div>
       ) : null}
     </Dialog>

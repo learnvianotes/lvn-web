@@ -33,7 +33,7 @@ const viewer = (over: Record<string, unknown> = {}) => ({
 const session = (user = viewer()) => ({ __typename: 'Session', accessToken: 'header.payload.sig', accessTokenExpiresAt: new Date(Date.now() + 900_000).toISOString(), user })
 const ok = { __typename: 'OkPayload', ok: true, userErrors: [] }
 /** A userError as the API sends it (Apollo matches fragments by __typename). */
-const problem = (field: string[] | null, message: string, code = 'VALIDATION') => ({ __typename: 'UserError', field, message, code })
+const problem = (field: string[] | null, message: string, code = 'VALIDATION', supportEmail: string | null = null) => ({ __typename: 'UserError', field, message, code, supportEmail })
 const fail = (...problems: ReturnType<typeof problem>[]) => ({ __typename: 'OkPayload', ok: false, userErrors: problems })
 
 /**
@@ -159,9 +159,8 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
   })
 
   test('an age-restricted sign-up explains how to reach an admin', async ({ page }) => {
-    const support = 'The account could not be activated. Write to support@learnvianotes.in if the date of birth is wrong.'
     await mockApi(page, {
-      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, support, 'AGE_RESTRICTED')] } }),
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'The account could not be activated.', 'AGE_RESTRICTED', 'support@learnvianotes.in')] } }),
     })
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => undefined)
     await page.goto('/sign-up')
@@ -170,6 +169,7 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await createAccount(page, '1 May 2014')
     await expect(page.getByRole('heading', { level: 1, name: 'This account couldn’t be activated' })).toBeVisible()
     await expect(page.getByText('We couldn’t activate the account because of the age requirement.')).toBeVisible()
+    await expect(page.getByText(/contact admin at/)).toBeVisible()
     await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
     await expect(page.getByRole('main')).not.toContainText('18')
     await page.getByRole('button', { name: 'Copy email' }).click()
@@ -239,13 +239,28 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
 test.describe('sign in', () => {
   test('an age-blocked account sees the same message as a refused sign-up', async ({ page }) => {
     await mockApi(page, {
-      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'This account is age-blocked. Contact support@learnvianotes.in.', 'AGE_BLOCKED')] } }),
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'This account could not be activated.', 'AGE_RESTRICTED', 'support@learnvianotes.in')] } }),
     })
     await page.goto('/sign-in')
     await page.getByLabel('Email').fill('ravi@college.edu')
     await page.getByLabel('Password').fill('a long enough passphrase')
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'This account couldn’t be activated' })).toBeVisible()
+    await expect(page.getByText(/contact admin at/)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+    await expect(page.getByLabel('Password')).toHaveCount(0)
+  })
+
+  test('a blocked sign-in names the admin to contact', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'This account is blocked.', 'FORBIDDEN', 'support@learnvianotes.in')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByLabel('Email').fill('ravi@college.edu')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'This account is blocked' })).toBeVisible()
+    await expect(page.getByText(/contact admin at/)).toBeVisible()
     await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
     await expect(page.getByLabel('Password')).toHaveCount(0)
   })
