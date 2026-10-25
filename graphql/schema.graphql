@@ -290,6 +290,18 @@ type AdminModerationMetrics {
   openReports: Int!
 }
 
+"""One error code in the window, with who it affected."""
+type AdminErrorGroup {
+  code: String!
+  count: Int!
+  firstSeen: DateTime!
+  lastSeen: DateTime!
+  sampleMessage: String!
+
+  """At most 100 distinct account ids."""
+  userIds: [UUID!]!
+}
+
 """
 A plan's price is what it costs. Saving a price charges nobody.
 priceMinor is minor units (49900 INR with interval MONTH is ₹499 a month).
@@ -410,6 +422,29 @@ type AiAnswer {
 
   """Markdown citing sources as [n]"""
   text: String!
+}
+
+"""
+DAU, WAU and MAU are distinct accounts in the last 1, 7 and 30 days before `to`.
+"""
+type AdminUsageSummary {
+  dau: Int!
+  from: DateTime!
+  mau: Int!
+  to: DateTime!
+  topEvents: [UsageCount!]!
+  topFeatures: [UsageCount!]!
+  wau: Int!
+}
+
+"""
+Display name, email and role for the errors dashboard. Platform admins only.
+"""
+type AdminUserLookup {
+  displayName: String!
+  email: String!
+  globalRole: GlobalRole!
+  id: UUID!
 }
 
 """
@@ -1297,6 +1332,24 @@ enum ClassroomRole {
   TEACHER
 }
 
+input ClientErrorInput {
+  appVersion: String
+  code: String!
+  message: String!
+  occurredAt: DateTime
+  platform: ClientPlatform!
+  release: String
+  route: String
+}
+
+"""
+Where the client recorded the event. Backend failures are stored by the server and are not sent here.
+"""
+enum ClientPlatform {
+  MOBILE
+  WEB
+}
+
 type Comment {
   """Null when removed"""
   author: User
@@ -2098,7 +2151,13 @@ type ForkCredit {
   title: String
 }
 
+type FunnelStep {
+  name: String!
+  users: Int!
+}
+
 enum GlobalRole {
+  MANAGER
   PLATFORM_ADMIN
   STUDENT
   TEACHER
@@ -2338,6 +2397,31 @@ enum HighlightKind {
   TEXT
 }
 
+"""
+match, mismatch or unreadable. A mismatch is never an automatic rejection.
+"""
+type IdCardCheck {
+  checkedAt: DateTime!
+  confidence: Float
+  extracted: IdCardFields!
+  reason: String
+  verdict: IdCardVerdict!
+}
+
+"""Fields read from the document. `idNumber` is null for the student."""
+type IdCardFields {
+  idNumber: String
+  institution: String
+  name: String
+  validUntil: String
+}
+
+enum IdCardVerdict {
+  MATCH
+  MISMATCH
+  UNREADABLE
+}
+
 input IdInput {
   id: UUID!
 }
@@ -2358,6 +2442,11 @@ type ImportSkip {
 type ImportedNote {
   id: UUID!
   title: String!
+}
+
+input IngestAnalyticsInput {
+  errors: [ClientErrorInput!]
+  events: [UsageEventInput!]
 }
 
 type Institution {
@@ -2969,6 +3058,11 @@ type Mutation {
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
 
+  """
+  Signed in. At most 40 events, 30 batches a minute. Unknown event names are refused.
+  """
+  ingestAnalytics(input: IngestAnalyticsInput!): OkPayload!
+
   """Admins and the Owner invite a teacher; the invite lasts 14 days"""
   inviteMentor(input: InviteMentorInput!): GroupPayload!
   inviteRhythmBuddy(input: InviteRhythmBuddyInput!): OkPayload!
@@ -3102,12 +3196,17 @@ type Mutation {
   reviewGroupJoinRequest(input: ReviewGroupJoinRequestInput!): GroupPayload!
 
   """
-  Platform admins: approve or reject a college ID card. reason is optional; the student reads it (ADR-0099).
+  Platform admins: approve or reject a domain, including one nobody has asked for yet.
+  """
+  reviewInstitutionDomain(input: DecideDomainReviewInput!): OkPayload!
+
+  """
+  A reviewer of this request. Approval sets the account verified with method DOCUMENTS. The card is kept until the retention window. A reason is optional.
   """
   reviewStudentIdVerification(input: ReviewStudentIdVerificationInput!): StudentIdVerificationPayload!
 
   """
-  Teachers: requests addressed to them. Platform admins: all, including documents.
+  Teachers: student requests in their scope. Managers: student requests. Platform admins: all, including teacher applications.
   """
   reviewVerificationRequest(input: ReviewVerificationRequestInput!): VerificationRequestPayload!
 
@@ -3138,6 +3237,9 @@ type Mutation {
   """The note's owner only"""
   setAiInsightHidden(hidden: Boolean!, id: UUID!): OkPayload!
 
+  """Signed in. Stops or resumes usage analytics for this account."""
+  setAnalyticsOptOut(optOut: Boolean!): OkPayload!
+
   """Teachers turn their class's goal on or off"""
   setClassGoal(input: SetClassGoalInput!): OkPayload!
   setClassroomRole(input: SetClassroomRoleInput!): ClassroomPayload!
@@ -3146,7 +3248,7 @@ type Mutation {
   setContestBands(input: SetContestBandsInput!): ContestSettingsPayload!
 
   """
-  Platform admins: TEACHER is granted by review, not by an email address (§5, ADR-0017)
+  Platform admins: TEACHER and MANAGER are granted here, not by an email address (§5, ADR-0017). Every change is audited.
   """
   setGlobalRole(input: SetGlobalRoleInput!): OkPayload!
 
@@ -4019,6 +4121,16 @@ type Query {
   adminContests: [AdminContest!]!
 
   """
+  Platform admins. Errors since `since`, or the last 90 days. Grouped by code.
+  """
+  adminErrors(since: DateTime): [AdminErrorGroup!]!
+
+  """
+  Platform admins. Ordered steps. A person counts at a step when each earlier step happened first.
+  """
+  adminFunnel(since: DateTime, steps: [String!]!): [FunnelStep!]!
+
+  """
   Platform admins. from and to bound AI usage only; omit them for the last 30 days. At most 366 days. Cached about a minute.
   """
   adminMetrics(from: DateTime, to: DateTime): AdminMetrics!
@@ -4028,6 +4140,14 @@ type Query {
 
   """Platform admins: configuration, grouped by category"""
   adminSettings: [AdminSetting!]!
+
+  """
+  Platform admins. Usage between `from` and `to`. Omit them for the last 30 days.
+  """
+  adminUsage(from: DateTime, to: DateTime): AdminUsageSummary!
+
+  """Platform admins. One account's usage, newest first."""
+  adminUserActivity(first: Int, userId: UUID!): [UserActivityEvent!]!
   aiAnswer(id: UUID!): AiAnswer
 
   """
@@ -4115,6 +4235,11 @@ type Query {
   group(id: UUID!): Group
 
   """
+  Platform admins: the same queue, or every domain of one status. Omit status for domains still waiting.
+  """
+  institutionDomains(first: Int, status: DomainReviewStatus): [DomainReview!]!
+
+  """
   Signed in only: days before `before` (YYYY-MM-DD), `days` at a time (at most 60)
   """
   learningHistory(before: String, days: Int): LearningHistory!
@@ -4180,7 +4305,7 @@ type Query {
   """
   Signed in: the viewer's college ID request, when they have sent one (ADR-0099)
   """
-  myStudentIdVerification: StudentIdVerification
+  myStudentIdVerification: StudentIdVerificationRequest
   myTags: [Tag!]!
 
   """Signed in: the viewer's latest application to teach (ADR-0073)"""
@@ -4271,7 +4396,7 @@ type Query {
   signInOptions: SignInOptions!
 
   """
-  Platform admins only: a short-lived link to the college ID card. Fetch it when the admin opens the card; every view is audited. Do not cache or prefetch it (ADR-0099).
+  A reviewer of this card: a 5-minute link. Every view is written to the audit log. The student is refused.
   """
   studentIdCardUrl(requestId: UUID!): SignedUrl!
 
@@ -4281,9 +4406,9 @@ type Query {
   studentIdVerificationEnabled: Boolean!
 
   """
-  Platform admins: college ID cards waiting for review, oldest first. `after` is the last id seen (ADR-0099).
+  Platform admins and managers: every pending college-ID request. A teacher: students of their institution. Oldest first. `after` is the last id seen.
   """
-  studentIdVerificationQueue(after: UUID, first: Int): [StudentIdVerification!]!
+  studentIdVerificationQueue(after: UUID, first: Int): [StudentIdVerificationRequest!]!
   subject(slug: String!): Subject
   subjects: [Subject!]!
 
@@ -4324,12 +4449,17 @@ type Query {
   userByHandle(handle: String!): User
 
   """
-  Platform admins only: a 15-minute link to one document; the view is written to the audit log
+  Platform admins. Resolves account ids for the errors dashboard. Unknown and deleted accounts are omitted.
+  """
+  usersByIds(ids: [UUID!]!): [AdminUserLookup!]!
+
+  """
+  A reviewer of this request: a 15-minute link to one document. The view is written to the audit log.
   """
   verificationDocumentUrl(fileId: UUID!, requestId: UUID!): SignedUrl!
 
   """
-  Teachers: pending requests addressed to them. Platform admins: every pending request. Oldest first; `after` is the last id seen.
+  Teachers: student requests addressed to them, and students of their institution. Managers: every student request. Platform admins: every pending request. Oldest first; `after` is the last id seen.
   """
   verificationRequestsToReview(after: UUID, first: Int): [VerificationRequest!]!
 
@@ -4619,7 +4749,7 @@ input RequestAccountDeletionInput {
 }
 
 """
-fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by platform admins only, deleted 30 days after the decision
+fileIds uploaded with createUploadIntent(purpose: VERIFICATION_DOCUMENT); seen by reviewers of this request, deleted 30 days after the decision
 """
 input RequestDocumentVerificationInput {
   fileIds: [UUID!]!
@@ -5389,14 +5519,51 @@ type StudentIdVerification {
   status: StudentIdVerificationStatus!
 }
 
+"""
+A college-ID request. `card` is set for a reviewer and null for the student. It is null once the card has been deleted.
+"""
+type StudentIdVerificationRequest {
+  """
+  The automated reading, once it has run. The ID number is hidden from the student.
+  """
+  aiCheck: IdCardCheck
+  card: VerificationDocument
+  createdAt: DateTime!
+  decidedAt: DateTime
+  id: UUID!
+
+  """Why it was refused, when a reason was given"""
+  reason: String
+  requester: User!
+  status: VerificationRequestStatus!
+}
+
 type StudentIdVerificationPayload {
-  request: StudentIdVerification
+  request: StudentIdVerificationRequest
   userErrors: [UserError!]!
 }
 
-"""Whether students may send a college ID card (ADR-0099)"""
+"""
+Platform admins. `updatedAt` is null until someone changes the college-ID switch. The AI switches default off.
+"""
 type StudentIdVerificationSettings {
+  """student_id_ai_check. Off until an admin turns it on."""
+  aiCheckEnabled: Boolean!
+
+  """
+  student_id_ai_auto_approve. Off until an admin turns it on. Never rejects.
+  """
+  autoApproveOnHighConfidence: Boolean!
+
+  """student_id_ai_confidence_threshold, 50–100. Default 90."""
+  confidenceThreshold: Int!
   enabled: Boolean!
+
+  """
+  student_id_image_retention_days. Default 30. A withdrawn card is deleted at once.
+  """
+  imageRetentionDays: Int!
+  updatedAt: DateTime
 }
 
 type StudentIdVerificationSettingsPayload {
@@ -5896,12 +6063,37 @@ type UploadIntentPayload {
   userErrors: [UserError!]!
 }
 
+type UsageCount {
+  count: Int!
+  name: String!
+}
+
+input UsageEventInput {
+  appVersion: String
+
+  """One of: page_view, note_open, note_upload, search, download, sign_in."""
+  name: String!
+  occurredAt: DateTime
+  platform: ClientPlatform!
+
+  """
+  A small object. A string `feature` is counted in top features. At most 1024 characters.
+  """
+  props: JSON
+  sessionId: String
+}
+
 """A person, owned by the users subgraph"""
 type User {
   """
   Achievements, the highest tier of each: the viewer's own, or an adult's who shows them; null otherwise
   """
   achievements: [Achievement!]
+
+  """
+  Viewer only. When true, usage analytics are not stored for this account.
+  """
+  analyticsOptOut: Boolean
 
   """Points and level, under the same rule as achievements"""
   contribution: Contribution
@@ -5985,6 +6177,14 @@ type User {
   verified: Boolean!
 }
 
+type UserActivityEvent {
+  appVersion: String
+  name: String!
+  occurredAt: DateTime!
+  platform: ClientPlatform!
+  props: JSON
+}
+
 """
 An expected failure of a mutation; `field` is the dotted input path, e.g. ["input", "email"]
 """
@@ -6016,14 +6216,23 @@ enum VerificationPurpose {
 }
 
 """
-Shown to the requester, the addressed teacher and platform admins. Documents are listed for platform admins only.
+Shown to the requester, the addressed teacher, a teacher at the same institution, a manager and platform admins. Documents are listed for those reviewers.
 """
 type VerificationRequest {
+  """
+  The automated reading, once it has run. The ID number is hidden from the student.
+  """
+  aiCheck: IdCardCheck
+
+  """
+  True when the proof is one college ID card (ADR-0099). Kept for the retention window after a decision, and deleted at once when withdrawn.
+  """
+  collegeIdCard: Boolean!
   createdAt: DateTime!
   decidedAt: DateTime
 
   """
-  Platform admins only; open one with verificationDocumentUrl (every view is audited)
+  Reviewers who may decide this request. Open one with verificationDocumentUrl (every view is audited).
   """
   documents: [VerificationDocument!]!
   id: UUID!

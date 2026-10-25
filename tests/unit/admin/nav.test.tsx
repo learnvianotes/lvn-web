@@ -165,7 +165,7 @@ describe('admin settings sidebar', () => {
     expect(canSeeAdminNav(undefined)).toBe(false)
     expect(canSeeAdminNav(null)).toBe(false)
     expect(sectionsForRole('PLATFORM_ADMIN').map((section) => section.href)).toEqual(ADMIN_SECTIONS.map((section) => section.href))
-    expect(sectionsForRole('MANAGER').map((section) => section.key)).toEqual(['errors', 'usage', 'verification', 'studentId'])
+    expect(sectionsForRole('MANAGER').map((section) => section.key)).toEqual(['verification', 'studentId'])
     expect(sectionsForRole('TEACHER').map((section) => section.key)).toEqual(['verification', 'studentId'])
     expect(sectionsForRole('STUDENT')).toEqual([])
   })

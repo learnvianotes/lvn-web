@@ -4,7 +4,7 @@
  * A person who opts out of analytics is not recorded. Errors keep flowing; that choice is separate.
  */
 import type { ErrorEventInput, UsageEventInput } from '@/lib/platform-api'
-import { ingestEvents, loadAnalyticsOptOut } from '@/lib/platform-api'
+import { USAGE_EVENT_NAMES, ingestAnalytics, loadAnalyticsOptOut } from '@/lib/platform-api'
 import { useSession } from '@/state/session'
 import { installClientErrorListeners, setErrorSink, type ClientError } from './errors'
 
@@ -17,25 +17,26 @@ export function pagePath(path: string): string {
   return (clean.startsWith('/') ? clean : `/${clean}`).slice(0, 200)
 }
 
-/** Props safe to leave the browser: short tokens, numbers and booleans. Everything else is dropped. */
-export function usageProps(props: Record<string, unknown> | undefined): { key: string; value: string }[] {
-  if (!props) return []
-  const out: { key: string; value: string }[] = []
+const ALLOWED_EVENTS = new Set<string>(USAGE_EVENT_NAMES)
+
+/** Props safe to leave the browser: a JSON object of short tokens, numbers and booleans. Everything else is dropped. */
+export function usageProps(props: Record<string, unknown> | undefined): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {}
+  if (!props) return out
   for (const [key, value] of Object.entries(props)) {
     if (!/^[a-z][a-z0-9_]{0,31}$/i.test(key) || BLOCKED_PROP.test(key)) continue
-    if (typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) out.push({ key, value: String(value) })
-    else if (typeof value === 'string' && value.length > 0 && value.length <= 40 && !value.includes('@') && !/[\s/]/.test(value)) out.push({ key, value })
+    if (typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) out[key] = value
+    else if (typeof value === 'string' && value.length > 0 && value.length <= 40 && !value.includes('@') && !/[\s/]/.test(value)) out[key] = value
   }
   return out
 }
 
-export type UsageSender = (batch: { usage: UsageEventInput[]; errors: ErrorEventInput[] }) => Promise<void>
+export type UsageSender = (batch: { events: UsageEventInput[]; errors: ErrorEventInput[] }) => Promise<void>
 
-export function createUsageTracker(deps: { send: UsageSender; signedIn: () => boolean; now?: () => string; path?: () => string }) {
+export function createUsageTracker(deps: { send: UsageSender; signedIn: () => boolean; now?: () => string }) {
   const now = deps.now ?? (() => new Date().toISOString())
-  const path = deps.path ?? (() => (typeof location === 'undefined' ? '/' : pagePath(location.pathname)))
   let preference: 'unknown' | 'in' | 'out' = 'unknown'
-  const usage: UsageEventInput[] = []
+  const events: UsageEventInput[] = []
   const errors: ErrorEventInput[] = []
   let timer: ReturnType<typeof setTimeout> | null = null
   let sending = false
@@ -49,42 +50,42 @@ export function createUsageTracker(deps: { send: UsageSender; signedIn: () => bo
     if (timer) clearTimeout(timer)
     timer = null
     if (sending || !deps.signedIn()) return
-    const usageBatch = preference === 'in' ? usage.splice(0, MAX_BATCH) : []
+    const eventBatch = preference === 'in' ? events.splice(0, MAX_BATCH) : []
     const errorBatch = errors.splice(0, MAX_BATCH)
-    if (!usageBatch.length && !errorBatch.length) return
+    if (!eventBatch.length && !errorBatch.length) return
     sending = true
     try {
-      await deps.send({ usage: usageBatch, errors: errorBatch })
+      await deps.send({ events: eventBatch, errors: errorBatch })
     } catch {
-      usage.unshift(...usageBatch)
+      events.unshift(...eventBatch)
       errors.unshift(...errorBatch)
     } finally {
       sending = false
-      if (usage.length + errors.length) schedule()
+      if (events.length + errors.length) schedule()
     }
   }
 
   return {
     setPreference(optedOut: boolean) {
       preference = optedOut ? 'out' : 'in'
-      if (optedOut) usage.length = 0
-      else if (usage.length || errors.length) schedule()
+      if (optedOut) events.length = 0
+      else if (events.length || errors.length) schedule()
     },
     preference: () => preference,
     track(name: string, props?: Record<string, unknown>) {
       if (preference === 'out') return
-      if (!/^[a-z][a-z0-9_]{0,40}$/.test(name)) return
-      usage.push({ name, at: now(), path: pagePath(path()), props: usageProps(props) })
-      if (usage.length >= MAX_BATCH && preference === 'in') void flush()
+      if (!ALLOWED_EVENTS.has(name)) return
+      events.push({ name, platform: 'WEB', occurredAt: now(), props: usageProps(props) })
+      if (events.length >= MAX_BATCH && preference === 'in') void flush()
       else if (preference === 'in') schedule()
     },
     report(event: ClientError) {
-      errors.push({ type: event.type, message: event.message, route: event.route, stack: event.stack, at: event.at })
+      errors.push({ code: event.type, message: event.message, platform: 'WEB', route: event.route, occurredAt: event.at })
       if (errors.length >= MAX_BATCH) void flush()
       else schedule()
     },
     flush,
-    pending: () => ({ usage: usage.length, errors: errors.length }),
+    pending: () => ({ usage: events.length, errors: errors.length }),
   }
 }
 
@@ -93,7 +94,7 @@ let tracker: Tracker | undefined
 
 function shared(): Tracker {
   tracker ??= createUsageTracker({
-    send: (batch) => ingestEvents(batch),
+    send: (batch) => ingestAnalytics(batch),
     signedIn: () => useSession.getState().status === 'signed-in',
   })
   return tracker

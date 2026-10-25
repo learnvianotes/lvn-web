@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ViewerDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { PlatformError, loadVerificationQueue, reviewVerification, verificationDocumentUrl, type AiVerdictView, type ReviewRequestView } from '@/lib/platform-api'
+import { IdCardExtracted } from './IdCardExtracted'
 import { ProofPreview } from './ProofPreview'
 import { confidencePercent, verdictTone } from './proof'
 
@@ -106,7 +107,7 @@ function RequestCard({ request: r, canDecideRole, onDone }: { request: ReviewReq
         <p className="text-sm text-muted">{[r.requester.institutionName, r.requester.department].filter(Boolean).join(' · ')}</p>
       ) : null}
       {r.message ? <blockquote className="rounded-xl bg-surface-2 px-3 py-2 text-sm">{r.message}</blockquote> : null}
-      {r.ai ? <AiVerdict ai={r.ai} /> : null}
+      {r.ai ? <AiVerdict ai={r.ai} profileName={r.requester.displayName} profileInstitution={r.requester.institutionName} /> : null}
       {r.documents.length ? (
         <ul className="flex flex-col gap-3">
           {r.documents.map((document) => (
@@ -176,7 +177,7 @@ const TONE = {
   pending: 'bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100',
 } as const
 
-function AiVerdict({ ai }: { ai: AiVerdictView }) {
+function AiVerdict({ ai, profileName, profileInstitution }: { ai: AiVerdictView; profileName: string; profileInstitution: string | null }) {
   const t = useTranslations('verification.review')
   const format = useFormatter()
   const percent = confidencePercent(ai.confidence)
@@ -188,7 +189,8 @@ function AiVerdict({ ai }: { ai: AiVerdictView }) {
         {percent != null ? <span className="text-sm text-muted">{t('confidence', { percent })}</span> : null}
         {checked ? <span className="text-sm text-muted">{t('checkedAt', { when: checked })}</span> : null}
       </div>
-      {ai.reasons ? <p className="text-sm">{ai.reasons}</p> : null}
+      {ai.reason ? <p className="text-sm">{ai.reason}</p> : null}
+      <IdCardExtracted extracted={ai.extracted} profileName={profileName} profileInstitution={profileInstitution} />
     </div>
   )
 }

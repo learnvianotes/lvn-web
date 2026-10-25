@@ -12,19 +12,24 @@ describe('platform API names', () => {
       'student_id_ai_confidence_threshold',
       'student_id_image_retention_days',
     ])
-    expect(source).not.toMatch(/aiCheckEnabled|autoApproveOnHighConfidence|AiVerificationSettings/)
+    expect(source).not.toMatch(/AiVerificationSettings/)
   })
 
-  it('asks for the verdict columns and the schema fields that already exist', () => {
-    expect(source).toMatch(/aiVerdict/)
-    expect(source).toMatch(/aiConfidence/)
-    expect(source).toMatch(/aiReasons/)
-    expect(source).toMatch(/aiCheckedAt/)
-    expect(source).not.toMatch(/aiExtracted|aiReason[^s]/)
-    expect(source).toMatch(/domainReviews\(status: \$status\)/)
-    expect(source).toMatch(/decideDomainReview\(input: \$input\)/)
+  it('asks for the verdict, extracted fields and the analytics operations from the schema', () => {
+    expect(source).toMatch(/aiCheck \{/)
+    expect(source).toMatch(/extracted \{ name institution idNumber validUntil \}/)
+    expect(source).not.toMatch(/aiReasons|aiVerdict|ingestEvents|adminUserTimeline|topPages/)
+    expect(source).toMatch(/institutionDomains\(status: \$status\)/)
+    expect(source).toMatch(/reviewInstitutionDomain\(input: \$input\)/)
+    expect(source).toMatch(/ingestAnalytics\(input: \$input\)/)
+    expect(source).toMatch(/adminErrors\(since: \$since\)/)
+    expect(source).toMatch(/adminUsage\(from: \$from, to: \$to\)/)
+    expect(source).toMatch(/adminUserActivity\(userId: \$userId, first: \$first\)/)
+    expect(source).toMatch(/usersByIds\(ids: \$ids\)/)
+    expect(source).toMatch(/setAnalyticsOptOut\(optOut: \$optOut\)/)
     expect(source).toMatch(/setGlobalRole\(input: \$input\)/)
     expect(source).toMatch(/\$input: SetGlobalRoleInput!/)
     expect(source).toMatch(/\$input: DecideDomainReviewInput!/)
+    expect(source).toMatch(/\$input: IngestAnalyticsInput!/)
   })
 })

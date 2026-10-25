@@ -20,7 +20,6 @@ import {
   type ViewerQuery,
   type YearOfStudy,
 } from '@/graphql/generated/graphql'
-import { trackUsage } from '@/lib/analytics'
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
@@ -112,7 +111,6 @@ function SignOutButton() {
       onClick={async () => {
         // Drafts mirrored in this browser are deleted on sign-out (shared computers); unsent ones only if the user agrees.
         if ((await countDraftMirrors()) > 0 && !window.confirm(t('unsavedDrafts'))) return
-        trackUsage('sign_out')
         await clearDraftMirrors()
         await signOut().catch(() => undefined)
         signedOut()

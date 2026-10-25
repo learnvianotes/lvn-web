@@ -1,17 +1,12 @@
 /**
  * Contracts for the verification, roles, institution-domain, error and usage APIs
- * (lvn-backend PR #27, branch feat/verification-manager-ai-analytics).
+ * (lvn-backend PR #27). Names match the patched graphql/schema.graphql:
+ * `ingestAnalytics`, `adminErrors(since)`, `adminUsage(from, to)`, `adminUserActivity`,
+ * `usersByIds`, `institutionDomains`, `reviewInstitutionDomain`, `setAnalyticsOptOut`,
+ * and `aiCheck { extracted }` on a verification request.
  *
- * Field and argument names that already exist in graphql/schema.graphql are used as written there:
- * `domainReviews`, `decideDomainReview`, `setGlobalRole`, `verificationRequestsToReview`,
- * `updateAdminSetting`. The ID-card check is those admin setting keys, not a separate mutation.
- * Verdict fields follow the approved columns `aiVerdict`, `aiConfidence`, `aiReasons`, `aiCheckedAt`.
+ * The ID-card switches are still written with `updateAdminSetting` and the catalog keys.
  * A query the running API does not know yet falls back to the slimmer document.
- *
- * `adminErrors`, `adminUsage`, `adminUserTimeline`, `usersByIds`, `ingestEvents` and
- * `analyticsOptOut` are not in the schema copied into this repo. PR #27 could not be read from
- * here (the backend repository is private to this token), so those names are still the ones from
- * the brief and may not match the published schema.
  */
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { parse, type DocumentNode } from 'graphql'
@@ -20,12 +15,23 @@ import { apolloClient } from '@/lib/apollo'
 export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 export type AssignableRole = 'MANAGER' | 'TEACHER' | 'STUDENT'
 
+/** Names `UsageEventInput` accepts. Anything else is refused with VALIDATION. */
+export const USAGE_EVENT_NAMES = ['page_view', 'note_open', 'note_upload', 'search', 'download', 'sign_in'] as const
+
+export type IdCardFieldsView = {
+  name: string | null
+  institution: string | null
+  idNumber: string | null
+  validUntil: string | null
+}
+
 export type AiVerdictView = {
   verdict: string
   confidence: number | null
-  /** `aiReasons`, whether the API sends one string or a list. */
-  reasons: string | null
+  /** `IdCardCheck.reason`, one string. */
+  reason: string | null
   checkedAt: string | null
+  extracted: IdCardFieldsView
 }
 
 /** Admin setting catalog keys for the college-ID vision check (not a separate settings type). */
@@ -89,53 +95,52 @@ export type InstitutionDomain = {
 }
 
 export type ErrorGroup = {
-  fingerprint: string
-  type: string
-  message: string
+  code: string
   count: number
   firstSeen: string
   lastSeen: string
-  trend: number[]
-  affectedUserIds: string[]
-  affectedUsers: { userId: string; lastSeen: string }[]
+  sampleMessage: string
+  userIds: string[]
 }
 
 export type LookupUser = {
   id: string
   displayName: string
-  email: string | null
-  handle: string
+  email: string
   globalRole: string
 }
+
+export type UsageCount = { name: string; count: number }
 
 export type UsageSummary = {
   dau: number
   wau: number
   mau: number
-  topPages: { name: string; count: number }[]
-  topEvents: { name: string; count: number }[]
+  topFeatures: UsageCount[]
+  topEvents: UsageCount[]
 }
 
 export type TimelineEntry = {
-  id: string
   name: string
-  at: string
-  path: string | null
+  occurredAt: string
+  platform: string
+  props: Record<string, unknown> | null
+  appVersion: string | null
 }
 
 export type UsageEventInput = {
   name: string
-  at: string
-  path: string | null
-  props: { key: string; value: string }[]
+  platform: 'WEB'
+  occurredAt: string
+  props?: Record<string, string | number | boolean>
 }
 
 export type ErrorEventInput = {
-  type: string
+  code: string
   message: string
-  route: string | null
-  stack: string | null
-  at: string
+  platform: 'WEB'
+  route?: string | null
+  occurredAt: string
 }
 
 export class PlatformError extends Error {
@@ -149,6 +154,16 @@ export class PlatformError extends Error {
 
 const documentOf = (source: string): DocumentNode => parse(source)
 
+const AI_CHECK = /* GraphQL */ `
+  aiCheck {
+    verdict
+    confidence
+    reason
+    checkedAt
+    extracted { name institution idNumber validUntil }
+  }
+`
+
 const REVIEW_QUEUE = documentOf(/* GraphQL */ `
   query VerificationRequestsToReview($after: UUID) {
     verificationRequestsToReview(first: 30, after: $after) {
@@ -161,10 +176,7 @@ const REVIEW_QUEUE = documentOf(/* GraphQL */ `
       message
       reason
       createdAt
-      aiVerdict
-      aiConfidence
-      aiReasons
-      aiCheckedAt
+      ${AI_CHECK}
       requester { id displayName handle email institution { name } profile { department } }
       documents { fileId fileName mimeType sizeBytes }
     }
@@ -211,10 +223,7 @@ const STUDENT_ID_QUEUE = documentOf(/* GraphQL */ `
       status
       reason
       createdAt
-      aiVerdict
-      aiConfidence
-      aiReasons
-      aiCheckedAt
+      ${AI_CHECK}
       requester { id displayName handle email institution { name } profile { department } }
     }
   }
@@ -239,14 +248,14 @@ const STUDENT_ID_URL = documentOf(/* GraphQL */ `
 `)
 
 const DOMAINS = documentOf(/* GraphQL */ `
-  query DomainReviews($status: DomainReviewStatus) {
-    domainReviews(status: $status) { domain status requests firstSeenAt }
+  query InstitutionDomains($status: DomainReviewStatus) {
+    institutionDomains(status: $status) { domain status requests firstSeenAt }
   }
 `)
 
 const DECIDE_DOMAIN = documentOf(/* GraphQL */ `
-  mutation DecideDomainReview($input: DecideDomainReviewInput!) {
-    decideDomainReview(input: $input) { ok userErrors { message code } }
+  mutation ReviewInstitutionDomain($input: DecideDomainReviewInput!) {
+    reviewInstitutionDomain(input: $input) { ok userErrors { message code } }
   }
 `)
 
@@ -257,48 +266,56 @@ const SET_ROLE = documentOf(/* GraphQL */ `
 `)
 
 const ADMIN_ERRORS = documentOf(/* GraphQL */ `
-  query AdminErrors {
-    adminErrors {
-      fingerprint
-      type
-      message
+  query AdminErrors($since: DateTime) {
+    adminErrors(since: $since) {
+      code
       count
       firstSeen
       lastSeen
-      trend
-      affectedUserIds
-      affectedUsers { userId lastSeen }
+      sampleMessage
+      userIds
     }
   }
 `)
 
 const USERS_BY_IDS = documentOf(/* GraphQL */ `
   query UsersByIds($ids: [UUID!]!) {
-    usersByIds(ids: $ids) { id displayName email handle globalRole }
+    usersByIds(ids: $ids) { id displayName email globalRole }
   }
 `)
 
 const ADMIN_USAGE = documentOf(/* GraphQL */ `
-  query AdminUsage {
-    adminUsage {
+  query AdminUsage($from: DateTime, $to: DateTime) {
+    adminUsage(from: $from, to: $to) {
       dau
       wau
       mau
-      topPages { name count }
+      from
+      to
       topEvents { name count }
+      topFeatures { name count }
     }
   }
 `)
 
-const USER_TIMELINE = documentOf(/* GraphQL */ `
-  query AdminUserTimeline($userId: UUID!) {
-    adminUserTimeline(userId: $userId) { id name at path }
+const USER_ACTIVITY = documentOf(/* GraphQL */ `
+  query AdminUserActivity($userId: UUID!, $first: Int) {
+    adminUserActivity(userId: $userId, first: $first) {
+      name
+      occurredAt
+      platform
+      props
+      appVersion
+    }
   }
 `)
 
 const INGEST = documentOf(/* GraphQL */ `
-  mutation IngestEvents($input: IngestEventsInput!) {
-    ingestEvents(input: $input) { ok }
+  mutation IngestAnalytics($input: IngestAnalyticsInput!) {
+    ingestAnalytics(input: $input) {
+      ok
+      userErrors { code message }
+    }
   }
 `)
 
@@ -339,22 +356,36 @@ async function run<T>(document: DocumentNode, variables: Record<string, unknown>
   }
 }
 
-type RawAi = { aiVerdict?: string | null; aiConfidence?: number | null; aiReasons?: unknown; aiCheckedAt?: string | null }
+type RawExtracted = { name?: string | null; institution?: string | null; idNumber?: string | null; validUntil?: string | null }
 
-function reasonsOf(value: unknown): string | null {
-  if (typeof value === 'string') return value.trim() || null
-  if (!Array.isArray(value)) return null
-  const text = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).join(' ')
-  return text || null
+type RawCheck = {
+  verdict?: string | null
+  confidence?: number | null
+  reason?: string | null
+  checkedAt?: string | null
+  extracted?: RawExtracted | null
 }
 
-function aiOf(raw: RawAi): AiVerdictView | null {
-  if (!raw.aiVerdict) return null
+function textOrNull(value: string | null | undefined): string | null {
+  const text = value?.trim()
+  return text ? text : null
+}
+
+function aiOf(raw: { aiCheck?: RawCheck | null }): AiVerdictView | null {
+  const check = raw.aiCheck
+  if (!check?.verdict) return null
+  const extracted = check.extracted ?? {}
   return {
-    verdict: raw.aiVerdict,
-    confidence: typeof raw.aiConfidence === 'number' ? raw.aiConfidence : null,
-    reasons: reasonsOf(raw.aiReasons),
-    checkedAt: raw.aiCheckedAt ?? null,
+    verdict: check.verdict,
+    confidence: typeof check.confidence === 'number' ? check.confidence : null,
+    reason: textOrNull(check.reason),
+    checkedAt: check.checkedAt ?? null,
+    extracted: {
+      name: textOrNull(extracted.name),
+      institution: textOrNull(extracted.institution),
+      idNumber: textOrNull(extracted.idNumber),
+      validUntil: textOrNull(extracted.validUntil),
+    },
   }
 }
 
@@ -378,7 +409,7 @@ function requesterOf(raw: RawRequester): ReviewRequestView['requester'] {
   }
 }
 
-type RawReview = RawAi & {
+type RawReview = {
   id: string
   purpose: string
   institution?: string | null
@@ -390,6 +421,7 @@ type RawReview = RawAi & {
   createdAt: string
   requester: RawRequester
   documents?: ReviewDocument[] | null
+  aiCheck?: RawCheck | null
 }
 
 function reviewOf(raw: RawReview): ReviewRequestView {
@@ -431,7 +463,14 @@ export async function reviewVerification(input: { requestId: string; approve: bo
   return data.reviewVerificationRequest.userErrors[0]?.message ?? null
 }
 
-type RawStudentId = RawAi & { id: string; status: string; reason?: string | null; createdAt: string; requester: RawRequester }
+type RawStudentId = {
+  id: string
+  status: string
+  reason?: string | null
+  createdAt: string
+  requester: RawRequester
+  aiCheck?: RawCheck | null
+}
 
 function studentIdOf(raw: RawStudentId): StudentIdReviewItem {
   return { id: raw.id, status: raw.status, reason: raw.reason ?? null, createdAt: raw.createdAt, requester: requesterOf(raw.requester), ai: aiOf(raw) }
@@ -454,13 +493,13 @@ export async function studentIdCardUrl(requestId: string): Promise<string | null
 }
 
 export async function listInstitutionDomains(status?: DomainStatus): Promise<InstitutionDomain[]> {
-  const data = await run<{ domainReviews: InstitutionDomain[] }>(DOMAINS, status ? { status } : {}, 'query')
-  return data.domainReviews ?? []
+  const data = await run<{ institutionDomains: InstitutionDomain[] }>(DOMAINS, status ? { status } : {}, 'query')
+  return data.institutionDomains ?? []
 }
 
 export async function decideInstitutionDomain(domain: string, approve: boolean): Promise<string | null> {
-  const data = await run<{ decideDomainReview: { ok: boolean; userErrors: { message: string }[] } }>(DECIDE_DOMAIN, { input: { domain, approve } }, 'mutation')
-  const payload = data.decideDomainReview
+  const data = await run<{ reviewInstitutionDomain: { ok: boolean; userErrors: { message: string }[] } }>(DECIDE_DOMAIN, { input: { domain, approve } }, 'mutation')
+  const payload = data.reviewInstitutionDomain
   return payload.userErrors[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }
 
@@ -470,13 +509,15 @@ export async function setStaffRole(userId: string, role: AssignableRole): Promis
   return payload.userErrors[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }
 
-export async function loadErrorGroups(): Promise<ErrorGroup[]> {
-  const data = await run<{ adminErrors: ErrorGroup[] }>(ADMIN_ERRORS, undefined, 'query')
+export async function loadErrorGroups(since?: string): Promise<ErrorGroup[]> {
+  const data = await run<{ adminErrors: ErrorGroup[] }>(ADMIN_ERRORS, since ? { since } : {}, 'query')
   return (data.adminErrors ?? []).map((group) => ({
-    ...group,
-    trend: group.trend ?? [],
-    affectedUserIds: group.affectedUserIds ?? group.affectedUsers?.map((user) => user.userId) ?? [],
-    affectedUsers: group.affectedUsers ?? [],
+    code: group.code,
+    count: group.count,
+    firstSeen: group.firstSeen,
+    lastSeen: group.lastSeen,
+    sampleMessage: group.sampleMessage,
+    userIds: group.userIds ?? [],
   }))
 }
 
@@ -486,23 +527,40 @@ export async function lookupUsers(ids: string[]): Promise<LookupUser[]> {
   return data.usersByIds ?? []
 }
 
-export async function loadUsageSummary(): Promise<UsageSummary> {
-  const data = await run<{ adminUsage: UsageSummary }>(ADMIN_USAGE, undefined, 'query')
-  return data.adminUsage
+export async function loadUsageSummary(range?: { from?: string; to?: string }): Promise<UsageSummary> {
+  const data = await run<{ adminUsage: UsageSummary }>(ADMIN_USAGE, { from: range?.from, to: range?.to }, 'query')
+  return {
+    ...data.adminUsage,
+    topEvents: data.adminUsage.topEvents ?? [],
+    topFeatures: data.adminUsage.topFeatures ?? [],
+  }
 }
 
-export async function loadUserTimeline(userId: string): Promise<TimelineEntry[]> {
-  const data = await run<{ adminUserTimeline: TimelineEntry[] }>(USER_TIMELINE, { userId }, 'query')
-  return data.adminUserTimeline ?? []
+export async function loadUserTimeline(userId: string, first = 50): Promise<TimelineEntry[]> {
+  const data = await run<{ adminUserActivity: TimelineEntry[] }>(USER_ACTIVITY, { userId, first }, 'query')
+  return (data.adminUserActivity ?? []).map((row) => ({
+    name: row.name,
+    occurredAt: row.occurredAt,
+    platform: row.platform,
+    props: row.props && typeof row.props === 'object' && !Array.isArray(row.props) ? row.props : null,
+    appVersion: row.appVersion ?? null,
+  }))
 }
 
-export async function ingestEvents(input: { usage: UsageEventInput[]; errors: ErrorEventInput[] }): Promise<void> {
-  if (!input.usage.length && !input.errors.length) return
-  await run(INGEST, { input }, 'mutation')
+export async function ingestAnalytics(input: { events?: UsageEventInput[]; errors?: ErrorEventInput[] }): Promise<void> {
+  const events = input.events ?? []
+  const errors = input.errors ?? []
+  if (!events.length && !errors.length) return
+  const data = await run<{ ingestAnalytics: { ok: boolean; userErrors: { code: string; message: string }[] } }>(INGEST, { input: { events, errors } }, 'mutation')
+  const problem = data.ingestAnalytics.userErrors[0]
+  if (!problem) return
+  // A refused name is not worth retrying; the tracker would put the same batch back.
+  if (problem.code === 'VALIDATION') return
+  throw new PlatformError(problem.message)
 }
 
 export async function loadAnalyticsOptOut(): Promise<boolean> {
-  const data = await run<{ viewer: { analyticsOptOut: boolean } | null }>(OPT_OUT, undefined, 'query')
+  const data = await run<{ viewer: { analyticsOptOut: boolean | null } | null }>(OPT_OUT, undefined, 'query')
   return data.viewer?.analyticsOptOut === true
 }
 

@@ -2,7 +2,7 @@
 # The bytes are PUT to createStudentIdUploadIntent; submitStudentIdVerification checks them.
 # Do not call completeUpload. The card URL is fetched on open and is not cached.
 
-fragment StudentIdVerificationFields on StudentIdVerification {
+fragment StudentIdVerificationFields on StudentIdVerificationRequest {
   id
   status
   reason

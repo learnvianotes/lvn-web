@@ -27,7 +27,6 @@ export type AdminSection = {
 
 const ADMIN: readonly StaffRole[] = ['PLATFORM_ADMIN']
 const REVIEW: readonly StaffRole[] = ['PLATFORM_ADMIN', 'MANAGER', 'TEACHER']
-const OPS: readonly StaffRole[] = ['PLATFORM_ADMIN', 'MANAGER']
 
 /**
  * Every page under app/(site)/(app)/admin, in sidebar order. A unit test fails when a page is added there and left
@@ -37,8 +36,8 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin', group: 'platform', key: 'overview', icon: LayoutDashboard, roles: ADMIN },
   { href: '/admin/settings', group: 'platform', key: 'settings', icon: SlidersHorizontal, roles: ADMIN },
   { href: '/admin/plans', group: 'platform', key: 'plans', icon: Wallet, roles: ADMIN },
-  { href: '/admin/errors', group: 'platform', key: 'errors', icon: Bug, roles: OPS },
-  { href: '/admin/usage', group: 'platform', key: 'usage', icon: Activity, roles: OPS },
+  { href: '/admin/errors', group: 'platform', key: 'errors', icon: Bug, roles: ADMIN },
+  { href: '/admin/usage', group: 'platform', key: 'usage', icon: Activity, roles: ADMIN },
   { href: '/admin/access', group: 'people', key: 'access', icon: KeyRound, roles: ADMIN },
   { href: '/admin/roles', group: 'people', key: 'roles', icon: UserCog, roles: ADMIN },
   { href: '/admin/domains', group: 'people', key: 'domains', icon: Building2, roles: ADMIN },

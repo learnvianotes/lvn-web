@@ -10,7 +10,7 @@ import { loadUsageSummary, loadUserTimeline, PlatformError, type TimelineEntry, 
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** DAU, WAU and MAU, the pages and actions people use, and one person's timeline. */
+/** DAU, WAU and MAU, the features and actions people use, and one person's timeline. */
 export function AdminUsage() {
   const t = useTranslations('adminUsage')
   const format = useFormatter()
@@ -45,7 +45,7 @@ export function AdminUsage() {
             <Stat label={t('mau')} value={format.number(summary.mau)} />
           </dl>
           <div className="grid gap-4 lg:grid-cols-2">
-            <Rank title={t('pages')} rows={summary.topPages} empty={t('noPages')} />
+            <Rank title={t('pages')} rows={summary.topFeatures} empty={t('noPages')} />
             <Rank title={t('features')} rows={summary.topEvents} empty={t('noFeatures')} />
           </div>
         </>
@@ -118,10 +118,10 @@ function Timeline() {
       {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       {rows && !rows.length ? <p className="text-sm text-muted">{t('noEvents')}</p> : null}
       <ol className="flex flex-col gap-2">
-        {(rows ?? []).map((row) => (
-          <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-            <span className="font-medium">{row.name}{row.path ? <span className="font-normal text-muted"> · {row.path}</span> : null}</span>
-            <time className="text-muted" dateTime={row.at}>{format.dateTime(new Date(row.at), { dateStyle: 'medium', timeStyle: 'short' })}</time>
+        {(rows ?? []).map((row, index) => (
+          <li key={`${row.occurredAt}-${row.name}-${index}`} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+            <span className="font-medium">{row.name}<span className="font-normal text-muted"> · {row.platform}</span></span>
+            <time className="text-muted" dateTime={row.occurredAt}>{format.dateTime(new Date(row.occurredAt), { dateStyle: 'medium', timeStyle: 'short' })}</time>
           </li>
         ))}
       </ol>

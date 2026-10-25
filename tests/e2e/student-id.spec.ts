@@ -10,7 +10,7 @@ const unverified = { ...viewerExtras, verified: false, verificationMethod: null 
 const person = (id: string, displayName: string, handle: string) => ({ __typename: 'User', id, displayName, handle })
 const ravi = person('01920000-0000-7000-8000-0000000000e2', 'Ravi Kumar', 'ravi')
 const request = (over: Record<string, unknown> = {}) => ({
-  __typename: 'StudentIdVerification',
+  __typename: 'StudentIdVerificationRequest',
   id: '01920000-0000-7000-8000-0000000id001',
   status: 'PENDING',
   reason: null,
@@ -138,7 +138,7 @@ test('a platform admin turns college ID checks on, opens a card on demand, and a
       ReviewStudentIdVerification: (v) => {
         const input = v.input as { requestId: string; approve: boolean }
         waiting = waiting.filter((item) => item.id !== input.requestId)
-        return { reviewStudentIdVerification: { request: { __typename: 'StudentIdVerification', id: input.requestId, status: input.approve ? 'APPROVED' : 'REJECTED' }, ...none } }
+        return { reviewStudentIdVerification: { request: { __typename: 'StudentIdVerificationRequest', id: input.requestId, status: input.approve ? 'APPROVED' : 'REJECTED' }, ...none } }
       },
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },

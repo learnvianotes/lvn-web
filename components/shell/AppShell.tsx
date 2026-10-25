@@ -36,7 +36,6 @@ import { useReadPdf } from '@/features/reader/readPdf'
 import { OPEN_SEARCH_EVENT } from '@/features/search/SearchPalette'
 import { CreateNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { canSeeAdminNav } from '@/features/admin/AdminNav'
-import { trackUsage } from '@/lib/analytics'
 import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { cn } from '@/lib/cn'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
@@ -164,10 +163,7 @@ function Nav() {
       const res = await create({ variables: { input: {} } })
       const problem = res.data?.createNote.userErrors[0]
       const id = res.data?.createNote.note?.id
-      if (id) {
-        trackUsage('note_create')
-        router.push(`/notes/${id}`)
-      }
+      if (id) router.push(`/notes/${id}`)
       else setCreateError({ message: problem?.message ?? t('createFailed'), limit: isLimitCode(problem?.code) })
     } catch (error) {
       const refused = refusalMessage(error)

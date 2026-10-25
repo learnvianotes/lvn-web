@@ -81,10 +81,14 @@ const reviewRequest = {
     profile: { __typename: 'Profile', department: 'Computer Science' },
   },
   documents: [{ __typename: 'VerificationDocument', fileId, fileName: 'id-card.png', mimeType: 'image/png', sizeBytes: 400 }],
-  aiVerdict: 'MATCH',
-  aiConfidence: 0.82,
-  aiReasons: ['The name and college on the card match the profile.'],
-  aiCheckedAt: '2026-10-20T08:05:00.000Z',
+  aiCheck: {
+    __typename: 'IdCardCheck',
+    verdict: 'MATCH',
+    confidence: 0.82,
+    reason: 'The name and college on the card match the profile.',
+    checkedAt: '2026-10-20T08:05:00.000Z',
+    extracted: { __typename: 'IdCardFields', name: 'Ravi Kumar', institution: 'IIT Hyderabad', idNumber: 'IH20201234', validUntil: '2027-05' },
+  },
 }
 
 test('an admin sees Admin in the sidebar; a student does not', async ({ page }, info) => {
@@ -112,8 +116,8 @@ test('a manager reviews proof, and only sees the admin sections they are allowed
   )
   await page.goto('/admin/verification')
   const nav = page.getByRole('navigation', { name: 'Admin settings' })
-  await expect(nav.getByRole('link', { name: 'Errors' })).toBeVisible()
-  await expect(nav.getByRole('link', { name: 'Usage' })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Errors' })).toHaveCount(0)
+  await expect(nav.getByRole('link', { name: 'Usage' })).toHaveCount(0)
   await expect(nav.getByRole('link', { name: 'Proof of study to review' })).toBeVisible()
   await expect(nav.getByRole('link', { name: 'College ID cards' })).toBeVisible()
   await expect(nav.getByRole('link', { name: 'Roles' })).toHaveCount(0)
@@ -124,6 +128,10 @@ test('a manager reviews proof, and only sees the admin sections they are allowed
   await expect(card.getByText('82% confidence')).toBeVisible()
   await expect(card.getByText('The name and college on the card match the profile.')).toBeVisible()
   await expect(card.getByText(/Checked/)).toBeVisible()
+  await expect(card.getByText('Ravi Kumar', { exact: true })).toBeVisible()
+  await expect(card.getByText('matches the profile').first()).toBeVisible()
+  await expect(card.getByText('ID number IH20201234')).toBeVisible()
+  await expect(card.getByText('Valid until 2027-05')).toBeVisible()
   await card.getByRole('button', { name: 'id-card.png' }).click()
   await expect(card.getByRole('img', { name: 'id-card.png' })).toBeVisible()
   await expect(card.getByRole('link', { name: 'Open in a new tab' })).toHaveAttribute('href', 'http://storage.test/doc')
@@ -178,11 +186,11 @@ test('an admin assigns a role, decides a domain, and turns on the ID-card check'
         },
       }),
       SetGlobalRole: () => ({ setGlobalRole: { __typename: 'OkPayload', ok: true, ...none } }),
-      DomainReviews: () => ({ domainReviews: domains }),
-      DecideDomainReview: (v) => {
+      InstitutionDomains: () => ({ institutionDomains: domains }),
+      ReviewInstitutionDomain: (v) => {
         const input = v.input as { domain: string; approve: boolean }
         domains = domains.map((row) => (row.domain === input.domain ? { ...row, status: input.approve ? 'APPROVED' : 'REJECTED' } : row))
-        return { decideDomainReview: { __typename: 'OkPayload', ok: true, ...none } }
+        return { reviewInstitutionDomain: { __typename: 'OkPayload', ok: true, ...none } }
       },
       AdminSettings: () => ({ adminSettings: catalog }),
       UpdateAdminSetting: (v) => {
@@ -207,7 +215,7 @@ test('an admin assigns a role, decides a domain, and turns on the ID-card check'
   await page.getByRole('button', { name: 'Approve' }).click()
   await expect(page.getByText('No domains are waiting.')).toBeVisible()
   await expect(page.getByRole('list').getByText('newcollege.edu')).toBeVisible()
-  expect(calls.find((call) => call.op === 'DecideDomainReview')?.variables).toEqual({ input: { domain: 'newcollege.edu', approve: true } })
+  expect(calls.find((call) => call.op === 'ReviewInstitutionDomain')?.variables).toEqual({ input: { domain: 'newcollege.edu', approve: true } })
 
   await page.goto('/admin/settings')
   const check = page.getByRole('switch', { name: 'Run the AI check' })
@@ -227,20 +235,17 @@ test('errors group by type and open the people who hit them', async ({ page }, i
       AdminErrors: () => ({
         adminErrors: [
           {
-            __typename: 'ErrorGroup',
-            fingerprint: 'upload-403',
-            type: 'upload',
-            message: 'The file could not be uploaded. Storage refused it (403).',
+            __typename: 'AdminErrorGroup',
+            code: 'upload',
+            sampleMessage: 'The file could not be uploaded. Storage refused it (403).',
             count: 12,
             firstSeen: '2026-10-01T08:00:00.000Z',
             lastSeen: '2026-10-25T09:00:00.000Z',
-            trend: [1, 2, 4, 8, 12],
-            affectedUserIds: [raviId],
-            affectedUsers: [{ __typename: 'AffectedUser', userId: raviId, lastSeen: '2026-10-25T09:00:00.000Z' }],
+            userIds: [raviId],
           },
         ],
       }),
-      UsersByIds: () => ({ usersByIds: [{ __typename: 'User', id: raviId, displayName: 'Ravi Kumar', email: 'ravi@college.edu', handle: 'ravi', globalRole: 'STUDENT' }] }),
+      UsersByIds: () => ({ usersByIds: [{ __typename: 'AdminUserLookup', id: raviId, displayName: 'Ravi Kumar', email: 'ravi@college.edu', globalRole: 'STUDENT' }] }),
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
   )
@@ -266,9 +271,9 @@ test('usage shows active people, top pages and one person’s timeline', async (
           dau: 128,
           wau: 640,
           mau: 2104,
-          topPages: [
-            { __typename: 'UsageCount', name: '/home', count: 900 },
-            { __typename: 'UsageCount', name: '/notes', count: 420 },
+          topFeatures: [
+            { __typename: 'UsageCount', name: 'flashcards', count: 900 },
+            { __typename: 'UsageCount', name: 'reader', count: 420 },
           ],
           topEvents: [
             { __typename: 'UsageCount', name: 'note_open', count: 300 },
@@ -276,10 +281,10 @@ test('usage shows active people, top pages and one person’s timeline', async (
           ],
         },
       }),
-      AdminUserTimeline: () => ({
-        adminUserTimeline: [
-          { __typename: 'TimelineEntry', id: '01920000-0000-7000-8000-00000000e101', name: 'page_view', at: '2026-10-25T09:00:00.000Z', path: '/home' },
-          { __typename: 'TimelineEntry', id: '01920000-0000-7000-8000-00000000e102', name: 'note_open', at: '2026-10-25T09:01:00.000Z', path: '/notes/abc' },
+      AdminUserActivity: () => ({
+        adminUserActivity: [
+          { __typename: 'UserActivityEvent', name: 'page_view', occurredAt: '2026-10-25T09:00:00.000Z', platform: 'WEB', props: null, appVersion: null },
+          { __typename: 'UserActivityEvent', name: 'note_open', occurredAt: '2026-10-25T09:01:00.000Z', platform: 'WEB', props: { feature: 'reader' }, appVersion: null },
         ],
       }),
     },
@@ -289,12 +294,13 @@ test('usage shows active people, top pages and one person’s timeline', async (
   await expect(page.getByText('128')).toBeVisible()
   await expect(page.getByText('640')).toBeVisible()
   await expect(page.getByText('2,104')).toBeVisible()
-  await expect(page.getByText('/home')).toBeVisible()
+  await expect(page.getByText('flashcards', { exact: true })).toBeVisible()
   await expect(page.getByText('note_open')).toBeVisible()
   await page.getByPlaceholder('User id').fill(USER)
   await page.getByRole('button', { name: 'Show activity' }).click()
-  await expect(page.getByText('/notes/abc')).toBeVisible()
-  expect(calls.find((call) => call.op === 'AdminUserTimeline')?.variables).toEqual({ userId: USER })
+  await expect(page.getByText('page_view')).toBeVisible()
+  await expect(page.getByText('WEB').first()).toBeVisible()
+  expect(calls.find((call) => call.op === 'AdminUserActivity')?.variables).toEqual({ userId: USER, first: 50 })
   await shot(page, 'admin_usage')
 })
 

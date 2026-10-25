@@ -13,7 +13,7 @@ export type ClientError = {
 }
 
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
-const SKIP_OPS = new Set(['IngestEvents', 'AnalyticsOptOut', 'Refresh'])
+const SKIP_OPS = new Set(['IngestAnalytics', 'AnalyticsOptOut', 'Refresh'])
 const SKIP_CODES = new Set(['UNAUTHENTICATED', 'FORBIDDEN', 'VALIDATION', 'BAD_USER_INPUT', 'RATE_LIMITED', 'NOT_FOUND'])
 
 let sink: (event: ClientError) => void = () => undefined
