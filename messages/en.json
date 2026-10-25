@@ -3275,16 +3275,18 @@
   },
   "adminUsers": {
     "title": "Users",
-    "lead": "Look up an account, correct a date of birth, block or suspend it, or delete it. A block, suspension or deletion needs a reason. Only platform admins can do this.",
+    "lead": "Look up an account, correct a date of birth, block or suspend it, or delete it. Every edit, block, suspension, or deletion needs a reason. Only platform admins can do this.",
     "search": "Search",
     "searchHint": "Name or email",
     "filters": "Status",
     "status": {
       "AGE_BLOCKED": "Age-blocked",
       "BLOCKED": "Blocked",
+      "BLOCKED_OR_SUSPENDED": "Blocked or suspended",
       "SUSPENDED": "Suspended",
       "ACTIVE": "Active"
     },
+    "count": "{count, plural, one {# account} other {# accounts}}",
     "none": "No accounts in this list.",
     "loading": "Loading…",
     "notAllowed": "Only platform admins can manage users.",

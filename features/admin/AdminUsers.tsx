@@ -14,29 +14,33 @@ import {
   PlatformError,
   setAccountStanding,
   updateAdminUser,
-  type AccountStatus,
   type AdminManagedUser,
+  type AdminUserStatusFilter,
   type AgeOutcome,
 } from '@/lib/platform-api'
 
-const FILTERS: AccountStatus[] = ['AGE_BLOCKED', 'BLOCKED', 'SUSPENDED', 'ACTIVE']
+const FILTERS: AdminUserStatusFilter[] = ['AGE_BLOCKED', 'BLOCKED_OR_SUSPENDED', 'ACTIVE']
 const DELETE_WORD = 'DELETE'
 
 /** Platform admins: search accounts, correct a date of birth, block, suspend, unblock, or delete. */
 export function AdminUsers() {
   const t = useTranslations('adminUsers')
   const { role, ready } = useViewerRole()
-  const [status, setStatus] = useState<AccountStatus>('AGE_BLOCKED')
+  const [status, setStatus] = useState<AdminUserStatusFilter>('AGE_BLOCKED')
   const [search, setSearch] = useState('')
   const [rows, setRows] = useState<AdminManagedUser[] | null>(null)
+  const [total, setTotal] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openUser, setOpenUser] = useState<AdminManagedUser | null>(null)
   const load = useCallback(async () => {
     try {
-      setRows(await loadAdminUsers({ status, search }))
+      const list = await loadAdminUsers({ status, search })
+      setRows(list.users)
+      setTotal(list.total)
       setError(null)
     } catch (e) {
       setRows([])
+      setTotal(null)
       setError(isUnknownFieldError(e) ? t('unavailable') : e instanceof PlatformError && e.forbidden ? t('notAllowed') : t('failed'))
     }
   }, [status, search, t])
@@ -64,6 +68,7 @@ export function AdminUsers() {
           ))}
         </div>
       </div>
+      {total !== null ? <p className="text-sm text-muted">{t('count', { count: total })}</p> : null}
       {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       {rows && !rows.length && !error ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-3">
@@ -94,6 +99,7 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [dob, setDob] = useState('')
+  const [reason, setReason] = useState('')
   const [blockReason, setBlockReason] = useState('')
   const [until, setUntil] = useState('')
   const [deleteReason, setDeleteReason] = useState('')
@@ -105,6 +111,7 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
     setName(user?.displayName ?? '')
     setEmail(user?.email ?? '')
     setDob(user?.dateOfBirth ?? '')
+    setReason('')
     setBlockReason('')
     setUntil('')
     setDeleteReason('')
@@ -116,10 +123,11 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
   }, [user?.id])
   const save = async () => {
     if (!user) return
+    if (!reason.trim()) return setError(t('reasonNeeded'))
     setBusy(true)
     setError(null)
     try {
-      const result = await updateAdminUser({ userId: user.id, displayName: name.trim(), email: email.trim(), dateOfBirth: dob })
+      const result = await updateAdminUser({ userId: user.id, reason: reason.trim(), displayName: name.trim(), email: email.trim(), dateOfBirth: dob })
       if (result.problem) setError(result.problem)
       else {
         if (result.user) {
@@ -204,6 +212,10 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('dob')}</span>
               <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">{t('reason')}</span>
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonHint')} />
             </label>
             <Button type="submit" disabled={busy}>{busy ? t('saving') : t('save')}</Button>
             {outcome ? <p role="status" className="text-sm font-medium">{outcome === 'unblocked' ? t('unblocked') : t('stillUnderAge')}</p> : null}

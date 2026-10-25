@@ -575,6 +575,8 @@ export async function saveAnalyticsOptOut(optOut: boolean): Promise<string | nul
 
 export type AccountStatus = 'ACTIVE' | 'AGE_BLOCKED' | 'BLOCKED' | 'SUSPENDED'
 
+export type AdminUserStatusFilter = 'ACTIVE' | 'AGE_BLOCKED' | 'BLOCKED_OR_SUSPENDED'
+
 export type AgeOutcome = 'unblocked' | 'still_under_age'
 
 export type AdminManagedUser = {
@@ -604,6 +606,7 @@ const USER_FIELDS = /* GraphQL */ `
 const ADMIN_USERS = documentOf(/* GraphQL */ `
   query AdminUsers($status: AdminUserStatusFilter!, $search: String, $first: Int) {
     adminUsers(status: $status, search: $search, first: $first) {
+      total
       users { ${USER_FIELDS} }
     }
   }
@@ -674,13 +677,13 @@ export function ageOutcomeOf(status: string | null | undefined): AgeOutcome | nu
   return null
 }
 
-export async function loadAdminUsers(filter: { status: AccountStatus; search: string }): Promise<AdminManagedUser[]> {
+export async function loadAdminUsers(filter: { status: AdminUserStatusFilter; search: string }): Promise<{ total: number; users: AdminManagedUser[] }> {
   const variables = { status: filter.status, search: filter.search.trim() || null, first: 50 }
-  const data = await run<{ adminUsers: { users: RawUser[] | null } }>(ADMIN_USERS, variables, 'query')
-  return (data.adminUsers.users ?? []).map(userOf)
+  const data = await run<{ adminUsers: { total: number; users: RawUser[] | null } }>(ADMIN_USERS, variables, 'query')
+  return { total: data.adminUsers.total ?? 0, users: (data.adminUsers.users ?? []).map(userOf) }
 }
 
-export type AdminUserEdit = { userId: string; displayName: string; email: string; dateOfBirth: string }
+export type AdminUserEdit = { userId: string; reason: string; displayName: string; email: string; dateOfBirth: string }
 
 export async function updateAdminUser(input: AdminUserEdit): Promise<{ problem: string | null; outcome: AgeOutcome | null; user: AdminManagedUser | null }> {
   type Payload = { user?: RawUser | null; userErrors?: { message: string }[] }

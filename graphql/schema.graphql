@@ -475,6 +475,7 @@ type AdminManagedUser {
 
 """Accounts for one status tab."""
 type AdminUserList {
+  total: Int!
   users: [AdminManagedUser!]!
 }
 
@@ -483,12 +484,11 @@ type AdminUserPayload {
   userErrors: [UserError!]!
 }
 
-"""One account status. adminUsers takes exactly one."""
+"""Which accounts adminUsers returns. BLOCKED_OR_SUSPENDED is both blocked and suspended accounts."""
 enum AdminUserStatusFilter {
   ACTIVE
   AGE_BLOCKED
-  BLOCKED
-  SUSPENDED
+  BLOCKED_OR_SUSPENDED
 }
 
 """Permanently deletes an account. confirm is the exact word DELETE."""
@@ -511,13 +511,14 @@ input AdminSetAccountStandingInput {
 
 """
 Edits the name, email or date of birth and re-runs the age gate.
-A date of birth that passes clears AGE_BLOCKED.
+A date of birth that passes clears AGE_BLOCKED. reason is required on every edit.
 """
 input AdminUpdateUserInput {
-  """YYYY-MM-DD"""
+  """YYYY-MM-DD. The age gate runs again."""
   dateOfBirth: String
   displayName: String
   email: String
+  reason: String!
   userId: UUID!
 }
 
@@ -4238,7 +4239,7 @@ type Query {
   adminUserActivity(first: Int, userId: UUID!): [UserActivityEvent!]!
 
   """
-  Platform admins. Accounts in one status. search matches the name, email or handle.
+  Platform admins. Accounts in one status filter. BLOCKED_OR_SUSPENDED returns both. search matches the name, email or handle.
   """
   adminUsers(first: Int, search: String, status: AdminUserStatusFilter!): AdminUserList!
   aiAnswer(id: UUID!): AiAnswer

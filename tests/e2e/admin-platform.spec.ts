@@ -335,14 +335,19 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   ]
   const listed = (v: Record<string, unknown>) =>
     accounts.filter((account) => {
-      if (account.accountStatus !== v.status) return false
+      const status = String(v.status ?? '')
+      const inTab = status === 'BLOCKED_OR_SUSPENDED' ? account.accountStatus === 'BLOCKED' || account.accountStatus === 'SUSPENDED' : account.accountStatus === status
+      if (!inTab) return false
       const term = String(v.search ?? '').trim().toLowerCase()
       return !term || account.displayName.toLowerCase().includes(term) || account.email.toLowerCase().includes(term)
     })
   const calls = await mockApi(
     page,
     {
-      AdminUsers: (v) => ({ adminUsers: { __typename: 'AdminUserList', users: listed(v) } }),
+      AdminUsers: (v) => {
+        const users = listed(v)
+        return { adminUsers: { __typename: 'AdminUserList', total: users.length, users } }
+      },
       AdminUpdateUser: (v) => {
         const input = v.input as { userId: string; displayName: string; email: string; dateOfBirth: string }
         accounts = accounts.map((account) => (account.id === input.userId ? { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth, accountStatus: 'ACTIVE', statusReason: null } : account))
@@ -366,7 +371,8 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   await page.goto('/admin/users')
   await expect(page.getByRole('heading', { name: 'Users', level: 1 })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Age-blocked' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByRole('button', { name: 'Suspended' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Blocked or suspended' })).toBeVisible()
+  await expect(page.getByText('1 account')).toBeVisible()
   await expect(page.getByText('ravi@college.edu')).toBeVisible()
   await expect(page.getByText('asha@example.com')).toHaveCount(0)
   await page.getByRole('textbox', { name: 'Search' }).fill('nobody')
@@ -378,13 +384,16 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   await expect(drawer.getByText('Date of birth is under the requirement.')).toBeVisible()
   await drawer.getByLabel('Date of birth').fill('2004-04-02')
   await drawer.getByRole('button', { name: 'Save details' }).click()
+  await expect(drawer.getByRole('alert')).toHaveText('Add a reason first.')
+  await drawer.getByPlaceholder('Why you are making this change').first().fill('The date of birth was typed wrong.')
+  await drawer.getByRole('button', { name: 'Save details' }).click()
   await expect(drawer.getByText('Age check: unblocked.')).toBeVisible()
   expect(calls.find((call) => call.op === 'AdminUpdateUser')?.variables).toMatchObject({
-    input: { userId: raviId, dateOfBirth: '2004-04-02', displayName: 'Ravi Kumar', email: 'ravi@college.edu' },
+    input: { userId: raviId, dateOfBirth: '2004-04-02', displayName: 'Ravi Kumar', email: 'ravi@college.edu', reason: 'The date of birth was typed wrong.' },
   })
   await drawer.getByRole('button', { name: 'Block' }).click()
   await expect(drawer.getByRole('alert')).toHaveText('Add a reason first.')
-  await drawer.getByPlaceholder('Why you are making this change').first().fill('Asked to pause the account.')
+  await drawer.getByPlaceholder('Why you are making this change').nth(1).fill('Asked to pause the account.')
   await drawer.getByRole('button', { name: 'Block' }).click()
   await expect(drawer.getByRole('button', { name: 'Unblock' })).toBeVisible()
   expect(calls.find((call) => call.op === 'AdminSetAccountStanding')?.variables).toMatchObject({
@@ -402,7 +411,7 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   await drawer.getByLabel('Type DELETE').fill('delete')
   await expect(remove).toBeDisabled()
   await drawer.getByLabel('Type DELETE').fill('DELETE')
-  await drawer.getByPlaceholder('Why you are making this change').nth(1).fill('Duplicate account.')
+  await drawer.getByPlaceholder('Why you are making this change').nth(2).fill('Duplicate account.')
   await expect(remove).toBeEnabled()
   await shot(page, 'admin_users')
   await remove.click()
