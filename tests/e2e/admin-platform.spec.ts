@@ -399,13 +399,14 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   expect(calls.find((call) => call.op === 'AdminSetAccountStanding')?.variables).toMatchObject({
     input: { userId: raviId, status: 'BLOCKED', reason: 'Asked to pause the account.', until: null },
   })
-  await drawer.getByRole('button', { name: 'Suspend' }).click()
+  await drawer.getByRole('button', { name: 'Suspend', exact: true }).click()
   await expect(drawer.getByRole('alert')).toHaveText('Add when the suspension ends.')
   await drawer.getByLabel('Suspended until').fill('2026-12-01T09:00')
-  await drawer.getByRole('button', { name: 'Suspend' }).click()
-  const suspended = calls.filter((call) => call.op === 'AdminSetAccountStanding').at(-1)?.variables as { input: { status: string; until: string } }
-  expect(suspended.input.status).toBe('SUSPENDED')
-  expect(suspended.input.until).toContain('2026-12-01')
+  await drawer.getByRole('button', { name: 'Suspend', exact: true }).click()
+  await expect.poll(() => {
+    const last = calls.filter((call) => call.op === 'AdminSetAccountStanding').at(-1)?.variables as { input?: { status?: string; until?: string } } | undefined
+    return last?.input
+  }).toMatchObject({ status: 'SUSPENDED', until: expect.stringContaining('2026-12-01') })
   const remove = drawer.getByRole('button', { name: 'Delete this user' })
   await expect(remove).toBeDisabled()
   await drawer.getByLabel('Type DELETE').fill('delete')

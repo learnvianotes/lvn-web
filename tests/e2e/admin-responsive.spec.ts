@@ -168,7 +168,10 @@ async function fits(page: Page, where: string) {
 
 async function barAboveTitle(page: Page, heading: string) {
   // The app and visitor bars are the banner. A page may also use <header> for its own title.
-  const header = await page.getByRole('banner').first().boundingBox()
+  // A signed-in public page swaps in the app bar after hydration, so wait until that bar is laid out.
+  const banner = page.getByRole('banner').first()
+  await expect(banner).toBeVisible()
+  const header = await banner.boundingBox()
   const title = await page.getByRole('heading', { level: 1, name: heading }).boundingBox()
   expect(header?.y ?? 99).toBeLessThanOrEqual(2)
   expect(title!.y).toBeGreaterThanOrEqual(header!.y + header!.height - 1)
