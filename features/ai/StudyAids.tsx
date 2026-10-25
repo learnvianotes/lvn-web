@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpenCheck, CircleHelp, Eye, EyeOff, Layers, Lightbulb, ListChecks, LoaderCircle, ScrollText, type LucideIcon } from 'lucide-react'
+import { BookOpenCheck, CircleQuestionMark, Eye, EyeOff, Layers, Lightbulb, ListChecks, LoaderCircle, ScrollText, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -30,7 +30,7 @@ export interface Aid {
   hidden?: boolean
 }
 
-const ICON: Record<string, LucideIcon> = { SUMMARIZE: ScrollText, KEY_CONCEPTS: Lightbulb, PRACTICE_QUESTIONS: CircleHelp, QUIZ: ListChecks, FLASHCARDS: Layers }
+const ICON: Record<string, LucideIcon> = { SUMMARIZE: ScrollText, KEY_CONCEPTS: Lightbulb, PRACTICE_QUESTIONS: CircleQuestionMark, QUIZ: ListChecks, FLASHCARDS: Layers }
 const POLL_MS = 3000
 
 /** One aid's body: Markdown, or its cards to try. */

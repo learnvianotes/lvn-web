@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Trash } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -122,7 +122,7 @@ export function SkillsEditor() {
                   <ArrowDown className="size-4" aria-hidden />
                 </Button>
                 <Button type="button" variant="ghost" size="icon" aria-label={t('remove', { name: item.name || t('item', { n: i + 1 }) })} onClick={() => setItems((list) => list.filter((x) => x.key !== item.key))}>
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </div>
             </fieldset>

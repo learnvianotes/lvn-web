@@ -22,6 +22,9 @@ const acrossTabs = <T>(fn: () => Promise<T>): Promise<T> =>
  */
 export function refreshSession(): Promise<boolean> {
   inFlight ??= (async () => {
+    // A sign-in that lands while this request is open (the OAuth callback, another tab) stores a newer token.
+    // The empty restore must not wipe that token: it only describes the cookie this request saw.
+    const tokenAtStart = useSession.getState().accessToken
     try {
       const res = await acrossTabs(() => fetch(env.NEXT_PUBLIC_API_URL, {
         method: 'POST',
@@ -32,7 +35,7 @@ export function refreshSession(): Promise<boolean> {
       const body = (await res.json()) as { data?: { refreshSession?: { session?: { accessToken: string; accessTokenExpiresAt: string } } } }
       const s = body.data?.refreshSession?.session
       if (!s) {
-        signedOut()
+        if (useSession.getState().accessToken === tokenAtStart) signedOut()
         return false
       }
       signedIn(s.accessToken, s.accessTokenExpiresAt)

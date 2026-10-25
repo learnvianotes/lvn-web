@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { CircleHelp, MessageSquare } from 'lucide-react'
+import { CircleQuestionMark, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -56,7 +56,7 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
         </div>
         {group.viewerCan.askDoubt && !open ? (
           <Button size="sm" className="ml-auto gap-1.5" onClick={() => setOpen(true)}>
-            <CircleHelp className="size-4" aria-hidden />
+            <CircleQuestionMark className="size-4" aria-hidden />
             {t('ask')}
           </Button>
         ) : null}

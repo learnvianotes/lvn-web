@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Copy, FileText, GraduationCap, RefreshCw, Trash2, Users } from 'lucide-react'
+import { Copy, FileText, GraduationCap, RefreshCw, Trash, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -233,7 +233,7 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
                 <span className="ml-auto flex gap-1">
                   {p.viewerCanDelete ? (
                     <button type="button" onClick={() => void act(() => remove({ variables: { postId: p.id } }))} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
-                      <Trash2 className="size-4" aria-hidden />
+                      <Trash className="size-4" aria-hidden />
                     </button>
                   ) : null}
                   <ReportButton look="icon" entityType="CLASSROOM_POST" entityId={p.id} authorId={p.author.id} />

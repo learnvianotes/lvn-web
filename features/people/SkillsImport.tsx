@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Check, Copy, RefreshCw, Trash2 } from 'lucide-react'
+import { Check, Copy, RefreshCw, Trash } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -146,7 +146,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
                     void run(async () => ({ problem: (await remove({ variables: { identityId: i.id } })).data?.removeExternalIdentity.userErrors[0]?.message }))
                   }}
                 >
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </div>
               {!i.verified ? (
@@ -242,7 +242,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
                   aria-label={t('takeAway', { name: s.name })}
                   onClick={() => void run(async () => ({ problem: (await discard({ variables: { skillIds: [s.id] } })).data?.discardTeacherSkills.userErrors[0]?.message }))}
                 >
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </li>
             ))}
