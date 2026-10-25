@@ -40,6 +40,7 @@ const SECTIONS: [group: string, label: string, href: string][] = [
   ['Platform', 'Errors', '/admin/errors'],
   ['Platform', 'Usage', '/admin/usage'],
   ['People', 'Beta access', '/admin/access'],
+  ['People', 'Users', '/admin/users'],
   ['People', 'Roles', '/admin/roles'],
   ['People', 'Institution domains', '/admin/domains'],
   ['People', 'Proof of study to review', '/admin/verification'],

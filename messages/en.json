@@ -208,7 +208,13 @@
       "refusedTitle": "Sorry, you can’t create an account",
       "refusedLead": "LearnViaNotes accounts are only for adults. You can still read every public note and subject without one.",
       "browse": "Read the public notes",
-      "signOut": "Sign out"
+      "signOut": "Sign out",
+      "blockedTitle": "This account couldn’t be activated",
+      "blockedLead": "We couldn’t activate the account because of the age requirement.",
+      "blockedWrong": "If your details were entered wrong, contact an admin at {email}. They can correct the account.",
+      "blockedNoEmail": "If your details were entered wrong, contact an admin so they can correct the account.",
+      "copyEmail": "Copy email",
+      "copied": "Copied"
     }
   },
   "profile": {
@@ -3243,6 +3249,7 @@
       "verification": "Proof of study to review",
       "studentId": "College ID cards",
       "roles": "Roles",
+      "users": "Users",
       "domains": "Institution domains",
       "errors": "Errors",
       "usage": "Usage",
@@ -3262,6 +3269,45 @@
     "retention": "Days to keep the card image",
     "save": "Save",
     "failed": "Those settings could not be saved. Try again."
+  },
+  "adminUsers": {
+    "title": "Users",
+    "lead": "Look up an account, correct a date of birth, block or unblock it, or delete it. Every change needs a reason and is kept in the audit history. Only platform admins can do this.",
+    "search": "Search",
+    "searchHint": "Name or email",
+    "filters": "Status",
+    "status": {
+      "AGE_BLOCKED": "Age-blocked",
+      "BLOCKED": "Blocked",
+      "ACTIVE": "Active"
+    },
+    "none": "No accounts in this list.",
+    "loading": "Loading…",
+    "notAllowed": "Only platform admins can manage users.",
+    "failed": "Users could not be loaded. Try again.",
+    "unavailable": "This list is not available yet.",
+    "open": "Open",
+    "dob": "Date of birth",
+    "name": "Name",
+    "email": "Email",
+    "reason": "Reason",
+    "reasonHint": "Why you are making this change",
+    "reasonNeeded": "Add a reason first.",
+    "save": "Save details",
+    "saving": "Saving…",
+    "unblocked": "Age check: unblocked.",
+    "stillUnderAge": "Age check: still under age.",
+    "saved": "Saved.",
+    "block": "Block",
+    "unblock": "Unblock",
+    "delete": "Delete user permanently",
+    "deleteLead": "This cannot be undone. Type the user’s email, and give a reason.",
+    "deleteConfirm": "Type their email",
+    "deleteDo": "Delete this user",
+    "deleted": "The account was deleted.",
+    "audit": "Audit history",
+    "noAudit": "No audit history yet.",
+    "close": "Close"
   },
   "adminRoles": {
     "title": "Roles",

@@ -13,7 +13,9 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { SignInDocument } from '@/graphql/generated/graphql'
+import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { refusalMessage } from '@/lib/limit-error'
+import { AgeBlocked } from './AgeBlocked'
 import { InviteOnlyNotice } from './InviteOnlyNotice'
 import { applyProblems } from './forms'
 import { ProviderButtons } from './ProviderButtons'
@@ -32,6 +34,7 @@ export function SignInForm() {
   const finish = useFinishSignIn()
   const [general, setGeneral] = useState<string | null>(null)
   const [refused, setRefused] = useState<string | null>(null)
+  const [hold, setHold] = useState<AgeHold | null>(null)
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } })
   const { errors, isSubmitting } = form.formState
 
@@ -41,6 +44,8 @@ export function SignInForm() {
     try {
       const { data } = await signIn({ variables: { input: values } })
       const payload = data!.signIn
+      const ageHold = ageHoldFromProblems(payload.userErrors)
+      if (ageHold) return setHold(ageHold)
       if (payload.session) return finish(payload.session, next)
       const blocked = payload.userErrors.find((error) => error.code === 'FORBIDDEN')
       const rest = blocked ? payload.userErrors.filter((error) => error !== blocked) : payload.userErrors
@@ -51,6 +56,8 @@ export function SignInForm() {
     }
   })
 
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} />
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
@@ -59,7 +66,7 @@ export function SignInForm() {
       </header>
       <InviteOnlyNotice />
       {inviteFromQuery || refused ? <Alert tone="error">{refused ?? te('inviteOnly')}</Alert> : null}
-      <ProviderButtons next={next} />
+      <ProviderButtons next={next} onAgeHold={setHold} />
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {general ? <Alert tone="error">{general}</Alert> : null}
         <Field label={t('email')} error={errors.email ? te('email') : undefined}>

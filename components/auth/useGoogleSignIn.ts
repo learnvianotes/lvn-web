@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { SignInOptionsDocument, SignInWithGoogleDocument } from '@/graphql/generated/graphql'
+import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { googleIdToken } from '@/lib/auth/google'
 import { firebaseConfig } from '@/lib/env'
 import { refusalMessage } from '@/lib/limit-error'
@@ -20,6 +21,7 @@ export function useGoogleSignIn(next?: string | null) {
   const finish = useFinishSignIn()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hold, setHold] = useState<AgeHold | null>(null)
 
   const signIn = async () => {
     setError(null)
@@ -29,8 +31,10 @@ export function useGoogleSignIn(next?: string | null) {
       if (!idToken) return
       const { data: res } = await exchange({ variables: { idToken } })
       const payload = res?.signInWithGoogle
+      const ageHold = ageHoldFromProblems(payload?.userErrors)
+      if (ageHold) return setHold(ageHold)
       // The API's messages are written for people; Firebase's and the network's are not.
-      const blocked = payload?.userErrors.find((error) => error.code === 'FORBIDDEN')
+      const blocked = payload?.userErrors.find((problem) => problem.code === 'FORBIDDEN')
       if (!payload?.session) return setError(blocked?.message ?? payload?.userErrors[0]?.message ?? t('failed'))
       await finish(payload.session, next)
     } catch (error) {
@@ -40,5 +44,5 @@ export function useGoogleSignIn(next?: string | null) {
     }
   }
 
-  return { available: !!data?.signInOptions.google && !!firebaseConfig, busy, error, signIn }
+  return { available: !!data?.signInOptions.google && !!firebaseConfig, busy, error, hold, signIn }
 }

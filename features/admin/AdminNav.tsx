@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Wallet, X, type LucideIcon } from 'lucide-react'
+import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -13,7 +13,7 @@ export type AdminGroupKey = 'platform' | 'people' | 'content' | 'ai'
 
 export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 
-export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'access' | 'roles' | 'domains' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
+export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'access' | 'users' | 'roles' | 'domains' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
 
 export type AdminSection = {
   href: string
@@ -39,6 +39,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin/errors', group: 'platform', key: 'errors', icon: Bug, roles: ADMIN },
   { href: '/admin/usage', group: 'platform', key: 'usage', icon: Activity, roles: ADMIN },
   { href: '/admin/access', group: 'people', key: 'access', icon: KeyRound, roles: ADMIN },
+  { href: '/admin/users', group: 'people', key: 'users', icon: Users, roles: ADMIN },
   { href: '/admin/roles', group: 'people', key: 'roles', icon: UserCog, roles: ADMIN },
   { href: '/admin/domains', group: 'people', key: 'domains', icon: Building2, roles: ADMIN },
   { href: '/admin/verification', group: 'people', key: 'verification', icon: BadgeCheck, roles: REVIEW },

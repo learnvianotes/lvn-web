@@ -7,6 +7,10 @@
  *
  * The ID-card switches are still written with `updateAdminSetting` and the catalog keys.
  * A query the running API does not know yet falls back to the slimmer document.
+ *
+ * Account admin (`adminAccounts`, `adminAccount`, `updateAdminAccount`, `setAccountBlocked`,
+ * `deleteAdminAccount`) is provisional until lvn-backend PR #27 names the operations.
+ * Each call tries the full document, then a slimmer one, when a field is unknown.
  */
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { parse, type DocumentNode } from 'graphql'
@@ -568,4 +572,226 @@ export async function saveAnalyticsOptOut(optOut: boolean): Promise<string | nul
   const data = await run<{ setAnalyticsOptOut: { ok: boolean; userErrors: { message: string }[] } }>(SET_OPT_OUT, { optOut }, 'mutation')
   const payload = data.setAnalyticsOptOut
   return payload.userErrors[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
+}
+
+/** Provisional until the backend names account standing. */
+export type AccountStanding = 'ACTIVE' | 'BLOCKED' | 'AGE_BLOCKED'
+
+export type AgeRecheck = 'unblocked' | 'still_under_age'
+
+export type AdminAccount = {
+  id: string
+  displayName: string
+  email: string
+  dateOfBirth: string | null
+  globalRole: string
+  status: AccountStanding
+  createdAt: string
+}
+
+export type AccountAuditEntry = {
+  id: string
+  action: string
+  reason: string
+  at: string
+  actorName: string | null
+}
+
+export type AdminAccountDetail = AdminAccount & { audit: AccountAuditEntry[] }
+
+const ACCOUNT_FIELDS = /* GraphQL */ `
+  id
+  displayName
+  email
+  dateOfBirth
+  globalRole
+  status
+  createdAt
+`
+
+const ACCOUNTS = documentOf(/* GraphQL */ `
+  query AdminAccounts($status: AccountStanding, $search: String, $first: Int) {
+    adminAccounts(status: $status, search: $search, first: $first) {
+      ${ACCOUNT_FIELDS}
+    }
+  }
+`)
+
+const ACCOUNTS_BASIC = documentOf(/* GraphQL */ `
+  query AdminAccounts($status: AccountStanding, $search: String, $first: Int) {
+    adminAccounts(status: $status, search: $search, first: $first) {
+      id
+      displayName
+      email
+      globalRole
+      status
+      createdAt
+    }
+  }
+`)
+
+const ACCOUNT = documentOf(/* GraphQL */ `
+  query AdminAccount($id: UUID!) {
+    adminAccount(id: $id) {
+      ${ACCOUNT_FIELDS}
+      audit { id action reason at actorName }
+    }
+  }
+`)
+
+const ACCOUNT_BASIC = documentOf(/* GraphQL */ `
+  query AdminAccount($id: UUID!) {
+    adminAccount(id: $id) {
+      id
+      displayName
+      email
+      globalRole
+      status
+      createdAt
+    }
+  }
+`)
+
+const UPDATE_ACCOUNT = documentOf(/* GraphQL */ `
+  mutation UpdateAdminAccount($input: UpdateAdminAccountInput!) {
+    updateAdminAccount(input: $input) {
+      ageCheck
+      account { id displayName email dateOfBirth status }
+      userErrors { code message }
+    }
+  }
+`)
+
+const UPDATE_ACCOUNT_BASIC = documentOf(/* GraphQL */ `
+  mutation UpdateAdminAccount($input: UpdateAdminAccountInput!) {
+    updateAdminAccount(input: $input) {
+      account { id status }
+      userErrors { code message }
+    }
+  }
+`)
+
+const SET_BLOCKED = documentOf(/* GraphQL */ `
+  mutation SetAccountBlocked($input: SetAccountBlockedInput!) {
+    setAccountBlocked(input: $input) {
+      account { id status }
+      userErrors { code message }
+    }
+  }
+`)
+
+const DELETE_ACCOUNT = documentOf(/* GraphQL */ `
+  mutation DeleteAdminAccount($input: DeleteAdminAccountInput!) {
+    deleteAdminAccount(input: $input) {
+      ok
+      userErrors { code message }
+    }
+  }
+`)
+
+type RawAccount = {
+  id: string
+  displayName: string
+  email: string
+  dateOfBirth?: string | null
+  globalRole?: string | null
+  status?: string | null
+  createdAt?: string | null
+  audit?: { id?: string | null; action?: string | null; reason?: string | null; at?: string | null; actorName?: string | null }[] | null
+}
+
+function standingOf(value: string | null | undefined): AccountStanding {
+  if (value === 'BLOCKED' || value === 'AGE_BLOCKED') return value
+  return 'ACTIVE'
+}
+
+function accountOf(raw: RawAccount): AdminAccount {
+  return {
+    id: raw.id,
+    displayName: raw.displayName,
+    email: raw.email,
+    dateOfBirth: raw.dateOfBirth ?? null,
+    globalRole: raw.globalRole ?? 'STUDENT',
+    status: standingOf(raw.status),
+    createdAt: raw.createdAt ?? '',
+  }
+}
+
+function detailOf(raw: RawAccount): AdminAccountDetail {
+  return {
+    ...accountOf(raw),
+    audit: (raw.audit ?? []).map((entry, index) => ({
+      id: entry.id || `${index}`,
+      action: entry.action ?? '',
+      reason: entry.reason ?? '',
+      at: entry.at ?? '',
+      actorName: entry.actorName ?? null,
+    })),
+  }
+}
+
+/** `UNBLOCKED` / `STILL_UNDER_AGE` from the mutation, or the account status when that field is absent. */
+export function ageRecheckOf(ageCheck: string | null | undefined, status: string | null | undefined): AgeRecheck | null {
+  const code = (ageCheck ?? '').toUpperCase().replace(/[\s-]+/g, '_')
+  if (code === 'UNBLOCKED') return 'unblocked'
+  if (code === 'STILL_UNDER_AGE' || code === 'UNDER_AGE') return 'still_under_age'
+  if (status === 'ACTIVE') return 'unblocked'
+  if (status === 'AGE_BLOCKED') return 'still_under_age'
+  return null
+}
+
+async function firstOf<T>(attempts: (() => Promise<T>)[]): Promise<T> {
+  let last: unknown
+  for (const attempt of attempts) {
+    try {
+      return await attempt()
+    } catch (error) {
+      if (!isUnknownFieldError(error)) throw error
+      last = error
+    }
+  }
+  throw last instanceof Error ? last : new PlatformError('Request failed')
+}
+
+export async function loadAdminAccounts(filter: { status: AccountStanding; search: string }): Promise<AdminAccount[]> {
+  const variables = { status: filter.status, search: filter.search.trim() || null, first: 50 }
+  const rows = await firstOf([
+    () => run<{ adminAccounts: RawAccount[] }>(ACCOUNTS, variables, 'query').then((data) => data.adminAccounts),
+    () => run<{ adminAccounts: RawAccount[] }>(ACCOUNTS_BASIC, variables, 'query').then((data) => data.adminAccounts),
+  ])
+  return (rows ?? []).map(accountOf)
+}
+
+export async function loadAdminAccount(id: string): Promise<AdminAccountDetail> {
+  const raw = await firstOf([
+    () => run<{ adminAccount: RawAccount | null }>(ACCOUNT, { id }, 'query').then((data) => data.adminAccount),
+    () => run<{ adminAccount: RawAccount | null }>(ACCOUNT_BASIC, { id }, 'query').then((data) => data.adminAccount),
+  ])
+  if (!raw) throw new PlatformError('That account was not found.')
+  return detailOf(raw)
+}
+
+export type AccountEdit = { userId: string; displayName: string; email: string; dateOfBirth: string; reason: string }
+
+export async function updateAdminAccount(input: AccountEdit): Promise<{ problem: string | null; recheck: AgeRecheck | null; account: AdminAccount | null }> {
+  type Payload = { ageCheck?: string | null; account?: RawAccount | null; userErrors?: { message: string }[] }
+  const data = await firstOf([
+    () => run<{ updateAdminAccount: Payload }>(UPDATE_ACCOUNT, { input }, 'mutation').then((result) => result.updateAdminAccount),
+    () => run<{ updateAdminAccount: Payload }>(UPDATE_ACCOUNT_BASIC, { input }, 'mutation').then((result) => result.updateAdminAccount),
+  ])
+  const problem = data.userErrors?.[0]?.message ?? null
+  return { problem, recheck: problem ? null : ageRecheckOf(data.ageCheck, data.account?.status), account: data.account ? accountOf({ ...data.account, displayName: data.account.displayName ?? input.displayName, email: data.account.email ?? input.email }) : null }
+}
+
+export async function setAccountBlocked(input: { userId: string; blocked: boolean; reason: string }): Promise<{ problem: string | null; status: AccountStanding | null }> {
+  const data = await run<{ setAccountBlocked: { account?: { status?: string | null } | null; userErrors?: { message: string }[] } }>(SET_BLOCKED, { input }, 'mutation')
+  const payload = data.setAccountBlocked
+  const problem = payload.userErrors?.[0]?.message ?? null
+  return { problem, status: problem ? null : standingOf(payload.account?.status ?? (input.blocked ? 'BLOCKED' : 'ACTIVE')) }
+}
+
+export async function deleteAdminAccount(input: { userId: string; confirmEmail: string; reason: string }): Promise<string | null> {
+  const data = await run<{ deleteAdminAccount: { ok: boolean; userErrors?: { message: string }[] } }>(DELETE_ACCOUNT, { input }, 'mutation')
+  const payload = data.deleteAdminAccount
+  return payload.userErrors?.[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }

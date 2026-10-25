@@ -14,8 +14,10 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { CompleteRegistrationDocument, SignInOptionsDocument, SignOutDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { markAgeRefused } from '@/lib/age'
+import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { signedInDestination } from '@/lib/auth/destination'
 import { signedOut } from '@/lib/auth/session'
+import { AgeBlocked } from './AgeBlocked'
 import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
 import { applyProblems } from './forms'
 
@@ -46,6 +48,7 @@ export function DetailsForm() {
   const [complete] = useMutation(CompleteRegistrationDocument)
   const [signOut] = useMutation(SignOutDocument)
   const [general, setGeneral] = useState<string | null>(null)
+  const [hold, setHold] = useState<AgeHold | null>(null)
   const refused = useAgeRefused()
   const [pending, setPending] = useState<Values | null>(null)
   const [sending, setSending] = useState(false)
@@ -80,6 +83,14 @@ export function DetailsForm() {
     try {
       const { data } = await complete({ variables: { input: { ...values, institutionalEmail: institutionalEmail || null, acceptedTermsVersion: options?.termsVersion ?? '' } } })
       const payload = data!.completeRegistration
+      const ageHold = ageHoldFromProblems(payload.userErrors)
+      if (ageHold) {
+        await signOut().catch(() => undefined)
+        signedOut()
+        await client.clearStore()
+        setHold(ageHold)
+        return
+      }
       if (payload.userErrors.some((e) => e.code === 'UNDER_MINIMUM_AGE')) {
         // The API erased this unfinished account; the sign-up page shows the refusal from now on.
         markAgeRefused()
@@ -97,6 +108,8 @@ export function DetailsForm() {
   }
 
   const message = (n: (typeof FIELDS)[number], fallback: string) => (errors[n] ? (errors[n]!.type === 'server' ? errors[n]!.message : fallback) : undefined)
+
+  if (hold) return <AgeBlocked supportEmail={hold.supportEmail} />
 
   if (refused) {
     return (

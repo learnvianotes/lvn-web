@@ -158,6 +158,26 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await expect(page).toHaveURL(/\/profile$/)
   })
 
+  test('an age-restricted sign-up explains how to reach an admin', async ({ page }) => {
+    const support = 'The account could not be activated. Write to support@learnvianotes.in if the date of birth is wrong.'
+    await mockApi(page, {
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, support, 'AGE_RESTRICTED')] } }),
+    })
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => undefined)
+    await page.goto('/sign-up')
+    await fillSignUp(page)
+    await page.getByLabel('Date of birth').fill('2014-05-01')
+    await createAccount(page, '1 May 2014')
+    await expect(page.getByRole('heading', { level: 1, name: 'This account couldn’t be activated' })).toBeVisible()
+    await expect(page.getByText('We couldn’t activate the account because of the age requirement.')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+    await expect(page.getByRole('main')).not.toContainText('18')
+    await page.getByRole('button', { name: 'Copy email' }).click()
+    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
+    const dir = process.env.ADMIN_PLATFORM_SHOTS
+    if (dir) await page.screenshot({ path: `${dir}/age_blocked.png`, fullPage: true })
+  })
+
   test('a refusal closes sign-up on this device for a day, and deletes or signs out nobody', async ({ page }) => {
     const calls = await mockApi(page, {
       SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'dateOfBirth'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')] } }),
@@ -172,7 +192,7 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await page.reload()
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
     await expect(page.getByLabel('Date of birth')).toHaveCount(0)
-    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions', 'AccessPolicy'].includes(op))).toEqual(['SignUp'])
+    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions', 'AccessPolicy', 'AnalyticsOptOut', 'IngestAnalytics'].includes(op))).toEqual(['SignUp'])
     // A day later the form is back.
     await page.evaluate(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() - 86_400_001 })))
     await page.reload()
@@ -217,6 +237,19 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
 })
 
 test.describe('sign in', () => {
+  test('an age-blocked account sees the same message as a refused sign-up', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'This account is age-blocked. Contact support@learnvianotes.in.', 'AGE_BLOCKED')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByLabel('Email').fill('ravi@college.edu')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'This account couldn’t be activated' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+    await expect(page.getByLabel('Password')).toHaveCount(0)
+  })
+
   test('shows one message for a wrong email or password', async ({ page }) => {
     await mockApi(page, { SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'Email or password is incorrect.')] } }) })
     await page.goto('/sign-in')

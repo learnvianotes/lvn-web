@@ -48,6 +48,7 @@ const PAGES: { path: string; heading: string; shot?: string; admin?: boolean }[]
   { path: '/admin/settings', heading: 'Configuration', shot: 'configuration' },
   { path: '/admin/plans', heading: 'Plans & pricing', shot: 'plans' },
   { path: '/admin/access', heading: 'Beta access', shot: 'access' },
+  { path: '/admin/users', heading: 'Users' },
   { path: '/admin/errors', heading: 'Errors' },
   { path: '/admin/usage', heading: 'Usage' },
   { path: '/admin/roles', heading: 'Roles' },
@@ -145,6 +146,7 @@ async function adminApi(page: Page) {
       AdminErrors: () => ({ adminErrors: [] }),
       AdminUsage: () => ({ adminUsage: { __typename: 'AdminUsageSummary', dau: 0, wau: 0, mau: 0, from: '2026-09-25T00:00:00.000Z', to: '2026-10-25T00:00:00.000Z', topFeatures: [], topEvents: [] } }),
       InstitutionDomains: () => ({ institutionDomains: [] }),
+      AdminAccounts: () => ({ adminAccounts: [] }),
     },
     { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
   )

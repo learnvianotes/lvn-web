@@ -65,6 +65,7 @@ const SECTIONS: [label: string, href: string][] = [
   ['Errors', '/admin/errors'],
   ['Usage', '/admin/usage'],
   ['Beta access', '/admin/access'],
+  ['Users', '/admin/users'],
   ['Roles', '/admin/roles'],
   ['Institution domains', '/admin/domains'],
   ['Proof of study to review', '/admin/verification'],
