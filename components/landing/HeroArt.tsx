@@ -18,12 +18,12 @@ export function HeroArt({ className }: { className?: string }) {
           <feDropShadow dx="0" dy="12" stdDeviation="14" floodColor="#1E3A8A" floodOpacity="0.18" />
         </filter>
       </defs>
-      <circle cx="380" cy="80" r="64" fill="#93C5FD" opacity="0.35" />
-      <circle cx="70" cy="320" r="48" fill="#F9A8D4" opacity="0.35" />
+      <circle cx="380" cy="80" r="64" fill="#9dc0ea" opacity="0.28" />
+      <circle cx="70" cy="320" r="48" fill="#d5dde8" opacity="0.7" />
       {/* Flashcards, fanned behind the note */}
       <g filter="url(#hero-shadow)">
-        <rect x="270" y="150" width="170" height="110" rx="18" fill="#FDE68A" transform="rotate(12 355 205)" />
-        <rect x="262" y="160" width="170" height="110" rx="18" fill="#FBCFE8" transform="rotate(4 347 215)" />
+        <rect x="270" y="150" width="170" height="110" rx="18" fill="#f5e6b8" transform="rotate(12 355 205)" />
+        <rect x="262" y="160" width="170" height="110" rx="18" fill="#e7f0fa" transform="rotate(4 347 215)" />
         <rect x="255" y="172" width="170" height="110" rx="18" fill="url(#hero-card)" />
         <text x="358" y="216" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="15" fontWeight="700" fill="#1E3A8A">
           What is a BST?
@@ -48,7 +48,7 @@ export function HeroArt({ className }: { className?: string }) {
         <circle cx="160" cy="212" r="14" fill="#FDE68A" />
         <circle cx="122" cy="246" r="12" fill="#A7F3D0" />
         <circle cx="198" cy="246" r="12" fill="#BFDBFE" />
-        <circle cx="102" cy="280" r="10" fill="#FBCFE8" />
+        <circle cx="102" cy="280" r="10" fill="#c5d4e8" />
         <circle cx="142" cy="280" r="10" fill="#A5F3FC" />
         {/* Learned */}
         <circle cx="252" cy="96" r="18" fill="#22C55E" />
@@ -59,7 +59,7 @@ export function HeroArt({ className }: { className?: string }) {
         <rect x="292" y="300" width="160" height="56" rx="18" fill="url(#hero-accent)" />
         <path d="M312 356 l-10 18 l26 -18 z" fill="#0891B2" />
         <text x="372" y="334" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="14" fontWeight="600" fill="#FFFFFF">
-          Explain simply ✨
+          Explain simply
         </text>
       </g>
       {/* Graduation cap */}
@@ -69,9 +69,8 @@ export function HeroArt({ className }: { className?: string }) {
         <line x1="100" y1="27" x2="100" y2="56" stroke="#F59E0B" strokeWidth="3" />
         <circle cx="100" cy="58" r="4" fill="#F59E0B" />
       </g>
-      {/* Sparkles */}
-      <path d="M440 220 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4 z" fill="#FBBF24" />
-      <path d="M30 120 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" fill="#60A5FA" />
+      <path d="M440 220 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4 z" fill="#1e4d8c" />
+      <path d="M30 120 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" fill="#0f5f6b" />
     </svg>
   )
 }

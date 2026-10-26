@@ -376,7 +376,7 @@
   --fire: #f97316;
   --fire-soft: #fff4ec;
   --danger: #dc2626;
-  --hero-grad: linear-gradient(135deg, #eef4ff 0%, #f6f8fc 55%, #fff6ee 100%);
+  --hero-grad: linear-gradient(135deg, #e7f0fa 0%, #f4f6f8 70%, #ffffff 100%);
 }
 :root[data-theme='dark'] {
   --fire: #fb923c;

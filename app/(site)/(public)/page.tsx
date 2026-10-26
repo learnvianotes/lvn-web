@@ -36,17 +36,16 @@ export default async function HomePage() {
     <>
       <RedirectSignedInHome />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <section className="relative isolate overflow-hidden bg-[linear-gradient(160deg,#F0F9FF_0%,#EFF6FF_55%,#FFFFFF_100%)] pb-16 text-fg dark:bg-[linear-gradient(160deg,#0B1220_0%,#1E3A8A_55%,#2563EB_100%)] dark:text-white">
-        <span aria-hidden className="pointer-events-none absolute -right-24 -top-16 -z-10 size-72 rounded-full bg-[#BFDBFE]/50 dark:bg-[#60A5FA]/20" />
+      <section className="border-b border-border bg-surface">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
           <div className="flex animate-rise flex-col gap-5">
-            <p className="inline-flex w-fit items-center gap-2 rounded-full border border-accent/20 bg-surface/70 px-3 py-1 text-xs font-semibold text-accent dark:border-white/20 dark:bg-white/10 dark:text-[#BFDBFE]">
-              ✦ {t('hero.eyebrow')}
+            <p className="inline-flex w-fit items-center rounded-full border border-border bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">
+              {t('hero.eyebrow')}
             </p>
             <h1 className="text-4xl font-extrabold tracking-tight text-balance sm:text-5xl">
-              {t('hero.titleLead')} <span className="text-accent dark:text-[#93C5FD]">{t('hero.titleAccent')}</span>
+              {t('hero.titleLead')} <span className="text-accent">{t('hero.titleAccent')}</span>
             </h1>
-            <p className="max-w-xl text-base text-muted text-pretty sm:text-lg dark:text-white/80">{t('hero.lead')}</p>
+            <p className="max-w-xl text-base text-muted text-pretty sm:text-lg">{t('hero.lead')}</p>
             <HeroActions />
             <Link href="/subjects" className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent hover:underline dark:text-[#BFDBFE]">
               {t('cta')} <ArrowRight className="size-4" aria-hidden />

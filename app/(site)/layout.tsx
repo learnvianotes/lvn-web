@@ -5,9 +5,10 @@ import { Analytics } from '@/components/analytics/Analytics'
 import { UsageTracker } from '@/components/analytics/UsageTracker'
 import { ReleaseLandingHold } from '@/components/landing/ReleaseLandingHold'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { ThemeSync } from '@/components/theme/ThemeSync'
 import { landingHoldScript } from '@/lib/auth/hint'
 import { env } from '@/lib/env'
-import { THEME_KEY } from '@/lib/theme'
+import { PAPER, themeBootScript } from '@/lib/theme'
 import '../globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
@@ -40,13 +41,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#161b22' },
+    { media: '(prefers-color-scheme: light)', color: PAPER.light },
+    { media: '(prefers-color-scheme: dark)', color: PAPER.dark },
   ],
 }
 
-// Applies the saved (or system) theme before first paint so there is no flash.
-const themeScript = `try{var t=JSON.parse(localStorage.getItem('${THEME_KEY}'));if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}`
+// Mode, accent, and the resolved scheme, before first paint.
+const themeScript = themeBootScript()
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="antialiased">
         <ReleaseLandingHold />
+        <ThemeSync />
         <NextIntlClientProvider>
           {children}
           <Analytics />

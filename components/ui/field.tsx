@@ -15,7 +15,7 @@ export function Field({ label, hint, error, children }: { label: string; hint?: 
       <label htmlFor={id} className="text-sm font-medium">{label}</label>
       {control}
       {hint ? <p id={hintId} className="text-xs text-muted">{hint}</p> : null}
-      {error ? <p id={errorId} role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p id={errorId} role="alert" className="text-xs font-medium text-bad">{error}</p> : null}
     </div>
   )
 }

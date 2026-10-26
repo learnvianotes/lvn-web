@@ -26,7 +26,7 @@ function Actions() {
   if (signedIn) {
     return (
       <div className="flex flex-wrap gap-3">
-        <Link href="/home" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-accent-fg shadow-lg shadow-accent/25 hover:opacity-90">
+        <Link href="/home" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
           {t('openHome')}
         </Link>
         <Link href="/profile" className="inline-flex h-12 items-center rounded-full border border-border bg-surface px-6 text-[15px] font-semibold text-fg hover:bg-surface-2">
@@ -39,7 +39,7 @@ function Actions() {
     <div className="flex flex-col gap-3">
       {google.error ? <Alert tone="error">{google.error}</Alert> : null}
       <div className="flex flex-wrap items-center gap-3">
-        <Link href="/sign-up" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-accent-fg shadow-lg shadow-accent/25 hover:opacity-90">
+        <Link href="/sign-up" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
           {t('start')}
         </Link>
         {google.available ? (
@@ -48,13 +48,13 @@ function Actions() {
           </div>
         ) : null}
       </div>
-      <p className="text-sm text-muted dark:text-white/75">
+      <p className="text-sm text-muted">
         {t('haveAccount')}{' '}
-        <Link href="/sign-in" className="font-semibold text-accent hover:underline dark:text-[#BFDBFE]">
+        <Link href="/sign-in" className="font-semibold text-accent hover:underline">
           {t('signIn')}
         </Link>
       </p>
-      {google.available ? <p className="max-w-md text-xs leading-5 text-muted dark:text-white/70">{tw.rich('legal', legalLinks)}</p> : null}
+      {google.available ? <p className="max-w-md text-xs leading-5 text-muted">{tw.rich('legal', legalLinks)}</p> : null}
     </div>
   )
 }

@@ -27,9 +27,9 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Logo } from '@/components/brand/Logo'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { AppearanceMenu } from '@/components/theme/AppearanceMenu'
 import { LimitNotice } from '@/components/ui/limit-notice'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { useReadPdf } from '@/features/reader/readPdf'
@@ -79,12 +79,22 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
   // Admin keeps the top bar in the frame and scrolls the page under it. A sticky bar inside a document that also
   // overflows sideways is painted over the content (and over a full-page screenshot).
   const admin = path.startsWith('/admin')
+  const menuButton = useRef<HTMLButtonElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
   useEffect(() => setOpen(false), [path])
   useEffect(() => {
     if (!open) return
+    const button = menuButton.current
+    closeButton.current?.focus()
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
+      button?.focus()
+    }
   }, [open])
   return (
     <div className={cn('min-h-dvh', app && 'lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]', admin && 'h-dvh max-h-dvh overflow-hidden')}>
@@ -98,7 +108,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
         </aside>
       ) : null}
       <div className={cn('flex min-w-0 flex-col', admin && 'h-dvh max-h-dvh min-h-0 overflow-hidden')}>
-        {app ? <TopBar onMenu={() => setOpen(true)} pinned={admin} /> : visitor}
+        {app ? <TopBar menuButton={menuButton} open={open} onMenu={() => setOpen(true)} pinned={admin} /> : visitor}
         {app ? <DeletionBanner /> : null}
         <main
           id="main"
@@ -119,7 +129,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <Brand />
-              <button type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="rounded-lg p-2 text-muted hover:bg-surface-2">
+              <button ref={closeButton} type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="inline-flex size-10 items-center justify-center rounded-lg text-muted hover:bg-surface-2">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
@@ -205,7 +215,7 @@ function Nav() {
           readPdf.limit ? (
             <LimitNotice>{readPdf.error}</LimitNotice>
           ) : (
-            <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
+            <p role="alert" className="px-3 text-xs text-bad">
               {readPdf.error}
             </p>
           )
@@ -214,14 +224,14 @@ function Nav() {
           createError.limit ? (
             <LimitNotice>{createError.message}</LimitNotice>
           ) : (
-            <p role="alert" className="px-3 text-xs text-red-600 dark:text-red-400">
+            <p role="alert" className="px-3 text-xs text-bad">
               {createError.message}
             </p>
           )
         ) : null}
           </>
         ) : null}
-        <button type="button" onClick={() => void newNote()} disabled={creating.loading} className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg hover:opacity-90">
+        <button type="button" onClick={() => void newNote()} disabled={creating.loading} className="mt-1 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
           <Plus className="size-4" aria-hidden />
           {t('createNote')}
         </button>
@@ -230,16 +240,15 @@ function Nav() {
   )
 }
 
-/** The top bar: the menu (below 1024 px), search (opens the palette), the theme, the bell and the avatar. */
-function TopBar({ onMenu, pinned }: { onMenu: () => void; pinned?: boolean }) {
+/** The top bar: the menu (below 1024 px), search (opens the palette), appearance, the bell and the avatar. */
+function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open: boolean; menuButton: RefObject<HTMLButtonElement | null>; pinned?: boolean }) {
   const t = useTranslations('shell')
-  const ts = useTranslations('site')
   const router = useRouter()
   const viewer = useQuery(ViewerDocument).data?.viewer
   return (
-    <header className={cn('z-30 shrink-0 border-b border-border bg-bg/85 backdrop-blur supports-[backdrop-filter]:bg-bg/70', pinned ? 'relative' : 'sticky top-0')}>
+    <header className={cn('z-30 shrink-0 border-b border-border bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-bg/70', pinned ? 'relative' : 'sticky top-0')}>
       <div className={cn('mx-auto flex h-14 min-w-0 items-center gap-1 px-3 sm:gap-2 sm:px-4', pinned ? 'max-w-none' : 'max-w-6xl')}>
-        <button type="button" aria-label={t('menu')} onClick={onMenu} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
+        <button ref={menuButton} type="button" aria-label={t('menu')} aria-expanded={open} onClick={onMenu} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
           <Menu className="size-5" aria-hidden />
         </button>
         <button
@@ -255,8 +264,8 @@ function TopBar({ onMenu, pinned }: { onMenu: () => void; pinned?: boolean }) {
           <span className="truncate">{t('searchPlaceholder')}</span>
           <kbd className="ml-auto hidden rounded border border-border px-1.5 text-[10px] sm:inline">Ctrl K</kbd>
         </button>
-        <div className="ml-auto flex shrink-0 items-center">
-          <ThemeToggle labels={{ toLight: ts('theme.toLight'), toDark: ts('theme.toDark') }} />
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
+          <AppearanceMenu />
           <NotificationBell />
           <Link href="/profile" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
             {(viewer?.displayName ?? '?').slice(0, 1).toUpperCase()}

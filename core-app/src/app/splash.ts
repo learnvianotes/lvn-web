@@ -1,8 +1,8 @@
 /* ============================================================
    Launch splash (markup + styles inline in index.html so it
-   paints before any JS). Hidden as soon as the first content is
-   ready — there's no minimum display time — and after 8 s at the
-   latest, so it can never block the app.
+   paints before any JS). Hidden as soon as the app shell mounts,
+   and after 8 s at the latest if that script never runs. The page
+   underneath shows its own loading and error states.
    ============================================================ */
 
 let done = false

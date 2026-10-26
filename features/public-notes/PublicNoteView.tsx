@@ -95,19 +95,19 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
       <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
-            <p className="flex items-center gap-1.5 text-sm font-medium text-[#BFDBFE]">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-inverse-muted">
               <Sparkles className="size-4" aria-hidden />
               {t('ctaKicker')}
             </p>
             <p className="text-xl font-bold">{t('ctaTitle')}</p>
-            <p className="text-sm text-white/80">{t('ctaLead')}</p>
+            <p className="text-sm text-inverse-muted">{t('ctaLead')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0B1220] hover:bg-white/90">
+            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-full bg-inverse-ink px-4 py-2 text-sm font-semibold text-inverse hover:opacity-90">
               <NotebookPen className="size-4" aria-hidden />
               {t('ctaStart')}
             </Link>
-            <Link href={`/notes/${note.id}`} className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-white/40 hover:bg-white/10">
+            <Link href={`/notes/${note.id}`} className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-inverse-ink/40 hover:bg-white/10">
               {t('ctaOpen')}
             </Link>
           </div>

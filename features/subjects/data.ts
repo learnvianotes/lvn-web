@@ -51,6 +51,16 @@ const TOPICS = 'topics { id slug title children { id slug title } }'
 /** Every subject with its topics, in the catalogue's order; empty when the API cannot answer. */
 export const listSubjects = cache(async (): Promise<SubjectSummary[]> => (await query<{ subjects: SubjectSummary[] }>(`query Subjects { subjects { id slug title ${TOPICS} } }`, {})).subjects)
 
+/** A subject, or why it is not on the page: missing is a real 404; down is an API failure. */
+export async function loadSubject(slug: string): Promise<{ status: 'ok'; subject: SubjectSummary } | { status: 'missing' } | { status: 'down' }> {
+  try {
+    const subject = await getSubject(slug)
+    return subject ? { status: 'ok', subject } : { status: 'missing' }
+  } catch {
+    return { status: 'down' }
+  }
+}
+
 export const getSubject = cache(
   async (slug: string): Promise<SubjectSummary | null> => (await query<{ subject: SubjectSummary | null }>(`query Subject($slug: String!) { subject(slug: $slug) { id slug title ${TOPICS} } }`, { slug })).subject,
 )
