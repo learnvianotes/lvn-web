@@ -69,7 +69,7 @@
     "rxjs": "^7.8.2",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.7.0",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -97,7 +97,9 @@
   "pnpm": {
     "overrides": {
       "next>postcss": "^8.5.23",
-      "@grpc/grpc-js": "^1.13.6"
+      "@grpc/grpc-js": "^1.13.6",
+      "lodash": "4.18.1",
+      "lodash-es": "4.18.1"
     }
   }
 }

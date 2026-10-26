@@ -1,4 +1,5 @@
 import type { NotificationFieldsFragment } from '@/graphql/generated/graphql'
+import { safeNext } from '@/lib/auth/destination'
 
 type Translate = (key: string, values?: Record<string, string | number>) => string
 
@@ -94,6 +95,8 @@ export function describeNotification(
 
 /** Where a notification opens: its path, and for a comment or mention on a note the note's Discussions tab (ADR-0076). */
 export function notificationHref(n: { category: string; path: string }): string {
-  if ((n.category === 'COMMENT' || n.category === 'MENTION') && /^\/notes\/[0-9a-f-]{36}$/.test(n.path)) return `${n.path}?tab=discussions`
-  return n.path
+  // The path comes from the API. It is still a navigation target, so an off-site value must not leave this site.
+  const path = safeNext(n.path) ?? '/notifications'
+  if ((n.category === 'COMMENT' || n.category === 'MENTION') && /^\/notes\/[0-9a-f-]{36}$/.test(path)) return `${path}?tab=discussions`
+  return path
 }
