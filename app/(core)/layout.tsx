@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { APP_NAME } from '@core/config'
 import { SITE_DESCRIPTION } from '@core/app/title'
 import { env } from '@/lib/env'
+import { PAPER, themeBootScript } from '@/lib/theme'
 // The old site's global styles, in its order; feature styles are imported by their components.
 import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import '@core/shared/styles/base.css'
@@ -38,13 +39,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#17171a' },
+    { media: '(prefers-color-scheme: light)', color: PAPER.light },
+    { media: '(prefers-color-scheme: dark)', color: PAPER.dark },
   ],
 }
 
-// Apply the saved theme before first paint (no flash).
-const themeScript = `try{var t=JSON.parse(localStorage.getItem('cnote:theme'));if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)}catch(e){}`
+// Same pre-paint script as the product site, so accent and mode survive a full load into /core.
+const themeScript = themeBootScript()
 
 // Launch splash: shown only while the app is actually loading (removed by core-app/src/app/splash.ts).
 // Inner HTML, so React never owns the nodes the app removes.
@@ -54,6 +55,7 @@ const splash = `<div id="splash" role="status" aria-label="Loading ${APP_NAME}">
     <img src="/icons/icon-192.png" alt="" width="72" height="72" />
   </div>
   <div class="splash-name">${APP_NAME}</div>
+  <p class="splash-status">Opening notes…</p>
   <div class="splash-bar"><span></span></div>
 </div>
 <style>
@@ -66,6 +68,8 @@ const splash = `<div id="splash" role="status" aria-label="Loading ${APP_NAME}">
   .splash-mark img { position: relative; border-radius: 18px; box-shadow: 0 10px 30px -10px rgb(37 99 235 / .45); animation: splash-float 1.6s ease-in-out infinite; }
   .splash-glow { position: absolute; inset: -18px; border-radius: 50%; background: radial-gradient(circle, rgb(37 99 235 / .22), transparent 70%); animation: splash-pulse 1.6s ease-in-out infinite; }
   .splash-name { animation: splash-in .4s .06s cubic-bezier(.2,.8,.2,1) both; }
+  .splash-status { margin: 0; font-size: 14px; font-weight: 500; color: #3d4b63; animation: splash-in .4s .1s both; }
+  [data-theme='dark'] .splash-status { color: #b7c3d4; }
   .splash-bar { width: 120px; height: 3px; border-radius: 3px; overflow: hidden; background: rgb(127 127 127 / .18); animation: splash-in .4s .1s both; }
   .splash-bar span { display: block; width: 40%; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: splash-slide 1s ease-in-out infinite; }
   @keyframes splash-in { from { opacity: 0; transform: translateY(6px) scale(.97); } }

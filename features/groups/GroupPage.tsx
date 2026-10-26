@@ -549,7 +549,7 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
       </h3>
       {group.pictureUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- a short-lived read URL from storage
-        <img src={group.pictureUrl} alt="" className="h-28 w-56 rounded-xl border border-border object-cover" />
+        <img src={group.pictureUrl} alt={t('pictureOf', { name: group.name })} className="h-28 w-56 rounded-xl border border-border object-cover" />
       ) : (
         <p className="text-sm text-muted">{t('noPicture')}</p>
       )}

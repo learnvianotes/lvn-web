@@ -13,12 +13,12 @@ type Rec = RecommendationsQuery['recommendations'][number]
 
 /** A picture for each kind of recommendation (board A's illustrated cards): a gradient and the kind's sign. */
 const ART: Record<RecommendationKind, { icon: typeof BookOpen; from: string; to: string }> = {
-  EXAM_TOPIC: { icon: CalendarClock, from: '#EA580C', to: '#DB2777' },
-  REVISE_TOPIC: { icon: RotateCcw, from: '#2563EB', to: '#0891B2' },
-  CONTINUE_NOTE: { icon: BookOpen, from: '#0284C7', to: '#2563EB' },
-  QUIZ_ON_TOPIC: { icon: ListChecks, from: '#059669', to: '#0284C7' },
-  POPULAR_NOTE: { icon: TrendingUp, from: '#0891B2', to: '#DB2777' },
-  RESOURCE: { icon: Library, from: '#0D9488', to: '#2563EB' },
+  EXAM_TOPIC: { icon: CalendarClock, from: '#8a4b08', to: '#1e4d8c' },
+  REVISE_TOPIC: { icon: RotateCcw, from: '#1e4d8c', to: '#0f5f6b' },
+  CONTINUE_NOTE: { icon: BookOpen, from: '#163e73', to: '#1e4d8c' },
+  QUIZ_ON_TOPIC: { icon: ListChecks, from: '#0f6b45', to: '#0f5f6b' },
+  POPULAR_NOTE: { icon: TrendingUp, from: '#0f5f6b', to: '#1e4d8c' },
+  RESOURCE: { icon: Library, from: '#0f5f6b', to: '#163e73' },
 }
 const coreName = (key: string) => key.replace(/^core:/, '').replace('/', ' / ').replace(/-/g, ' ')
 const hrefOf = (r: Rec) => (r.note ? `/notes/${r.note.id}` : r.resource ? `/resources/${r.resource.id}` : r.topic ? `/search?topic=${r.topic.id}&topicTitle=${encodeURIComponent(r.topicTitle ?? '')}` : `/search?q=${encodeURIComponent(r.topicTitle ?? coreName(r.topicKey ?? ''))}`)

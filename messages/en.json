@@ -13,9 +13,23 @@
       "features": "Features",
       "subjects": "Subjects",
       "community": "Community",
-      "start": "Get Started"
+      "start": "Get Started",
+      "menu": "Browse",
+      "menuClose": "Close browse"
     },
     "theme": {
+      "appearance": "Appearance",
+      "hint": "Saved on this device. System follows your device.",
+      "mode": "Mode",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark",
+      "accent": "Accent",
+      "navy": "Navy",
+      "teal": "Teal",
+      "forest": "Forest",
+      "slate": "Slate",
+      "amber": "Amber",
       "toLight": "Switch to light theme",
       "toDark": "Switch to dark theme"
     },
@@ -84,6 +98,7 @@
   "states": {
     "loading": "Loading…",
     "loadFailed": "This could not be loaded.",
+    "offline": "LearnViaNotes did not answer. Check your connection and try again.",
     "retry": "Try again"
   },
   "auth": {

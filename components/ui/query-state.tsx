@@ -16,10 +16,16 @@ import { Button } from './button'
 /** Waiting for the first answer. */
 export function Loading({ label, className }: { label?: string; className?: string }) {
   const t = useTranslations('states')
+  const text = label ?? t('loading')
   return (
-    <p role="status" className={cn('text-sm text-muted', className)}>
-      {label ?? t('loading')}
-    </p>
+    <div role="status" aria-live="polite" className={cn('flex flex-col gap-3', className)}>
+      <p className="text-sm text-muted">{text}</p>
+      <div aria-hidden className="flex max-w-md flex-col gap-2">
+        <span className="lvn-skeleton h-4 w-2/3" />
+        <span className="lvn-skeleton h-4 w-full" />
+        <span className="lvn-skeleton h-24 w-full" />
+      </div>
+    </div>
   )
 }
 

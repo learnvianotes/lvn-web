@@ -29,7 +29,7 @@ function apply(theme: Theme) {
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove())
   const meta = document.createElement('meta')
   meta.name = 'theme-color'
-  meta.content = theme === 'dark' ? '#17171a' : '#ffffff'
+  meta.content = theme === 'dark' ? '#0e1520' : '#f4f6f8'
   document.head.appendChild(meta)
 }
 

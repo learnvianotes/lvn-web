@@ -62,9 +62,10 @@ code is not written early").
 - **Providers.** Google uses Firebase Authentication, loaded only when the button is pressed and signed out of
   straight after; GitHub and LinkedIn use Authorization Code + PKCE with the verifier kept in this tab. A button shows
   only when both the API (`signInOptions`) and this deployment's env offer the provider.
-- **Theme** is applied before first paint by an inline script in each root layout and stored under `cnote:theme`
-  (the old site's key, JSON-encoded) so the choice carries between `/` and `/core` (per-device preference, not auth
-  data — §7.1 storage rules are respected).
+- **Theme** is applied before first paint by one inline script (`lib/theme.ts`) in each root layout. `cnote:theme`
+  is JSON `"system"` (the default), `"light"`, or `"dark"`. `cnote:accent` is JSON `"navy"` (the default), `"teal"`,
+  `"forest"`, `"slate"`, or `"amber"`. `data-theme` is the resolved scheme. The choice is per device, not auth data
+  (§7.1), and it carries between `/` and `/core`.
 - **The note editor (P2b).** A note is one Tiptap document whose top-level nodes are cards, one node type per card
   type (§12.2); rich-text cards hold paragraphs and lists, structured cards (table, question, quiz, flashcard) are atoms
   edited through forms. Every card node carries its id, position and revision, so a save sends only what changed:
