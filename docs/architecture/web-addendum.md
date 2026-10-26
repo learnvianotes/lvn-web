@@ -60,8 +60,11 @@ code is not written early").
 - **GraphQL.** Operations live in `graphql/operations/*.graphql`; `pnpm graphql:sync` copies the API schema from
   lvn-backend (`contracts/graphql/schema.graphql`) and `pnpm codegen` writes typed documents to `graphql/generated/`.
 - **Providers.** Google uses Firebase Authentication, loaded only when the button is pressed and signed out of
-  straight after; GitHub and LinkedIn use Authorization Code + PKCE with the verifier kept in this tab. A button shows
-  only when both the API (`signInOptions`) and this deployment's env offer the provider.
+  straight after. On https the SDK's auth domain is this site, and `/__/auth` is proxied to `<project>.firebaseapp.com`
+  so the Google result stays in first-party storage. GitHub and LinkedIn use Authorization Code + PKCE with the
+  verifier kept in this tab. A button shows only when both the API (`signInOptions`) and this deployment's env offer
+  the provider. The API exchanges the Firebase ID token (`signInWithGoogle`) and links an email that already has an
+  account; this app does not create one.
 - **Theme** is applied before first paint by one inline script (`lib/theme.ts`) in each root layout. `cnote:theme`
   is JSON `"system"` (the default), `"light"`, or `"dark"`. `cnote:accent` is JSON `"navy"` (the default), `"teal"`,
   `"forest"`, `"slate"`, or `"amber"`. `data-theme` is the resolved scheme. The choice is per device, not auth data

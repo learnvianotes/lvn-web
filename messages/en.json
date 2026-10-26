@@ -165,7 +165,8 @@
       "googleBusy": "Signing in…",
       "github": "Continue with GitHub",
       "linkedin": "Continue with LinkedIn",
-      "failed": "That sign-in did not work. Try again."
+      "failed": "That sign-in did not work. Try again.",
+      "redirectLost": "Google sign-in did not finish. Try again."
     },
     "verify": {
       "checking": "Checking your link…",
