@@ -193,15 +193,15 @@ test('the owner shares with a person, changes their role and removes them', asyn
   await page.getByRole('button', { name: 'Share', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Share this note' })
   await expect(dialog.getByRole('radio', { name: /Private/ })).toBeChecked()
-  // Readers see the published version, so a note that was never published cannot go public.
-  await expect(dialog.getByRole('radio', { name: /Public/ })).toBeDisabled()
+  // Public can be chosen before the note is published; readers see it once a version exists.
+  await expect(dialog.getByRole('radio', { name: /Public/ })).toBeEnabled()
   await expect(dialog.getByText('Not shared with anyone yet.')).toBeVisible()
 
   await dialog.getByLabel('Handle or email').fill('@ravi')
   await dialog.getByLabel('What they can do').selectOption('EDITOR')
   await dialog.getByRole('button', { name: 'Add' }).click()
   await expect(dialog.getByText('Ravi Kumar', { exact: true })).toBeVisible()
-  await expect(dialog.getByRole('radio', { name: /Shared/ })).toBeChecked()
+  await expect(dialog.getByRole('radio', { name: /Unlisted link/ })).toBeChecked()
   expect(calls.find((c) => c.op === 'ShareNote')?.variables).toEqual({ noteId: NOTE_ID, person: '@ravi', role: 'EDITOR' })
 
   await dialog.getByLabel('What Ravi Kumar can do').selectOption('VIEWER')
@@ -210,7 +210,7 @@ test('the owner shares with a person, changes their role and removes them', asyn
   await expect(dialog.getByText('Not shared with anyone yet.')).toBeVisible()
   expect(calls.find((c) => c.op === 'UnshareNote')?.variables).toEqual({ noteId: NOTE_ID, userId: FRIEND })
   await dialog.getByRole('button', { name: 'Done' }).click()
-  await expect(page.getByTitle('Share this note')).toContainText('Shared')
+  await expect(page.getByTitle('Share this note')).toContainText('Unlisted')
 })
 
 test('a refusal from the server is shown in its own words', async ({ page }) => {

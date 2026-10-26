@@ -1,20 +1,20 @@
 'use client'
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
-import { useMutation, useQuery } from '@apollo/client/react'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { Check, Copy, GitFork, Globe, Handshake, Lock, Share2, UserPlus, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { GatedNotice } from '@/components/auth/GatedNotice'
 import { usePublicNotesRequireVerification, useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { forkNote, setNoteVisibility } from '@/features/beta/api'
+import { audienceDisabled, audienceOf, linkEnabled, type ShareAudience } from '@/features/notes/share/visibility'
 import {
-  ChangeNoteVisibilityDocument,
-  ForkNoteDocument,
   NoteSharesDocument,
   SetNoteForkingDocument,
   SetNoteSharedWithConnectionsDocument,
@@ -56,7 +56,9 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   const shareHeld = gates.gated('note.share')
   const publicHeld = usePublicNotesRequireVerification() && gates.held
   const shares = useQuery(NoteSharesDocument, { variables: { id: meta.id }, skip: !open, fetchPolicy: 'cache-and-network' })
-  const [changeVisibility, changing] = useMutation(ChangeNoteVisibilityDocument)
+  const client = useApolloClient()
+  const [changing, setChanging] = useState(false)
+  const flight = useRef(false)
   const [share, sharing] = useMutation(ShareNoteDocument)
   const [unshare] = useMutation(UnshareNoteDocument)
   const [setForking, settingForking] = useMutation(SetNoteForkingDocument)
@@ -72,12 +74,21 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   const link = typeof window === 'undefined' ? '' : `${window.location.origin}${meta.visibility === 'PUBLIC' ? publicNotePath(meta) : `/notes/${meta.id}`}`
 
   const pickVisibility = async (visibility: Visibility) => {
-    if (visibility === meta.visibility) return
+    if (visibility === meta.visibility || flight.current) return
+    const audience = audienceOf(visibility)
+    if (audienceDisabled({ changeVisibility: meta.viewerCan.changeVisibility, offPublic: meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED', audience })) return
+    flight.current = true
+    setChanging(true)
     setError(null)
-    const { result, error } = await attempt(() => changeVisibility({ variables: { noteId: meta.id, visibility } }))
-    const payload = result?.data?.changeNoteVisibility
-    if (payload?.note) onSaved(payload.note)
-    setError(problemOf(error, payload, t('failed')))
+    const previous = meta
+    onSaved({ ...meta, visibility })
+    const { result, error } = await attempt(() => setNoteVisibility(client, meta.id, audience))
+    const problem = problemOf(error, result, t('failed'))
+    if (result?.note && !problem) onSaved(result.note)
+    else onSaved(previous)
+    setError(problem)
+    flight.current = false
+    setChanging(false)
   }
   const add = async (who: string, as: NoteShareRole) => {
     setError(null)
@@ -125,30 +136,31 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   return (
     <Dialog open={open} onClose={onClose} title={t('title')}>
       <div className="flex flex-col gap-5">
-        <fieldset className="flex flex-col gap-2" disabled={changing.loading}>
+        <fieldset className="flex flex-col gap-2" disabled={changing}>
           <legend className="pb-2 text-sm font-semibold">{t('whoCanRead')}</legend>
           {VISIBILITIES.map(({ value, icon: Icon }) => {
             const active = meta.visibility === value
-            const needsPublish = value === 'PUBLIC' && !meta.publishedVersion
+            const audience: ShareAudience = audienceOf(value)
             // ADR-0037: a note moderators hid or removed stays off the public pages until they approve it.
-            const offPublic = value === 'PUBLIC' && (meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED')
-            const publicBlocked = value === 'PUBLIC' && publicHeld
+            const offPublic = meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED'
+            const disabled = audienceDisabled({ changeVisibility: meta.viewerCan.changeVisibility, offPublic, audience }) || (value === 'PUBLIC' && publicHeld)
             return (
               <label
                 key={value}
                 className={cn(
                   'flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition',
                   active ? 'border-accent bg-accent-soft ring-1 ring-accent/40' : 'border-border bg-surface hover:border-accent/40',
-                  (needsPublish || offPublic || publicBlocked) && 'cursor-not-allowed opacity-60',
+                  disabled && 'cursor-not-allowed opacity-60',
                 )}
               >
-                <input type="radio" name="visibility" value={value} checked={active} disabled={needsPublish || offPublic || publicBlocked || !meta.viewerCan.changeVisibility} onChange={() => void pickVisibility(value)} className="sr-only" />
+                {/* The radio stays in the row. An sr-only (clipped, absolute) input sits on the dialog origin and misses the click. */}
+                <input type="radio" name="visibility" value={value} checked={active} disabled={disabled} onChange={() => void pickVisibility(value)} className="mt-1 size-4 shrink-0" />
                 <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl', active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted')}>
                   <Icon className="size-[1.125rem]" aria-hidden />
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="text-sm font-semibold">{t(`visibility.${value}`)}</span>
-                  <span className="text-xs leading-5 text-muted">{offPublic ? t('offPublic') : needsPublish ? t('publishFirst') : t(`visibilityHint.${value}`)}</span>
+                  <span className="text-xs leading-5 text-muted">{value === 'PUBLIC' && offPublic ? t('offPublic') : t(`visibilityHint.${value}`)}</span>
                 </span>
                 {active ? <Check className="ml-auto size-4 shrink-0 text-accent" aria-hidden /> : null}
               </label>
@@ -260,7 +272,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
         ) : null}
 
         <div className="flex items-center justify-between gap-2">
-          <Button type="button" variant="secondary" className="gap-1.5" disabled={meta.visibility === 'PRIVATE'} title={meta.visibility === 'PRIVATE' ? t('copyLinkPrivate') : undefined} onClick={() => void copyLink()}>
+          <Button type="button" variant="secondary" className="gap-1.5" disabled={!linkEnabled(meta.visibility)} title={!linkEnabled(meta.visibility) ? t('copyLinkPrivate') : undefined} onClick={() => void copyLink()}>
             {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
             {copied ? t('copied') : t('copyLink')}
           </Button>
@@ -277,16 +289,19 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
 export function useMakeCopy(noteId: string) {
   const t = useTranslations('notes.share')
   const router = useRouter()
-  const [fork, forking] = useMutation(ForkNoteDocument)
+  const client = useApolloClient()
+  const [copying, setCopying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const makeCopy = async () => {
     setError(null)
-    const { result, error } = await attempt(() => fork({ variables: { noteId } }))
-    const id = result?.data?.forkNote.note?.id
+    setCopying(true)
+    const { result, error } = await attempt(() => forkNote(client, noteId))
+    const id = result?.note?.id
     if (id) router.push(`/notes/${id}`)
-    else setError(problemOf(error, result?.data?.forkNote, t('copyFailed')) ?? t('copyFailed'))
+    else setError(problemOf(error, result, t('copyFailed')) ?? t('copyFailed'))
+    setCopying(false)
   }
-  return { makeCopy, copying: forking.loading, copyError: error }
+  return { makeCopy, copying, copyError: error }
 }
 
 export function MakeCopyButton({ copy, className }: { copy: ReturnType<typeof useMakeCopy>; className?: string }) {

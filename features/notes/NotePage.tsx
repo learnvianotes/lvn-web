@@ -19,7 +19,7 @@ import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
 import { ModerationBanner } from '@/features/moderation/ModerationBanner'
 import { MediaProvider } from './media'
-import { ForkCredit, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
+import { ForkCredit, MakeCopyButton, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
 import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
 import { NoteEditor } from './editor/NoteEditor'
@@ -151,6 +151,7 @@ export function NotePage({ id }: { id: string }) {
         {t('versions.button')}
       </Button>
       <AiButton onClick={() => setAiOpen(true)} />
+      {meta.viewerAccess !== 'OWNER' && meta.viewerCan.fork && meta.forkingEnabled ? <MakeCopyButton copy={copy} /> : null}
       {meta.viewerAccess === 'OWNER' ? (
         <Button variant="secondary" size="sm" className="gap-1.5" aria-label={t('share.button')} onClick={() => setShareOpen(true)}>
           <Share2 className="size-4" aria-hidden />

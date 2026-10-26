@@ -76,7 +76,8 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
           {meta.kind === 'PROJECT' ? <NoteCredits noteId={meta.id} /> : null}
           <div className="flex flex-wrap items-center gap-2">
             <ReadAloudControls reader={reader} />
-            {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
+            {meta.viewerCan.fork && meta.forkingEnabled ? <MakeCopyButton copy={copy} /> : null}
+            {!meta.forkingEnabled ? <p className="text-xs text-muted">{t('share.forksOff')}</p> : null}
             <CopyLinkButton note={meta} />
             <SaveNoteButton noteId={meta.id} />
             <AiButton onClick={() => setAiOpen(true)} />

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { AiResult, useRunAiTask } from '@/features/ai/AiPanel'
 import { StudyAids } from '@/features/ai/StudyAids'
 import { StudyCardsButton } from '@/features/learning/StudyCardsButton'
+import { ShareQuiz } from '@/features/quizzes/ShareQuiz'
 import { useLive } from '@/features/notifications/live'
 import { NoteAiArtifactsDocument, NoteInsightsDocument, type AiTask } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
@@ -105,6 +106,7 @@ export function CardsTab({ kind, noteId, cards, study, canEdit, reader, onAdd, o
       <StudyAids noteId={noteId} tasks={[task]} />
       <Results noteId={noteId} study={study} tab={kind} canEdit={canEdit} onAddedToNote={onAddedToNote} />
       {!any ? <p className="text-sm text-muted">{t('none')}</p> : null}
+      {kind === 'quiz' && canEdit ? <ShareQuiz noteId={noteId} /> : null}
       <div className="flex flex-wrap items-center gap-2">
         <Make ai={study.ai} task={task} label={t('make')} icon={kind === 'flashcards' ? Layers : ListChecks} />
         {canEdit && onAdd ? (

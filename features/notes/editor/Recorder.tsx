@@ -1,10 +1,14 @@
 'use client'
 
+import { useApolloClient } from '@apollo/client/react'
 import { Mic, Square } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
+import { AiResultPanel } from '@/features/ai/AiAction'
+import { notesFromTranscript, transcribeVoiceNote } from '@/features/beta/api'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { captionsFromEvent, speechRecognitionCtor, type SpeechRec } from './captions'
 
 /**
  * A voice note recorded in the browser (lvn-backend ADR-0062): MediaRecorder, Opus in WebM (MP4 where WebM is not
@@ -20,19 +24,34 @@ type State = 'idle' | 'recording' | 'recorded' | 'denied' | 'unsupported'
 const recordingType = () => (typeof MediaRecorder === 'undefined' ? null : ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported(t)) ?? null)
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-export function RecordDialog({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: (file: File) => void }) {
+export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean; onClose: () => void; onDone: (file: File) => void; noteId?: string }) {
   const t = useTranslations('notes.record')
+  const client = useApolloClient()
   const [state, setState] = useState<State>('idle')
   const [seconds, setSeconds] = useState(0)
   const [recording, setRecording] = useState<{ blob: Blob; url: string } | null>(null)
+  const [captions, setCaptions] = useState('')
+  const [captionsLive, setCaptionsLive] = useState(false)
+  const [transcript, setTranscript] = useState<string | null>(null)
+  const [notes, setNotes] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
   const recorder = useRef<MediaRecorder | null>(null)
   const stream = useRef<MediaStream | null>(null)
+  const speech = useRef<SpeechRec | null>(null)
+  const finals = useRef('')
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
 
   const release = () => {
     clearInterval(timer.current)
     stream.current?.getTracks().forEach((track) => track.stop())
     stream.current = null
+    try {
+      speech.current?.stop()
+    } catch {
+      /* already stopped */
+    }
+    speech.current = null
   }
   const reset = () => {
     release()
@@ -40,6 +59,11 @@ export function RecordDialog({ open, onClose, onDone }: { open: boolean; onClose
     recorder.current = null
     setRecording((r) => (r && URL.revokeObjectURL(r.url), null))
     setSeconds(0)
+    setCaptions('')
+    setTranscript(null)
+    setNotes(null)
+    setAiError(null)
+    finals.current = ''
     setState('idle')
   }
   useEffect(() => {
@@ -67,6 +91,28 @@ export function RecordDialog({ open, onClose, onDone }: { open: boolean; onClose
     }
     recorder.current = rec
     rec.start(1000)
+    finals.current = ''
+    setCaptions('')
+    const Ctor = speechRecognitionCtor()
+    setCaptionsLive(!!Ctor)
+    if (Ctor) {
+      const heard = new Ctor()
+      heard.continuous = true
+      heard.interimResults = true
+      heard.lang = 'en-US'
+      heard.onresult = (event) => {
+        const next = captionsFromEvent(event, finals.current)
+        finals.current = next.finals
+        setCaptions(next.line)
+      }
+      heard.onerror = () => setCaptionsLive(false)
+      try {
+        heard.start()
+        speech.current = heard
+      } catch {
+        setCaptionsLive(false)
+      }
+    }
     setSeconds(0)
     setState('recording')
     timer.current = setInterval(() => {
@@ -77,6 +123,29 @@ export function RecordDialog({ open, onClose, onDone }: { open: boolean; onClose
     }, 1000)
   }
   const stop = () => recorder.current?.state === 'recording' && recorder.current.stop()
+  const runAi = async (kind: 'transcribe' | 'notes') => {
+    if (!noteId) return
+    setAiBusy(true)
+    setAiError(null)
+    try {
+      if (kind === 'transcribe') {
+        const payload = await transcribeVoiceNote(client, noteId, captions)
+        const problem = payload.userErrors?.[0]?.message
+        if (problem || !payload.transcript) setAiError(problem ?? t('aiFailed'))
+        else setTranscript(payload.transcript)
+      } else {
+        const source = transcript || captions
+        const payload = await notesFromTranscript(client, noteId, source)
+        const problem = payload.userErrors?.[0]?.message
+        if (problem) setAiError(problem)
+        else setNotes(payload.markdown ?? t('notesReady'))
+      }
+    } catch {
+      setAiError(t('aiFailed'))
+    } finally {
+      setAiBusy(false)
+    }
+  }
   const add = () => {
     if (!recording) return
     const mime = recording.blob.type || 'audio/webm'
@@ -105,6 +174,9 @@ export function RecordDialog({ open, onClose, onDone }: { open: boolean; onClose
               <span className="size-3 animate-pulse rounded-full bg-red-500" aria-hidden />
               {clock(seconds)}
             </p>
+            <p aria-live="polite" className="min-h-10 w-full rounded-xl bg-surface-2 px-3 py-2 text-left text-sm">
+              {captions || (captionsLive ? t('listening') : t('captionsFallback'))}
+            </p>
             <Button size="lg" variant="secondary" className="gap-2" onClick={stop}>
               <Square className="size-5" aria-hidden />
               {t('stop')}
@@ -114,12 +186,25 @@ export function RecordDialog({ open, onClose, onDone }: { open: boolean; onClose
         {state === 'recorded' && recording ? (
           <>
             <audio controls src={recording.url} className="w-full" aria-label={t('listen')} />
-            <div className="flex gap-2">
+            <p aria-live="polite" className="w-full rounded-xl bg-surface-2 px-3 py-2 text-left text-sm">{captions || t('captionsFallback')}</p>
+            <div className="flex flex-wrap justify-center gap-2">
               <Button variant="secondary" onClick={reset}>
                 {t('again')}
               </Button>
               <Button onClick={add}>{t('add')}</Button>
+              {noteId ? (
+                <>
+                  <Button variant="secondary" disabled={aiBusy} onClick={() => void runAi('transcribe')}>{t('transcribe')}</Button>
+                  <Button variant="secondary" disabled={aiBusy} onClick={() => void runAi('notes')}>{t('makeNotes')}</Button>
+                </>
+              ) : null}
             </div>
+            <AiResultPanel empty={!transcript && !notes && !aiError && !aiBusy} className="w-full text-left">
+              {aiBusy ? <p className="text-sm text-muted">{t('working')}</p> : null}
+              {aiError ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{aiError}</p> : null}
+              {transcript ? <p className="whitespace-pre-wrap text-sm">{transcript}</p> : null}
+              {notes ? <p className="whitespace-pre-wrap text-sm">{notes}</p> : null}
+            </AiResultPanel>
           </>
         ) : null}
       </div>

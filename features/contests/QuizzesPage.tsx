@@ -2,6 +2,9 @@
 
 import { useQuery } from '@apollo/client/react'
 import { Layers, ListChecks, Target } from 'lucide-react'
+import { AiButton } from '@/features/ai/AiPanel'
+import { AiResultPanel } from '@/features/ai/AiAction'
+import { useStudioAsk } from '@/features/studio/useStudioAsk'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { QueryState } from '@/components/ui/query-state'
@@ -14,6 +17,7 @@ import { ContestHero } from './ContestsPage'
  */
 export function QuizzesPage() {
   const t = useTranslations('quizzes')
+  const ai = useStudioAsk('Quiz', 'A short quiz from what I am studying')
   const contestsQuery = useQuery(ContestsDocument, { fetchPolicy: 'cache-and-network' })
   const contests = contestsQuery.data?.contests ?? []
   const hub = useQuery(QuizzesHubDocument, { fetchPolicy: 'cache-and-network' })
@@ -25,10 +29,18 @@ export function QuizzesPage() {
   ].slice(0, 8)
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-muted">{t('lead')}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-muted">{t('lead')}</p>
+        </div>
+        <AiButton onClick={() => void ai.ask()} />
       </header>
+      <AiResultPanel empty={!ai.busy && !ai.result && !ai.error}>
+        {ai.busy ? <p className="text-sm text-muted">{t('working')}</p> : null}
+        {ai.error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{ai.error}</p> : null}
+        {ai.result ? <p className="whitespace-pre-wrap text-sm">{ai.result}</p> : null}
+      </AiResultPanel>
 
       {open ? (
         <ContestHero contest={open} />

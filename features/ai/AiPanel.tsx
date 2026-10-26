@@ -51,6 +51,7 @@ import {
 } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
 import { cn } from '@/lib/cn'
+import { AiResultPanel } from './AiAction'
 import { CardView } from '@/features/notes/render/CardView'
 import { Markdown } from '@/features/notes/render/Markdown'
 import { AnswerList, AskForm } from './AskAi'
@@ -243,14 +244,12 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
           ) : null}
         </section>
 
-        <section aria-label={t('results')} className="flex flex-col gap-3">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('results')}</h3>
+        <AiResultPanel empty={!!list.data && !artifacts.length}>
           {list.loading && !list.data ? <p className="text-sm text-muted">{t('loading')}</p> : null}
-          {list.data && !artifacts.length ? <p className="text-sm text-muted">{t('noResults')}</p> : null}
           {artifacts.map((a) => (
             <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void run(a.task, a.language)} onAddedToNote={onAddedToNote} onTextMended={onTextMended} />
           ))}
-        </section>
+        </AiResultPanel>
       </div>
     </Dialog>
   )
