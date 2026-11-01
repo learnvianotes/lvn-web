@@ -13,6 +13,7 @@ import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { Discussion } from '@/features/discussion/Discussion'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { DeleteResourceDocument, MyResourcesDocument, ResourceDocument, type ResourceFieldsFragment } from '@/graphql/generated/graphql'
+import { safeLinkHref } from '@/lib/http-url'
 import { isNotThere } from '@/lib/query'
 import { useSession } from '@/state/session'
 import { SaveButton } from './Catalogue'
@@ -71,6 +72,7 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
   const [error, setError] = useState<string | null>(null)
   const [recommending, setRecommending] = useState(false)
   const signedIn = useSession((s) => s.status) === 'signed-in'
+  const link = safeLinkHref(r.url)
   return (
     <article className="flex flex-col gap-5" aria-labelledby="resource-title">
       {r.status !== 'APPROVED' ? (
@@ -97,10 +99,14 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
           </h1>
           {r.author ? <p className="text-sm text-muted">{t('by', { author: r.author })}</p> : null}
           {/* A link people added: marked as user content and not followed by search engines (ADR-0074). */}
-          <a href={r.url} rel="ugc nofollow noopener" target="_blank" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90">
-            {t('open', { host: r.host })}
-            <ExternalLink className="size-4" aria-hidden />
-          </a>
+          {link ? (
+            <a href={link} rel="ugc nofollow noopener" target="_blank" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90">
+              {t('open', { host: r.host })}
+              <ExternalLink className="size-4" aria-hidden />
+            </a>
+          ) : (
+            <span className="text-sm text-muted">{t('open', { host: r.host })}</span>
+          )}
         </div>
       </div>
       {r.description ? <p className="whitespace-pre-line">{r.description}</p> : null}

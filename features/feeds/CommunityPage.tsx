@@ -13,6 +13,7 @@ import { publicNotePath } from '@/features/public-notes/paths'
 import { ActivityFeedDocument, FollowingFeedDocument, ForYouFeedDocument, TrendingFeedDocument, type ActivityFeedQuery } from '@/graphql/generated/graphql'
 import { PostCard } from './PostCard'
 import type { Doc } from '@/lib/contracts/validation'
+import { safeLinkHref } from '@/lib/http-url'
 
 type Tab = 'forYou' | 'trending' | 'following' | 'activity'
 const TABS: Tab[] = ['forYou', 'trending', 'following', 'activity']
@@ -95,6 +96,7 @@ function ActivityCard({ item }: { item: Item }) {
   const actor = item.actor?.displayName ?? item.repositoryEvent?.authorLogin ?? t('someone')
   const body = item.post?.body ?? item.announcement?.body
   const href = item.doubt && item.group ? `/groups/${item.group.id}/doubts/${item.doubt.id}` : item.note ? `/notes/${item.note.id}` : (place?.href ?? '#')
+  const eventUrl = item.repositoryEvent ? safeLinkHref(item.repositoryEvent.url) : null
   // A shared note the viewer can no longer read resolves to nothing; nothing is shown for it.
   if (item.kind === 'SHARED_NOTE' && !item.note) return null
   return (
@@ -120,10 +122,17 @@ function ActivityCard({ item }: { item: Item }) {
         </Link>
       ) : null}
       {item.repositoryEvent ? (
-        <a href={item.repositoryEvent.url} target="_blank" rel="noopener noreferrer nofollow" className="font-semibold hover:text-accent">
-          {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
-          {item.repositoryEvent.title}
-        </a>
+        eventUrl ? (
+          <a href={eventUrl} target="_blank" rel="noopener noreferrer nofollow" className="font-semibold hover:text-accent">
+            {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
+            {item.repositoryEvent.title}
+          </a>
+        ) : (
+          <span className="font-semibold">
+            {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
+            {item.repositoryEvent.title}
+          </span>
+        )
       ) : null}
       {item.note ? (
         <Link href={href} className="inline-flex w-fit items-center gap-2 font-semibold hover:text-accent">

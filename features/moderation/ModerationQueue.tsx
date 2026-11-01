@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ModerateContentDocument, ModerationQueueDocument, MuteGroupMemberDocument, ViewerDocument, type ModerationActionType, type ModerationQueueQuery, type ModerationScope } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { safeLinkHref } from '@/lib/http-url'
 import { ago } from '@/features/notes/look'
 
 type Case = ModerationQueueQuery['moderationQueue']['edges'][number]['node']
@@ -271,9 +272,13 @@ function ResourceCase({ resource: r }: { resource: NonNullable<Case['resource']>
         {r.author ? ` · ${r.author}` : ''}
         {r.isbn ? ` · ISBN ${r.isbn}` : ''}
       </p>
-      <a href={r.url} rel="ugc nofollow noopener" target="_blank" className="break-all font-semibold text-accent hover:underline">
-        {r.url}
-      </a>
+      {safeLinkHref(r.url) ? (
+        <a href={r.url} rel="ugc nofollow noopener" target="_blank" className="break-all font-semibold text-accent hover:underline">
+          {r.url}
+        </a>
+      ) : (
+        <span className="break-all">{r.url}</span>
+      )}
       {r.description ? <p className="line-clamp-6 whitespace-pre-line">{r.description}</p> : null}
       {r.topics.length ? <p className="text-xs text-muted">{r.topics.flatMap((x) => (x ? [x.title] : [])).join(' · ')}</p> : null}
     </div>

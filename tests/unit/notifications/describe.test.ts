@@ -137,4 +137,11 @@ describe('where a notification opens (lvn-backend ADR-0076)', () => {
     expect(notificationHref({ category: 'COMMENT', path: '/groups/g1' })).toBe('/groups/g1')
     expect(notificationHref({ category: 'SHARE', path: note })).toBe(note)
   })
+
+  it('does not open an off-site path', async () => {
+    const { notificationHref } = await import('@/features/notifications/describe')
+    expect(notificationHref({ category: 'SHARE', path: 'https://evil.example' })).toBe('/notifications')
+    expect(notificationHref({ category: 'SHARE', path: '//evil.example' })).toBe('/notifications')
+    expect(notificationHref({ category: 'SHARE', path: '/\n/evil.example' })).toBe('/notifications')
+  })
 })

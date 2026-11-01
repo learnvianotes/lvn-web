@@ -17,10 +17,26 @@ export function signedInDestination(next?: string | null): string {
   return dest
 }
 
-/** Only same-site paths: an attacker-supplied `next` must not send people to another site after sign-in. */
+/**
+ * Only same-site paths: an attacker-supplied `next` must not send people to another site after sign-in.
+ *
+ * `router.replace` parses the path with the WHATWG URL parser and, when the origin differs, assigns
+ * `location`. That parser strips tab, newline, and carriage return, and turns `\` into `/`, so
+ * `/%0A/evil.example` and `/\evil.example` become protocol-relative URLs. Reject those characters, then
+ * require the parsed URL to stay on a dummy origin.
+ */
 export function safeNext(next?: string | null): string | null {
-  if (!next || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\')) return null
-  return next
+  if (!next || /[\u0000-\u001F\u007F\\]/.test(next)) return null
+  if (!next.startsWith('/') || next.startsWith('//')) return null
+  try {
+    const url = new URL(next, 'https://lvn.invalid')
+    if (url.origin !== 'https://lvn.invalid') return null
+    const path = `${url.pathname}${url.search}${url.hash}`
+    if (!path.startsWith('/') || path.startsWith('//')) return null
+    return path
+  } catch {
+    return null
+  }
 }
 
 /** `/` and `/?…` are the marketing page, whatever query it carries. */

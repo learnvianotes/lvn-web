@@ -23,7 +23,27 @@ describe('after sign-in', () => {
     expect(signedInDestination('/home')).toBe('/home')
   })
 
-  it.each(['https://evil.example', '//evil.example', '/\\evil.example', 'javascript:alert(1)', ''])('never sends people off-site via next=%j', (next) => {
+  it.each([
+    'https://evil.example',
+    '//evil.example',
+    '/\\evil.example',
+    'javascript:alert(1)',
+    '',
+    // WHATWG strips tab, LF, and CR, and rewrites `\`, so these parse as //evil.example.
+    '/\t/evil.example',
+    '/\n/evil.example',
+    '/\r/evil.example',
+    '/\t\\evil.example',
+    '///evil.example',
+    '/\\tevil.example',
+  ])('never sends people off-site via next=%j', (next) => {
+    expect(safeNext(next)).toBeNull()
+    expect(afterSignIn({ registrationComplete: true }, next)).toBe(APP_HOME)
+  })
+
+  it('rejects a next query whose decoded form is protocol-relative', () => {
+    const next = new URL('https://learnvianotes.in/sign-in?next=/%0A/evil.example').searchParams.get('next')
+    expect(next).toBe('/\n/evil.example')
     expect(safeNext(next)).toBeNull()
     expect(afterSignIn({ registrationComplete: true }, next)).toBe(APP_HOME)
   })
