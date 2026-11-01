@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react'
 import { SignInOptionsDocument, SignInWithGoogleDocument } from '@/graphql/generated/graphql'
 import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { googleIdToken, googleRedirectIdToken, rememberGoogleNext, takeGoogleNext } from '@/lib/auth/google'
+import { googleSignInProblem } from '@/lib/auth/google-message'
 import { firebaseConfig } from '@/lib/env'
-import { refusalMessage } from '@/lib/limit-error'
 import { useFinishSignIn } from './useFinishSignIn'
 
 /** One redirect return per page load, even if several buttons mount (React strict mode included). */
@@ -42,20 +42,25 @@ export function useGoogleSignIn(next?: string | null) {
     if (redirectHandled) return
     redirectHandled = true
     void (async () => {
-      let idToken: string | null
+      let returned: Awaited<ReturnType<typeof googleRedirectIdToken>>
       try {
-        idToken = await googleRedirectIdToken()
+        returned = await googleRedirectIdToken()
       } catch (error) {
-        setError(refusalMessage(error) ?? t('failed'))
+        setError(googleSignInProblem(error, t('failed')))
         return
       }
-      if (!idToken) return
+      if (returned.status === 'none') return
+      if (returned.status === 'missing') {
+        takeGoogleNext()
+        setError(t('redirectLost'))
+        return
+      }
       const stored = takeGoogleNext()
       setBusy(true)
       try {
-        await complete(idToken, stored ?? next)
+        await complete(returned.idToken, stored ?? next)
       } catch (error) {
-        setError(refusalMessage(error) ?? t('failed'))
+        setError(googleSignInProblem(error, t('failed')))
       } finally {
         setBusy(false)
       }
@@ -80,7 +85,7 @@ export function useGoogleSignIn(next?: string | null) {
       await complete(attempt.idToken, next)
     } catch (error) {
       rememberGoogleNext(null)
-      setError(refusalMessage(error) ?? t('failed'))
+      setError(googleSignInProblem(error, t('failed')))
     } finally {
       setBusy(false)
     }

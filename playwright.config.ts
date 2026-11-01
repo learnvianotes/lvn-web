@@ -24,8 +24,8 @@ export default defineConfig({
         },
         {
           command: `pnpm build && pnpm start -p ${port}`,
-          // A stand-in Firebase web config, so the Google button shows whenever the mocked API offers Google. Firebase is
-          // only loaded on a click, which no test makes.
+          // A stand-in Firebase web config, so the Google button shows whenever the mocked API offers Google. A click
+          // uses that project id and returns a stand-in token; it does not load Firebase or open Google.
           env: {
             NEXT_DIST_DIR: '.next-e2e',
             // Live updates go to an address nothing answers; tests that need a socket intercept it (tests/e2e/support).

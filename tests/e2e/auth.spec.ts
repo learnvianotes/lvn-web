@@ -424,6 +424,62 @@ test.describe('links from emails', () => {
 test.describe('Google first', () => {
   const offered = { withGoogle: () => null }
 
+  test('Continue with Google signs into an account that already exists, on sign-in and sign-up', async ({ page }) => {
+    const calls = await mockApi(page, {
+      ...offered,
+      SignInWithGoogle: () => ({ signInWithGoogle: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.goto('/sign-in')
+    const button = page.getByRole('button', { name: 'Continue with Google' })
+    const box = await button.boundingBox()
+    expect(box?.width ?? 0).toBeGreaterThan(280)
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await button.click()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+    expect(calls.find((call) => call.op === 'SignInWithGoogle')?.variables).toMatchObject({ idToken: 'e2e-google-id-token' })
+    expect(calls.filter((call) => call.op === 'SignUp')).toHaveLength(0)
+
+    await page.goto('/sign-up')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    expect(calls.filter((call) => call.op === 'SignUp')).toHaveLength(0)
+    expect(calls.filter((call) => call.op === 'SignInWithGoogle')).toHaveLength(2)
+  })
+
+  test('a first Google sign-in continues to registration details', async ({ page }) => {
+    await mockApi(page, {
+      ...offered,
+      SignInWithGoogle: () => ({ signInWithGoogle: { __typename: 'AuthPayload', session: session(viewer({ registrationComplete: false })), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
+    })
+    await page.goto('/sign-up')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-up\/details$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Almost there, Asha')
+  })
+
+  test('a refused Google sign-in shows the invite-only message, not a generic failure', async ({ page }) => {
+    const message = 'LearnViaNotes beta is invite-only. Ask an admin to add your email.'
+    await mockApi(page, {
+      ...offered,
+      AccessPolicy: () => ({ accessPolicy: { __typename: 'AccessPolicy', inviteOnly: true } }),
+      SignInWithGoogle: () => ({ signInWithGoogle: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'idToken'], message, 'FORBIDDEN')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-in$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('That sign-in did not work')).toHaveCount(0)
+
+    await page.goto('/sign-up')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-up$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('That sign-in did not work')).toHaveCount(0)
+  })
+
   test('the landing page offers Get Started Free and Continue with Google side by side, then sign-in (board A)', async ({ page }) => {
     await mockApi(page, offered)
     await page.goto('/')

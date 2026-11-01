@@ -20,6 +20,29 @@ export const E2E_GOOGLE_ID_TOKEN = 'e2e-google-id-token'
 
 export type GoogleSignInAttempt = { status: 'token'; idToken: string } | { status: 'cancelled' } | { status: 'redirecting' }
 
+export type GoogleRedirectAttempt = { status: 'none' } | { status: 'missing' } | { status: 'token'; idToken: string }
+
+/**
+ * authDomain the browser should use. On https, off localhost and off Firebase's own hosts, that is this site:
+ * the SDK then loads /__/auth here (proxied) and Google's redirect URI is https://<this host>/__/auth/handler.
+ * HTTP (local) keeps the configured firebaseapp.com domain, whose handler is already registered.
+ */
+export function googleAuthDomain(configured: string, location: { protocol: string; hostname: string } | null): string {
+  if (!location || location.protocol !== 'https:') return configured
+  const hostname = location.hostname.toLowerCase()
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return configured
+  if (hostname.endsWith('.firebaseapp.com') || hostname.endsWith('.web.app')) return configured
+  if (hostname === configured.toLowerCase()) return configured
+  return location.hostname
+}
+
+/** The ID token is the result. Signing Firebase out afterwards must not discard it if sign-out throws. */
+export async function tokenThenSignOut(read: () => Promise<string>, signOut: () => Promise<unknown>): Promise<string> {
+  const idToken = await read()
+  await signOut().catch(() => undefined)
+  return idToken
+}
+
 /** How a failed popup should be treated. Unknown codes are real errors. */
 export function googlePopupOutcome(code: string): 'cancel' | 'redirect' | 'error' {
   if (CANCELLED.has(code)) return 'cancel'
@@ -32,7 +55,9 @@ type FirebaseAuthModule = typeof import('firebase/auth')
 async function firebaseAuth(): Promise<{ auth: ReturnType<FirebaseAuthModule['getAuth']>; mod: FirebaseAuthModule }> {
   if (!firebaseConfig) throw new Error('Google sign-in is not configured')
   const [{ initializeApp, getApps }, mod] = await Promise.all([import('firebase/app'), import('firebase/auth')])
-  const app = getApps().find((candidate) => candidate.name === 'lvn') ?? initializeApp(firebaseConfig, 'lvn')
+  const location = typeof window === 'undefined' ? null : window.location
+  const config = { ...firebaseConfig, authDomain: googleAuthDomain(firebaseConfig.authDomain, location) }
+  const app = getApps().find((candidate) => candidate.name === 'lvn') ?? initializeApp(config, 'lvn')
   return { auth: mod.getAuth(app), mod }
 }
 
@@ -62,11 +87,8 @@ export async function googleIdToken(): Promise<GoogleSignInAttempt> {
   const provider = new mod.GoogleAuthProvider()
   try {
     const result = await mod.signInWithPopup(auth, provider)
-    try {
-      return { status: 'token', idToken: await result.user.getIdToken() }
-    } finally {
-      await mod.signOut(auth)
-    }
+    const idToken = await tokenThenSignOut(() => result.user.getIdToken(), () => mod.signOut(auth))
+    return { status: 'token', idToken }
   } catch (error) {
     const code = (error as { code?: string }).code ?? ''
     const outcome = googlePopupOutcome(code)
@@ -78,26 +100,24 @@ export async function googleIdToken(): Promise<GoogleSignInAttempt> {
   }
 }
 
-let redirectOnce: Promise<string | null> | undefined
+let redirectOnce: Promise<GoogleRedirectAttempt> | undefined
 
 /**
- * The ID token from a redirect that just returned to this page, or null when this load is not one.
- * Firebase is not loaded unless a redirect was started in this tab.
+ * The ID token from a redirect that just returned to this page.
+ * `none` when this load is not one (Firebase is not loaded). `missing` when a redirect was started and came
+ * back without a credential — the page says so, instead of leaving the button as if nothing was clicked.
  */
-export function googleRedirectIdToken(): Promise<string | null> {
-  if (typeof sessionStorage === 'undefined') return Promise.resolve(null)
-  if (!firebaseConfig || firebaseConfig.projectId === E2E_PROJECT) return Promise.resolve(null)
-  if (sessionStorage.getItem(PENDING_KEY) !== '1') return Promise.resolve(null)
+export function googleRedirectIdToken(): Promise<GoogleRedirectAttempt> {
+  if (typeof sessionStorage === 'undefined') return Promise.resolve({ status: 'none' })
+  if (!firebaseConfig || firebaseConfig.projectId === E2E_PROJECT) return Promise.resolve({ status: 'none' })
+  if (sessionStorage.getItem(PENDING_KEY) !== '1') return Promise.resolve({ status: 'none' })
   redirectOnce ??= (async () => {
     sessionStorage.removeItem(PENDING_KEY)
     const { auth, mod } = await firebaseAuth()
     const result = await mod.getRedirectResult(auth)
-    if (!result) return null
-    try {
-      return await result.user.getIdToken()
-    } finally {
-      await mod.signOut(auth)
-    }
+    if (!result) return { status: 'missing' }
+    const idToken = await tokenThenSignOut(() => result.user.getIdToken(), () => mod.signOut(auth))
+    return { status: 'token', idToken }
   })()
   return redirectOnce
 }
