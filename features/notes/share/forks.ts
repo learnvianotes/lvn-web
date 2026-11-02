@@ -4,7 +4,7 @@ import { useApolloClient } from '@apollo/client/react'
 import { useEffect, useState } from 'react'
 import { loadForkState } from '@/features/beta/api'
 
-/** allowForks from contracts 0.74.0, with forkingEnabled until that field answers. */
+/** allowForks from the note, confirmed by forkingEnabled(noteId) when that query answers. */
 export function useAllowForks(noteId: string, fallback: boolean) {
   const client = useApolloClient()
   const [allow, setAllow] = useState<boolean | null>(null)

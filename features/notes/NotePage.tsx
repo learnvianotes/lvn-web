@@ -65,7 +65,7 @@ export function NotePage({ id }: { id: string }) {
     window.history.replaceState(window.history.state, '', url)
   }, [askedAi])
   const copy = useMakeCopy(id)
-  const forks = useAllowForks(id, loaded.state === 'ready' ? loaded.meta.forkingEnabled : true)
+  const forks = useAllowForks(id, loaded.state === 'ready' ? loaded.meta.allowForks : true)
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
   const [notice, setNotice] = useState<string | null>(null)

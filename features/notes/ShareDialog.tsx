@@ -72,7 +72,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   const [allowForks, setAllowForks] = useState<boolean | null>(null)
   const [forkCount, setForkCount] = useState(0)
   const people = shares.data?.note?.shares ?? []
-  const forksOn = allowForks ?? meta.forkingEnabled
+  const forksOn = allowForks ?? meta.allowForks
   // Unlisted and public notes open at /n/{slug}-{id}. Shared notes stay in the app. The origin is added here.
   const link = typeof window === 'undefined' ? '' : absoluteUrl(noteSharePath(meta), window.location.origin)
   useEffect(() => {

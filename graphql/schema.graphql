@@ -2,6 +2,7 @@
 # ADR-0099 (college ID cards, lvn-backend#18, contracts 0.64.0) is included here so this app typechecks before that branch is on main. `pnpm graphql:sync` replaces this file from lvn-backend.
 # lvn-backend main ebe43a2 (contracts 0.74.0): VerifyEmailPayload, resendVerification, unverifiedGatedActions as [String!]!, UserError.retryAfter, Float min/max on AdminSettingConstraints, and publicNotesRequireVerification.
 # lvn-backend#48 (contracts 0.75.0): User.viewerNeedsVerification. False for a platform admin, null on anyone else's user.
+# lvn-backend main 24c4a54 (contracts 0.76.0, #48 and #49): Note.allowForks, Note.forkCount, and Query.forkingEnabled(noteId). Note.forkingEnabled is gone. Visibility includes UNLISTED.
 # lvn-backend#27 account admin is included the same way: AccountStatus, adminUsers, adminUpdateUser, adminSetAccountStanding, adminDeleteUser, and UserError.supportEmail.
 input AcceptTermsInput {
   """Query.termsVersion, as shown to the person"""
@@ -3560,7 +3561,12 @@ type Note {
 
   """Set on a copy of another note; it cannot be removed"""
   forkedFrom: ForkCredit
-  forkingEnabled: Boolean!
+
+  """Whether readers may copy this note (contracts 0.76.0). Replaces forkingEnabled on Note."""
+  allowForks: Boolean!
+
+  """How many copies of this note exist."""
+  forkCount: Int!
 
   """Owner only: the groups the note is shared to"""
   groups: [Group!]
@@ -4329,6 +4335,11 @@ type Query {
 
   """Signed in only: the viewer's open focus session"""
   focusSession: FocusSession
+
+  """
+  Whether readers may copy this note (contracts 0.76.0). This replaces Note.forkingEnabled.
+  """
+  forkingEnabled(noteId: UUID!): Boolean!
 
   """
   The Following feed (ADR-0049): PUBLIC notes and publications of the people the viewer follows, newest first
@@ -6402,6 +6413,7 @@ enum Visibility {
   PRIVATE
   PUBLIC
   SHARED
+  UNLISTED
 }
 
 type WeakTopic {

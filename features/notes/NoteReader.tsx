@@ -37,7 +37,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
   const spoken = useCallback(() => cards.map((c) => ({ id: c.id, text: cardPlainText(c.type, c.content) })), [cards])
   const reader = useReadAloud(spoken)
   const copy = useMakeCopy(meta.id)
-  const forks = useAllowForks(meta.id, meta.forkingEnabled)
+  const forks = useAllowForks(meta.id, meta.allowForks)
   const headings = cards.filter((c) => c.type === 'heading')
   const minutes = readingMinutes(cards.map((c) => cardPlainText(c.type, c.content)).join(' '))
   const accent = accentOf(meta.id)

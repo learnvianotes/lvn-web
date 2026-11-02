@@ -1,26 +1,27 @@
 import type { ApolloClient } from '@apollo/client'
 import { parse, type DocumentNode } from 'graphql'
-import { ChangeNoteVisibilityDocument, CompleteNoteUploadDocument, CreateNoteUploadDocument, ForkNoteDocument, type Visibility } from '@/graphql/generated/graphql'
+import { ChangeNoteVisibilityDocument, CompleteNoteUploadDocument, CreateNoteUploadDocument, ForkNoteDocument, NoteForksDocument, type Visibility } from '@/graphql/generated/graphql'
 import { publicNotePath } from '@/features/public-notes/paths'
 import type { NotePage } from '@/features/notes/pages/model'
 import { pagesFromUnknown } from '@/features/notes/pages/model'
 import { type ShareAudience, wireVisibility } from '@/features/notes/share/visibility'
 
 /**
- * Beta operations against lvn-backend contracts 0.74.0 (PR #47, branch
- * cursor/sharing-quizzes-pages-voice-3455). Existing schema operations are the
- * generated documents. Fields that 0.74.0 adds and this repo's vendored schema
- * does not list yet are one document each, named as that contract names them.
+ * Beta operations against lvn-backend contracts 0.74.0 (PR #47) and the forking
+ * shape on main 24c4a54 (contracts 0.76.0). Existing schema operations are the
+ * generated documents. Fields this vendored schema still does not list are one
+ * document each, named as that contract names them.
  *
- * This agent cannot read the private lvn-backend repository, so the documents
- * below follow the operation names in that PR and this repo's payload style
- * (userErrors, UUID, relative paths). Shapes the PR summary did not spell out
- * are called out in GAPS.
+ * This agent cannot read the private lvn-backend repository, so those documents
+ * follow the operation names from PR #47 and this repo's payload style
+ * (userErrors, UUID, relative paths). Shapes the summary did not spell out are
+ * called out in GAPS. Forking is on the schema: Note.allowForks, Note.forkCount,
+ * and forkingEnabled(noteId). Note.forkingEnabled is not a field.
  */
 export const ASSUMPTIONS = [
   'setNoteVisibility calls changeNoteVisibility. Visibility is PRIVATE | SHARED | UNLISTED | PUBLIC. UNLISTED is its own value.',
   'Public is gated by the platform setting public_notes_require_verification, read as the query publicNotesRequireVerification.',
-  'forkNote is the existing mutation. Opt-out is allowForks (forkingEnabled remains the fallback while a note payload still sends it). forkCount is the number of copies.',
+  'forkNote is the existing mutation. Opt-out is Note.allowForks. forkCount is the number of copies. The boolean query is forkingEnabled(noteId).',
   'sharedQuiz(noteId), sharedQuizByLink(token), myQuizzes, and publicQuizzes are the quiz reads. Attempts and the owner aggregate sit on the owned quiz.',
   'Quiz and note share paths are relative (/q/{token}, /n/{slug}-{id}). The web joins them to its origin.',
   'Note.pages returns pages with strokes and drawing side by side, plus image placements. Pictures are uploaded with createUploadIntent purpose PAGE_IMAGE.',
@@ -35,22 +36,12 @@ export const ASSUMPTIONS = [
 export const GAPS = [
   'Submit for a shared quiz is submitSharedQuizAttempt. The summary names the reads (sharedQuizByLink, attempts, aggregates) and not this write.',
   'Saving ink is saveNotePages. The summary names the Note.pages read (strokes beside drawing, PAGE_IMAGE placements) and not the write.',
-  'publicNotesRequireVerification is the client read of the public_notes_require_verification setting. Admins already have adminSettings; a learner cannot use that query.',
   'voiceCapture, transcribeCaptionClip, transcribeAudio, and makeNotesFromTranscript inputs are { noteId, fileId?, captions? | transcript? } with userErrors. The summary names the operations, not the input fields.',
 ] as const
 
 const PublicNotesRequireVerificationDocument = op(`
   query PublicNotesRequireVerification {
     publicNotesRequireVerification
-  }
-`)
-
-const NoteForksDocument = op(`
-  query NoteForks($id: UUID!) {
-    note(id: $id) {
-      allowForks
-      forkCount
-    }
   }
 `)
 
@@ -266,9 +257,11 @@ export async function forkNote(client: ApolloClient, noteId: string) {
 
 export async function loadForkState(client: ApolloClient, noteId: string): Promise<ForkState | null> {
   const res = await client.query({ query: NoteForksDocument, variables: { id: noteId }, fetchPolicy: 'network-only' })
-  const note = (res.data as { note?: { allowForks?: boolean; forkCount?: number } | null }).note
-  if (!note || typeof note.allowForks !== 'boolean') return null
-  return { allowForks: note.allowForks, forkCount: note.forkCount ?? 0 }
+  const data = res.data
+  if (!data) return null
+  const allow = data.forkingEnabled
+  if (typeof allow !== 'boolean') return null
+  return { allowForks: data.note?.allowForks ?? allow, forkCount: data.note?.forkCount ?? 0 }
 }
 
 export async function shareQuiz(client: ApolloClient, noteId: string): Promise<Payload<{ quiz: { id: string; token: string; path: string; title: string } | null }>> {

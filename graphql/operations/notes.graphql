@@ -93,7 +93,8 @@ fragment NoteMeta on Note {
     number
     createdAt
   }
-  forkingEnabled
+  allowForks
+  forkCount
   moderation {
     state
     reason
@@ -572,4 +573,13 @@ query UploadsEnabled {
 # Setting public_notes_require_verification. Public visibility follows this, not unverifiedGatedActions.
 query PublicNotesRequireVerification {
   publicNotesRequireVerification
+}
+
+# Contracts 0.76.0: the boolean is a query. The note carries allowForks and forkCount.
+query NoteForks($id: UUID!) {
+  forkingEnabled(noteId: $id)
+  note(id: $id) {
+    allowForks
+    forkCount
+  }
 }
