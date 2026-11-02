@@ -1,4 +1,3 @@
-import { deflateSync } from 'node:zlib'
 import { expect, test, type Page } from '@playwright/test'
 import { mockApi, USER } from './support/notes-api'
 
@@ -12,47 +11,6 @@ const none = { userErrors: [] }
 const raviId = '01920000-0000-7000-8000-0000000000e2'
 const requestId = '01920000-0000-7000-8000-0000000ve001'
 const fileId = '01920000-0000-7000-8000-00000000f0d1'
-
-function crc32(buf: Buffer): number {
-  let c = ~0
-  for (const byte of buf) {
-    c ^= byte
-    for (let i = 0; i < 8; i++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1))
-  }
-  return ~c >>> 0
-}
-
-function chunk(type: string, data: Buffer): Buffer {
-  const body = Buffer.concat([Buffer.from(type), data])
-  const out = Buffer.alloc(8 + body.length)
-  out.writeUInt32BE(data.length, 0)
-  body.copy(out, 4)
-  out.writeUInt32BE(crc32(body), 4 + body.length)
-  return out
-}
-
-/** A small college-ID stand-in, so the review thumbnail paints in a screenshot. */
-function cardPng(width = 240, height = 140): Buffer {
-  const raw = Buffer.alloc((width * 4 + 1) * height)
-  for (let y = 0; y < height; y++) {
-    const row = y * (width * 4 + 1)
-    raw[row] = 0
-    for (let x = 0; x < width; x++) {
-      const i = row + 1 + x * 4
-      const band = y < 36
-      raw[i] = band ? 15 : 232
-      raw[i + 1] = band ? 118 : 244
-      raw[i + 2] = band ? 110 : 248
-      raw[i + 3] = 255
-    }
-  }
-  const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(width, 0)
-  ihdr.writeUInt32BE(height, 4)
-  ihdr[8] = 8
-  ihdr[9] = 6
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))])
-}
 
 async function shot(page: Page, name: string) {
   const dir = process.env.ADMIN_PLATFORM_SHOTS
@@ -106,46 +64,44 @@ test('an admin sees Admin in the sidebar; a student does not', async ({ page }, 
   await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Admin', exact: true })).toHaveCount(0)
 })
 
-test('a manager reviews proof, and only sees the admin sections they are allowed', async ({ page }, info) => {
-  test.skip(info.project.name === 'phone', 'desktop shows the admin sidebar beside the card')
-  await page.route('http://storage.test/**', (route) => route.fulfill({ status: 200, body: cardPng(), headers: { 'content-type': 'image/png' } }))
-  await mockApi(
+test('a manager cannot open the verification or college ID queues', async ({ page }) => {
+  const calls = await mockApi(
     page,
-    { VerificationRequestsToReview: () => ({ verificationRequestsToReview: [reviewRequest] }), VerificationDocumentUrl: () => ({ verificationDocumentUrl: { __typename: 'SignedUrl', url: 'http://storage.test/doc', expiresAt: '2026-10-25T12:00:00.000Z' } }) },
+    { VerificationRequestsToReview: () => ({ verificationRequestsToReview: [reviewRequest] }) },
     { ...viewerExtras, globalRole: 'MANAGER' },
   )
   await page.goto('/admin/verification')
-  const nav = page.getByRole('navigation', { name: 'Admin settings' })
-  await expect(nav.getByRole('link', { name: 'Errors' })).toHaveCount(0)
-  await expect(nav.getByRole('link', { name: 'Usage' })).toHaveCount(0)
-  await expect(nav.getByRole('link', { name: 'Proof of study to review' })).toBeVisible()
-  await expect(nav.getByRole('link', { name: 'College ID cards' })).toBeVisible()
-  await expect(nav.getByRole('link', { name: 'Roles' })).toHaveCount(0)
-  await expect(nav.getByRole('link', { name: 'Overview' })).toHaveCount(0)
+  await expect(page.getByText('Only platform admins and verified teachers can review these.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Approve' })).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: 'Admin settings' })).toHaveCount(0)
+  expect(calls.some((call) => call.op === 'VerificationRequestsToReview')).toBe(false)
 
-  const card = page.getByRole('article', { name: 'Ravi Kumar' })
-  await expect(card.getByText('MATCH', { exact: true })).toBeVisible()
-  await expect(card.getByText('82% confidence')).toBeVisible()
-  await expect(card.getByText('The name and college on the card match the profile.')).toBeVisible()
-  await expect(card.getByText(/Checked/)).toBeVisible()
-  await expect(card.getByText('Ravi Kumar', { exact: true })).toBeVisible()
-  await expect(card.getByText('matches the profile').first()).toBeVisible()
-  await expect(card.getByText('ID number IH20201234')).toBeVisible()
-  await expect(card.getByText('Valid until 2027-05')).toBeVisible()
-  await card.getByRole('button', { name: 'id-card.png' }).click()
-  await expect(card.getByRole('img', { name: 'id-card.png' })).toBeVisible()
-  await expect(card.getByRole('link', { name: 'Open in a new tab' })).toHaveAttribute('href', 'http://storage.test/doc')
-  await shot(page, 'review_card')
+  await page.goto('/admin/student-id')
+  await expect(page.getByText('Only platform admins and verified teachers can review these.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Approve' })).toHaveCount(0)
 })
 
 test('a teacher sees the review sections and cannot assign roles', async ({ page }, info) => {
   test.skip(info.project.name === 'phone', 'the sections are the same list')
-  await mockApi(page, { VerificationRequestsToReview: () => ({ verificationRequestsToReview: [] }) }, { ...viewerExtras, globalRole: 'TEACHER' })
+  await mockApi(page, { VerificationRequestsToReview: () => ({ verificationRequestsToReview: [] }) }, { ...viewerExtras, globalRole: 'TEACHER', verified: true })
   await page.goto('/admin/verification')
   const nav = page.getByRole('navigation', { name: 'Admin settings' })
   await expect(nav.getByRole('link')).toHaveText(['Proof of study to review', 'College ID cards'])
   await page.goto('/admin/roles')
   await expect(page.getByText('Only platform admins can assign roles.')).toBeVisible()
+})
+
+test('an unverified teacher cannot review verification requests', async ({ page }) => {
+  const calls = await mockApi(
+    page,
+    { VerificationRequestsToReview: () => ({ verificationRequestsToReview: [reviewRequest] }) },
+    { ...viewerExtras, globalRole: 'TEACHER', verified: false },
+  )
+  await page.goto('/admin/verification')
+  await expect(page.getByText('Only platform admins and verified teachers can review these.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Approve' })).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: 'Admin settings' })).toHaveCount(0)
+  expect(calls.some((call) => call.op === 'VerificationRequestsToReview')).toBe(false)
 })
 
 test('an admin assigns a role, decides a domain, and turns on the ID-card check', async ({ page }, info) => {

@@ -5,6 +5,7 @@ import { GraduationCap } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
 import { Button } from '@/components/ui/button'
 import { attempt, problemOf } from '@/features/groups/shared'
 import { ClassroomByCodeDocument, RequestToJoinClassroomDocument, WithdrawClassroomJoinRequestDocument } from '@/graphql/generated/graphql'
@@ -64,6 +65,7 @@ export function JoinByCode({ code: raw, via }: { code: string; via: 'CODE' | 'LI
               <Button className="w-fit" disabled={requesting.loading} onClick={() => void run(() => request({ variables: { code, via } }))}>
                 {t('askToJoin')}
               </Button>
+              <GatedNotice feature="JOIN_CLASS" />
               <p className="text-xs text-muted">{t('askHint')}</p>
             </>
           )}

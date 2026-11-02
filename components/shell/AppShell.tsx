@@ -38,6 +38,7 @@ import { CreateNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
 import { canSeeAdminNav } from '@/features/admin/AdminNav'
 import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { cn } from '@/lib/cn'
+import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 
@@ -109,6 +110,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
       ) : null}
       <div className={cn('flex min-w-0 flex-col', admin && 'h-dvh max-h-dvh min-h-0 overflow-hidden')}>
         {app ? <TopBar menuButton={menuButton} open={open} onMenu={() => setOpen(true)} pinned={admin} /> : visitor}
+        {app ? <VerifyEmailBanner /> : null}
         {app ? <DeletionBanner /> : null}
         <main
           id="main"
@@ -159,8 +161,8 @@ function Nav() {
   const t = useTranslations('shell')
   const path = usePathname()
   const router = useRouter()
-  const role = useQuery(ViewerDocument).data?.viewer?.globalRole
-  const entries = ENTRIES.filter((entry) => !entry.staff || canSeeAdminNav(role))
+  const viewer = useQuery(ViewerDocument).data?.viewer
+  const entries = ENTRIES.filter((entry) => !entry.staff || canSeeAdminNav(viewer?.globalRole, { verified: viewer?.verified }))
   const readPdf = useReadPdf()
   const pdf = useRef<HTMLInputElement>(null)
   // Upload (read a PDF) only while uploads are on (lvn-backend ADR-0097).

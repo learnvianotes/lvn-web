@@ -34,6 +34,7 @@ fragment Problems on UserError {
   message
   code
   supportEmail
+  retryAfter
 }
 
 query Viewer {
@@ -138,10 +139,26 @@ mutation CompleteRegistration($input: CompleteRegistrationInput!) {
 mutation VerifyEmail($token: String!) {
   verifyEmail(input: { token: $token }) {
     ok
+    user {
+      ...ViewerFields
+    }
     userErrors {
       ...Problems
     }
   }
+}
+
+mutation ResendVerification {
+  resendVerification {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+query UnverifiedGatedActions {
+  unverifiedGatedActions
 }
 
 mutation RequestPasswordReset($email: String!) {

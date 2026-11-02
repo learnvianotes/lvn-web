@@ -66,6 +66,8 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
     if (op === 'AnalyticsOptOut' && !handlers[op]) return route.fulfill({ json: { data: { viewer: { __typename: 'User', id: USER, analyticsOptOut: false } } } })
     if (op === 'IngestAnalytics' && !handlers[op]) return route.fulfill({ json: { data: { ingestAnalytics: { __typename: 'OkPayload', ok: true, userErrors: [] } } } })
     if (op === 'TermsStatus' && !handlers[op]) return route.fulfill({ json: { data: { termsVersion: '2026-10-08', viewer: { __typename: 'User', id: USER, termsAccepted: true } } } })
+    // Public list of actions closed until the sign-in email is confirmed. Empty unless a test names some.
+    if (op === 'UnverifiedGatedActions' && !handlers[op]) return route.fulfill({ json: { data: { unverifiedGatedActions: [] } } })
     const handler = handlers[op]
     if (!handler) return route.fulfill({ status: 500, json: { errors: [{ message: `unmocked ${op}` }] } })
     return route.fulfill({ json: { data: handler(body.variables ?? {}) } })

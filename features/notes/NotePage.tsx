@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CardType } from '@/lib/contracts/domain/enums'
+import { GatedNotice } from '@/components/auth/GatedNotice'
+import { useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Button } from '@/components/ui/button'
 import { LoadFailed } from '@/components/ui/query-state'
 import { DeleteNoteDocument, PublishNoteDocument, ViewerDocument } from '@/graphql/generated/graphql'
@@ -42,6 +44,7 @@ export function NotePage({ id }: { id: string }) {
   const client = useApolloClient()
   const router = useRouter()
   const viewer = useQuery(ViewerDocument)
+  const publishHeld = useUnverifiedGates().gated('PUBLISH_NOTE')
   const userId = viewer.data?.viewer?.id
   useEffect(() => {
     trackUsage('note_open')
@@ -102,6 +105,7 @@ export function NotePage({ id }: { id: string }) {
     )
   }
   const { meta } = loaded
+  const canPublish = meta.viewerCan.publish && !publishHeld
   if (meta.viewerAccess === 'READER') {
     return (
       <MediaProvider noteId={null} cards={loaded.media} readNoteId={id}>
@@ -154,7 +158,7 @@ export function NotePage({ id }: { id: string }) {
         </Button>
       ) : null}
       {meta.viewerAccess === 'OWNER' ? (
-        <Button size="sm" className="gap-1.5 shadow-md shadow-accent/25" disabled={!meta.viewerCan.publish || publishing.loading} title={meta.viewerCan.publish ? t('publishHint') : t('verifyToPublish')} onClick={(e) => void doPublish(e)}>
+        <Button size="sm" className="gap-1.5 shadow-md shadow-accent/25" disabled={!canPublish || publishing.loading} title={canPublish ? t('publishHint') : publishHeld ? t('verifyToPublish') : t('publishUnavailable')} onClick={(e) => void doPublish(e)}>
           <Rocket className="size-4" aria-hidden />
           {t('publish')}
         </Button>
@@ -246,14 +250,8 @@ export function NotePage({ id }: { id: string }) {
             {notice}
           </p>
         ) : null}
-        {!meta.viewerCan.publish && meta.viewerAccess === 'OWNER' ? (
-          <p className="text-xs text-muted">
-            {t('verifyToPublish')}{' '}
-            <Link href="/profile" className="text-accent hover:underline">
-              {t('verifyLink')}
-            </Link>
-          </p>
-        ) : null}
+        {meta.viewerAccess === 'OWNER' ? <GatedNotice feature="PUBLISH_NOTE" when={!canPublish} /> : null}
+        {meta.viewerAccess === 'OWNER' ? <GatedNotice feature="UPLOAD" /> : null}
         <NoteEditor
           key={generation}
           noteId={id}

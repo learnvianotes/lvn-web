@@ -171,6 +171,13 @@
     "verify": {
       "checking": "Checking your link…",
       "emailDone": "Your email is confirmed.",
+      "accountVerified": "Your account is verified.",
+      "bannerTitle": "Verify your email",
+      "bannerLead": "We sent a confirmation link to {email}.",
+      "bannerLeadNoEmail": "We sent a confirmation link to your sign-in email.",
+      "resendLink": "Resend verification email",
+      "resentLink": "If your email can receive it, a new link is on its way.",
+      "retryAfter": "You can try again in {seconds} seconds.",
       "continue": "Continue",
       "codeTitle": "Enter your code",
       "codeLead": "We sent a 6-digit code to {email}.",
@@ -201,6 +208,24 @@
     },
     "invite": {
       "notice": "This beta is invite-only. Sign in with Google or email if an admin has added your address."
+    },
+    "gates": {
+      "why": "Confirm your sign-in email to use this.",
+      "how": "Verify your email",
+      "held": "Until you confirm it, these stay closed: {features}.",
+      "open": "Nothing else is held back.",
+      "features": {
+        "PUBLISH_NOTE": "publishing notes",
+        "SHARE_NOTE": "sharing notes",
+        "COMMENT": "commenting",
+        "FOLLOW": "following people",
+        "JOIN_GROUP": "joining groups",
+        "JOIN_CLASS": "joining classes",
+        "ASK_AI": "asking AI",
+        "POST": "posting",
+        "UPLOAD": "uploading files",
+        "REACT": "reactions"
+      }
     },
     "errors": {
       "generic": "Something went wrong. Try again.",
@@ -323,7 +348,8 @@
     "backToNotes": "My notes",
     "publish": "Publish",
     "publishHint": "Save this version as the one readers see. Later edits stay in your draft until you publish again.",
-    "verifyToPublish": "Verify your account to publish notes.",
+    "verifyToPublish": "Confirm your sign-in email to publish notes.",
+    "publishUnavailable": "Publishing isn’t available for this note.",
     "verifyLink": "Verify now",
     "published": "Published as version {n}.",
     "publishFailed": "The note could not be published. Try again.",
@@ -1935,7 +1961,7 @@
       "teacherLead": "Vouch only for students you know. Approving lets them share, comment and join groups.",
       "adminTitle": "Proof of study to review",
       "adminLead": "Oldest first. Every document you open is recorded.",
-      "notAllowed": "This page is for platform admins.",
+      "notAllowed": "Only platform admins and verified teachers can review these.",
       "none": "Nothing to review.",
       "reason": "Reason (needed to decline; the student reads it)",
       "reasonHint": "For example: The ID card is from another college.",
@@ -1986,7 +2012,7 @@
     "collegeIdAdmin": {
       "title": "College ID cards",
       "lead": "Turn the option on for students, then review the cards they send. Open a card only when you mean to look: the link is short-lived and every open is recorded.",
-      "notAllowed": "This page is for platform admins.",
+      "notAllowed": "Only platform admins and verified teachers can review these.",
       "switch": "Students can send a college ID card",
       "switchOn": "On",
       "switchOff": "Off",

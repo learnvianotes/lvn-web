@@ -174,6 +174,6 @@ test('the college ID page is for platform admins only', async ({ page }) => {
   await page.goto('/profile')
   await expect(page.getByRole('link', { name: 'College ID cards', exact: true })).toHaveCount(0)
   await page.goto('/admin/student-id')
-  await expect(page.getByText('This page is for platform admins.')).toBeVisible()
+  await expect(page.getByText('Only platform admins and verified teachers can review these.')).toBeVisible()
   expect(calls.some((c) => c.op === 'StudentIdVerificationQueue' || c.op === 'StudentIdCardUrl')).toBe(false)
 })

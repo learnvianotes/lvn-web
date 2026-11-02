@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { AuthProvider } from '@/components/auth/AuthProvider'
+import { GatedNotice } from '@/components/auth/GatedNotice'
+import { useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import {
@@ -43,6 +45,7 @@ type Act = 'follow' | 'unfollow' | 'removeFollower' | 'block' | 'unblock' | 'res
 
 function Actions({ id, handle }: { id: string; handle: string }) {
   const t = useTranslations('people')
+  const followHeld = useUnverifiedGates().gated('FOLLOW')
   const status = useSession((s) => s.status)
   const { data } = useQuery(ProfileRelationDocument, { variables: { handle }, skip: status !== 'signed-in', fetchPolicy: 'cache-and-network' })
   const [error, setError] = useState<string | null>(null)
@@ -121,8 +124,7 @@ function Actions({ id, handle }: { id: string; handle: string }) {
             <UserCheck className="size-4" aria-hidden />
             {t('following')}
           </Button>
-        ) : r.viewerCan.follow || (!data?.viewer?.verified && !r.blocked) ? (
-          // Unverified, Follow stays: pressing it says why it needs verification (ADR-0017).
+        ) : r.viewerCan.follow || (followHeld && !r.blocked) ? (
           <Button disabled={busy} onClick={() => void act('follow')}>
             <UserPlus className="size-4" aria-hidden />
             {t('follow')}
@@ -168,6 +170,7 @@ function Actions({ id, handle }: { id: string; handle: string }) {
         </MoreMenu>
         <ReportDialog entityType="USER" entityId={person.id} open={reporting} onClose={() => setReporting(false)} />
       </div>
+      <GatedNotice feature="FOLLOW" when={!r.viewerCan.follow && !r.following && !r.blocked} />
       {r.restricted ? <span className="text-xs text-muted">{t('restrictedNote')}</span> : null}
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { LoadFailed, Loading, QueryState } from '@/components/ui/query-state'
@@ -168,6 +169,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
         ) : null}
         <ReportButton entityType="GROUP" entityId={group.id} authorId={group.owner.id} className="ml-auto" />
       </div>
+      <GatedNotice feature="JOIN_GROUP" when={!group.viewerRole && !group.viewerCan.join && !group.viewerCan.requestJoin && !group.viewerRequestId} />
       {asking && group.viewerCan.requestJoin ? (
         <form
           className="flex flex-col gap-2"
@@ -214,6 +216,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
   return (
     // Room below the last post for the floating ＋.
     <div className={group.viewerCan.post ? 'flex flex-col gap-4 pb-20' : 'flex flex-col gap-4'}>
+      <GatedNotice feature="POST" when={!group.viewerCan.post} />
       {group.viewerCan.post ? (
         <>
           {/* A new post starts from the floating ＋ (lvn-backend ADR-0076); what was typed stays if the dialog is closed. */}

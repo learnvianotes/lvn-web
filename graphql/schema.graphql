@@ -1,5 +1,6 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
 # ADR-0099 (college ID cards, lvn-backend#18, contracts 0.64.0) is included here so this app typechecks before that branch is on main. `pnpm graphql:sync` replaces this file from lvn-backend.
+# lvn-backend#46 (contracts 0.74.0): VerifyEmailPayload, resendVerification, unverifiedGatedActions, UserError.retryAfter, and Float min/max on AdminSettingConstraints.
 # lvn-backend#27 account admin is included the same way: AccountStatus, adminUsers, adminUpdateUser, adminSetAccountStanding, adminDeleteUser, and UserError.supportEmail.
 input AcceptTermsInput {
   """Query.termsVersion, as shown to the person"""
@@ -363,9 +364,9 @@ type AdminSetting {
 }
 
 type AdminSettingConstraints {
-  max: Int
+  max: Float
   maxLength: Int
-  min: Int
+  min: Float
   nullable: Boolean!
   pattern: String
 }
@@ -3253,6 +3254,12 @@ type Mutation {
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
 
+  """
+  Signed in. Sends another confirmation link for the sign-in email.
+  RATE_LIMITED sets retryAfter. Does not say whether that address can receive mail.
+  """
+  resendVerification: OkPayload!
+
   """Platform admins: put a setting back to its environment default"""
   resetAdminSetting(key: String!): AdminSettingPayload!
 
@@ -3482,7 +3489,7 @@ type Mutation {
   """Replaces the items written by hand; imported items stay"""
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
   updateWeeklyTask(input: UpdateWeeklyTaskInput!): WeeklyTaskPayload!
-  verifyEmail(input: VerifyEmailInput!): OkPayload!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
   withdrawClassroomJoinRequest(input: JoinRequestIdInput!): ClassroomPayload!
 
@@ -3965,6 +3972,13 @@ enum OAuthProvider {
 
 type OkPayload {
   ok: Boolean!
+  userErrors: [UserError!]!
+}
+
+"""The account after a sign-in email link is confirmed, so the client can show it verified at once."""
+type VerifyEmailPayload {
+  ok: Boolean!
+  user: User
   userErrors: [UserError!]!
 }
 
@@ -6289,6 +6303,9 @@ type UserError {
 
   """Set on AGE_RESTRICTED and on a blocked sign-in."""
   supportEmail: String
+
+  """Seconds to wait when code is RATE_LIMITED. Null otherwise."""
+  retryAfter: Int
 }
 
 type VerificationDocument {
@@ -6534,9 +6551,32 @@ type MyPlan {
   usage: [PlanUsage!]!
 }
 
+"""
+An action an admin can hold back until the sign-in email is confirmed.
+The public list is the same for everyone. Platform admins are never held back.
+"""
+enum UnverifiedGatedAction {
+  PUBLISH_NOTE
+  SHARE_NOTE
+  COMMENT
+  FOLLOW
+  JOIN_GROUP
+  JOIN_CLASS
+  ASK_AI
+  POST
+  UPLOAD
+  REACT
+}
+
 extend type Query {
   """Public."""
   accessPolicy: AccessPolicy!
+
+  """
+  Public. Actions closed until the sign-in email is confirmed.
+  Empty when an admin gated nothing.
+  """
+  unverifiedGatedActions: [UnverifiedGatedAction!]!
 
   """Platform admins."""
   adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!

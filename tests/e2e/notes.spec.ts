@@ -98,12 +98,26 @@ test('a reader sees the published version, read-only, and can try the quiz', asy
 })
 
 test('an unverified owner is told how to publish', async ({ page }) => {
+  await mockApi(
+    page,
+    {
+      NoteToEdit: () => ({ note: { ...meta({ viewerCan: { __typename: 'NotePermissions', edit: true, publish: false, changeVisibility: false, delete: true, share: false, fork: true } }), cards: page1(cards) } }),
+      UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['PUBLISH_NOTE'] }),
+    },
+    { emailVerified: false, verified: false },
+  )
+  await page.goto(`/notes/${NOTE_ID}`)
+  await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: 'Verify your email' })).toHaveAttribute('href', '/profile#verify-email')
+})
+
+test('publishing stays closed without a verify prompt when the email is already confirmed', async ({ page }) => {
   await mockApi(page, {
     NoteToEdit: () => ({ note: { ...meta({ viewerCan: { __typename: 'NotePermissions', edit: true, publish: false, changeVisibility: false, delete: true, share: false, fork: true } }), cards: page1(cards) } }),
   })
   await page.goto(`/notes/${NOTE_ID}`)
   await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
-  await expect(page.getByRole('link', { name: 'Verify now' })).toHaveAttribute('href', '/profile')
+  await expect(page.getByRole('link', { name: 'Verify your email' })).toHaveCount(0)
 })
 
 test('publishing names the version, and history previews and restores one', async ({ page }, info) => {

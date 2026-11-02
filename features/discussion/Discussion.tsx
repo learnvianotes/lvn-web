@@ -5,6 +5,7 @@ import { Lock, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
 import { Button } from '@/components/ui/button'
 import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { attempt, textToDoc } from '@/features/groups/shared'
@@ -89,6 +90,7 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
           {t('more')}
         </Button>
       ) : null}
+      <GatedNotice feature="REACT" when={!d.viewerCanComment && reactionTarget !== null} />
       {d.viewerCanComment ? (
         <form
           className="flex flex-col gap-2"
@@ -110,9 +112,12 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
             </Button>
           </div>
         </form>
-      ) : d.whyNot ? (
-        <p className="text-sm text-muted">{d.whyNot}</p>
-      ) : null}
+      ) : (
+        <>
+          {d.whyNot ? <p className="text-sm text-muted">{d.whyNot}</p> : null}
+          <GatedNotice feature="COMMENT" />
+        </>
+      )}
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}

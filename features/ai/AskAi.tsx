@@ -6,6 +6,7 @@ import { BookOpen, Globe, LoaderCircle, MessageCircleQuestionMark, NotebookPen, 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
 import { Button } from '@/components/ui/button'
 import { LimitNotice } from '@/components/ui/limit-notice'
 import { Loading } from '@/components/ui/query-state'
@@ -81,6 +82,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
           <Sparkles className="size-4 text-accent" aria-hidden />
           {t('aboutDoubt')}
         </Button>
+        <GatedNotice feature="ASK_AI" />
         {off ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
         {error ? (
           limit ? <LimitNotice>{error}</LimitNotice> : (
@@ -118,6 +120,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
           {busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : t('ask')}
         </Button>
       </div>
+      <GatedNotice feature="ASK_AI" />
       {off && offNotice ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
       {error ? (
         limit ? <LimitNotice>{error}</LimitNotice> : (
