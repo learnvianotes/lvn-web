@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
+import { usePublicNotesRequireVerification, useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -49,6 +51,10 @@ async function attempt<T>(run: () => Promise<T>): Promise<{ result: T | null; er
 /** Who can read a note (§4.2, §4.4): only the owner, the people it is shared with, or everyone; and whether others may copy it. */
 export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; open: boolean; onClose: () => void; onSaved: (meta: NoteMeta) => void }) {
   const t = useTranslations('notes.share')
+  const tGates = useTranslations('auth.gates')
+  const gates = useUnverifiedGates()
+  const shareHeld = gates.gated('note.share')
+  const publicHeld = usePublicNotesRequireVerification() && gates.held
   const shares = useQuery(NoteSharesDocument, { variables: { id: meta.id }, skip: !open, fetchPolicy: 'cache-and-network' })
   const [changeVisibility, changing] = useMutation(ChangeNoteVisibilityDocument)
   const [share, sharing] = useMutation(ShareNoteDocument)
@@ -126,16 +132,17 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
             const needsPublish = value === 'PUBLIC' && !meta.publishedVersion
             // ADR-0037: a note moderators hid or removed stays off the public pages until they approve it.
             const offPublic = value === 'PUBLIC' && (meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED')
+            const publicBlocked = value === 'PUBLIC' && publicHeld
             return (
               <label
                 key={value}
                 className={cn(
                   'flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition',
                   active ? 'border-accent bg-accent-soft ring-1 ring-accent/40' : 'border-border bg-surface hover:border-accent/40',
-                  (needsPublish || offPublic) && 'cursor-not-allowed opacity-60',
+                  (needsPublish || offPublic || publicBlocked) && 'cursor-not-allowed opacity-60',
                 )}
               >
-                <input type="radio" name="visibility" value={value} checked={active} disabled={needsPublish || offPublic || !meta.viewerCan.changeVisibility} onChange={() => void pickVisibility(value)} className="sr-only" />
+                <input type="radio" name="visibility" value={value} checked={active} disabled={needsPublish || offPublic || publicBlocked || !meta.viewerCan.changeVisibility} onChange={() => void pickVisibility(value)} className="sr-only" />
                 <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl', active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted')}>
                   <Icon className="size-[1.125rem]" aria-hidden />
                 </span>
@@ -147,11 +154,11 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
               </label>
             )
           })}
-          {!meta.viewerCan.changeVisibility ? (
-            <p className="text-xs text-muted">
-              {t('verifyToShare')}{' '}
-              <Link href="/profile" className="text-accent hover:underline">
-                {t('verifyLink')}
+          {publicHeld ? (
+            <p className="text-sm text-muted">
+              {tGates('publicNote')}{' '}
+              <Link href="/profile#verify-email" className="font-semibold text-accent hover:underline">
+                {tGates('how')}
               </Link>
             </p>
           ) : null}
@@ -170,17 +177,17 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
           >
             <label className="min-w-0 flex-1">
               <span className="sr-only">{t('personLabel')}</span>
-              <Input value={person} onChange={(e) => setPerson(e.target.value)} placeholder={t('personPlaceholder')} autoComplete="off" disabled={!meta.viewerCan.share} />
+              <Input value={person} onChange={(e) => setPerson(e.target.value)} placeholder={t('personPlaceholder')} autoComplete="off" disabled={!meta.viewerCan.share || shareHeld} />
             </label>
             <div className="flex gap-2">
               <label className="flex-1 sm:flex-none">
                 <span className="sr-only">{t('roleLabel')}</span>
-                <select className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm" value={role} onChange={(e) => setRole(e.target.value as NoteShareRole)} disabled={!meta.viewerCan.share}>
+                <select className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm" value={role} onChange={(e) => setRole(e.target.value as NoteShareRole)} disabled={!meta.viewerCan.share || shareHeld}>
                   <option value="VIEWER">{t('role.VIEWER')}</option>
                   <option value="EDITOR">{t('role.EDITOR')}</option>
                 </select>
               </label>
-              <Button type="submit" className="gap-1.5" disabled={!person.trim() || sharing.loading || !meta.viewerCan.share}>
+              <Button type="submit" className="gap-1.5" disabled={!person.trim() || sharing.loading || !meta.viewerCan.share || shareHeld}>
                 <UserPlus className="size-4" aria-hidden />
                 {t('add')}
               </Button>
@@ -220,6 +227,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
           ) : shares.data ? (
             <p className="text-sm text-muted">{t('nobodyYet')}</p>
           ) : null}
+          <GatedNotice feature="note.share" />
           {meta.visibility === 'PRIVATE' && people.length ? <p className="text-xs text-muted">{t('privateHidesShares')}</p> : null}
         </section>
 
@@ -230,7 +238,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
               <span className="text-sm font-semibold">{t('withConnections')}</span>
               <span className="text-xs leading-5 text-muted">{t('withConnectionsHint')}</span>
             </span>
-            <input type="checkbox" role="switch" className="peer sr-only" checked={withConnections} disabled={settingConnections.loading} onChange={() => void toggleConnections()} />
+            <input type="checkbox" role="switch" className="peer sr-only" checked={withConnections} disabled={settingConnections.loading || shareHeld} onChange={() => void toggleConnections()} />
             <span aria-hidden className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-surface-2 ring-1 ring-border transition after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition peer-checked:bg-accent peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
           </label>
         ) : null}

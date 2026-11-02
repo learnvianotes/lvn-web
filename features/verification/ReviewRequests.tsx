@@ -7,6 +7,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ViewerDocument } from '@/graphql/generated/graphql'
+import { canSeeSection } from '@/features/admin/AdminNav'
 import { cn } from '@/lib/cn'
 import { PlatformError, loadVerificationQueue, reviewVerification, verificationDocumentUrl, type AiVerdictView, type ReviewRequestView } from '@/lib/platform-api'
 import { IdCardExtracted } from './IdCardExtracted'
@@ -14,14 +15,16 @@ import { ProofPreview } from './ProofPreview'
 import { confidencePercent, verdictTone } from './proof'
 
 /**
- * Requests to verify accounts. Platform admins and managers see every pending request, including documents.
+ * Requests to verify accounts. Platform admins and verified teachers review them.
  * A teacher sees students of their institution (the API scopes the list). Approving verifies the account;
  * declining needs a reason the student reads. Teacher applications stay with platform admins.
  */
 export function ReviewRequests({ title }: { title?: boolean }) {
   const t = useTranslations('verification.review')
-  const role = useQuery(ViewerDocument).data?.viewer?.globalRole
-  const teacher = role === 'TEACHER'
+  const viewerQuery = useQuery(ViewerDocument)
+  const viewer = viewerQuery.data?.viewer
+  const allowed = !!viewer && canSeeSection(viewer.globalRole, 'verification', { verified: viewer.verified })
+  const teacher = viewer?.globalRole === 'TEACHER'
   const [requests, setRequests] = useState<ReviewRequestView[] | null>(null)
   const [forbidden, setForbidden] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -37,9 +40,11 @@ export function ReviewRequests({ title }: { title?: boolean }) {
     }
   }, [])
   useEffect(() => {
+    if (!allowed) return
     void load()
-  }, [load])
-  if (forbidden) return <p className="text-muted">{t('notAllowed')}</p>
+  }, [allowed, load])
+  if (!viewer && viewerQuery.loading) return <p className="text-muted">{t('loading')}</p>
+  if (!allowed || forbidden) return <p className="text-muted">{t('notAllowed')}</p>
   if (!requests) return <p className="text-muted">{t('loading')}</p>
   return (
     <section aria-labelledby="verify-requests" className="flex flex-col gap-3">
@@ -58,7 +63,7 @@ export function ReviewRequests({ title }: { title?: boolean }) {
       <ul className="flex flex-col gap-3">
         {requests.map((request) => (
           <li key={request.id}>
-            <RequestCard request={request} canDecideRole={role === 'PLATFORM_ADMIN'} onDone={() => void load()} />
+            <RequestCard request={request} canDecideRole={viewer?.globalRole === 'PLATFORM_ADMIN'} onDone={() => void load()} />
           </li>
         ))}
       </ul>

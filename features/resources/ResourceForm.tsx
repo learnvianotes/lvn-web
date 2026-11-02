@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
+import { useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { putToStorage, UploadError } from '@/features/notes/media'
@@ -40,6 +42,7 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
   const fileInput = useRef<HTMLInputElement>(null)
   // A cover from this device is an upload (lvn-backend ADR-0097); a cover found at the link or ISBN is not.
   const uploadsOn = useUploadsEnabled()
+  const submitHeld = useUnverifiedGates().gated('resource.submit') && !resource
   const [url, setUrl] = useState(resource?.url ?? '')
   const [isbn, setIsbn] = useState(resource?.isbn ?? '')
   const [type, setType] = useState<ResourceType | ''>(resource?.type ?? '')
@@ -258,7 +261,8 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
 
       {error ? <Alert tone="error">{error}</Alert> : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={!ready}>
+        {!resource ? <GatedNotice feature="resource.submit" /> : null}
+        <Button type="submit" disabled={!ready || submitHeld}>
           {resource ? (resource.status === 'REJECTED' ? t('saveAgain') : t('save')) : t('send')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => router.back()}>

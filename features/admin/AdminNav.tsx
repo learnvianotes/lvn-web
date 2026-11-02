@@ -26,7 +26,10 @@ export type AdminSection = {
 }
 
 const ADMIN: readonly StaffRole[] = ['PLATFORM_ADMIN']
-const REVIEW: readonly StaffRole[] = ['PLATFORM_ADMIN', 'MANAGER', 'TEACHER']
+/** Proof of study and college IDs. Verified teachers are added in sectionsForRole; managers are not. */
+const REVIEW: readonly StaffRole[] = ['PLATFORM_ADMIN']
+
+type ReviewOpts = { verified?: boolean | null }
 
 /**
  * Every page under app/(site)/(app)/admin, in sidebar order. A unit test fails when a page is added there and left
@@ -49,14 +52,21 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin/ai', group: 'ai', key: 'ai', icon: Sparkles, roles: ADMIN },
 ]
 
-/** Sections this role may open. Students and signed-out visitors get none. */
-export function sectionsForRole(role: string | null | undefined): AdminSection[] {
+/**
+ * Sections this role may open. Students and signed-out visitors get none.
+ * Verification and college ID queues are for platform admins and verified teachers only.
+ */
+export function sectionsForRole(role: string | null | undefined, opts?: ReviewOpts): AdminSection[] {
   if (role !== 'PLATFORM_ADMIN' && role !== 'MANAGER' && role !== 'TEACHER') return []
-  return ADMIN_SECTIONS.filter((section) => section.roles.includes(role))
+  const review = role === 'PLATFORM_ADMIN' || (role === 'TEACHER' && opts?.verified === true)
+  return ADMIN_SECTIONS.filter((section) => {
+    if (section.key === 'verification' || section.key === 'studentId') return review
+    return section.roles.includes(role)
+  })
 }
 
-export function canSeeSection(role: string | null | undefined, key: AdminSectionKey): boolean {
-  return sectionsForRole(role).some((section) => section.key === key)
+export function canSeeSection(role: string | null | undefined, key: AdminSectionKey, opts?: ReviewOpts): boolean {
+  return sectionsForRole(role, opts).some((section) => section.key === key)
 }
 
 export const ADMIN_GROUP_ORDER: AdminGroupKey[] = ['platform', 'people', 'content', 'ai']
@@ -71,15 +81,15 @@ export function activeAdminSection(pathname: string): AdminSection | undefined {
 }
 
 /** The admin area is for platform admins, managers and teachers. Each role only sees its sections. */
-export function canSeeAdminNav(role: string | null | undefined): boolean {
-  return sectionsForRole(role).length > 0
+export function canSeeAdminNav(role: string | null | undefined, opts?: ReviewOpts): boolean {
+  return sectionsForRole(role, opts).length > 0
 }
 
 /**
  * The admin area's side navigation: every settings page, grouped, with the open one marked. From 1024 px it stays
  * on the left; below that it is a drawer opened from "Admin settings" (the app's own menu is separate).
  */
-export function AdminNav({ role }: { role?: string | null }) {
+export function AdminNav({ role, verified }: { role?: string | null; verified?: boolean | null }) {
   const t = useTranslations('adminNav')
   const path = usePathname()
   const [open, setOpen] = useState(false)
@@ -115,7 +125,7 @@ export function AdminNav({ role }: { role?: string | null }) {
           {t('open')}
         </button>
         <aside className="hidden lg:block">
-          <SectionList pathname={path} idPrefix="admin-nav" role={role} />
+          <SectionList pathname={path} idPrefix="admin-nav" role={role} verified={verified} />
         </aside>
       </div>
       {open ? (
@@ -134,7 +144,7 @@ export function AdminNav({ role }: { role?: string | null }) {
                 <X className="size-5" aria-hidden />
               </button>
             </div>
-            <SectionList pathname={path} idPrefix="admin-drawer" onNavigate={close} role={role} />
+            <SectionList pathname={path} idPrefix="admin-drawer" onNavigate={close} role={role} verified={verified} />
           </div>
         </div>
       ) : null}
@@ -142,10 +152,10 @@ export function AdminNav({ role }: { role?: string | null }) {
   )
 }
 
-function SectionList({ pathname, idPrefix, onNavigate, role }: { pathname: string; idPrefix: string; onNavigate?: () => void; role?: string | null }) {
+function SectionList({ pathname, idPrefix, onNavigate, role, verified }: { pathname: string; idPrefix: string; onNavigate?: () => void; role?: string | null; verified?: boolean | null }) {
   const t = useTranslations('adminNav')
   const active = activeAdminSection(pathname)
-  const sections = role === undefined ? ADMIN_SECTIONS : sectionsForRole(role)
+  const sections = role === undefined ? ADMIN_SECTIONS : sectionsForRole(role, { verified })
   return (
     <nav aria-label={t('label')} className="flex flex-col gap-4">
       {ADMIN_GROUP_ORDER.map((group) => {
@@ -190,11 +200,11 @@ function SectionList({ pathname, idPrefix, onNavigate, role }: { pathname: strin
  * looks as it did before. Children stay in one place so the page does not remount when the viewer's role arrives.
  */
 export function AdminShell({ children }: { children: ReactNode }) {
-  const role = useQuery(ViewerDocument).data?.viewer?.globalRole
-  const admin = canSeeAdminNav(role)
+  const viewer = useQuery(ViewerDocument).data?.viewer
+  const admin = canSeeAdminNav(viewer?.globalRole, { verified: viewer?.verified })
   return (
     <div className={admin ? 'flex flex-col gap-4 lg:grid lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-8' : undefined}>
-      {admin ? <AdminNav role={role} /> : null}
+      {admin ? <AdminNav role={viewer?.globalRole} verified={viewer?.verified} /> : null}
       <div className={admin ? 'min-w-0' : undefined}>{children}</div>
     </div>
   )

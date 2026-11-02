@@ -18,15 +18,15 @@ import { confidencePercent, verdictTone } from './proof'
 import { studentIdErrorMessage, type StudentIdErrorCopy } from './student-id'
 
 /**
- * College ID cards (lvn-backend ADR-0099): admins turn the option on; admins, managers and teachers
- * review the queue. The card is fetched when someone chooses to look, then shown on the page.
+ * College ID cards (lvn-backend ADR-0099): platform admins turn the option on. Only platform admins
+ * and verified teachers review the queue. The card is fetched when someone chooses to look, then shown on the page.
  */
 export function StudentIdAdmin() {
   const t = useTranslations('verification.collegeIdAdmin')
   const errors = useTranslations('verification.collegeId')
   const viewer = useQuery(ViewerDocument)
   const role = viewer.data?.viewer?.globalRole
-  const allowed = canSeeSection(role, 'studentId')
+  const allowed = canSeeSection(role, 'studentId', { verified: viewer.data?.viewer?.verified })
   const isAdmin = role === 'PLATFORM_ADMIN'
   const enabledQ = useQuery(StudentIdVerificationEnabledDocument, { skip: !isAdmin, fetchPolicy: 'cache-and-network' })
   const [items, setItems] = useState<StudentIdReviewItem[] | null>(null)

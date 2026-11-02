@@ -20,6 +20,7 @@ import {
   type ViewerQuery,
   type YearOfStudy,
 } from '@/graphql/generated/graphql'
+import { skipsVerificationPrompt } from '@/lib/auth/gates'
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
@@ -133,10 +134,9 @@ function Verification({ viewer }: { viewer: Viewer }) {
         {viewer.verified ? `✓ ${t('verified')}` : t('notVerified')}
         {viewer.verified && viewer.verificationMethod ? <span className="text-sm font-normal text-muted"> {t(`verifiedBy.${viewer.verificationMethod}`)}</span> : null}
       </h2>
-      {!viewer.verified ? <p className="text-sm text-muted">{t('verifyLead')}</p> : null}
-      {!viewer.emailVerified ? <Alert>{t('emailUnverified')}</Alert> : null}
+      {!skipsVerificationPrompt(viewer) && !viewer.verified ? <p className="text-sm text-muted">{t('verifyLead')}</p> : null}
       {/* Without a college email (ADR-0019): a teacher vouches, or our team checks proof of study. */}
-      {!viewer.verified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
+      {!skipsVerificationPrompt(viewer) && !viewer.verified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
     </section>
   )
 }

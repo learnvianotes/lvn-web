@@ -55,6 +55,14 @@ describe('admin settings', () => {
     expect(validateSetting(budget, '1.5')).toBe('integer')
   })
 
+  it('compares an integer setting with a fractional min and max', () => {
+    const threshold = setting({ key: 'student_id_ai_confidence_threshold', type: 'INTEGER', constraints: { min: 0.5, max: 99.5, maxLength: null, pattern: null, nullable: false } })
+    expect(validateSetting(threshold, '0')).toBe('min')
+    expect(validateSetting(threshold, '1')).toBeNull()
+    expect(validateSetting(threshold, '99')).toBeNull()
+    expect(validateSetting(threshold, '100')).toBe('max')
+  })
+
   it('checks strings and confirms risky changes before they are saved', () => {
     const code = setting({ key: 'site_code', type: 'STRING', constraints: { min: null, max: null, maxLength: 4, pattern: '^[a-z]+$', nullable: false } })
     expect(validateSetting(code, 'abcd')).toBeNull()

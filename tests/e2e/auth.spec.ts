@@ -33,7 +33,7 @@ const viewer = (over: Record<string, unknown> = {}) => ({
 const session = (user = viewer()) => ({ __typename: 'Session', accessToken: 'header.payload.sig', accessTokenExpiresAt: new Date(Date.now() + 900_000).toISOString(), user })
 const ok = { __typename: 'OkPayload', ok: true, userErrors: [] }
 /** A userError as the API sends it (Apollo matches fragments by __typename). */
-const problem = (field: string[] | null, message: string, code = 'VALIDATION', supportEmail: string | null = null) => ({ __typename: 'UserError', field, message, code, supportEmail })
+const problem = (field: string[] | null, message: string, code = 'VALIDATION', supportEmail: string | null = null, retryAfter: number | null = null) => ({ __typename: 'UserError', field, message, code, supportEmail, retryAfter })
 const fail = (...problems: ReturnType<typeof problem>[]) => ({ __typename: 'OkPayload', ok: false, userErrors: problems })
 
 /**
@@ -395,11 +395,83 @@ test.describe('sign in', () => {
 
 test.describe('links from emails', () => {
   test('confirms the sign-in email from /verify?token=', async ({ page }) => {
-    await mockApi(page, { VerifyEmail: (v) => ({ verifyEmail: v.token === 'good' ? ok : fail(problem(['input', 'token'], 'This link is invalid or has expired. Ask for a new one.')) }) })
+    await mockApi(page, { VerifyEmail: (v) => ({ verifyEmail: v.token === 'good' ? { ...ok, user: null } : { ...fail(problem(['input', 'token'], 'This link is invalid or has expired. Ask for a new one.')), user: null } }) })
     await page.goto('/verify?token=good')
     await expect(page.getByText('Your email is confirmed.')).toBeVisible()
+    await expect(page.getByText('Your account is verified.')).toHaveCount(0)
     await page.goto('/verify?token=old')
     await expect(page.getByText('This link is invalid or has expired. Ask for a new one.')).toBeVisible()
+  })
+
+  test('a signed-in confirmation updates the account without a reload', async ({ page }) => {
+    const confirmed = viewer({ emailVerified: true, verified: true, verificationMethod: 'INSTITUTIONAL_EMAIL' })
+    await mockApi(
+      page,
+      {
+        VerifyEmail: () => ({ verifyEmail: { __typename: 'VerifyEmailPayload', ok: true, user: confirmed, userErrors: [] } }),
+        Viewer: () => ({ viewer: confirmed }),
+      },
+      'signed-in',
+    )
+    await page.goto('/verify?token=good')
+    await expect(page.getByText('Your email is confirmed.')).toBeVisible()
+    await expect(page.getByText('Your account is verified.')).toBeVisible()
+    await page.getByRole('link', { name: 'Continue' }).click()
+    await expect(page).toHaveURL(/\/profile$/)
+    await expect(page.getByText('✓ Verified')).toBeVisible()
+  })
+
+  test('an unverified person can resend the confirmation email, and a rate limit says how long to wait', async ({ page }) => {
+    let limited = false
+    await mockApi(
+      page,
+      {
+        Viewer: () => ({ viewer: viewer({ emailVerified: false }) }),
+        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish', 'workshop.custom'] }),
+        ResendVerification: () => {
+          if (!limited) {
+            limited = true
+            return { resendVerification: ok }
+          }
+          return { resendVerification: fail(problem(null, 'Please wait before asking again.', 'RATE_LIMITED', null, 60)) }
+        },
+      },
+      'signed-in',
+    )
+    await page.goto('/profile')
+    const banner = page.getByRole('region', { name: 'Verify your email' })
+    await expect(banner).toBeVisible()
+    await expect(banner).toContainText('publishing notes')
+    await expect(banner).toContainText('workshop.custom')
+    await banner.getByRole('button', { name: 'Resend verification email' }).click()
+    await expect(banner.getByRole('status')).toHaveText('If your email can receive it, a new link is on its way.')
+    await banner.getByRole('button', { name: 'Resend verification email' }).click()
+    await expect(banner.getByRole('alert')).toHaveText('Please wait before asking again. You can try again in 60 seconds.')
+  })
+
+  test('a platform admin is never asked to verify', async ({ page }) => {
+    await mockApi(page, { Viewer: () => ({ viewer: viewer({ emailVerified: false, globalRole: 'PLATFORM_ADMIN' }) }) }, 'signed-in')
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Resend verification email' })).toHaveCount(0)
+  })
+
+  test('viewerNeedsVerification false hides the prompt, and null falls back to the role', async ({ page }) => {
+    await mockApi(page, { Viewer: () => ({ viewer: viewer({ emailVerified: false, viewerNeedsVerification: false }) }) }, 'signed-in')
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toHaveCount(0)
+
+    await mockApi(
+      page,
+      {
+        Viewer: () => ({ viewer: viewer({ emailVerified: false, globalRole: 'STUDENT', viewerNeedsVerification: null }) }),
+        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish'] }),
+      },
+      'signed-in',
+    )
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()
+    await expect(page.getByText('publishing notes')).toBeVisible()
   })
 
   test('requests a reset link, then sets a new password from it', async ({ page }) => {

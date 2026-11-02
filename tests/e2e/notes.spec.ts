@@ -98,12 +98,49 @@ test('a reader sees the published version, read-only, and can try the quiz', asy
 })
 
 test('an unverified owner is told how to publish', async ({ page }) => {
+  await mockApi(
+    page,
+    {
+      NoteToEdit: () => ({ note: { ...meta({ viewerCan: { __typename: 'NotePermissions', edit: true, publish: false, changeVisibility: false, delete: true, share: false, fork: true } }), cards: page1(cards) } }),
+      UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish'] }),
+    },
+    { emailVerified: false, verified: false },
+  )
+  await page.goto(`/notes/${NOTE_ID}`)
+  await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: 'Verify your email' })).toHaveAttribute('href', '/profile#verify-email')
+})
+
+test('sharing can be held while visibility stays open, and Public follows the setting', async ({ page }) => {
+  const published = { publishedAt: new Date().toISOString(), publishedVersion: { __typename: 'NoteVersion', id: NOTE_ID, number: 1, createdAt: new Date().toISOString() } }
+  await mockApi(
+    page,
+    {
+      NoteToEdit: () => ({ note: { ...meta(published), cards: page1(cards) } }),
+      NoteShares: () => ({ note: { __typename: 'Note', id: NOTE_ID, visibility: 'PRIVATE', shares: [] } }),
+      UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.share'] }),
+      PublicNotesRequireVerification: () => ({ publicNotesRequireVerification: true }),
+    },
+    { emailVerified: false, verified: false },
+  )
+  await page.goto(`/notes/${NOTE_ID}`)
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Share this note' })
+  await expect(dialog.getByRole('radio', { name: /Private/ })).toBeEnabled()
+  await expect(dialog.getByRole('radio', { name: /Shared/ })).toBeEnabled()
+  await expect(dialog.getByRole('radio', { name: /Public/ })).toBeDisabled()
+  await expect(dialog.getByRole('group', { name: 'Who can read it' }).getByRole('link', { name: 'Verify your email' })).toBeVisible()
+  await expect(dialog.getByRole('region', { name: 'People' }).getByRole('link', { name: 'Verify your email' })).toBeVisible()
+  await expect(dialog.getByLabel('Handle or email')).toBeDisabled()
+})
+
+test('publishing stays closed without a verify prompt when the email is already confirmed', async ({ page }) => {
   await mockApi(page, {
     NoteToEdit: () => ({ note: { ...meta({ viewerCan: { __typename: 'NotePermissions', edit: true, publish: false, changeVisibility: false, delete: true, share: false, fork: true } }), cards: page1(cards) } }),
   })
   await page.goto(`/notes/${NOTE_ID}`)
   await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
-  await expect(page.getByRole('link', { name: 'Verify now' })).toHaveAttribute('href', '/profile')
+  await expect(page.getByRole('link', { name: 'Verify your email' })).toHaveCount(0)
 })
 
 test('publishing names the version, and history previews and restores one', async ({ page }, info) => {

@@ -1,5 +1,7 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
 # ADR-0099 (college ID cards, lvn-backend#18, contracts 0.64.0) is included here so this app typechecks before that branch is on main. `pnpm graphql:sync` replaces this file from lvn-backend.
+# lvn-backend main ebe43a2 (contracts 0.74.0): VerifyEmailPayload, resendVerification, unverifiedGatedActions as [String!]!, UserError.retryAfter, Float min/max on AdminSettingConstraints, and publicNotesRequireVerification.
+# lvn-backend#48 (contracts 0.75.0): User.viewerNeedsVerification. False for a platform admin, null on anyone else's user.
 # lvn-backend#27 account admin is included the same way: AccountStatus, adminUsers, adminUpdateUser, adminSetAccountStanding, adminDeleteUser, and UserError.supportEmail.
 input AcceptTermsInput {
   """Query.termsVersion, as shown to the person"""
@@ -363,9 +365,9 @@ type AdminSetting {
 }
 
 type AdminSettingConstraints {
-  max: Int
+  max: Float
   maxLength: Int
-  min: Int
+  min: Float
   nullable: Boolean!
   pattern: String
 }
@@ -3253,6 +3255,12 @@ type Mutation {
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
   resendInstitutionalEmailCode: OkPayload!
 
+  """
+  Signed in. Sends another confirmation link for the sign-in email.
+  RATE_LIMITED sets retryAfter. Does not say whether that address can receive mail.
+  """
+  resendVerification: OkPayload!
+
   """Platform admins: put a setting back to its environment default"""
   resetAdminSetting(key: String!): AdminSettingPayload!
 
@@ -3482,7 +3490,7 @@ type Mutation {
   """Replaces the items written by hand; imported items stay"""
   updateTeacherProfile(input: UpdateTeacherProfileInput!): TeacherProfilePayload!
   updateWeeklyTask(input: UpdateWeeklyTaskInput!): WeeklyTaskPayload!
-  verifyEmail(input: VerifyEmailInput!): OkPayload!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
   withdrawClassroomJoinRequest(input: JoinRequestIdInput!): ClassroomPayload!
 
@@ -3968,6 +3976,13 @@ type OkPayload {
   userErrors: [UserError!]!
 }
 
+"""The account after a sign-in email link is confirmed, so the client can show it verified at once."""
+type VerifyEmailPayload {
+  ok: Boolean!
+  user: User
+  userErrors: [UserError!]!
+}
+
 type OutlineItem {
   cardId: UUID!
   level: Int!
@@ -4431,6 +4446,12 @@ type Query {
   Notes anyone may read, newest published first (at most 100 a page): sitemaps and public pages
   """
   publicNotes(after: String, first: Int): NoteConnection!
+
+  """
+  Setting public_notes_require_verification. Public. When true, making a note public needs a verified account.
+  Changing visibility is not an unverifiedGatedActions name.
+  """
+  publicNotesRequireVerification: Boolean!
 
   """Signed in only: best first, at most 20 (default 10)"""
   recommendations(limit: Int): [Recommendation!]!
@@ -6269,6 +6290,11 @@ type User {
   Verified by institutional email, a teacher, or platform admins (ADR-0019)
   """
   verified: Boolean!
+
+  """
+  Whether this viewer still needs to verify. False for a platform admin. Null on anyone else's user (lvn-backend#48, contracts 0.75.0).
+  """
+  viewerNeedsVerification: Boolean
 }
 
 type UserActivityEvent {
@@ -6289,6 +6315,9 @@ type UserError {
 
   """Set on AGE_RESTRICTED and on a blocked sign-in."""
   supportEmail: String
+
+  """Seconds to wait when code is RATE_LIMITED. Null otherwise."""
+  retryAfter: Int
 }
 
 type VerificationDocument {
@@ -6537,6 +6566,13 @@ type MyPlan {
 extend type Query {
   """Public."""
   accessPolicy: AccessPolicy!
+
+  """
+  Public. Lowercase dotted action names closed until the sign-in email is confirmed.
+  The default list is note.publish, note.share, contest.enter, payout.request, ai.bulk, resource.submit.
+  The same list for everyone. An admin may add names this client does not know.
+  """
+  unverifiedGatedActions: [String!]!
 
   """Platform admins."""
   adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!
