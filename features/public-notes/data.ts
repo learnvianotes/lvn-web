@@ -1,5 +1,7 @@
 import 'server-only'
+import { print } from 'graphql'
 import { cache } from 'react'
+import { PublicNoteDocument, PublicNotesDocument } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
 import { serverEnv } from '@/lib/server-env'
 
@@ -41,17 +43,7 @@ async function query<T>(source: string, variables: Record<string, unknown>, tags
   return body.data
 }
 
-const NOTE = `query PublicNote($id: UUID!, $after: String) {
-  note(id: $id) {
-    id title slug kind publishedAt
-    owner { displayName handle }
-    topics { id title subject { title } }
-    forkedFrom { title author { displayName } }
-    contributors { role user { id displayName handle } }
-    aiInsights { id task status markdown title cards { type content } }
-    cards(first: 100, after: $after) { edges { node { id type content media { id } } } pageInfo { hasNextPage endCursor } }
-  }
-}`
+const NOTE = print(PublicNoteDocument)
 
 type NoteAnswer = {
   note:
@@ -77,9 +69,7 @@ export const getPublicNote = cache(async (id: string): Promise<PublicNote | null
   return { ...note, cards }
 })
 
-const LIST = `query PublicNotes($after: String) {
-  publicNotes(first: 100, after: $after) { edges { node { id slug publishedAt } } pageInfo { hasNextPage endCursor } }
-}`
+const LIST = print(PublicNotesDocument)
 
 type ListAnswer = { publicNotes: { edges: { node: { id: string; slug: string; publishedAt: string | null } }[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } } }
 

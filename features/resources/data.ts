@@ -1,5 +1,7 @@
 import 'server-only'
+import { print } from 'graphql'
 import { cache } from 'react'
+import { PublicResourceDocument } from '@/graphql/generated/graphql'
 import { serverEnv } from '@/lib/server-env'
 
 /**
@@ -19,7 +21,7 @@ export interface PublicResource {
   createdAt: string
 }
 
-const QUERY = `query PublicResource($id: UUID!) { resource(id: $id) { id type title description url author isbn saveCount indexable createdAt } }`
+const QUERY = print(PublicResourceDocument)
 
 export const getResource = cache(async (id: string): Promise<PublicResource | null> => {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null

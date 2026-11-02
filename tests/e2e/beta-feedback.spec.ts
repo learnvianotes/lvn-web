@@ -50,8 +50,8 @@ test.describe('beta feedback', () => {
     const calls = await mockApi(page, {
       NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
       NotePages: () => ({ note: { pages: [] } }),
-      SaveNotePages: () => ({ saveNotePages: noProblems }),
-      CreatePageImage: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: '01920000-0000-7000-8000-00000000f0b1', uploadUrl: 'http://storage.test/put/page', uploadHeaders: [] }, ...noProblems } }),
+      SaveNotePages: () => ({ saveNotePages: { pages: [], ...noProblems } }),
+      CreateNoteUpload: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: '01920000-0000-7000-8000-00000000f0b1', uploadUrl: 'http://storage.test/put/page', uploadHeaders: [] }, ...noProblems } }),
       CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...noProblems } }),
     })
     await page.goto(`/notes/${NOTE_ID}`)
@@ -69,7 +69,12 @@ test.describe('beta feedback', () => {
     await page.mouse.move(box.x + 180, box.y + 220, { steps: 8 })
     await page.mouse.up()
     await expect(board).toHaveAttribute('data-strokes', '1')
-    await expect.poll(() => calls.some((c) => c.op === 'SaveNotePages' && Array.isArray((c.variables.pages as { strokes?: unknown[] }[])?.[0]?.strokes) && ((c.variables.pages as { strokes: unknown[] }[])[0]?.strokes.length ?? 0) > 0)).toBe(true)
+    await expect.poll(() => calls.some((c) => {
+      if (c.op !== 'SaveNotePages') return false
+      const page = (c.variables.input as { pages?: { drawing?: { strokes?: { points?: Record<string, unknown>[] }[] } }[] } | undefined)?.pages?.[0]
+      const point = page?.drawing?.strokes?.[0]?.points?.[0]
+      return !!point && !('p' in point) && typeof point.x === 'number' && typeof point.y === 'number'
+    })).toBe(true)
 
     await page.getByRole('button', { name: 'Ruler', exact: true }).click()
     await page.mouse.move(box.x + 30, box.y + 30)
@@ -80,7 +85,7 @@ test.describe('beta feedback', () => {
 
     await page.getByLabel('Insert picture').setInputFiles({ name: 'diagram.png', mimeType: 'image/png', buffer: png })
     await expect(page.getByRole('img', { name: 'diagram.png' })).toBeVisible()
-    await expect.poll(() => calls.find((c) => c.op === 'CreatePageImage')?.variables).toMatchObject({ input: { purpose: 'PAGE_IMAGE', parentId: NOTE_ID, mimeType: 'image/png' } })
+    await expect.poll(() => calls.find((c) => c.op === 'CreateNoteUpload')?.variables).toMatchObject({ input: { purpose: 'PAGE_IMAGE', parentId: NOTE_ID, mimeType: 'image/png' } })
     await page.getByRole('button', { name: 'Rotate' }).click()
     await page.getByRole('button', { name: 'Undo', exact: true }).click()
     await expect(page.getByRole('img', { name: 'diagram.png' })).toBeVisible()
@@ -128,10 +133,10 @@ test.describe('beta feedback', () => {
       NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
       CreateNoteUpload: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: '01920000-0000-7000-8000-00000000f0a1', uploadUrl: 'http://storage.test/put/voice', uploadHeaders: [] }, ...noProblems } }),
       CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...noProblems } }),
-      VoiceCapture: () => ({ voiceCapture: noProblems }),
-      TranscribeCaptionClip: () => ({ transcribeCaptionClip: { transcript: 'live line', ...noProblems } }),
-      TranscribeAudio: () => ({ transcribeAudio: { transcript: 'Binary search halves the range.', ...noProblems } }),
-      MakeNotesFromTranscript: () => ({ makeNotesFromTranscript: { markdown: '## Binary search\nHalve the range.', note: { id: NOTE_ID }, ...noProblems } }),
+      VoiceCapture: () => ({ voiceCapture: { voiceCapture: { __typename: 'VoiceCapture', api: 'SpeechRecognition', continuous: true, interimResults: true, languages: ['en-US'], streamingFallback: 'transcribeCaptionClip' }, ...noProblems } }),
+      TranscribeCaptionClip: () => ({ transcribeCaptionClip: { transcript: { __typename: 'Transcript', text: 'live line', cut: false }, ...noProblems } }),
+      TranscribeAudio: () => ({ transcribeAudio: { transcript: { __typename: 'Transcript', text: 'Binary search halves the range.', cut: false }, ...noProblems } }),
+      MakeNotesFromTranscript: () => ({ makeNotesFromTranscript: { notes: { __typename: 'NotesFromTranscript', noteId: NOTE_ID, title: 'Binary search', summary: 'Halve the range.' }, ...noProblems } }),
     })
     await page.goto(`/notes/${NOTE_ID}`)
     await page.getByRole('button', { name: 'Add a card', exact: true }).click()
@@ -149,9 +154,9 @@ test.describe('beta feedback', () => {
     await dialog.getByRole('button', { name: 'Make notes from this' }).click()
     await expect(dialog.getByText('Halve the range.')).toBeVisible()
     expect(calls.find((c) => c.op === 'CreateNoteUpload')?.variables).toMatchObject({ input: { purpose: 'VOICE_NOTE', parentId: NOTE_ID } })
-    expect(calls.find((c) => c.op === 'VoiceCapture')).toBeTruthy()
-    expect(calls.find((c) => c.op === 'TranscribeAudio')?.variables).toMatchObject({ noteId: NOTE_ID })
-    expect(calls.find((c) => c.op === 'MakeNotesFromTranscript')?.variables).toMatchObject({ noteId: NOTE_ID, transcript: 'Binary search halves the range.' })
+    expect(calls.find((c) => c.op === 'VoiceCapture')?.variables).toMatchObject({ input: { noteId: NOTE_ID } })
+    expect(calls.find((c) => c.op === 'TranscribeAudio')?.variables).toMatchObject({ input: { noteId: NOTE_ID } })
+    expect(calls.find((c) => c.op === 'MakeNotesFromTranscript')?.variables).toMatchObject({ input: { noteId: NOTE_ID, transcript: 'Binary search halves the range.' } })
     await dialog.getByRole('button', { name: 'Add to the note' }).click()
     await expect(dialog).toBeHidden()
   })
@@ -186,10 +191,45 @@ test.describe('beta feedback', () => {
   test('the owner shares a quiz and someone takes it', async ({ page }) => {
     await mockApi(page, {
       NoteToEdit: () => ({ note: { ...meta(), cards: page1([...cards, quizCard]) } }),
-      ShareQuiz: () => ({ shareQuiz: { quiz: { id: 'q', token: 'quiz-token', path: '/q/quiz-token', title: 'Searching' }, ...noProblems } }),
-      SharedQuiz: () => ({ sharedQuiz: { id: 'q', token: 'quiz-token', path: '/q/quiz-token', title: 'Searching', aggregate: { attempts: 2, averageScore: 1, total: 2 }, attempts: [] } }),
-      SharedQuizByLink: () => ({ sharedQuizByLink: { title: 'Searching', ownerName: 'Asha Rao', questions: [{ id: 'q1', prompt: 'Its running time?', choices: [{ id: 'a', text: 'O(n)' }, { id: 'b', text: 'O(log n)' }] }] } }),
-      SubmitSharedQuizAttempt: () => ({ submitSharedQuizAttempt: { score: 1, total: 1, ...noProblems } }),
+      CreateSharedQuiz: () => ({ createSharedQuiz: { quiz: { __typename: 'SharedQuiz', id: '01920000-0000-7000-8000-00000000c0de' }, ...noProblems } }),
+      SharedQuiz: () => ({
+        sharedQuiz: {
+          __typename: 'SharedQuiz',
+          id: '01920000-0000-7000-8000-00000000c0de',
+          title: 'Searching',
+          sharePath: '/q/quiz-token',
+          questionCount: 2,
+          visibility: 'UNLISTED',
+          viewerIsOwner: true,
+          owner: { __typename: 'User', id: '01920000-0000-7000-8000-0000000000aa', displayName: 'Asha Rao' },
+          stats: { __typename: 'SharedQuizStats', scoredAttempts: 2, takerCount: 2, averageScore: 0.5, practiceAttempts: 0 },
+          myAttempts: [],
+          questions: [],
+        },
+      }),
+      SharedQuizByLink: () => ({
+        sharedQuizByLink: {
+          __typename: 'SharedQuiz',
+          id: '01920000-0000-7000-8000-00000000c0de',
+          title: 'Searching',
+          questionCount: 1,
+          owner: { __typename: 'User', id: '01920000-0000-7000-8000-0000000000aa', displayName: 'Asha Rao' },
+          questions: [{
+            __typename: 'SharedQuizQuestion',
+            id: '01920000-0000-7000-8000-00000000c0d1',
+            position: 0,
+            multiple: false,
+            question: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Its running time?' }] }] },
+            choices: [
+              { __typename: 'ClassQuizChoice', id: 'a', content: [{ type: 'text', text: 'O(n)' }] },
+              { __typename: 'ClassQuizChoice', id: 'b', content: [{ type: 'text', text: 'O(log n)' }] },
+            ],
+            correct: null,
+            explanation: null,
+          }],
+        },
+      }),
+      SubmitSharedQuizAttempt: () => ({ submitSharedQuizAttempt: { attempt: { __typename: 'QuizAttempt', id: '01920000-0000-7000-8000-00000000a771', score: 1, total: 1, submittedAt: new Date().toISOString() }, ...noProblems } }),
     })
     await page.goto(`/notes/${NOTE_ID}?tab=quiz`)
     await page.getByRole('tab', { name: 'Quiz' }).click()

@@ -1,11 +1,12 @@
 'use client'
 
-import { useApolloClient } from '@apollo/client/react'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { Mic, Square } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { AiResultPanel } from '@/features/ai/AiAction'
-import { makeNotesFromTranscript, transcribeAudio, transcribeCaptionClip, uploadVoiceNote } from '@/features/beta/api'
+import { uploadVoiceNote } from '@/features/beta/api'
+import { MakeNotesFromTranscriptDocument, TranscribeAudioDocument, TranscribeCaptionClipDocument, VoiceCaptureDocument } from '@/graphql/generated/graphql'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { captionsFromEvent, speechRecognitionCtor, type SpeechRec } from './captions'
@@ -27,6 +28,10 @@ const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2,
 export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean; onClose: () => void; onDone: (file: File) => void; noteId?: string }) {
   const t = useTranslations('notes.record')
   const client = useApolloClient()
+  const guide = useQuery(VoiceCaptureDocument, { variables: { input: { noteId: noteId ?? '' } }, skip: !open || !noteId, fetchPolicy: 'cache-first' })
+  const [transcribeClip] = useMutation(TranscribeCaptionClipDocument)
+  const [transcribeFile] = useMutation(TranscribeAudioDocument)
+  const [makeNotes] = useMutation(MakeNotesFromTranscriptDocument)
   const [state, setState] = useState<State>('idle')
   const [seconds, setSeconds] = useState(0)
   const [recording, setRecording] = useState<{ blob: Blob; url: string } | null>(null)
@@ -97,9 +102,10 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
     setCaptionsLive(!!Ctor)
     if (Ctor) {
       const heard = new Ctor()
-      heard.continuous = true
-      heard.interimResults = true
-      heard.lang = 'en-US'
+      const speechGuide = guide.data?.voiceCapture.voiceCapture
+      heard.continuous = speechGuide?.continuous ?? true
+      heard.interimResults = speechGuide?.interimResults ?? true
+      heard.lang = speechGuide?.languages[0] ?? 'en-US'
       heard.onresult = (event) => {
         const next = captionsFromEvent(event, finals.current)
         finals.current = next.finals
@@ -133,20 +139,24 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
         if (recording) {
           const mime = recording.blob.type || 'audio/webm'
           const file = new File([recording.blob], `voice.${mime === 'audio/mp4' ? 'm4a' : 'webm'}`, { type: mime })
-          fileId = await uploadVoiceNote(client, noteId, file, captions).catch(() => null)
+          fileId = await uploadVoiceNote(client, noteId, file).catch(() => null)
         }
-        const clip = await transcribeCaptionClip(client, noteId, captions)
-        const full = fileId ? await transcribeAudio(client, noteId, fileId) : null
-        const problem = full?.userErrors?.[0]?.message ?? clip.userErrors?.[0]?.message
-        const text = full?.transcript || clip.transcript
+        const clip = await transcribeClip({ variables: { input: { noteId, captions } } })
+        const full = fileId ? await transcribeFile({ variables: { input: { noteId, fileId, captions } } }) : null
+        const clipPayload = clip.data?.transcribeCaptionClip
+        const fullPayload = full?.data?.transcribeAudio
+        const problem = fullPayload?.userErrors[0]?.message ?? clipPayload?.userErrors[0]?.message
+        const spoken = fullPayload?.transcript ?? clipPayload?.transcript
+        const text = spoken?.text
         if (problem || !text) setAiError(problem ?? t('aiFailed'))
-        else setTranscript(text)
+        else setTranscript(spoken?.cut ? `${text}\n\n${t('cut')}` : text)
       } else {
         const source = transcript || captions
-        const payload = await makeNotesFromTranscript(client, noteId, source)
-        const problem = payload.userErrors?.[0]?.message
-        if (problem) setAiError(problem)
-        else setNotes(payload.markdown ?? t('notesReady'))
+        const made = await makeNotes({ variables: { input: { noteId, transcript: source } } })
+        const payload = made.data?.makeNotesFromTranscript
+        const problem = payload?.userErrors[0]?.message
+        if (problem || !payload?.notes) setAiError(problem ?? t('aiFailed'))
+        else setNotes([payload.notes.title, payload.notes.summary].filter(Boolean).join('\n\n') || t('notesReady'))
       }
     } catch {
       setAiError(t('aiFailed'))

@@ -1,43 +1,29 @@
 'use client'
 
-import { useApolloClient } from '@apollo/client/react'
+import { useQuery } from '@apollo/client/react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
-import { loadMyQuizzes, loadPublicQuizzes, type QuizListItem } from '@/features/beta/api'
+import { MyQuizzesDocument, PublicQuizzesDocument } from '@/graphql/generated/graphql'
 
-/** Owned and public quizzes from contracts 0.74.0. Empty when the API does not answer yet. */
+type QuizLink = { id: string; title: string; sharePath: string | null }
+
+/** Owned and public quizzes. A public row without sharePath opens by id. */
 export function QuizLists() {
   const t = useTranslations('quizShare')
-  const client = useApolloClient()
-  const [mine, setMine] = useState<QuizListItem[]>([])
-  const [open, setOpen] = useState<QuizListItem[]>([])
-  useEffect(() => {
-    let cancel = false
-    void loadMyQuizzes(client)
-      .then((list) => {
-        if (!cancel) setMine(list)
-      })
-      .catch(() => undefined)
-    void loadPublicQuizzes(client)
-      .then((list) => {
-        if (!cancel) setOpen(list)
-      })
-      .catch(() => undefined)
-    return () => {
-      cancel = true
-    }
-  }, [client])
-  if (!mine.length && !open.length) return null
+  const mine = useQuery(MyQuizzesDocument, { variables: { first: 20 }, fetchPolicy: 'cache-and-network' })
+  const open = useQuery(PublicQuizzesDocument, { variables: { first: 20 }, fetchPolicy: 'cache-and-network' })
+  const mineItems = mine.data?.myQuizzes ?? []
+  const openItems = open.data?.publicQuizzes ?? []
+  if (!mineItems.length && !openItems.length) return null
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <QuizColumn title={t('mine')} items={mine} />
-      <QuizColumn title={t('public')} items={open} />
+      <QuizColumn title={t('mine')} items={mineItems} />
+      <QuizColumn title={t('public')} items={openItems} />
     </div>
   )
 }
 
-function QuizColumn({ title, items }: { title: string; items: QuizListItem[] }) {
+function QuizColumn({ title, items }: { title: string; items: QuizLink[] }) {
   if (!items.length) return null
   return (
     <section className="flex flex-col gap-2">
@@ -45,7 +31,7 @@ function QuizColumn({ title, items }: { title: string; items: QuizListItem[] }) 
       <ul className="flex flex-col gap-2">
         {items.map((quiz) => (
           <li key={quiz.id}>
-            <Link href={quiz.path || `/q/${quiz.token}`} className="block rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold hover:border-sky-600">
+            <Link href={quiz.sharePath || `/q/${quiz.id}`} className="block rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold hover:border-sky-600">
               {quiz.title}
             </Link>
           </li>

@@ -27,6 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Every URL comes from .env (lvn-backend ADR-0022); CI uses the documented development values.
       - run: cp .env.example .env
+      # Hand-written requests used to skip codegen. Every operation document has to validate against the vendored schema.
+      - run: pnpm graphql:check
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

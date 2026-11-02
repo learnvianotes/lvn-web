@@ -196,7 +196,7 @@ export function NotePage({ id }: { id: string }) {
     tab === 'summary' ? (
       <SummaryTab noteId={id} study={study} canEdit={meta.viewerCan.edit} onAddedToNote={addedToNote} />
     ) : tab === 'flashcards' || tab === 'quiz' ? (
-      <CardsTab kind={tab} noteId={id} cards={currentCards()} study={study} canEdit={meta.viewerCan.edit} reader={false} onAdd={meta.viewerCan.edit ? addCard : undefined} onAddedToNote={addedToNote} />
+      <CardsTab kind={tab} noteId={id} noteTitle={meta.title} cards={currentCards()} study={study} canEdit={meta.viewerCan.edit} reader={false} onAdd={meta.viewerCan.edit ? addCard : undefined} onAddedToNote={addedToNote} />
     ) : tab === 'discussions' ? (
       // What readers said about the published note (lvn-backend ADR-0047).
       <Discussion target={{ type: 'NOTE', id }} />

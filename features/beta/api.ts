@@ -1,169 +1,45 @@
 import type { ApolloClient } from '@apollo/client'
-import { parse, type DocumentNode } from 'graphql'
-import { ChangeNoteVisibilityDocument, CompleteNoteUploadDocument, CreateNoteUploadDocument, ForkNoteDocument, NoteForksDocument, type Visibility } from '@/graphql/generated/graphql'
+import {
+  ChangeNoteVisibilityDocument,
+  CompleteNoteUploadDocument,
+  CreateNoteUploadDocument,
+  ForkNoteDocument,
+  NoteForksDocument,
+  PublicNotesRequireVerificationDocument,
+  type Visibility,
+} from '@/graphql/generated/graphql'
 import { publicNotePath } from '@/features/public-notes/paths'
-import type { NotePage } from '@/features/notes/pages/model'
-import { pagesFromUnknown } from '@/features/notes/pages/model'
 import { type ShareAudience, wireVisibility } from '@/features/notes/share/visibility'
 
 /**
- * Beta operations against lvn-backend contracts 0.74.0 (PR #47) and the forking
- * shape on main 24c4a54 (contracts 0.76.0). Existing schema operations are the
- * generated documents. Fields this vendored schema still does not list are one
- * document each, named as that contract names them.
- *
- * This agent cannot read the private lvn-backend repository, so those documents
- * follow the operation names from PR #47 and this repo's payload style
- * (userErrors, UUID, relative paths). Shapes the summary did not spell out are
- * called out in GAPS. Forking is on the schema: Note.allowForks, Note.forkCount,
- * and forkingEnabled(noteId). Note.forkingEnabled is not a field.
+ * Helpers around the generated beta operations (graphql/operations/beta.graphql).
+ * Sharing a quiz is createSharedQuiz, not shareQuiz. voiceCapture is a query that
+ * describes the browser speech API. Page ink is saveNotePages with SaveNotePageInput.
  */
 export const ASSUMPTIONS = [
-  'setNoteVisibility calls changeNoteVisibility. Visibility is PRIVATE | SHARED | UNLISTED | PUBLIC. UNLISTED is its own value.',
-  'Public is gated by the platform setting public_notes_require_verification, read as the query publicNotesRequireVerification.',
+  'setNoteVisibility calls changeNoteVisibility. Visibility is PRIVATE | SHARED | UNLISTED | PUBLIC.',
+  'Public is gated by publicNotesRequireVerification.',
   'forkNote is the existing mutation. Opt-out is Note.allowForks. forkCount is the number of copies. The boolean query is forkingEnabled(noteId).',
-  'sharedQuiz(noteId), sharedQuizByLink(token), myQuizzes, and publicQuizzes are the quiz reads. Attempts and the owner aggregate sit on the owned quiz.',
-  'Quiz and note share paths are relative (/q/{token}, /n/{slug}-{id}). The web joins them to its origin.',
-  'Note.pages returns pages with strokes and drawing side by side, plus image placements. Pictures are uploaded with createUploadIntent purpose PAGE_IMAGE.',
-  'saveNotePages writes the page list, including drawing, so a round trip does not drop it.',
-  'Voice notes upload with purpose VOICE_NOTE, then voiceCapture. transcribeCaptionClip takes the live captions, transcribeAudio the file, and makeNotesFromTranscript writes the notes.',
+  'A shared quiz is createSharedQuiz, then sharedQuiz(id) for sharePath, owner, myAttempts and stats. The take link is sharedQuizByLink(token). Lists are myQuizzes and publicQuizzes.',
+  'submitSharedQuizAttempt takes quizId, clientOpId and answers of questionId plus choiceIds.',
+  'Quiz and note share paths are relative (/q/{linkToken} inside sharePath, /n/{slug}-{id}). The web joins them to its origin.',
+  'Note.pages returns strokes (points are x and y) and images. Pictures upload with createUploadIntent purpose PAGE_IMAGE.',
+  'saveNotePages takes noteId and pages of drawing, index and images.',
+  'Voice notes upload with purpose VOICE_NOTE. voiceCapture is a query. transcribeCaptionClip and transcribeAudio return transcript { text cut }. makeNotesFromTranscript returns notes { noteId title summary }.',
 ] as const
 
 /**
- * Names this client still has to assume because PR #47's summary did not include
- * a field list. Replace them if the schema spells a different write.
+ * What the schema does not offer, so the UI does not pretend those fields exist.
  */
 export const GAPS = [
-  'Submit for a shared quiz is submitSharedQuizAttempt. The summary names the reads (sharedQuizByLink, attempts, aggregates) and not this write.',
-  'Saving ink is saveNotePages. The summary names the Note.pages read (strokes beside drawing, PAGE_IMAGE placements) and not the write.',
-  'voiceCapture, transcribeCaptionClip, transcribeAudio, and makeNotesFromTranscript inputs are { noteId, fileId?, captions? | transcript? } with userErrors. The summary names the operations, not the input fields.',
+  'There is no shareQuiz and createSharedQuiz has no noteId. The share control sends the note’s quiz-card JSON. The quiz is not stored on the note.',
+  'SharedQuiz has sharePath, not token or path. sharePath is null while the quiz is private, and for a public quiz it is owner-only, so other people open /q/{id}.',
+  'stats.averageScore is a fraction of the questions. The attempt count is scoredAttempts. There is no aggregate.total.',
+  'Questions are rich text (question, choice content), not prompt and text.',
+  'voiceCapture does not store audio or captions. A recording is a VOICE_NOTE upload. Captions go to the transcribe mutations.',
+  'makeNotesFromTranscript returns notes.title and notes.summary, not markdown.',
+  'StrokePoint is x and y. Pressure is used while drawing and is not sent.',
 ] as const
-
-const PublicNotesRequireVerificationDocument = op(`
-  query PublicNotesRequireVerification {
-    publicNotesRequireVerification
-  }
-`)
-
-const ShareQuizDocument = op(`
-  mutation ShareQuiz($noteId: UUID!) {
-    shareQuiz(input: { noteId: $noteId }) {
-      quiz { id token path title }
-      userErrors { message }
-    }
-  }
-`)
-
-const SharedQuizDocument = op(`
-  query SharedQuiz($noteId: UUID!) {
-    sharedQuiz(noteId: $noteId) {
-      id
-      token
-      path
-      title
-      aggregate { attempts averageScore total }
-      attempts { id score total submittedAt }
-    }
-  }
-`)
-
-const SharedQuizByLinkDocument = op(`
-  query SharedQuizByLink($token: String!) {
-    sharedQuizByLink(token: $token) {
-      title
-      ownerName
-      questions { id prompt choices { id text } }
-    }
-  }
-`)
-
-const SubmitSharedQuizAttemptDocument = op(`
-  mutation SubmitSharedQuizAttempt($token: String!, $answers: JSON!) {
-    submitSharedQuizAttempt(input: { token: $token, answers: $answers }) {
-      score
-      total
-      userErrors { message }
-    }
-  }
-`)
-
-const MyQuizzesDocument = op(`
-  query MyQuizzes {
-    myQuizzes { id title path token }
-  }
-`)
-
-const PublicQuizzesDocument = op(`
-  query PublicQuizzes {
-    publicQuizzes { id title path token ownerName }
-  }
-`)
-
-const NotePagesDocument = op(`
-  query NotePages($noteId: UUID!) {
-    note(id: $noteId) {
-      pages {
-        id
-        strokes { id tool color width points { x y p } }
-        drawing
-        images { id fileId href name x y w h rotation }
-      }
-    }
-  }
-`)
-
-const SaveNotePagesDocument = op(`
-  mutation SaveNotePages($noteId: UUID!, $pages: JSON!) {
-    saveNotePages(input: { noteId: $noteId, pages: $pages }) {
-      userErrors { message }
-    }
-  }
-`)
-
-const CreatePageImageDocument = op(`
-  mutation CreatePageImage($input: CreateUploadIntentInput!) {
-    createUploadIntent(input: $input) {
-      intent { fileId uploadUrl uploadHeaders { name value } }
-      userErrors { message }
-    }
-  }
-`)
-
-const VoiceCaptureDocument = op(`
-  mutation VoiceCapture($noteId: UUID!, $fileId: UUID!, $captions: String!) {
-    voiceCapture(input: { noteId: $noteId, fileId: $fileId, captions: $captions }) {
-      userErrors { message }
-    }
-  }
-`)
-
-const TranscribeCaptionClipDocument = op(`
-  mutation TranscribeCaptionClip($noteId: UUID!, $captions: String!) {
-    transcribeCaptionClip(input: { noteId: $noteId, captions: $captions }) {
-      transcript
-      userErrors { message }
-    }
-  }
-`)
-
-const TranscribeAudioDocument = op(`
-  mutation TranscribeAudio($noteId: UUID!, $fileId: UUID!) {
-    transcribeAudio(input: { noteId: $noteId, fileId: $fileId }) {
-      transcript
-      userErrors { message }
-    }
-  }
-`)
-
-const MakeNotesFromTranscriptDocument = op(`
-  mutation MakeNotesFromTranscript($noteId: UUID!, $transcript: String!) {
-    makeNotesFromTranscript(input: { noteId: $noteId, transcript: $transcript }) {
-      markdown
-      note { id }
-      userErrors { message }
-    }
-  }
-`)
 
 export interface UserProblem {
   message: string
@@ -175,53 +51,10 @@ export interface QuizShareStats {
   total: number
 }
 
-export interface QuizAttemptRow {
-  id: string
-  score: number
-  total: number
-  submittedAt: string
-}
-
-export interface OwnedQuiz {
-  id: string
-  token: string
-  path: string
-  title: string
-  aggregate: QuizShareStats | null
-  attempts: QuizAttemptRow[]
-}
-
-export interface QuizListItem {
-  id: string
-  title: string
-  path: string
-  token: string
-  ownerName?: string | null
-}
-
-export interface SharedQuizChoice {
-  id: string
-  text: string
-}
-
-export interface SharedQuizQuestion {
-  id: string
-  prompt: string
-  choices: SharedQuizChoice[]
-}
-
-export interface SharedQuiz {
-  title: string
-  ownerName: string
-  questions: SharedQuizQuestion[]
-}
-
 export interface ForkState {
   allowForks: boolean
   forkCount: number
 }
-
-type Payload<T> = T & { userErrors?: UserProblem[] }
 
 export function absoluteUrl(pathOrUrl: string, origin: string): string {
   if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl
@@ -235,6 +68,7 @@ export function noteSharePath(note: { id: string; slug?: string | null; visibili
   return `/notes/${note.id}`
 }
 
+/** Owner links are sharePath. This is only the fallback when a token is all we have. */
 export function quizPath(token: string, serverPath?: string | null): string {
   if (serverPath && serverPath.startsWith('/')) return serverPath
   return `/q/${token}`
@@ -247,7 +81,7 @@ export async function setNoteVisibility(client: ApolloClient, noteId: string, au
 
 export async function publicNotesRequireVerification(client: ApolloClient): Promise<boolean> {
   const res = await client.query({ query: PublicNotesRequireVerificationDocument, fetchPolicy: 'network-only' })
-  return (res.data as { publicNotesRequireVerification?: boolean }).publicNotesRequireVerification === true
+  return res.data?.publicNotesRequireVerification === true
 }
 
 export async function forkNote(client: ApolloClient, noteId: string) {
@@ -264,61 +98,14 @@ export async function loadForkState(client: ApolloClient, noteId: string): Promi
   return { allowForks: data.note?.allowForks ?? allow, forkCount: data.note?.forkCount ?? 0 }
 }
 
-export async function shareQuiz(client: ApolloClient, noteId: string): Promise<Payload<{ quiz: { id: string; token: string; path: string; title: string } | null }>> {
-  const res = await client.mutate({ mutation: ShareQuizDocument, variables: { noteId } })
-  const payload = (res.data as { shareQuiz?: Payload<{ quiz: { id: string; token: string; path: string; title: string } | null }> } | null)?.shareQuiz
-  if (!payload) throw new Error('no answer')
-  return payload
-}
-
-export async function loadOwnedQuiz(client: ApolloClient, noteId: string): Promise<OwnedQuiz | null> {
-  const res = await client.query({ query: SharedQuizDocument, variables: { noteId }, fetchPolicy: 'network-only' })
-  return (res.data as { sharedQuiz?: OwnedQuiz | null }).sharedQuiz ?? null
-}
-
-export async function loadMyQuizzes(client: ApolloClient): Promise<QuizListItem[]> {
-  const res = await client.query({ query: MyQuizzesDocument, fetchPolicy: 'network-only' })
-  return (res.data as { myQuizzes?: QuizListItem[] }).myQuizzes ?? []
-}
-
-export async function loadPublicQuizzes(client: ApolloClient): Promise<QuizListItem[]> {
-  const res = await client.query({ query: PublicQuizzesDocument, fetchPolicy: 'network-only' })
-  return (res.data as { publicQuizzes?: QuizListItem[] }).publicQuizzes ?? []
-}
-
-export async function loadSharedQuiz(client: ApolloClient, token: string): Promise<SharedQuiz | null> {
-  const res = await client.query({ query: SharedQuizByLinkDocument, variables: { token }, fetchPolicy: 'network-only' })
-  return (res.data as { sharedQuizByLink?: SharedQuiz | null }).sharedQuizByLink ?? null
-}
-
-export async function submitSharedQuiz(client: ApolloClient, token: string, answers: { questionId: string; choiceId: string }[]) {
-  const res = await client.mutate({ mutation: SubmitSharedQuizAttemptDocument, variables: { token, answers } })
-  const payload = (res.data as { submitSharedQuizAttempt?: Payload<{ score: number | null; total: number | null }> } | null)?.submitSharedQuizAttempt
-  if (!payload) throw new Error('no answer')
-  return payload
-}
-
-export async function notePages(client: ApolloClient, noteId: string): Promise<NotePage[]> {
-  const res = await client.query({ query: NotePagesDocument, variables: { noteId }, fetchPolicy: 'network-only' })
-  const raw = (res.data as { note?: { pages?: unknown } | null }).note?.pages
-  return pagesFromUnknown(raw) ?? []
-}
-
-export async function saveNotePages(client: ApolloClient, noteId: string, pages: NotePage[]) {
-  const res = await client.mutate({ mutation: SaveNotePagesDocument, variables: { noteId, pages } })
-  const payload = (res.data as { saveNotePages?: { userErrors?: UserProblem[] } } | null)?.saveNotePages
-  if (!payload) throw new Error('no answer')
-  return payload
-}
-
-/** A picture on a page. purpose PAGE_IMAGE is not on the vendored FilePurpose enum yet. */
+/** A picture on a page. purpose PAGE_IMAGE, then completeUpload. */
 export async function createPageImage(client: ApolloClient, noteId: string, file: File) {
   const res = await client.mutate({
-    mutation: CreatePageImageDocument,
+    mutation: CreateNoteUploadDocument,
     variables: { input: { fileName: file.name || 'page.png', mimeType: file.type || 'image/png', sizeBytes: file.size, purpose: 'PAGE_IMAGE', parentId: noteId } },
   })
-  const payload = (res.data as { createUploadIntent?: Payload<{ intent: { fileId: string; uploadUrl: string; uploadHeaders: { name: string; value: string }[] } | null }> } | null)?.createUploadIntent
-  if (!payload?.intent) throw new Error(payload?.userErrors?.[0]?.message ?? 'upload refused')
+  const payload = res.data?.createUploadIntent
+  if (!payload?.intent) throw new Error(payload?.userErrors[0]?.message ?? 'upload refused')
   return payload.intent
 }
 
@@ -336,8 +123,8 @@ export async function completeUpload(client: ApolloClient, fileId: string) {
   return res.data?.completeUpload ?? null
 }
 
-/** Keeps the recording as a VOICE_NOTE, then registers it with voiceCapture. */
-export async function uploadVoiceNote(client: ApolloClient, noteId: string, file: File, captions: string) {
+/** Stores the recording as a VOICE_NOTE. voiceCapture does not register it. */
+export async function uploadVoiceNote(client: ApolloClient, noteId: string, file: File) {
   const res = await client.mutate({
     mutation: CreateNoteUploadDocument,
     variables: { input: { fileName: file.name || 'voice.webm', mimeType: file.type || 'audio/webm', sizeBytes: file.size, purpose: 'VOICE_NOTE', parentId: noteId } },
@@ -348,35 +135,7 @@ export async function uploadVoiceNote(client: ApolloClient, noteId: string, file
   await putFile(intent, file)
   const done = await completeUpload(client, intent.fileId)
   if (!done?.ok) throw new Error(done?.userErrors[0]?.message ?? 'upload not accepted')
-  const captured = await client.mutate({ mutation: VoiceCaptureDocument, variables: { noteId, fileId: intent.fileId, captions } })
-  const captureProblem = (captured.data as { voiceCapture?: { userErrors?: UserProblem[] } } | null)?.voiceCapture?.userErrors?.[0]?.message
-  if (captureProblem) throw new Error(captureProblem)
   return intent.fileId
-}
-
-export async function transcribeCaptionClip(client: ApolloClient, noteId: string, captions: string) {
-  const res = await client.mutate({ mutation: TranscribeCaptionClipDocument, variables: { noteId, captions } })
-  const payload = (res.data as { transcribeCaptionClip?: Payload<{ transcript: string | null }> } | null)?.transcribeCaptionClip
-  if (!payload) throw new Error('no answer')
-  return payload
-}
-
-export async function transcribeAudio(client: ApolloClient, noteId: string, fileId: string) {
-  const res = await client.mutate({ mutation: TranscribeAudioDocument, variables: { noteId, fileId } })
-  const payload = (res.data as { transcribeAudio?: Payload<{ transcript: string | null }> } | null)?.transcribeAudio
-  if (!payload) throw new Error('no answer')
-  return payload
-}
-
-export async function makeNotesFromTranscript(client: ApolloClient, noteId: string, transcript: string) {
-  const res = await client.mutate({ mutation: MakeNotesFromTranscriptDocument, variables: { noteId, transcript } })
-  const payload = (res.data as { makeNotesFromTranscript?: Payload<{ markdown: string | null; note: { id: string } | null }> } | null)?.makeNotesFromTranscript
-  if (!payload) throw new Error('no answer')
-  return payload
-}
-
-function op(source: string): DocumentNode {
-  return parse(source)
 }
 
 function putFile(intent: { uploadUrl: string; uploadHeaders: { name: string; value: string }[] }, file: Blob): Promise<void> {

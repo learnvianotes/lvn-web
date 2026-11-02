@@ -8,7 +8,9 @@ import {
   eraseAt,
   historyOf,
   insertImage,
+  pagesFromServer,
   pagesFromUnknown,
+  pagesToSave,
   pressureOf,
   redo,
   removeImage,
@@ -97,6 +99,25 @@ describe('note pages', () => {
     expect(pagesFromUnknown([{ ...page, images: [{ id: 'pic', name: 'a.png', href: '/a.png', fileId: '01920000-0000-7000-8000-00000000f0b1', x: 0.1, y: 0.1, w: 0.2, h: 0.2, rotation: 0 }] }])?.[0]?.images[0]?.fileId).toBe('01920000-0000-7000-8000-00000000f0b1')
     expect(pagesFromUnknown([{ id: 'x' }])).toBeNull()
     expect(pagesFromUnknown('nope')).toBeNull()
+    const withoutPressure = pagesFromUnknown([{ id: page.id, strokes: [{ id: 's1', tool: 'pen', color: '#1d4ed8', width: 0.7, points: [{ x: 0.2, y: 0.3 }] }], images: [] }])
+    expect(withoutPressure?.[0]?.strokes[0]?.points[0]).toEqual({ x: 0.2, y: 0.3, p: 0.5 })
+  })
+
+  it('saves ink as drawing JSON with x and y, and keeps a ruler as tool ruler', () => {
+    const page = addStroke(blankPage(), { ...stroke([{ x: 0.1, y: 0.2, p: 0.9 }, { x: 0.4, y: 0.2, p: 0.4 }]), straight: true })
+    const placed = insertImage(page, { id: 'img', name: 'a.png', href: 'data:image/png;base64,aa', fileId: '01920000-0000-7000-8000-00000000f0b1', x: 0.1, y: 0.1, w: 0.3, h: 0.2, rotation: 15 })
+    const input = pagesToSave('01920000-0000-7000-8000-00000000a001', [placed])
+    expect(input.pages[0]?.drawing).toEqual({
+      strokes: [{ id: 's1', tool: 'ruler', color: '#1d4ed8', width: 0.7, points: [{ x: 0.1, y: 0.2 }, { x: 0.4, y: 0.2 }] }],
+    })
+    expect(input.pages[0]?.images).toEqual([{ id: 'img', fileId: '01920000-0000-7000-8000-00000000f0b1', name: 'a.png', x: 0.1, y: 0.1, w: 0.3, h: 0.2, rotation: 15 }])
+    const loaded = pagesFromServer([{
+      id: placed.id,
+      strokes: [{ id: 's1', tool: 'RULER', color: '#1d4ed8', width: 0.7, points: [{ x: 0.1, y: 0.2 }] }],
+      images: [{ id: 'img', fileId: '01920000-0000-7000-8000-00000000f0b1', href: null, name: 'a.png', x: 0.1, y: 0.1, w: 0.3, h: 0.2, rotation: 15 }],
+    }])
+    expect(loaded[0]?.strokes[0]).toMatchObject({ tool: 'pen', straight: true, points: [{ x: 0.1, y: 0.2, p: 0.5 }] })
+    expect(loaded[0]?.images[0]?.href).toBe('')
   })
 
   it('keeps at most 40 undo steps', () => {

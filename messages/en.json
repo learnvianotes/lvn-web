@@ -737,7 +737,8 @@
       "makeNotes": "Make notes from this",
       "working": "Working…",
       "aiFailed": "That did not work. Try again.",
-      "notesReady": "Notes are ready."
+      "notesReady": "Notes are ready.",
+      "cut": "The recording was longer than 30 minutes, so the rest was not transcribed."
     },
     "pages": {
       "tools": "Drawing tools",

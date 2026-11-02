@@ -1,36 +1,64 @@
 'use client'
 
-import { useApolloClient } from '@apollo/client/react'
+import { useLazyQuery, useMutation } from '@apollo/client/react'
 import { Check, Copy, Share2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { absoluteUrl, loadOwnedQuiz, quizPath, shareQuiz, type QuizShareStats } from '@/features/beta/api'
+import { absoluteUrl, type QuizShareStats } from '@/features/beta/api'
 import { Button } from '@/components/ui/button'
+import { CreateSharedQuizDocument, SetSharedQuizVisibilityDocument, SharedQuizDocument, type SharedQuizQuery } from '@/graphql/generated/graphql'
+
+type Owned = NonNullable<SharedQuizQuery['sharedQuiz']>
 
 /** The owner shares a link. Anyone with it can take the quiz. Stats stay here. */
-export function ShareQuiz({ noteId }: { noteId: string }) {
+export function ShareQuiz({ title, questions }: { title: string; questions: unknown[] }) {
   const t = useTranslations('quizShare')
-  const client = useApolloClient()
+  const [createQuiz] = useMutation(CreateSharedQuizDocument)
+  const [setVisibility] = useMutation(SetSharedQuizVisibilityDocument)
+  const [loadQuiz] = useLazyQuery(SharedQuizDocument, { fetchPolicy: 'network-only' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [link, setLink] = useState<string | null>(null)
   const [stats, setStats] = useState<QuizShareStats | null>(null)
   const [copied, setCopied] = useState(false)
+  if (!questions.length) return null
 
   const share = async () => {
     setBusy(true)
     setError(null)
     try {
-      const payload = await shareQuiz(client, noteId)
-      const problem = payload.userErrors?.[0]?.message
-      if (problem || !payload.quiz) {
+      const created = await createQuiz({
+        variables: {
+          input: {
+            title: title.trim() || t('title'),
+            questions: questions.slice(0, 50),
+            visibility: 'UNLISTED',
+          },
+        },
+      })
+      const payload = created.data?.createSharedQuiz
+      const problem = payload?.userErrors[0]?.message
+      const id = payload?.quiz?.id
+      if (problem || !id) {
         setError(problem ?? t('failed'))
         return
       }
-      const owned = await loadOwnedQuiz(client, noteId).catch(() => null)
-      const token = owned?.token || payload.quiz.token
-      setLink(absoluteUrl(quizPath(token, owned?.path || payload.quiz.path), window.location.origin))
-      setStats(owned?.aggregate ?? null)
+      let quiz = (await loadQuiz({ variables: { id } })).data?.sharedQuiz ?? null
+      if (quiz && !quiz.sharePath) {
+        const visible = await setVisibility({ variables: { input: { quizId: id, visibility: 'UNLISTED' } } })
+        const visProblem = visible.data?.setSharedQuizVisibility.userErrors[0]?.message
+        if (visProblem) {
+          setError(visProblem)
+          return
+        }
+        quiz = (await loadQuiz({ variables: { id } })).data?.sharedQuiz ?? quiz
+      }
+      if (!quiz?.sharePath) {
+        setError(t('failed'))
+        return
+      }
+      setLink(absoluteUrl(quiz.sharePath, window.location.origin))
+      setStats(statsOf(quiz))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t('failed'))
     } finally {
@@ -78,4 +106,15 @@ export function ShareQuiz({ noteId }: { noteId: string }) {
       ) : null}
     </section>
   )
+}
+
+/** averageScore is a fraction of the questions. Show it as a score out of questionCount. */
+function statsOf(quiz: Owned): QuizShareStats | null {
+  const stats = quiz.stats
+  if (!stats || stats.averageScore == null) return null
+  return {
+    attempts: stats.scoredAttempts,
+    averageScore: Math.round(stats.averageScore * quiz.questionCount),
+    total: quiz.questionCount,
+  }
 }

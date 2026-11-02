@@ -32,6 +32,7 @@
     "graphql:sync": "node scripts/graphql-sync.mjs",
     "contracts:sync": "node scripts/contracts-sync.mjs",
     "codegen": "graphql-codegen --config codegen.ts",
+    "graphql:check": "node scripts/graphql-check.mjs",
     "pdfjs:assets": "node scripts/pdfjs-assets.mjs",
     "lighthouse": "node scripts/lighthouse.mjs"
   },

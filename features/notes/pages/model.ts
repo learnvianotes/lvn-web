@@ -205,7 +205,10 @@ function pageFromUnknown(value: unknown): NotePage | null {
   if (!value || typeof value !== 'object') return null
   const page = value as NotePage
   if (typeof page.id !== 'string' || !Array.isArray(page.strokes)) return null
-  const strokes = page.strokes.filter(isStroke)
+  const strokes = page.strokes.filter(isStroke).map((stroke) => ({
+    ...stroke,
+    points: stroke.points.map((point) => ({ x: point.x, y: point.y, p: typeof point.p === 'number' ? point.p : 0.5 })),
+  }))
   if (strokes.length !== page.strokes.length) return null
   const images = Array.isArray(page.images) ? page.images.filter(isImage) : []
   return { id: page.id, strokes, images, drawing: page.drawing ?? null }
@@ -225,8 +228,68 @@ function isImage(value: unknown): value is PageImage {
 
 function isPoint(value: unknown): value is InkPoint {
   if (!value || typeof value !== 'object') return false
-  const point = value as InkPoint
-  return [point.x, point.y, point.p].every((n) => typeof n === 'number' && Number.isFinite(n))
+  const point = value as Partial<InkPoint>
+  // StrokePoint on the server is x and y. Pressure stays on the device while drawing.
+  return typeof point.x === 'number' && Number.isFinite(point.x) && typeof point.y === 'number' && Number.isFinite(point.y) && (point.p === undefined || (typeof point.p === 'number' && Number.isFinite(point.p)))
+}
+
+/** A page as Note.pages returns it. Pressure is not stored, so loaded ink uses a medium stroke. */
+export function pagesFromServer(pages: ReadonlyArray<{
+  id: string
+  strokes: ReadonlyArray<{ id: string; tool: string; color: string | null; width: number; points: ReadonlyArray<{ x: number; y: number }> }>
+  images: ReadonlyArray<{ id: string; fileId: string; href: string | null; name: string; x: number; y: number; w: number; h: number; rotation: number }>
+}>): NotePage[] {
+  return pages.map((page) => ({
+    id: page.id,
+    strokes: page.strokes.flatMap((stroke) => {
+      const tool = stroke.tool === 'MARKER' || stroke.tool === 'marker' ? 'marker' : stroke.tool === 'ERASER' || stroke.tool === 'eraser' ? null : 'pen'
+      if (!tool) return []
+      return [{
+        id: stroke.id,
+        tool,
+        color: stroke.color ?? (tool === 'marker' ? '#0284c7' : '#1d4ed8'),
+        width: stroke.width,
+        straight: stroke.tool === 'RULER' || stroke.tool === 'ruler',
+        points: stroke.points.map((point) => ({ x: point.x, y: point.y, p: 0.5 })),
+      }]
+    }),
+    images: page.images.map((image) => ({
+      id: image.id,
+      fileId: image.fileId,
+      name: image.name,
+      href: image.href ?? '',
+      x: image.x,
+      y: image.y,
+      w: image.w,
+      h: image.h,
+      rotation: image.rotation,
+    })),
+  }))
+}
+
+/** SaveNotePages input. Points are x and y; a ruler stroke is stored as tool ruler. */
+export function pagesToSave(noteId: string, pages: NotePage[]) {
+  return {
+    noteId,
+    pages: pages.map((page, index) => ({
+      id: page.id,
+      index,
+      drawing: {
+        strokes: page.strokes.map((stroke) => ({
+          id: stroke.id,
+          tool: stroke.straight ? 'ruler' : stroke.tool,
+          color: stroke.color,
+          width: stroke.width,
+          points: stroke.points.map(({ x, y }) => ({ x, y })),
+        })),
+      },
+      images: page.images.flatMap((image) => (
+        image.fileId
+          ? [{ id: image.id, fileId: image.fileId, name: image.name, x: image.x, y: image.y, w: image.w, h: image.h, rotation: image.rotation }]
+          : []
+      )),
+    })),
+  }
 }
 
 function samePages(a: NotePage[], b: NotePage[]): boolean {

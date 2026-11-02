@@ -55,10 +55,10 @@ export function CollegeIdOption({ restrictedMinor }: { restrictedMinor: boolean 
         variables: { input: { fileName: file.name || 'college-id', mimeType: studentIdMime(file), sizeBytes: file.size } },
       })
       const payload = created.data?.createStudentIdUploadIntent
-      const intent = payload?.intent
-      if (!intent) throw new UploadError(studentIdErrorMessage(payload?.userErrors[0] ?? {}, copy))
-      await putToStorage(intent, file, () => undefined)
-      const sent = await submit({ variables: { input: { fileId: intent.fileId } } })
+      const upload = payload?.upload
+      if (!upload) throw new UploadError(studentIdErrorMessage(payload?.userErrors[0] ?? {}, copy))
+      await putToStorage(upload, file, () => undefined)
+      const sent = await submit({ variables: { input: { fileId: upload.fileId } } })
       const problem = sent.data?.submitStudentIdVerification.userErrors[0]
       if (problem) throw new UploadError(studentIdErrorMessage(problem, copy))
       setFile(null)

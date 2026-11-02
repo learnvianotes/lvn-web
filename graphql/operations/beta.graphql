@@ -1,0 +1,227 @@
+# Shared quizzes, note pages and voice notes. These used to be hand-written documents in
+# features/beta/api.ts. They are checked against graphql/schema.graphql with the rest.
+
+fragment SharedQuizStatsFields on SharedQuiz {
+  id
+  title
+  sharePath
+  questionCount
+  visibility
+  viewerIsOwner
+  owner {
+    id
+    displayName
+  }
+  stats {
+    scoredAttempts
+    takerCount
+    averageScore
+    practiceAttempts
+  }
+  myAttempts {
+    id
+    score
+    total
+    submittedAt
+  }
+}
+
+fragment SharedQuizQuestionFields on SharedQuizQuestion {
+  id
+  position
+  multiple
+  question
+  explanation
+  correct
+  choices {
+    id
+    content
+  }
+}
+
+# There is no shareQuiz. A quiz is created from quiz-card JSON, then read back by id.
+mutation CreateSharedQuiz($input: SharedQuizWriteInput!) {
+  createSharedQuiz(input: $input) {
+    quiz {
+      id
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation SetSharedQuizVisibility($input: SetSharedQuizVisibilityInput!) {
+  setSharedQuizVisibility(input: $input) {
+    quiz {
+      id
+      sharePath
+      visibility
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+query SharedQuiz($id: UUID!) {
+  sharedQuiz(id: $id) {
+    ...SharedQuizStatsFields
+    questions {
+      ...SharedQuizQuestionFields
+    }
+  }
+}
+
+query SharedQuizByLink($token: String!) {
+  sharedQuizByLink(token: $token) {
+    id
+    title
+    questionCount
+    owner {
+      id
+      displayName
+    }
+    questions {
+      ...SharedQuizQuestionFields
+    }
+  }
+}
+
+mutation SubmitSharedQuizAttempt($input: SubmitSharedQuizAttemptInput!) {
+  submitSharedQuizAttempt(input: $input) {
+    attempt {
+      id
+      score
+      total
+      submittedAt
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+query MyQuizzes($first: Int) {
+  myQuizzes(first: $first) {
+    id
+    title
+    sharePath
+    questionCount
+    visibility
+    owner {
+      id
+      displayName
+    }
+  }
+}
+
+query PublicQuizzes($first: Int) {
+  publicQuizzes(first: $first) {
+    id
+    title
+    sharePath
+    questionCount
+    visibility
+    owner {
+      id
+      displayName
+    }
+  }
+}
+
+query NotePages($noteId: UUID!) {
+  note(id: $noteId) {
+    pages {
+      id
+      index
+      drawing
+      strokes {
+        id
+        tool
+        color
+        width
+        points {
+          x
+          y
+        }
+      }
+      images {
+        id
+        fileId
+        href
+        name
+        x
+        y
+        w
+        h
+        rotation
+      }
+    }
+  }
+}
+
+mutation SaveNotePages($input: SaveNotePagesInput!) {
+  saveNotePages(input: $input) {
+    pages {
+      id
+      index
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+# A query: it describes the browser speech API. It does not store a recording.
+query VoiceCapture($input: VoiceCaptureInput!) {
+  voiceCapture(input: $input) {
+    voiceCapture {
+      api
+      continuous
+      interimResults
+      languages
+      streamingFallback
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation TranscribeCaptionClip($input: TranscribeCaptionClipInput!) {
+  transcribeCaptionClip(input: $input) {
+    transcript {
+      text
+      cut
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation TranscribeAudio($input: TranscribeAudioInput!) {
+  transcribeAudio(input: $input) {
+    transcript {
+      text
+      cut
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation MakeNotesFromTranscript($input: MakeNotesFromTranscriptInput!) {
+  makeNotesFromTranscript(input: $input) {
+    notes {
+      noteId
+      title
+      summary
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

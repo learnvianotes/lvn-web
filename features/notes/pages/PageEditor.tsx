@@ -1,10 +1,11 @@
 'use client'
 
-import { useApolloClient } from '@apollo/client/react'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { Camera, Eraser, ImagePlus, Pen, Redo2, Ruler, Trash2, Undo2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
-import { notePages, saveNotePages, uploadPageImage } from '@/features/beta/api'
+import { uploadPageImage } from '@/features/beta/api'
+import { NotePagesDocument, SaveNotePagesDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { PhotoScan } from './PhotoScan'
 import {
@@ -15,6 +16,8 @@ import {
   eraseAt,
   historyOf,
   insertImage,
+  pagesFromServer,
+  pagesToSave,
   newPageId,
   pressureOf,
   redo,
@@ -43,6 +46,8 @@ const MARKER = '#0284c7'
 export function PageEditor({ noteId }: { noteId: string }) {
   const t = useTranslations('notes.pages')
   const client = useApolloClient()
+  const loaded = useQuery(NotePagesDocument, { variables: { noteId }, fetchPolicy: 'network-only' })
+  const [savePages] = useMutation(SaveNotePagesDocument)
   const [history, setHistory] = useState<PageHistory>(() => historyOf([blankPage()]))
   const [index, setIndex] = useState(0)
   const [tool, setTool] = useState<DrawTool>('pen')
@@ -55,37 +60,38 @@ export function PageEditor({ noteId }: { noteId: string }) {
   const erasing = useRef(false)
   const before = useRef<NotePage[] | null>(null)
   const ready = useRef(false)
+  const hydrated = useRef<NotePage[] | null>(null)
   const file = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    let cancel = false
-    void notePages(client, noteId)
-      .then((pages) => {
-        if (cancel) return
-        setHistory(historyOf(pages.length ? pages : [blankPage()]))
-        ready.current = true
-        setStatus('saved')
-      })
-      .catch(() => {
-        if (cancel) return
-        ready.current = true
-        setStatus('error')
-      })
-    return () => {
-      cancel = true
+    if (loaded.loading || hydrated.current) return
+    if (loaded.error || !loaded.data) {
+      hydrated.current = []
+      setStatus('error')
+      return
     }
-  }, [client, noteId])
+    const pages = pagesFromServer(loaded.data.note?.pages ?? [])
+    const next = pages.length ? pages : [blankPage()]
+    hydrated.current = next
+    setHistory(historyOf(next))
+    setStatus('saved')
+  }, [loaded.data, loaded.error, loaded.loading])
 
   useEffect(() => {
-    if (!ready.current) return
+    if (!hydrated.current) return
+    // The load effect sets history for the next render. Do not write the previous pages first.
+    if (!ready.current) {
+      if (hydrated.current === history.present) ready.current = true
+      return
+    }
     setStatus('saving')
     const timer = setTimeout(() => {
-      void saveNotePages(client, noteId, history.present)
-        .then((payload) => setStatus(payload.userErrors?.length ? 'error' : 'saved'))
+      void savePages({ variables: { input: pagesToSave(noteId, history.present) } })
+        .then((res) => setStatus(res.data?.saveNotePages.userErrors.length ? 'error' : 'saved'))
         .catch(() => setStatus('error'))
     }, 400)
     return () => clearTimeout(timer)
-  }, [client, history.present, noteId])
+  }, [history.present, noteId, savePages])
 
   const page = history.present[Math.min(index, history.present.length - 1)] ?? history.present[0]!
   const pageIndex = history.present.indexOf(page)

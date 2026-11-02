@@ -1,5 +1,7 @@
 import 'server-only'
+import { print } from 'graphql'
 import { cache } from 'react'
+import { PublicProfileDocument } from '@/graphql/generated/graphql'
 import { serverEnv } from '@/lib/server-env'
 
 /**
@@ -30,16 +32,7 @@ export interface PublicProfile {
   contribution: { points: number; level: 'NEWCOMER' | 'CONTRIBUTOR' | 'TRUSTED' } | null
 }
 
-const PROFILE = `query PublicProfile($handle: String!) {
-  userByHandle(handle: $handle) {
-    id handle displayName globalRole verified createdAt followerMilestone
-    profile { department yearOfStudy }
-    teacherProfile { headline bio skills { id kind name detail source sourceUrl fetchedAt } }
-    achievements { id kind title description }
-    contribution { points level }
-    publicNotes(first: 60) { edges { node { id title slug kind publishedAt } } }
-  }
-}`
+const PROFILE = print(PublicProfileDocument)
 
 type Answer = { userByHandle: (Omit<PublicProfile, 'notes'> & { publicNotes: { edges: { node: PublicProfile['notes'][number] }[] } }) | null }
 

@@ -1,12 +1,17 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { ASSUMPTIONS, GAPS, absoluteUrl, noteSharePath, quizPath } from '@/features/beta/api'
 
-describe('beta API contracts 0.74.0', () => {
-  it('names the operations from lvn-backend PR #47', () => {
+describe('beta API against the vendored schema', () => {
+  it('names the real operations and the gaps the schema leaves', () => {
     const text = [...ASSUMPTIONS, ...GAPS].join('\n')
-    for (const name of ['setNoteVisibility', 'UNLISTED', 'publicNotesRequireVerification', 'allowForks', 'forkCount', 'sharedQuiz', 'sharedQuizByLink', 'myQuizzes', 'publicQuizzes', 'PAGE_IMAGE', 'drawing', 'VOICE_NOTE', 'voiceCapture', 'transcribeCaptionClip', 'transcribeAudio', 'makeNotesFromTranscript']) {
+    for (const name of ['changeNoteVisibility', 'UNLISTED', 'publicNotesRequireVerification', 'allowForks', 'forkCount', 'createSharedQuiz', 'sharedQuiz', 'sharedQuizByLink', 'myQuizzes', 'publicQuizzes', 'PAGE_IMAGE', 'saveNotePages', 'VOICE_NOTE', 'voiceCapture', 'transcribeCaptionClip', 'transcribeAudio', 'makeNotesFromTranscript', 'sharePath', 'choiceIds']) {
       expect(text).toContain(name)
     }
+    expect(text).toContain('There is no shareQuiz')
+    const api = readFileSync('features/beta/api.ts', 'utf8')
+    expect(api).not.toMatch(/from 'graphql'/)
+    expect(api).not.toMatch(/(?:query|mutation)\s+[A-Z][A-Za-z0-9_]*\s*(\(|\{)/)
   })
 
   it('builds absolute urls from the relative share paths', () => {

@@ -59,7 +59,7 @@ test('a student sends a college ID card and can withdraw it; completeUpload is n
       MyStudentIdVerification: () => ({ myStudentIdVerification: mine }),
       CreateStudentIdUploadIntent: () => ({
         createStudentIdUploadIntent: {
-          intent: { __typename: 'UploadIntent', fileId: FILE_ID, uploadUrl: 'http://storage.test/put', uploadHeaders: [{ __typename: 'UploadHeader', name: 'content-type', value: 'image/png' }] },
+          upload: { __typename: 'StudentIdUpload', fileId: FILE_ID, uploadUrl: 'http://storage.test/put', expiresAt: new Date(Date.now() + 60_000).toISOString(), uploadHeaders: [{ __typename: 'StudentIdUploadHeader', name: 'content-type', value: 'image/png' }] },
           ...none,
         },
       }),
@@ -92,7 +92,7 @@ test('a refusal is shown, and the wrong size, type, or limit is said plainly', a
       ...on,
       MyStudentIdVerification: () => ({ myStudentIdVerification: request({ status: 'REJECTED', reason: 'The name does not match.' }) }),
       CreateStudentIdUploadIntent: () => ({
-        createStudentIdUploadIntent: { intent: null, userErrors: [{ __typename: 'UserError', field: null, code: outcome?.code, message: outcome?.message }] },
+        createStudentIdUploadIntent: { upload: null, userErrors: [{ __typename: 'UserError', field: null, code: outcome?.code, message: outcome?.message }] },
       }),
     },
     unverified,
@@ -132,7 +132,7 @@ test('a platform admin turns college ID checks on, opens a card on demand, and a
     {
       ...basics,
       StudentIdVerificationEnabled: () => ({ studentIdVerificationEnabled: enabled }),
-      SetStudentIdVerificationEnabled: (v) => ((enabled = (v.input as { enabled: boolean }).enabled), { setStudentIdVerificationEnabled: { settings: { __typename: 'StudentIdVerificationSettings', enabled }, ...none } }),
+      SetStudentIdVerificationEnabled: (v) => ((enabled = v.enabled === true), { setStudentIdVerificationEnabled: { __typename: 'OkPayload', ok: true, ...none } }),
       StudentIdVerificationQueue: () => ({ studentIdVerificationQueue: waiting }),
       StudentIdCardUrl: () => ({ studentIdCardUrl: { __typename: 'SignedUrl', url: 'http://storage.test/card', expiresAt: new Date(Date.now() + 60_000).toISOString() } }),
       ReviewStudentIdVerification: (v) => {
@@ -150,7 +150,7 @@ test('a platform admin turns college ID checks on, opens a card on demand, and a
 
   await page.getByRole('switch', { name: 'Students can send a college ID card' }).click()
   await expect(page.getByRole('switch', { name: 'Students can send a college ID card' })).toBeChecked()
-  expect(calls.find((c) => c.op === 'SetStudentIdVerificationEnabled')?.variables).toEqual({ input: { enabled: true } })
+  expect(calls.find((c) => c.op === 'SetStudentIdVerificationEnabled')?.variables).toEqual({ enabled: true })
 
   const raviCard = page.getByRole('article', { name: 'Ravi Kumar' })
   await raviCard.getByRole('button', { name: 'View college ID card' }).click()

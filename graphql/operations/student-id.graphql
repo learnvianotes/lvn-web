@@ -28,6 +28,25 @@ query MyStudentIdVerification {
 query StudentIdVerificationQueue($after: UUID, $first: Int) {
   studentIdVerificationQueue(after: $after, first: $first) {
     ...StudentIdVerificationFields
+    aiCheck {
+      ...AiCheckFields
+    }
+    requester {
+      email
+      institution {
+        name
+      }
+      profile {
+        department
+      }
+    }
+  }
+}
+
+# Used when a server does not know aiCheck yet. The queue falls back to this.
+query StudentIdVerificationQueueBasic($first: Int) {
+  studentIdVerificationQueue(first: $first) {
+    ...StudentIdVerificationFields
   }
 }
 
@@ -38,15 +57,16 @@ query StudentIdCardUrl($requestId: UUID!) {
   }
 }
 
-mutation CreateStudentIdUploadIntent($input: CreateStudentIdUploadIntentInput!) {
+mutation CreateStudentIdUploadIntent($input: CreateStudentIdUploadInput!) {
   createStudentIdUploadIntent(input: $input) {
-    intent {
+    upload {
       fileId
       uploadUrl
       uploadHeaders {
         name
         value
       }
+      expiresAt
     }
     userErrors {
       ...Problems
@@ -74,11 +94,9 @@ mutation WithdrawStudentIdVerification($requestId: UUID!) {
   }
 }
 
-mutation SetStudentIdVerificationEnabled($input: SetStudentIdVerificationEnabledInput!) {
-  setStudentIdVerificationEnabled(input: $input) {
-    settings {
-      enabled
-    }
+mutation SetStudentIdVerificationEnabled($enabled: Boolean!) {
+  setStudentIdVerificationEnabled(enabled: $enabled) {
+    ok
     userErrors {
       ...Problems
     }
