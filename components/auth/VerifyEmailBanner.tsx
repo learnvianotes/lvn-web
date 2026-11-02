@@ -5,11 +5,9 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ResendVerificationDocument } from '@/graphql/generated/graphql'
-import { GATED_ACTIONS } from '@/lib/auth/gates'
+import { isKnownGatedAction } from '@/lib/auth/gates'
 import { resendVerificationNotice } from '@/lib/auth/resend'
 import { useUnverifiedGates } from './useUnverifiedGates'
-
-const KNOWN = new Set<string>(GATED_ACTIONS)
 
 /**
  * On every signed-in page while the sign-in email is unconfirmed, except for platform admins.
@@ -24,7 +22,7 @@ export function VerifyEmailBanner() {
   const [note, setNote] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   if (!viewer || !held) return null
-  const heldBack = actions.filter((action) => KNOWN.has(action)).map((action) => tg(`features.${action}`))
+  const heldBack = actions.map((action) => (isKnownGatedAction(action) ? tg(`features.${action}`) : tg('unknown', { action })))
 
   const again = async () => {
     setNote(null)

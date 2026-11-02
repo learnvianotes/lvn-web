@@ -568,3 +568,8 @@ query SavedNotes($first: Int, $after: String) {
 query UploadsEnabled {
   uploadsEnabled
 }
+
+# Setting public_notes_require_verification. Public visibility follows this, not unverifiedGatedActions.
+query PublicNotesRequireVerification {
+  publicNotesRequireVerification
+}

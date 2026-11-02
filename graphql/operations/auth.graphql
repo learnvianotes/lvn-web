@@ -10,6 +10,7 @@ fragment ViewerFields on User {
   registrationComplete
   verified
   verificationMethod
+  viewerNeedsVerification
   globalRole
   teacherStatus
   restrictedMinor

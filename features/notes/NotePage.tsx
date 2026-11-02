@@ -44,7 +44,7 @@ export function NotePage({ id }: { id: string }) {
   const client = useApolloClient()
   const router = useRouter()
   const viewer = useQuery(ViewerDocument)
-  const publishHeld = useUnverifiedGates().gated('PUBLISH_NOTE')
+  const publishHeld = useUnverifiedGates().gated('note.publish')
   const userId = viewer.data?.viewer?.id
   useEffect(() => {
     trackUsage('note_open')
@@ -250,8 +250,7 @@ export function NotePage({ id }: { id: string }) {
             {notice}
           </p>
         ) : null}
-        {meta.viewerAccess === 'OWNER' ? <GatedNotice feature="PUBLISH_NOTE" when={!canPublish} /> : null}
-        {meta.viewerAccess === 'OWNER' ? <GatedNotice feature="UPLOAD" /> : null}
+        {meta.viewerAccess === 'OWNER' ? <GatedNotice feature="note.publish" when={!canPublish} /> : null}
         <NoteEditor
           key={generation}
           noteId={id}

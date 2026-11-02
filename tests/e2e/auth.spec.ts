@@ -427,7 +427,7 @@ test.describe('links from emails', () => {
       page,
       {
         Viewer: () => ({ viewer: viewer({ emailVerified: false }) }),
-        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['PUBLISH_NOTE', 'COMMENT'] }),
+        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish', 'workshop.custom'] }),
         ResendVerification: () => {
           if (!limited) {
             limited = true
@@ -442,7 +442,7 @@ test.describe('links from emails', () => {
     const banner = page.getByRole('region', { name: 'Verify your email' })
     await expect(banner).toBeVisible()
     await expect(banner).toContainText('publishing notes')
-    await expect(banner).toContainText('commenting')
+    await expect(banner).toContainText('workshop.custom')
     await banner.getByRole('button', { name: 'Resend verification email' }).click()
     await expect(banner.getByRole('status')).toHaveText('If your email can receive it, a new link is on its way.')
     await banner.getByRole('button', { name: 'Resend verification email' }).click()
@@ -454,6 +454,24 @@ test.describe('links from emails', () => {
     await page.goto('/profile')
     await expect(page.getByRole('heading', { name: 'Verify your email' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Resend verification email' })).toHaveCount(0)
+  })
+
+  test('viewerNeedsVerification false hides the prompt, and null falls back to the role', async ({ page }) => {
+    await mockApi(page, { Viewer: () => ({ viewer: viewer({ emailVerified: false, viewerNeedsVerification: false }) }) }, 'signed-in')
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toHaveCount(0)
+
+    await mockApi(
+      page,
+      {
+        Viewer: () => ({ viewer: viewer({ emailVerified: false, globalRole: 'STUDENT', viewerNeedsVerification: null }) }),
+        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish'] }),
+      },
+      'signed-in',
+    )
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()
+    await expect(page.getByText('publishing notes')).toBeVisible()
   })
 
   test('requests a reset link, then sets a new password from it', async ({ page }) => {

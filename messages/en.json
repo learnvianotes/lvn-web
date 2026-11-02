@@ -214,17 +214,25 @@
       "how": "Verify your email",
       "held": "Until you confirm it, these stay closed: {features}.",
       "open": "Nothing else is held back.",
+      "publicNote": "Confirm your sign-in email before a note can be public.",
+      "unknown": "{action}",
       "features": {
-        "PUBLISH_NOTE": "publishing notes",
-        "SHARE_NOTE": "sharing notes",
-        "COMMENT": "commenting",
-        "FOLLOW": "following people",
-        "JOIN_GROUP": "joining groups",
-        "JOIN_CLASS": "joining classes",
-        "ASK_AI": "asking AI",
-        "POST": "posting",
-        "UPLOAD": "uploading files",
-        "REACT": "reactions"
+        "note": {
+          "publish": "publishing notes",
+          "share": "sharing notes"
+        },
+        "contest": {
+          "enter": "entering contests"
+        },
+        "payout": {
+          "request": "requesting a payout"
+        },
+        "ai": {
+          "bulk": "bulk AI"
+        },
+        "resource": {
+          "submit": "submitting resources"
+        }
       }
     },
     "errors": {

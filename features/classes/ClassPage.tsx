@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { GatedNotice } from '@/components/auth/GatedNotice'
 import { Button } from '@/components/ui/button'
 import { LoadFailed, Loading, QueryState } from '@/components/ui/query-state'
 import { PostComments } from '@/features/discussion/PostComments'
@@ -173,7 +172,6 @@ function Header({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
           </Button>
         ) : null}
       </div>
-      <GatedNotice feature="JOIN_CLASS" when={!classroom.viewerRole && !classroom.viewerInviteId && !classroom.viewerRequestId} />
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}
@@ -197,7 +195,6 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
   }
   return (
     <div className="flex flex-col gap-4">
-      <GatedNotice feature="POST" when={!classroom.viewerCan.post} />
       {classroom.viewerCan.post ? (
         <form
           className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3"

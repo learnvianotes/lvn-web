@@ -1,6 +1,7 @@
 # LearnViaNotes API schema — composed from contexts/*/src/graphql/*.graphql by scripts/export-supergraph.mjs. Do not edit.
 # ADR-0099 (college ID cards, lvn-backend#18, contracts 0.64.0) is included here so this app typechecks before that branch is on main. `pnpm graphql:sync` replaces this file from lvn-backend.
-# lvn-backend#46 (contracts 0.74.0): VerifyEmailPayload, resendVerification, unverifiedGatedActions, UserError.retryAfter, and Float min/max on AdminSettingConstraints.
+# lvn-backend main ebe43a2 (contracts 0.74.0): VerifyEmailPayload, resendVerification, unverifiedGatedActions as [String!]!, UserError.retryAfter, Float min/max on AdminSettingConstraints, and publicNotesRequireVerification.
+# lvn-backend#48 (contracts 0.75.0): User.viewerNeedsVerification. False for a platform admin, null on anyone else's user.
 # lvn-backend#27 account admin is included the same way: AccountStatus, adminUsers, adminUpdateUser, adminSetAccountStanding, adminDeleteUser, and UserError.supportEmail.
 input AcceptTermsInput {
   """Query.termsVersion, as shown to the person"""
@@ -4446,6 +4447,12 @@ type Query {
   """
   publicNotes(after: String, first: Int): NoteConnection!
 
+  """
+  Setting public_notes_require_verification. Public. When true, making a note public needs a verified account.
+  Changing visibility is not an unverifiedGatedActions name.
+  """
+  publicNotesRequireVerification: Boolean!
+
   """Signed in only: best first, at most 20 (default 10)"""
   recommendations(limit: Int): [Recommendation!]!
 
@@ -6283,6 +6290,11 @@ type User {
   Verified by institutional email, a teacher, or platform admins (ADR-0019)
   """
   verified: Boolean!
+
+  """
+  Whether this viewer still needs to verify. False for a platform admin. Null on anyone else's user (lvn-backend#48, contracts 0.75.0).
+  """
+  viewerNeedsVerification: Boolean
 }
 
 type UserActivityEvent {
@@ -6551,32 +6563,16 @@ type MyPlan {
   usage: [PlanUsage!]!
 }
 
-"""
-An action an admin can hold back until the sign-in email is confirmed.
-The public list is the same for everyone. Platform admins are never held back.
-"""
-enum UnverifiedGatedAction {
-  PUBLISH_NOTE
-  SHARE_NOTE
-  COMMENT
-  FOLLOW
-  JOIN_GROUP
-  JOIN_CLASS
-  ASK_AI
-  POST
-  UPLOAD
-  REACT
-}
-
 extend type Query {
   """Public."""
   accessPolicy: AccessPolicy!
 
   """
-  Public. Actions closed until the sign-in email is confirmed.
-  Empty when an admin gated nothing.
+  Public. Lowercase dotted action names closed until the sign-in email is confirmed.
+  The default list is note.publish, note.share, contest.enter, payout.request, ai.bulk, resource.submit.
+  The same list for everyone. An admin may add names this client does not know.
   """
-  unverifiedGatedActions: [UnverifiedGatedAction!]!
+  unverifiedGatedActions: [String!]!
 
   """Platform admins."""
   adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!

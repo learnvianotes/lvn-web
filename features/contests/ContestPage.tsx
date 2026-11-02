@@ -5,6 +5,8 @@ import { Check, X } from 'lucide-react'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
+import { useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { LoadFailed, Loading } from '@/components/ui/query-state'
@@ -19,6 +21,7 @@ import { isNotThere } from '@/lib/query'
  */
 export function ContestPage({ id }: { id: string }) {
   const t = useTranslations('contests')
+  const enterHeld = useUnverifiedGates().gated('contest.enter')
   const format = useFormatter()
   const { data, loading, error, refetch } = useQuery(ContestDocument, { variables: { id }, fetchPolicy: 'cache-and-network' })
   const [start, starting] = useMutation(StartContestDocument)
@@ -48,10 +51,11 @@ export function ContestPage({ id }: { id: string }) {
           {c.state === 'OPEN' ? (
             <>
               <p className="text-sm">{t('rules', { minutes: c.minutes, closes: format.dateTime(new Date(c.closesAt), { weekday: 'long', hour: 'numeric', minute: '2-digit' }) })}</p>
+              <GatedNotice feature="contest.enter" />
               <Button
                 type="button"
                 className="self-start"
-                disabled={starting.loading}
+                disabled={starting.loading || enterHeld}
                 onClick={async () => {
                   const res = await start({ variables: { contestId: c.id } }).catch(() => null)
                   setProblem(res?.data?.startContest.userErrors[0]?.message ?? (res ? null : t('failed')))

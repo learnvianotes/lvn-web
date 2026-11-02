@@ -1,30 +1,48 @@
 import { describe, expect, it } from 'vitest'
-import { holdsVerification, isGated } from '@/lib/auth/gates'
+import { holdsVerification, isGated, isKnownGatedAction, publicVisibilityHeld, skipsVerificationPrompt } from '@/lib/auth/gates'
 import { resendVerificationNotice } from '@/lib/auth/resend'
 
 const wait = (seconds: number) => `You can try again in ${seconds} seconds.`
 
 describe('unverified gates', () => {
-  it('holds an unconfirmed sign-in email and never a platform admin', () => {
+  it('uses viewerNeedsVerification when it is present, and the role when it is not', () => {
     expect(holdsVerification(null)).toBe(false)
     expect(holdsVerification(undefined)).toBe(false)
-    expect(holdsVerification({ emailVerified: true })).toBe(false)
-    expect(holdsVerification({})).toBe(false)
-    expect(holdsVerification({ emailVerified: false })).toBe(true)
-    expect(holdsVerification({ emailVerified: false, globalRole: 'STUDENT' })).toBe(true)
-    expect(holdsVerification({ emailVerified: false, globalRole: 'TEACHER' })).toBe(true)
-    expect(holdsVerification({ emailVerified: false, globalRole: 'MANAGER' })).toBe(true)
+    expect(skipsVerificationPrompt({ viewerNeedsVerification: false, emailVerified: false, globalRole: 'STUDENT' })).toBe(true)
+    expect(holdsVerification({ viewerNeedsVerification: false, emailVerified: false, globalRole: 'STUDENT' })).toBe(false)
+    expect(holdsVerification({ viewerNeedsVerification: true, emailVerified: false, globalRole: 'STUDENT' })).toBe(true)
+    expect(holdsVerification({ viewerNeedsVerification: true, emailVerified: true, globalRole: 'STUDENT' })).toBe(false)
+    expect(holdsVerification({ viewerNeedsVerification: null, emailVerified: false, globalRole: 'PLATFORM_ADMIN' })).toBe(false)
+    expect(holdsVerification({ viewerNeedsVerification: null, emailVerified: false, globalRole: 'STUDENT' })).toBe(true)
+    expect(holdsVerification({ viewerNeedsVerification: null, emailVerified: true, globalRole: 'STUDENT' })).toBe(false)
     expect(holdsVerification({ emailVerified: false, globalRole: 'PLATFORM_ADMIN' })).toBe(false)
+    expect(holdsVerification({ emailVerified: false, globalRole: 'MANAGER' })).toBe(true)
+    expect(holdsVerification({ emailVerified: false })).toBe(true)
+    expect(holdsVerification({})).toBe(false)
   })
 
-  it('gates only the actions the public list names', () => {
-    const viewer = { emailVerified: false, globalRole: 'STUDENT' }
-    expect(isGated(viewer, ['PUBLISH_NOTE', 'FOLLOW'], 'PUBLISH_NOTE')).toBe(true)
-    expect(isGated(viewer, ['PUBLISH_NOTE'], 'SHARE_NOTE')).toBe(false)
-    expect(isGated(viewer, [], 'FOLLOW')).toBe(false)
-    expect(isGated(viewer, null, 'FOLLOW')).toBe(false)
-    expect(isGated({ emailVerified: true }, ['FOLLOW'], 'FOLLOW')).toBe(false)
-    expect(isGated({ emailVerified: false, globalRole: 'PLATFORM_ADMIN' }, ['FOLLOW', 'COMMENT'], 'FOLLOW')).toBe(false)
+  it('gates only the dotted names the public list includes', () => {
+    const viewer = { emailVerified: false, globalRole: 'STUDENT', viewerNeedsVerification: true }
+    expect(isGated(viewer, ['note.publish', 'note.share'], 'note.publish')).toBe(true)
+    expect(isGated(viewer, ['note.publish'], 'note.share')).toBe(false)
+    expect(isGated(viewer, ['note.publish', 'workshop.custom'], 'workshop.custom')).toBe(true)
+    expect(isGated(viewer, ['note.publish'], 'comment')).toBe(false)
+    expect(isGated(viewer, [], 'note.publish')).toBe(false)
+    expect(isGated({ emailVerified: false, globalRole: 'PLATFORM_ADMIN' }, ['note.publish'], 'note.publish')).toBe(false)
+    expect(isGated({ viewerNeedsVerification: false, emailVerified: false }, ['note.share'], 'note.share')).toBe(false)
+    expect(isKnownGatedAction('note.publish')).toBe(true)
+    expect(isKnownGatedAction('contest.enter')).toBe(true)
+    expect(isKnownGatedAction('comment')).toBe(false)
+    expect(isKnownGatedAction('workshop.custom')).toBe(false)
+  })
+
+  it('holds Public only when the setting is on and this person still needs to verify', () => {
+    const held = { emailVerified: false, globalRole: 'STUDENT' as const }
+    expect(publicVisibilityHeld(held, true)).toBe(true)
+    expect(publicVisibilityHeld(held, false)).toBe(false)
+    expect(publicVisibilityHeld(held, null)).toBe(false)
+    expect(publicVisibilityHeld({ emailVerified: true, globalRole: 'STUDENT' }, true)).toBe(false)
+    expect(publicVisibilityHeld({ viewerNeedsVerification: false, emailVerified: false }, true)).toBe(false)
   })
 })
 
