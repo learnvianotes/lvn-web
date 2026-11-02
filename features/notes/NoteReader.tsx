@@ -11,6 +11,7 @@ import { accentOf, readingMinutes } from './look'
 import { ReadAloudControls } from './ReadAloudControls'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { CopyLinkButton, ForkCredit, MakeCopyButton, useMakeCopy } from './ShareDialog'
+import { useAllowForks } from './share/forks'
 import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
@@ -36,6 +37,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
   const spoken = useCallback(() => cards.map((c) => ({ id: c.id, text: cardPlainText(c.type, c.content) })), [cards])
   const reader = useReadAloud(spoken)
   const copy = useMakeCopy(meta.id)
+  const forks = useAllowForks(meta.id, meta.forkingEnabled)
   const headings = cards.filter((c) => c.type === 'heading')
   const minutes = readingMinutes(cards.map((c) => cardPlainText(c.type, c.content)).join(' '))
   const accent = accentOf(meta.id)
@@ -76,8 +78,9 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
           {meta.kind === 'PROJECT' ? <NoteCredits noteId={meta.id} /> : null}
           <div className="flex flex-wrap items-center gap-2">
             <ReadAloudControls reader={reader} />
-            {meta.viewerCan.fork && meta.forkingEnabled ? <MakeCopyButton copy={copy} /> : null}
-            {!meta.forkingEnabled ? <p className="text-xs text-muted">{t('share.forksOff')}</p> : null}
+            {meta.viewerCan.fork && forks.allowForks ? <MakeCopyButton copy={copy} /> : null}
+            {!forks.allowForks ? <p className="text-xs text-muted">{t('share.forksOff')}</p> : null}
+            {forks.forkCount > 0 ? <span className="text-xs text-muted">{t('share.forkCount', { n: forks.forkCount })}</span> : null}
             <CopyLinkButton note={meta} />
             <SaveNoteButton noteId={meta.id} />
             <AiButton onClick={() => setAiOpen(true)} />

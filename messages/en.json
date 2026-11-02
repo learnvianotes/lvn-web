@@ -672,14 +672,17 @@
       "whoCanRead": "Who can read it",
       "visibility": {
         "PRIVATE": "Private",
-        "SHARED": "Unlisted link",
+        "SHARED": "Shared",
+        "UNLISTED": "Unlisted link",
         "PUBLIC": "Public"
       },
       "visibilityHint": {
         "PRIVATE": "Only you.",
-        "SHARED": "Anyone with the link can read it. It is not listed on public pages. You can still name people below.",
+        "SHARED": "Only the people you name below.",
+        "UNLISTED": "Anyone with the link can read it. It is not listed on public pages.",
         "PUBLIC": "Anyone can find it. Readers see the published version once you publish."
       },
+      "publicNeedsVerification": "Verify your account before a note can be public.",
       "publishFirst": "Publish the note first: readers see the published version.",
       "verifyToShare": "Verify your account to share notes.",
       "verifyLink": "Verify now",
@@ -695,7 +698,8 @@
       "add": "Add",
       "remove": "Remove {name}",
       "nobodyYet": "Not shared with anyone yet.",
-      "privateHidesShares": "The note is private, so the people above cannot open it until you choose Unlisted link or Public.",
+      "privateHidesShares": "The note is private, so the people above cannot open it until you choose Shared, Unlisted link, or Public.",
+      "forkCount": "{n, plural, one {# copy} other {# copies}}",
       "allowCopies": "Allow forks",
       "allowCopiesHint": "Turn this off to opt out. The Fork button disappears for everyone else. A copy is private and always names you.",
       "forksOff": "Forks are off. The author opted out of copies.",
@@ -3025,7 +3029,9 @@
     "submitFailed": "The quiz could not be submitted. Try again.",
     "score": "{score} of {total}",
     "missing": "This quiz link does not open.",
-    "loading": "Loading the quiz…"
+    "loading": "Loading the quiz…",
+    "mine": "Your quizzes",
+    "public": "Public quizzes"
   },
   "studio": {
     "quick": {

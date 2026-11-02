@@ -10,6 +10,15 @@ import { NOTE_ID, cards, meta, mockApi, p, page1 } from './support/notes-api'
 const SHOTS = '/opt/cursor/artifacts/screenshots'
 const WIDTHS = [375, 768, 1440] as const
 const noProblems = { userErrors: [] }
+const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'PUT, OPTIONS', 'access-control-allow-headers': '*' }
+
+async function mockStorage(page: Page) {
+  await page.route('http://storage.test/**', async (route) => {
+    const req = route.request()
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS })
+    return route.fulfill({ status: 200, headers: CORS })
+  })
+}
 const quizCard = {
   __typename: 'Card',
   id: '01920000-0000-7000-8000-00000000c003',
@@ -37,10 +46,13 @@ test.describe('beta feedback', () => {
   })
 
   test('the page editor draws, and screenshots at 375, 768 and 1440', async ({ page }) => {
+    await mockStorage(page)
     const calls = await mockApi(page, {
       NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
-      NotePages: () => ({ notePages: { pages: [] } }),
+      NotePages: () => ({ note: { pages: [] } }),
       SaveNotePages: () => ({ saveNotePages: noProblems }),
+      CreatePageImage: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: '01920000-0000-7000-8000-00000000f0b1', uploadUrl: 'http://storage.test/put/page', uploadHeaders: [] }, ...noProblems } }),
+      CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...noProblems } }),
     })
     await page.goto(`/notes/${NOTE_ID}`)
     await page.getByRole('button', { name: 'Pages', exact: true }).click()
@@ -68,6 +80,7 @@ test.describe('beta feedback', () => {
 
     await page.getByLabel('Insert picture').setInputFiles({ name: 'diagram.png', mimeType: 'image/png', buffer: png })
     await expect(page.getByRole('img', { name: 'diagram.png' })).toBeVisible()
+    await expect.poll(() => calls.find((c) => c.op === 'CreatePageImage')?.variables).toMatchObject({ input: { purpose: 'PAGE_IMAGE', parentId: NOTE_ID, mimeType: 'image/png' } })
     await page.getByRole('button', { name: 'Rotate' }).click()
     await page.getByRole('button', { name: 'Undo', exact: true }).click()
     await expect(page.getByRole('img', { name: 'diagram.png' })).toBeVisible()
@@ -103,17 +116,22 @@ test.describe('beta feedback', () => {
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await dialog.getByRole('radio', { name: /Unlisted link/ }).check()
-    await expect.poll(() => calls.find((c) => c.op === 'ChangeNoteVisibility')?.variables).toEqual({ noteId: NOTE_ID, visibility: 'SHARED' })
+    await expect.poll(() => calls.find((c) => c.op === 'ChangeNoteVisibility')?.variables).toEqual({ noteId: NOTE_ID, visibility: 'UNLISTED' })
     await expect(dialog.getByRole('button', { name: 'Copy link' })).toBeEnabled()
     await dialog.getByRole('radio', { name: /Public/ }).check()
     await expect.poll(() => calls.filter((c) => c.op === 'ChangeNoteVisibility').at(-1)?.variables).toEqual({ noteId: NOTE_ID, visibility: 'PUBLIC' })
   })
 
   test('a voice note keeps the recording, shows a caption fallback, then transcribes', async ({ page }) => {
+    await mockStorage(page)
     const calls = await mockApi(page, {
       NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }),
-      TranscribeVoiceNote: () => ({ transcribeVoiceNote: { transcript: 'Binary search halves the range.', ...noProblems } }),
-      NotesFromTranscript: () => ({ notesFromTranscript: { markdown: '## Binary search\nHalve the range.', note: { id: NOTE_ID }, ...noProblems } }),
+      CreateNoteUpload: () => ({ createUploadIntent: { intent: { __typename: 'UploadIntent', fileId: '01920000-0000-7000-8000-00000000f0a1', uploadUrl: 'http://storage.test/put/voice', uploadHeaders: [] }, ...noProblems } }),
+      CompleteNoteUpload: () => ({ completeUpload: { ok: true, ...noProblems } }),
+      VoiceCapture: () => ({ voiceCapture: noProblems }),
+      TranscribeCaptionClip: () => ({ transcribeCaptionClip: { transcript: 'live line', ...noProblems } }),
+      TranscribeAudio: () => ({ transcribeAudio: { transcript: 'Binary search halves the range.', ...noProblems } }),
+      MakeNotesFromTranscript: () => ({ makeNotesFromTranscript: { markdown: '## Binary search\nHalve the range.', note: { id: NOTE_ID }, ...noProblems } }),
     })
     await page.goto(`/notes/${NOTE_ID}`)
     await page.getByRole('button', { name: 'Add a card', exact: true }).click()
@@ -130,8 +148,10 @@ test.describe('beta feedback', () => {
     await expect(dialog.getByText('Binary search halves the range.')).toBeVisible()
     await dialog.getByRole('button', { name: 'Make notes from this' }).click()
     await expect(dialog.getByText('Halve the range.')).toBeVisible()
-    expect(calls.find((c) => c.op === 'TranscribeVoiceNote')?.variables).toMatchObject({ noteId: NOTE_ID })
-    expect(calls.find((c) => c.op === 'NotesFromTranscript')?.variables).toMatchObject({ noteId: NOTE_ID, transcript: 'Binary search halves the range.' })
+    expect(calls.find((c) => c.op === 'CreateNoteUpload')?.variables).toMatchObject({ input: { purpose: 'VOICE_NOTE', parentId: NOTE_ID } })
+    expect(calls.find((c) => c.op === 'VoiceCapture')).toBeTruthy()
+    expect(calls.find((c) => c.op === 'TranscribeAudio')?.variables).toMatchObject({ noteId: NOTE_ID })
+    expect(calls.find((c) => c.op === 'MakeNotesFromTranscript')?.variables).toMatchObject({ noteId: NOTE_ID, transcript: 'Binary search halves the range.' })
     await dialog.getByRole('button', { name: 'Add to the note' }).click()
     await expect(dialog).toBeHidden()
   })
@@ -152,7 +172,7 @@ test.describe('beta feedback', () => {
       for (const width of WIDTHS) await shot(page, file, width)
     }
     await page.goto('/quick-notes')
-    await expect(page.getByText('Scratchpad')).toBeVisible()
+    await expect(page.getByRole('paragraph').filter({ hasText: 'Scratchpad' })).toBeVisible()
     await page.goto('/flashcards')
     await page.getByRole('button', { name: 'Flip' }).click()
     await expect(page.getByText('Recall the answer before you turn it over.')).toBeVisible()
@@ -166,18 +186,19 @@ test.describe('beta feedback', () => {
   test('the owner shares a quiz and someone takes it', async ({ page }) => {
     await mockApi(page, {
       NoteToEdit: () => ({ note: { ...meta(), cards: page1([...cards, quizCard]) } }),
-      ShareQuiz: () => ({ shareQuiz: { share: { token: 'quiz-token', url: '/quiz/quiz-token' }, stats: { attempts: 2, averageScore: 1, total: 2 }, ...noProblems } }),
-      SharedQuiz: () => ({ sharedQuiz: { title: 'Searching', ownerName: 'Asha Rao', questions: [{ id: 'q1', prompt: 'Its running time?', choices: [{ id: 'a', text: 'O(n)' }, { id: 'b', text: 'O(log n)' }] }] } }),
-      SubmitSharedQuiz: () => ({ submitSharedQuiz: { score: 1, total: 1, ...noProblems } }),
+      ShareQuiz: () => ({ shareQuiz: { quiz: { id: 'q', token: 'quiz-token', path: '/q/quiz-token', title: 'Searching' }, ...noProblems } }),
+      SharedQuiz: () => ({ sharedQuiz: { id: 'q', token: 'quiz-token', path: '/q/quiz-token', title: 'Searching', aggregate: { attempts: 2, averageScore: 1, total: 2 }, attempts: [] } }),
+      SharedQuizByLink: () => ({ sharedQuizByLink: { title: 'Searching', ownerName: 'Asha Rao', questions: [{ id: 'q1', prompt: 'Its running time?', choices: [{ id: 'a', text: 'O(n)' }, { id: 'b', text: 'O(log n)' }] }] } }),
+      SubmitSharedQuizAttempt: () => ({ submitSharedQuizAttempt: { score: 1, total: 1, ...noProblems } }),
     })
     await page.goto(`/notes/${NOTE_ID}?tab=quiz`)
     await page.getByRole('tab', { name: 'Quiz' }).click()
     const share = page.getByRole('region', { name: 'Share this quiz' })
     await share.getByRole('button', { name: 'Share quiz' }).click()
-    await expect(share.getByLabel('Quiz link')).toHaveValue(/\/quiz\/quiz-token$/)
+    await expect(share.getByLabel('Quiz link')).toHaveValue(/\/q\/quiz-token$/)
     await expect(share.getByTestId('quiz-stats')).toHaveText('2 attempts · average 1 of 2')
 
-    await page.goto('/quiz/quiz-token')
+    await page.goto('/q/quiz-token')
     await expect(page.getByRole('heading', { name: 'Searching' })).toBeVisible()
     await page.getByRole('radio', { name: 'O(log n)' }).check()
     await page.getByRole('button', { name: 'Submit' }).click()

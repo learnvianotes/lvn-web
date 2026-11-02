@@ -20,6 +20,7 @@ import { NoteReader } from './NoteReader'
 import { ModerationBanner } from '@/features/moderation/ModerationBanner'
 import { MediaProvider } from './media'
 import { ForkCredit, MakeCopyButton, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
+import { useAllowForks } from './share/forks'
 import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
 import { NoteEditor } from './editor/NoteEditor'
@@ -64,6 +65,7 @@ export function NotePage({ id }: { id: string }) {
     window.history.replaceState(window.history.state, '', url)
   }, [askedAi])
   const copy = useMakeCopy(id)
+  const forks = useAllowForks(id, loaded.state === 'ready' ? loaded.meta.forkingEnabled : true)
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
   const [notice, setNotice] = useState<string | null>(null)
@@ -151,7 +153,7 @@ export function NotePage({ id }: { id: string }) {
         {t('versions.button')}
       </Button>
       <AiButton onClick={() => setAiOpen(true)} />
-      {meta.viewerAccess !== 'OWNER' && meta.viewerCan.fork && meta.forkingEnabled ? <MakeCopyButton copy={copy} /> : null}
+      {meta.viewerAccess !== 'OWNER' && meta.viewerCan.fork && forks.allowForks ? <MakeCopyButton copy={copy} /> : null}
       {meta.viewerAccess === 'OWNER' ? (
         <Button variant="secondary" size="sm" className="gap-1.5" aria-label={t('share.button')} onClick={() => setShareOpen(true)}>
           <Share2 className="size-4" aria-hidden />

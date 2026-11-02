@@ -25,6 +25,8 @@ export interface PageImage {
   id: string
   name: string
   href: string
+  /** Set after createUploadIntent purpose PAGE_IMAGE accepts the bytes. */
+  fileId?: string
   x: number
   y: number
   w: number
@@ -37,6 +39,8 @@ export interface NotePage {
   id: string
   strokes: Stroke[]
   images: PageImage[]
+  /** Server field returned beside strokes (contracts 0.74.0). Round-tripped on save. */
+  drawing?: unknown
 }
 
 export interface PageHistory {
@@ -117,7 +121,7 @@ export function insertImage(page: NotePage, image: PageImage): NotePage {
   return { ...page, images: [...page.images, image] }
 }
 
-export function updateImage(page: NotePage, id: string, patch: Partial<Pick<PageImage, 'x' | 'y' | 'w' | 'h' | 'rotation'>>): NotePage {
+export function updateImage(page: NotePage, id: string, patch: Partial<Pick<PageImage, 'x' | 'y' | 'w' | 'h' | 'rotation' | 'fileId' | 'href'>>): NotePage {
   return {
     ...page,
     images: page.images.map((image) => {
@@ -200,9 +204,11 @@ export function pagesFromUnknown(value: unknown): NotePage[] | null {
 function pageFromUnknown(value: unknown): NotePage | null {
   if (!value || typeof value !== 'object') return null
   const page = value as NotePage
-  if (typeof page.id !== 'string' || !Array.isArray(page.strokes) || !Array.isArray(page.images)) return null
-  if (!page.strokes.every(isStroke) || !page.images.every(isImage)) return null
-  return { id: page.id, strokes: page.strokes, images: page.images }
+  if (typeof page.id !== 'string' || !Array.isArray(page.strokes)) return null
+  const strokes = page.strokes.filter(isStroke)
+  if (strokes.length !== page.strokes.length) return null
+  const images = Array.isArray(page.images) ? page.images.filter(isImage) : []
+  return { id: page.id, strokes, images, drawing: page.drawing ?? null }
 }
 
 function isStroke(value: unknown): value is Stroke {

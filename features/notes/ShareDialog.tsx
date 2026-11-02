@@ -2,17 +2,17 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { Check, Copy, GitFork, Globe, Handshake, Lock, Share2, UserPlus, Users, X } from 'lucide-react'
+import { Check, Copy, GitFork, Globe, Handshake, Link2, Lock, Share2, UserPlus, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GatedNotice } from '@/components/auth/GatedNotice'
 import { usePublicNotesRequireVerification, useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { forkNote, setNoteVisibility } from '@/features/beta/api'
+import { absoluteUrl, forkNote, loadForkState, noteSharePath, setNoteVisibility } from '@/features/beta/api'
 import { audienceDisabled, audienceOf, linkEnabled, type ShareAudience } from '@/features/notes/share/visibility'
 import {
   NoteSharesDocument,
@@ -24,13 +24,13 @@ import {
   type Visibility,
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
-import { publicNotePath } from '@/features/public-notes/paths'
 import type { NoteMeta } from './api'
 import { accentOf } from './look'
 
-const VISIBILITIES: { value: Visibility; icon: typeof Lock }[] = [
+const VISIBILITIES: { value: ShareAudience; icon: typeof Lock }[] = [
   { value: 'PRIVATE', icon: Lock },
   { value: 'SHARED', icon: Users },
+  { value: 'UNLISTED', icon: Link2 },
   { value: 'PUBLIC', icon: Globe },
 ]
 
@@ -69,19 +69,35 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
   const [role, setRole] = useState<NoteShareRole>('VIEWER')
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [allowForks, setAllowForks] = useState<boolean | null>(null)
+  const [forkCount, setForkCount] = useState(0)
   const people = shares.data?.note?.shares ?? []
-  // Public notes have their own page anyone can open; shared ones open in the app for the people they are shared with.
-  const link = typeof window === 'undefined' ? '' : `${window.location.origin}${meta.visibility === 'PUBLIC' ? publicNotePath(meta) : `/notes/${meta.id}`}`
+  const forksOn = allowForks ?? meta.forkingEnabled
+  // Unlisted and public notes open at /n/{slug}-{id}. Shared notes stay in the app. The origin is added here.
+  const link = typeof window === 'undefined' ? '' : absoluteUrl(noteSharePath(meta), window.location.origin)
+  useEffect(() => {
+    if (!open) return
+    let cancel = false
+    void loadForkState(client, meta.id)
+      .then((state) => {
+        if (cancel || !state) return
+        setAllowForks(state.allowForks)
+        setForkCount(state.forkCount)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancel = true
+    }
+  }, [client, meta.id, open])
 
-  const pickVisibility = async (visibility: Visibility) => {
-    if (visibility === meta.visibility || flight.current) return
-    const audience = audienceOf(visibility)
-    if (audienceDisabled({ changeVisibility: meta.viewerCan.changeVisibility, offPublic: meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED', audience })) return
+  const pickVisibility = async (audience: ShareAudience) => {
+    if (audience === meta.visibility || flight.current) return
+    if (audienceDisabled({ changeVisibility: meta.viewerCan.changeVisibility, offPublic: meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED', audience, publicHeld })) return
     flight.current = true
     setChanging(true)
     setError(null)
     const previous = meta
-    onSaved({ ...meta, visibility })
+    onSaved({ ...meta, visibility: audience as Visibility })
     const { result, error } = await attempt(() => setNoteVisibility(client, meta.id, audience))
     const problem = problemOf(error, result, t('failed'))
     if (result?.note && !problem) onSaved(result.note)
@@ -118,9 +134,13 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
 
   const toggleForking = async () => {
     setError(null)
-    const { result, error } = await attempt(() => setForking({ variables: { noteId: meta.id, enabled: !meta.forkingEnabled } }))
+    const next = !forksOn
+    const { result, error } = await attempt(() => setForking({ variables: { noteId: meta.id, enabled: next } }))
     const payload = result?.data?.setNoteForking
-    if (payload?.note) onSaved(payload.note)
+    if (payload?.note) {
+      setAllowForks(next)
+      onSaved(payload.note)
+    }
     setError(problemOf(error, payload, t('failed')))
   }
   const copyLink = async () => {
@@ -143,7 +163,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
             const audience: ShareAudience = audienceOf(value)
             // ADR-0037: a note moderators hid or removed stays off the public pages until they approve it.
             const offPublic = meta.moderation?.state === 'HIDDEN' || meta.moderation?.state === 'REMOVED'
-            const disabled = audienceDisabled({ changeVisibility: meta.viewerCan.changeVisibility, offPublic, audience }) || (value === 'PUBLIC' && publicHeld)
+            const disabled = audienceDisabled({ changeVisibility: meta.viewerCan.changeVisibility, offPublic, audience, publicHeld })
             return (
               <label
                 key={value}
@@ -160,7 +180,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="text-sm font-semibold">{t(`visibility.${value}`)}</span>
-                  <span className="text-xs leading-5 text-muted">{value === 'PUBLIC' && offPublic ? t('offPublic') : t(`visibilityHint.${value}`)}</span>
+                  <span className="text-xs leading-5 text-muted">{value === 'PUBLIC' && offPublic ? t('offPublic') : value === 'PUBLIC' && publicHeld ? t('publicNeedsVerification') : t(`visibilityHint.${value}`)}</span>
                 </span>
                 {active ? <Check className="ml-auto size-4 shrink-0 text-accent" aria-hidden /> : null}
               </label>
@@ -259,9 +279,9 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
           <GitFork className="mt-0.5 size-[1.125rem] shrink-0 text-muted" aria-hidden />
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-sm font-semibold">{t('allowCopies')}</span>
-            <span className="text-xs leading-5 text-muted">{t('allowCopiesHint')}</span>
+            <span className="text-xs leading-5 text-muted">{t('allowCopiesHint')}{forkCount ? ` ${t('forkCount', { n: forkCount })}` : ''}</span>
           </span>
-          <input type="checkbox" role="switch" className="peer sr-only" checked={meta.forkingEnabled} disabled={settingForking.loading} onChange={() => void toggleForking()} />
+          <input type="checkbox" role="switch" className="peer sr-only" checked={forksOn} disabled={settingForking.loading} onChange={() => void toggleForking()} />
           <span aria-hidden className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-surface-2 ring-1 ring-border transition after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition peer-checked:bg-accent peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
         </label>
 
@@ -356,7 +376,7 @@ export function CopyLinkButton({ note }: { note: Pick<NoteMeta, 'id' | 'slug' | 
   const t = useTranslations('notes.view')
   const [copied, setCopied] = useState(false)
   const copyLink = async () => {
-    const link = `${window.location.origin}${note.visibility === 'PUBLIC' ? publicNotePath(note) : `/notes/${note.id}`}`
+    const link = absoluteUrl(noteSharePath(note), window.location.origin)
     try {
       await navigator.clipboard.writeText(link)
       setCopied(true)

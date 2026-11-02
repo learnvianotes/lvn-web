@@ -5,7 +5,7 @@ import { Mic, Square } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { AiResultPanel } from '@/features/ai/AiAction'
-import { notesFromTranscript, transcribeVoiceNote } from '@/features/beta/api'
+import { makeNotesFromTranscript, transcribeAudio, transcribeCaptionClip, uploadVoiceNote } from '@/features/beta/api'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { captionsFromEvent, speechRecognitionCtor, type SpeechRec } from './captions'
@@ -129,13 +129,21 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
     setAiError(null)
     try {
       if (kind === 'transcribe') {
-        const payload = await transcribeVoiceNote(client, noteId, captions)
-        const problem = payload.userErrors?.[0]?.message
-        if (problem || !payload.transcript) setAiError(problem ?? t('aiFailed'))
-        else setTranscript(payload.transcript)
+        let fileId: string | null = null
+        if (recording) {
+          const mime = recording.blob.type || 'audio/webm'
+          const file = new File([recording.blob], `voice.${mime === 'audio/mp4' ? 'm4a' : 'webm'}`, { type: mime })
+          fileId = await uploadVoiceNote(client, noteId, file, captions).catch(() => null)
+        }
+        const clip = await transcribeCaptionClip(client, noteId, captions)
+        const full = fileId ? await transcribeAudio(client, noteId, fileId) : null
+        const problem = full?.userErrors?.[0]?.message ?? clip.userErrors?.[0]?.message
+        const text = full?.transcript || clip.transcript
+        if (problem || !text) setAiError(problem ?? t('aiFailed'))
+        else setTranscript(text)
       } else {
         const source = transcript || captions
-        const payload = await notesFromTranscript(client, noteId, source)
+        const payload = await makeNotesFromTranscript(client, noteId, source)
         const problem = payload.userErrors?.[0]?.message
         if (problem) setAiError(problem)
         else setNotes(payload.markdown ?? t('notesReady'))

@@ -4,7 +4,7 @@ import { useApolloClient } from '@apollo/client/react'
 import { Camera, Eraser, ImagePlus, Pen, Redo2, Ruler, Trash2, Undo2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
-import { notePages, saveNotePages } from '@/features/beta/api'
+import { notePages, saveNotePages, uploadPageImage } from '@/features/beta/api'
 import { cn } from '@/lib/cn'
 import { PhotoScan } from './PhotoScan'
 import {
@@ -143,10 +143,19 @@ export function PageEditor({ noteId }: { noteId: string }) {
     const finished = tool === 'ruler' ? straighten(stroke) : stroke
     setHistory((h) => commit(h, updatePage(h.present, pageIndex, (p) => addStroke(p, finished))))
   }
-  const place = (href: string, name: string) => {
+  const place = (href: string, name: string, file?: File) => {
     const image = { id: newPageId(), name, href, x: 0.18, y: 0.18, w: 0.42, h: 0.32, rotation: 0 }
     setHistory((h) => commit(h, updatePage(h.present, pageIndex, (p) => insertImage(p, image))))
     setSelected(image.id)
+    if (!file) return
+    void uploadPageImage(client, noteId, file)
+      .then((fileId) => {
+        setHistory((h) => ({
+          ...h,
+          present: h.present.map((item) => (item.images.some((placed) => placed.id === image.id) ? updateImage(item, image.id, { fileId }) : item)),
+        }))
+      })
+      .catch(() => undefined)
   }
   const shown = live && tool === 'ruler' ? straighten(live) : live
   const lastRuled = [...page.strokes].reverse().find((item) => item.straight)
@@ -177,7 +186,7 @@ export function PageEditor({ noteId }: { noteId: string }) {
             event.target.value = ''
             if (!picked) return
             const reader = new FileReader()
-            reader.onload = () => typeof reader.result === 'string' && place(reader.result, picked.name || 'image.png')
+            reader.onload = () => typeof reader.result === 'string' && place(reader.result, picked.name || 'image.png', picked)
             reader.readAsDataURL(picked)
           }}
         />

@@ -39,7 +39,7 @@ export function SubjectSpotlight({ subjects }: { subjects: SubjectSummary[] }) {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('searchPlaceholder')} className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm" />
         </label>
-        <button type="submit" className="h-11 shrink-0 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white">
+        <button type="submit" aria-label={t('search')} className="h-11 shrink-0 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white">
           {t('searchGo')}
         </button>
       </form>

@@ -4,7 +4,7 @@ import { useApolloClient } from '@apollo/client/react'
 import { Check, Copy, Share2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { quizLink, shareQuiz, type QuizShareStats } from '@/features/beta/api'
+import { absoluteUrl, loadOwnedQuiz, quizPath, shareQuiz, type QuizShareStats } from '@/features/beta/api'
 import { Button } from '@/components/ui/button'
 
 /** The owner shares a link. Anyone with it can take the quiz. Stats stay here. */
@@ -23,12 +23,14 @@ export function ShareQuiz({ noteId }: { noteId: string }) {
     try {
       const payload = await shareQuiz(client, noteId)
       const problem = payload.userErrors?.[0]?.message
-      if (problem || !payload.share) {
+      if (problem || !payload.quiz) {
         setError(problem ?? t('failed'))
         return
       }
-      setLink(quizLink(payload.share, window.location.origin))
-      setStats(payload.stats)
+      const owned = await loadOwnedQuiz(client, noteId).catch(() => null)
+      const token = owned?.token || payload.quiz.token
+      setLink(absoluteUrl(quizPath(token, owned?.path || payload.quiz.path), window.location.origin))
+      setStats(owned?.aggregate ?? null)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t('failed'))
     } finally {

@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { QueryState } from '@/components/ui/query-state'
 import { ContestsDocument, QuizzesHubDocument } from '@/graphql/generated/graphql'
+import { QuizLists } from '@/features/quizzes/QuizLists'
 import { ContestHero } from './ContestsPage'
 
 /**
@@ -36,6 +37,7 @@ export function QuizzesPage() {
         </div>
         <AiButton onClick={() => void ai.ask()} />
       </header>
+      <QuizLists />
       <AiResultPanel empty={!ai.busy && !ai.result && !ai.error}>
         {ai.busy ? <p className="text-sm text-muted">{t('working')}</p> : null}
         {ai.error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{ai.error}</p> : null}

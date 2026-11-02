@@ -201,7 +201,7 @@ test('the owner shares with a person, changes their role and removes them', asyn
   await dialog.getByLabel('What they can do').selectOption('EDITOR')
   await dialog.getByRole('button', { name: 'Add' }).click()
   await expect(dialog.getByText('Ravi Kumar', { exact: true })).toBeVisible()
-  await expect(dialog.getByRole('radio', { name: /Unlisted link/ })).toBeChecked()
+  await expect(dialog.getByRole('radio', { name: /Shared/ })).toBeChecked()
   expect(calls.find((c) => c.op === 'ShareNote')?.variables).toEqual({ noteId: NOTE_ID, person: '@ravi', role: 'EDITOR' })
 
   await dialog.getByLabel('What Ravi Kumar can do').selectOption('VIEWER')
@@ -210,7 +210,7 @@ test('the owner shares with a person, changes their role and removes them', asyn
   await expect(dialog.getByText('Not shared with anyone yet.')).toBeVisible()
   expect(calls.find((c) => c.op === 'UnshareNote')?.variables).toEqual({ noteId: NOTE_ID, userId: FRIEND })
   await dialog.getByRole('button', { name: 'Done' }).click()
-  await expect(page.getByTitle('Share this note')).toContainText('Unlisted')
+  await expect(page.getByTitle('Share this note')).toContainText('Shared')
 })
 
 test('a refusal from the server is shown in its own words', async ({ page }) => {

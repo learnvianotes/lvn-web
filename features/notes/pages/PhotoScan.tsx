@@ -11,7 +11,7 @@ import { enhanceRgba, type RgbaRect } from './model'
  * Photo scan: the camera on a phone (capture="environment" and getUserMedia), then crop and enhance before the picture
  * is placed on the page. A file is the fallback when the camera is refused.
  */
-export function PhotoScan({ open, onClose, onImage }: { open: boolean; onClose: () => void; onImage: (href: string, name: string) => void }) {
+export function PhotoScan({ open, onClose, onImage }: { open: boolean; onClose: () => void; onImage: (href: string, name: string, file?: File) => void }) {
   const t = useTranslations('notes.pages')
   const video = useRef<HTMLVideoElement>(null)
   const stream = useRef<MediaStream | null>(null)
@@ -86,7 +86,8 @@ export function PhotoScan({ open, onClose, onImage }: { open: boolean; onClose: 
         pixels.data.set(enhanceRgba(pixels.data))
         ctx.putImageData(pixels, 0, 0)
       }
-      onImage(canvas.toDataURL('image/png'), 'Scan.png')
+      const href = canvas.toDataURL('image/png')
+      onImage(href, 'Scan.png', fileFromDataUrl(href, 'Scan.png'))
       onClose()
     }
     image.src = shot
@@ -167,6 +168,13 @@ export function PhotoScan({ open, onClose, onImage }: { open: boolean; onClose: 
       </div>
     </Dialog>
   )
+}
+
+function fileFromDataUrl(href: string, name: string): File | undefined {
+  const match = /^data:([^;,]+);base64,(.+)$/.exec(href)
+  if (!match?.[1] || !match[2]) return undefined
+  const bytes = Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0))
+  return new File([bytes], name, { type: match[1] })
 }
 
 function pixelRect(width: number, height: number, crop: RgbaRect | null): RgbaRect {

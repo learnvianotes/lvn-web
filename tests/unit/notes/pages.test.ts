@@ -92,7 +92,9 @@ describe('note pages', () => {
 
   it('rejects a page payload that is not ink and pictures', () => {
     const page = blankPage()
-    expect(pagesFromUnknown([page])).toEqual([page])
+    expect(pagesFromUnknown([page])).toEqual([{ ...page, drawing: null }])
+    expect(pagesFromUnknown([{ ...page, drawing: { ink: 1 }, images: [{ ...page, id: 'pic', name: 'a.png', href: '/a.png', fileId: '01920000-0000-7000-8000-00000000f0b1', x: 0.1, y: 0.1, w: 0.2, h: 0.2, rotation: 0 }] }])?.[0]?.drawing).toEqual({ ink: 1 })
+    expect(pagesFromUnknown([{ ...page, images: [{ id: 'pic', name: 'a.png', href: '/a.png', fileId: '01920000-0000-7000-8000-00000000f0b1', x: 0.1, y: 0.1, w: 0.2, h: 0.2, rotation: 0 }] }])?.[0]?.images[0]?.fileId).toBe('01920000-0000-7000-8000-00000000f0b1')
     expect(pagesFromUnknown([{ id: 'x' }])).toBeNull()
     expect(pagesFromUnknown('nope')).toBeNull()
   })
