@@ -8,7 +8,7 @@ import { Placeholder } from '@tiptap/extensions'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
-import { CircleAlert, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, LoaderCircle, type LucideIcon, Maximize2, Mic, Minimize2, Ellipsis, Plus, Redo2, Strikethrough, Trash, Underline, Undo2, Volume2, WandSparkles } from 'lucide-react'
+import { CircleAlert, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, LoaderCircle, type LucideIcon, Maximize2, Mic, Minimize2, Ellipsis, Notebook, Plus, Redo2, Strikethrough, Trash, Underline, Undo2, Volume2, WandSparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
@@ -25,6 +25,7 @@ import { AnchorChips } from './anchors'
 import { ReadingHighlight, setReadingCard } from './reading'
 import { uploads, useUploadsEnabled } from '../uploads'
 import { cardMenu, SlashMenu } from './slash'
+import { PageEditor } from '../pages/PageEditor'
 import { RecordDialog } from './Recorder'
 import { CardRail } from '../view/CardRail'
 
@@ -74,6 +75,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
   anchorRef.current = onAnchor
   const [title, setTitle] = useState(initialTitle)
   const [focus, setFocus] = useState(false)
+  const [pages, setPages] = useState(false)
   const [contentsOpen, setContentsOpen] = useState(false)
   const titleRef = useRef(initialTitle)
   const autosave = useAutosave({ userId, noteId, saved, send })
@@ -166,6 +168,10 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-sky-600 bg-sky-50 text-sky-900')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
+              <Notebook className="size-4" aria-hidden />
+              {t('pages')}
+            </button>
             <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
               <ListTree className="size-4" aria-hidden />
               {t('contents')}
@@ -225,7 +231,8 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         </div>
 
         {!focus ? tabs : null}
-        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel} className={showPanel ? 'hidden' : 'flex flex-col gap-4'}>
+        {pages && !focus ? <PageEditor noteId={noteId} /> : null}
+        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel || pages} className={showPanel || pages ? 'hidden' : 'flex flex-col gap-4'}>
           {wide ? <EditorRail editor={editor} /> : null}
           <Toolbar editor={editor} sticky={compact ? 'top-0' : 'top-14'} />
           <div className={cn('lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
@@ -233,7 +240,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             {editor ? <SelectionMenu editor={editor} /> : null}
             <EditorContent editor={editor} />
           </div>
-          <AddCardMenu editor={editor} />
+          <AddCardMenu editor={editor} noteId={noteId} />
           <p className="text-xs text-muted">{t('shortcuts')}</p>
         </div>
         {showPanel ? panel : null}
@@ -497,7 +504,7 @@ function MenuItem({ icon: Icon, label, onClick, danger }: { icon?: LucideIcon; l
   )
 }
 
-function AddCardMenu({ editor }: { editor: Editor | null }) {
+function AddCardMenu({ editor, noteId }: { editor: Editor | null; noteId: string }) {
   const t = useTranslations('notes.editor')
   const tRecord = useTranslations('notes.record')
   const [open, setOpen] = useState(false)
@@ -547,6 +554,7 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
       ) : null}
       <RecordDialog
         open={recording}
+        noteId={noteId}
         onClose={() => setRecording(false)}
         onDone={(file) => {
           setRecording(false)

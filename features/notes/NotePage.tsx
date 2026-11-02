@@ -19,7 +19,8 @@ import { NoteDetailsDialog } from './NoteDetailsDialog'
 import { NoteReader } from './NoteReader'
 import { ModerationBanner } from '@/features/moderation/ModerationBanner'
 import { MediaProvider } from './media'
-import { ForkCredit, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
+import { ForkCredit, MakeCopyButton, ShareDialog, VisibilityBadge, useMakeCopy } from './ShareDialog'
+import { useAllowForks } from './share/forks'
 import { VersionsDialog } from './VersionsDialog'
 import { celebrate } from './celebrate'
 import { NoteEditor } from './editor/NoteEditor'
@@ -64,6 +65,7 @@ export function NotePage({ id }: { id: string }) {
     window.history.replaceState(window.history.state, '', url)
   }, [askedAi])
   const copy = useMakeCopy(id)
+  const forks = useAllowForks(id, loaded.state === 'ready' ? loaded.meta.allowForks : true)
   const [publish, publishing] = useMutation(PublishNoteDocument)
   const [trash] = useMutation(DeleteNoteDocument)
   const [notice, setNotice] = useState<string | null>(null)
@@ -151,6 +153,7 @@ export function NotePage({ id }: { id: string }) {
         {t('versions.button')}
       </Button>
       <AiButton onClick={() => setAiOpen(true)} />
+      {meta.viewerAccess !== 'OWNER' && meta.viewerCan.fork && forks.allowForks ? <MakeCopyButton copy={copy} /> : null}
       {meta.viewerAccess === 'OWNER' ? (
         <Button variant="secondary" size="sm" className="gap-1.5" aria-label={t('share.button')} onClick={() => setShareOpen(true)}>
           <Share2 className="size-4" aria-hidden />
@@ -193,7 +196,7 @@ export function NotePage({ id }: { id: string }) {
     tab === 'summary' ? (
       <SummaryTab noteId={id} study={study} canEdit={meta.viewerCan.edit} onAddedToNote={addedToNote} />
     ) : tab === 'flashcards' || tab === 'quiz' ? (
-      <CardsTab kind={tab} noteId={id} cards={currentCards()} study={study} canEdit={meta.viewerCan.edit} reader={false} onAdd={meta.viewerCan.edit ? addCard : undefined} onAddedToNote={addedToNote} />
+      <CardsTab kind={tab} noteId={id} noteTitle={meta.title} cards={currentCards()} study={study} canEdit={meta.viewerCan.edit} reader={false} onAdd={meta.viewerCan.edit ? addCard : undefined} onAddedToNote={addedToNote} />
     ) : tab === 'discussions' ? (
       // What readers said about the published note (lvn-backend ADR-0047).
       <Discussion target={{ type: 'NOTE', id }} />

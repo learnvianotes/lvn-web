@@ -1,6 +1,6 @@
 'use client'
 
-import { BookBookmark, FileText, Globe, GraduationCap, Library, Lock, Search, Users, X } from 'lucide-react'
+import { BookBookmark, FileText, Globe, GraduationCap, Library, Link2, Lock, Search, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn'
 import { Snippet } from './Snippet'
 import { useSearch } from './useSearch'
 
-const VISIBILITY_ICON = { PRIVATE: Lock, SHARED: Users, PUBLIC: Globe } as const
+const VISIBILITY_ICON = { PRIVATE: Lock, SHARED: Users, UNLISTED: Link2, PUBLIC: Globe } as const
 const KINDS: NoteKind[] = ['NOTE', 'BLOG', 'POST', 'PROJECT']
 const SOURCES: NoteSource[] = ['MINE', 'SHARED', 'PUBLIC']
 type Tab = 'all' | 'notes' | 'topics' | 'groups' | 'users' | 'resources'

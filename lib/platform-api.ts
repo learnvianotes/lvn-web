@@ -12,8 +12,31 @@
  * `adminSetAccountStanding` and `adminDeleteUser`.
  */
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
-import { parse, type DocumentNode } from 'graphql'
+import type { DocumentNode } from 'graphql'
 import { apolloClient } from '@/lib/apollo'
+import {
+  AdminDeleteUserDocument,
+  AdminErrorsDocument,
+  AdminSetAccountStandingDocument,
+  AdminUpdateUserDocument,
+  AdminUsageDocument,
+  AdminUserActivityDocument,
+  AdminUsersDocument,
+  AnalyticsOptOutDocument,
+  IngestAnalyticsDocument,
+  InstitutionDomainsDocument,
+  ReviewInstitutionDomainDocument,
+  ReviewVerificationRequestDocument,
+  SetAnalyticsOptOutDocument,
+  SetGlobalRoleDocument,
+  StudentIdCardUrlDocument,
+  StudentIdVerificationQueueBasicDocument,
+  StudentIdVerificationQueueDocument,
+  UsersByIdsDocument,
+  VerificationDocumentUrlDocument,
+  VerificationRequestsToReviewBasicDocument,
+  VerificationRequestsToReviewDocument,
+} from '@/graphql/generated/graphql'
 
 export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 export type AssignableRole = 'MANAGER' | 'TEACHER' | 'STUDENT'
@@ -155,184 +178,6 @@ export class PlatformError extends Error {
   }
 }
 
-const documentOf = (source: string): DocumentNode => parse(source)
-
-const AI_CHECK = /* GraphQL */ `
-  aiCheck {
-    verdict
-    confidence
-    reason
-    checkedAt
-    extracted { name institution idNumber validUntil }
-  }
-`
-
-const REVIEW_QUEUE = documentOf(/* GraphQL */ `
-  query VerificationRequestsToReview($after: UUID) {
-    verificationRequestsToReview(first: 30, after: $after) {
-      id
-      purpose
-      institution
-      subjects
-      method
-      status
-      message
-      reason
-      createdAt
-      ${AI_CHECK}
-      requester { id displayName handle email institution { name } profile { department } }
-      documents { fileId fileName mimeType sizeBytes }
-    }
-  }
-`)
-
-const REVIEW_QUEUE_BASIC = documentOf(/* GraphQL */ `
-  query VerificationRequestsToReview($after: UUID) {
-    verificationRequestsToReview(first: 30, after: $after) {
-      id
-      purpose
-      institution
-      subjects
-      method
-      status
-      message
-      reason
-      createdAt
-      requester { id displayName handle }
-      documents { fileId fileName mimeType sizeBytes }
-    }
-  }
-`)
-
-const DOCUMENT_URL = documentOf(/* GraphQL */ `
-  query VerificationDocumentUrl($requestId: UUID!, $fileId: UUID!) {
-    verificationDocumentUrl(requestId: $requestId, fileId: $fileId) { url expiresAt }
-  }
-`)
-
-const REVIEW = documentOf(/* GraphQL */ `
-  mutation ReviewVerificationRequest($input: ReviewVerificationRequestInput!) {
-    reviewVerificationRequest(input: $input) {
-      request { id status }
-      userErrors { message code }
-    }
-  }
-`)
-
-const STUDENT_ID_QUEUE = documentOf(/* GraphQL */ `
-  query StudentIdVerificationQueue($first: Int) {
-    studentIdVerificationQueue(first: $first) {
-      id
-      status
-      reason
-      createdAt
-      ${AI_CHECK}
-      requester { id displayName handle email institution { name } profile { department } }
-    }
-  }
-`)
-
-const STUDENT_ID_QUEUE_BASIC = documentOf(/* GraphQL */ `
-  query StudentIdVerificationQueue($first: Int) {
-    studentIdVerificationQueue(first: $first) {
-      id
-      status
-      reason
-      createdAt
-      requester { id displayName handle }
-    }
-  }
-`)
-
-const STUDENT_ID_URL = documentOf(/* GraphQL */ `
-  query StudentIdCardUrl($requestId: UUID!) {
-    studentIdCardUrl(requestId: $requestId) { url expiresAt }
-  }
-`)
-
-const DOMAINS = documentOf(/* GraphQL */ `
-  query InstitutionDomains($status: DomainReviewStatus) {
-    institutionDomains(status: $status) { domain status requests firstSeenAt }
-  }
-`)
-
-const DECIDE_DOMAIN = documentOf(/* GraphQL */ `
-  mutation ReviewInstitutionDomain($input: DecideDomainReviewInput!) {
-    reviewInstitutionDomain(input: $input) { ok userErrors { message code } }
-  }
-`)
-
-const SET_ROLE = documentOf(/* GraphQL */ `
-  mutation SetGlobalRole($input: SetGlobalRoleInput!) {
-    setGlobalRole(input: $input) { ok userErrors { message code } }
-  }
-`)
-
-const ADMIN_ERRORS = documentOf(/* GraphQL */ `
-  query AdminErrors($since: DateTime) {
-    adminErrors(since: $since) {
-      code
-      count
-      firstSeen
-      lastSeen
-      sampleMessage
-      userIds
-    }
-  }
-`)
-
-const USERS_BY_IDS = documentOf(/* GraphQL */ `
-  query UsersByIds($ids: [UUID!]!) {
-    usersByIds(ids: $ids) { id displayName email globalRole }
-  }
-`)
-
-const ADMIN_USAGE = documentOf(/* GraphQL */ `
-  query AdminUsage($from: DateTime, $to: DateTime) {
-    adminUsage(from: $from, to: $to) {
-      dau
-      wau
-      mau
-      from
-      to
-      topEvents { name count }
-      topFeatures { name count }
-    }
-  }
-`)
-
-const USER_ACTIVITY = documentOf(/* GraphQL */ `
-  query AdminUserActivity($userId: UUID!, $first: Int) {
-    adminUserActivity(userId: $userId, first: $first) {
-      name
-      occurredAt
-      platform
-      props
-      appVersion
-    }
-  }
-`)
-
-const INGEST = documentOf(/* GraphQL */ `
-  mutation IngestAnalytics($input: IngestAnalyticsInput!) {
-    ingestAnalytics(input: $input) {
-      ok
-      userErrors { code message }
-    }
-  }
-`)
-
-const OPT_OUT = documentOf(/* GraphQL */ `
-  query AnalyticsOptOut {
-    viewer { id analyticsOptOut }
-  }
-`)
-
-const SET_OPT_OUT = documentOf(/* GraphQL */ `
-  mutation SetAnalyticsOptOut($optOut: Boolean!) {
-    setAnalyticsOptOut(optOut: $optOut) { ok userErrors { message code } }
-  }
-`)
 
 function toPlatformError(error: unknown): PlatformError {
   if (error instanceof PlatformError) return error
@@ -446,23 +291,23 @@ function reviewOf(raw: RawReview): ReviewRequestView {
 
 export async function loadVerificationQueue(): Promise<ReviewRequestView[]> {
   try {
-    const data = await run<{ verificationRequestsToReview: RawReview[] }>(REVIEW_QUEUE, {}, 'query')
+    const data = await run<{ verificationRequestsToReview: RawReview[] }>(VerificationRequestsToReviewDocument, {}, 'query')
     return (data.verificationRequestsToReview ?? []).map(reviewOf)
   } catch (error) {
     if (!isUnknownFieldError(error)) throw error
-    const data = await run<{ verificationRequestsToReview: RawReview[] }>(REVIEW_QUEUE_BASIC, {}, 'query')
+    const data = await run<{ verificationRequestsToReview: RawReview[] }>(VerificationRequestsToReviewBasicDocument, {}, 'query')
     return (data.verificationRequestsToReview ?? []).map(reviewOf)
   }
 }
 
 export async function verificationDocumentUrl(requestId: string, fileId: string): Promise<string | null> {
-  const data = await run<{ verificationDocumentUrl: { url: string } | null }>(DOCUMENT_URL, { requestId, fileId }, 'query')
+  const data = await run<{ verificationDocumentUrl: { url: string } | null }>(VerificationDocumentUrlDocument, { requestId, fileId }, 'query')
   return data.verificationDocumentUrl?.url ?? null
 }
 
 /** The first user error, or null when the decision was saved. */
 export async function reviewVerification(input: { requestId: string; approve: boolean; reason: string | null }): Promise<string | null> {
-  const data = await run<{ reviewVerificationRequest: { userErrors: { message: string }[] } }>(REVIEW, { input }, 'mutation')
+  const data = await run<{ reviewVerificationRequest: { userErrors: { message: string }[] } }>(ReviewVerificationRequestDocument, { input }, 'mutation')
   return data.reviewVerificationRequest.userErrors[0]?.message ?? null
 }
 
@@ -481,39 +326,39 @@ function studentIdOf(raw: RawStudentId): StudentIdReviewItem {
 
 export async function loadStudentIdQueue(first = 30): Promise<StudentIdReviewItem[]> {
   try {
-    const data = await run<{ studentIdVerificationQueue: RawStudentId[] }>(STUDENT_ID_QUEUE, { first }, 'query')
+    const data = await run<{ studentIdVerificationQueue: RawStudentId[] }>(StudentIdVerificationQueueDocument, { first }, 'query')
     return (data.studentIdVerificationQueue ?? []).map(studentIdOf)
   } catch (error) {
     if (!isUnknownFieldError(error)) throw error
-    const data = await run<{ studentIdVerificationQueue: RawStudentId[] }>(STUDENT_ID_QUEUE_BASIC, { first }, 'query')
+    const data = await run<{ studentIdVerificationQueue: RawStudentId[] }>(StudentIdVerificationQueueBasicDocument, { first }, 'query')
     return (data.studentIdVerificationQueue ?? []).map(studentIdOf)
   }
 }
 
 export async function studentIdCardUrl(requestId: string): Promise<string | null> {
-  const data = await run<{ studentIdCardUrl: { url: string } | null }>(STUDENT_ID_URL, { requestId }, 'query')
+  const data = await run<{ studentIdCardUrl: { url: string } | null }>(StudentIdCardUrlDocument, { requestId }, 'query')
   return data.studentIdCardUrl?.url ?? null
 }
 
 export async function listInstitutionDomains(status?: DomainStatus): Promise<InstitutionDomain[]> {
-  const data = await run<{ institutionDomains: InstitutionDomain[] }>(DOMAINS, status ? { status } : {}, 'query')
+  const data = await run<{ institutionDomains: InstitutionDomain[] }>(InstitutionDomainsDocument, status ? { status } : {}, 'query')
   return data.institutionDomains ?? []
 }
 
 export async function decideInstitutionDomain(domain: string, approve: boolean): Promise<string | null> {
-  const data = await run<{ reviewInstitutionDomain: { ok: boolean; userErrors: { message: string }[] } }>(DECIDE_DOMAIN, { input: { domain, approve } }, 'mutation')
+  const data = await run<{ reviewInstitutionDomain: { ok: boolean; userErrors: { message: string }[] } }>(ReviewInstitutionDomainDocument, { input: { domain, approve } }, 'mutation')
   const payload = data.reviewInstitutionDomain
   return payload.userErrors[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }
 
 export async function setStaffRole(userId: string, role: AssignableRole): Promise<string | null> {
-  const data = await run<{ setGlobalRole: { ok: boolean; userErrors: { message: string }[] } }>(SET_ROLE, { input: { userId, role } }, 'mutation')
+  const data = await run<{ setGlobalRole: { ok: boolean; userErrors: { message: string }[] } }>(SetGlobalRoleDocument, { input: { userId, role } }, 'mutation')
   const payload = data.setGlobalRole
   return payload.userErrors[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }
 
 export async function loadErrorGroups(since?: string): Promise<ErrorGroup[]> {
-  const data = await run<{ adminErrors: ErrorGroup[] }>(ADMIN_ERRORS, since ? { since } : {}, 'query')
+  const data = await run<{ adminErrors: ErrorGroup[] }>(AdminErrorsDocument, since ? { since } : {}, 'query')
   return (data.adminErrors ?? []).map((group) => ({
     code: group.code,
     count: group.count,
@@ -526,12 +371,12 @@ export async function loadErrorGroups(since?: string): Promise<ErrorGroup[]> {
 
 export async function lookupUsers(ids: string[]): Promise<LookupUser[]> {
   if (!ids.length) return []
-  const data = await run<{ usersByIds: LookupUser[] }>(USERS_BY_IDS, { ids }, 'query')
+  const data = await run<{ usersByIds: LookupUser[] }>(UsersByIdsDocument, { ids }, 'query')
   return data.usersByIds ?? []
 }
 
 export async function loadUsageSummary(range?: { from?: string; to?: string }): Promise<UsageSummary> {
-  const data = await run<{ adminUsage: UsageSummary }>(ADMIN_USAGE, { from: range?.from, to: range?.to }, 'query')
+  const data = await run<{ adminUsage: UsageSummary }>(AdminUsageDocument, { from: range?.from, to: range?.to }, 'query')
   return {
     ...data.adminUsage,
     topEvents: data.adminUsage.topEvents ?? [],
@@ -540,7 +385,7 @@ export async function loadUsageSummary(range?: { from?: string; to?: string }): 
 }
 
 export async function loadUserTimeline(userId: string, first = 50): Promise<TimelineEntry[]> {
-  const data = await run<{ adminUserActivity: TimelineEntry[] }>(USER_ACTIVITY, { userId, first }, 'query')
+  const data = await run<{ adminUserActivity: TimelineEntry[] }>(AdminUserActivityDocument, { userId, first }, 'query')
   return (data.adminUserActivity ?? []).map((row) => ({
     name: row.name,
     occurredAt: row.occurredAt,
@@ -554,7 +399,7 @@ export async function ingestAnalytics(input: { events?: UsageEventInput[]; error
   const events = input.events ?? []
   const errors = input.errors ?? []
   if (!events.length && !errors.length) return
-  const data = await run<{ ingestAnalytics: { ok: boolean; userErrors: { code: string; message: string }[] } }>(INGEST, { input: { events, errors } }, 'mutation')
+  const data = await run<{ ingestAnalytics: { ok: boolean; userErrors: { code: string; message: string }[] } }>(IngestAnalyticsDocument, { input: { events, errors } }, 'mutation')
   const problem = data.ingestAnalytics.userErrors[0]
   if (!problem) return
   // A refused name is not worth retrying; the tracker would put the same batch back.
@@ -563,12 +408,12 @@ export async function ingestAnalytics(input: { events?: UsageEventInput[]; error
 }
 
 export async function loadAnalyticsOptOut(): Promise<boolean> {
-  const data = await run<{ viewer: { analyticsOptOut: boolean | null } | null }>(OPT_OUT, undefined, 'query')
+  const data = await run<{ viewer: { analyticsOptOut: boolean | null } | null }>(AnalyticsOptOutDocument, undefined, 'query')
   return data.viewer?.analyticsOptOut === true
 }
 
 export async function saveAnalyticsOptOut(optOut: boolean): Promise<string | null> {
-  const data = await run<{ setAnalyticsOptOut: { ok: boolean; userErrors: { message: string }[] } }>(SET_OPT_OUT, { optOut }, 'mutation')
+  const data = await run<{ setAnalyticsOptOut: { ok: boolean; userErrors: { message: string }[] } }>(SetAnalyticsOptOutDocument, { optOut }, 'mutation')
   const payload = data.setAnalyticsOptOut
   return payload.userErrors[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }
@@ -591,53 +436,6 @@ export type AdminManagedUser = {
   statusReason: string | null
 }
 
-const USER_FIELDS = /* GraphQL */ `
-  id
-  accountStatus
-  createdAt
-  dateOfBirth
-  displayName
-  email
-  globalRole
-  handle
-  statusReason
-`
-
-const ADMIN_USERS = documentOf(/* GraphQL */ `
-  query AdminUsers($status: AdminUserStatusFilter!, $search: String, $first: Int) {
-    adminUsers(status: $status, search: $search, first: $first) {
-      total
-      users { ${USER_FIELDS} }
-    }
-  }
-`)
-
-const UPDATE_USER = documentOf(/* GraphQL */ `
-  mutation AdminUpdateUser($input: AdminUpdateUserInput!) {
-    adminUpdateUser(input: $input) {
-      user { ${USER_FIELDS} }
-      userErrors { code message }
-    }
-  }
-`)
-
-const SET_STANDING = documentOf(/* GraphQL */ `
-  mutation AdminSetAccountStanding($input: AdminSetAccountStandingInput!) {
-    adminSetAccountStanding(input: $input) {
-      user { ${USER_FIELDS} }
-      userErrors { code message }
-    }
-  }
-`)
-
-const DELETE_USER = documentOf(/* GraphQL */ `
-  mutation AdminDeleteUser($input: AdminDeleteUserInput!) {
-    adminDeleteUser(input: $input) {
-      ok
-      userErrors { code message }
-    }
-  }
-`)
 
 type RawUser = {
   id: string
@@ -679,7 +477,7 @@ export function ageOutcomeOf(status: string | null | undefined): AgeOutcome | nu
 
 export async function loadAdminUsers(filter: { status: AdminUserStatusFilter; search: string }): Promise<{ total: number; users: AdminManagedUser[] }> {
   const variables = { status: filter.status, search: filter.search.trim() || null, first: 50 }
-  const data = await run<{ adminUsers: { total: number; users: RawUser[] | null } }>(ADMIN_USERS, variables, 'query')
+  const data = await run<{ adminUsers: { total: number; users: RawUser[] | null } }>(AdminUsersDocument, variables, 'query')
   return { total: data.adminUsers.total ?? 0, users: (data.adminUsers.users ?? []).map(userOf) }
 }
 
@@ -687,7 +485,7 @@ export type AdminUserEdit = { userId: string; reason: string; displayName: strin
 
 export async function updateAdminUser(input: AdminUserEdit): Promise<{ problem: string | null; outcome: AgeOutcome | null; user: AdminManagedUser | null }> {
   type Payload = { user?: RawUser | null; userErrors?: { message: string }[] }
-  const data = await run<{ adminUpdateUser: Payload }>(UPDATE_USER, { input }, 'mutation')
+  const data = await run<{ adminUpdateUser: Payload }>(AdminUpdateUserDocument, { input }, 'mutation')
   const payload = data.adminUpdateUser
   const problem = payload.userErrors?.[0]?.message ?? null
   const user = payload.user ? userOf(payload.user) : null
@@ -696,7 +494,7 @@ export async function updateAdminUser(input: AdminUserEdit): Promise<{ problem: 
 
 /** ACTIVE lifts a block. until is required when status is SUSPENDED. AGE_BLOCKED is not sent. */
 export async function setAccountStanding(input: { userId: string; status: 'ACTIVE' | 'BLOCKED' | 'SUSPENDED'; reason: string; until?: string | null }): Promise<{ problem: string | null; user: AdminManagedUser | null }> {
-  const data = await run<{ adminSetAccountStanding: { user?: RawUser | null; userErrors?: { message: string }[] } }>(SET_STANDING, { input: { ...input, until: input.until ?? null } }, 'mutation')
+  const data = await run<{ adminSetAccountStanding: { user?: RawUser | null; userErrors?: { message: string }[] } }>(AdminSetAccountStandingDocument, { input: { ...input, until: input.until ?? null } }, 'mutation')
   const payload = data.adminSetAccountStanding
   const problem = payload.userErrors?.[0]?.message ?? null
   return { problem, user: problem || !payload.user ? null : userOf(payload.user) }
@@ -704,7 +502,7 @@ export async function setAccountStanding(input: { userId: string; status: 'ACTIV
 
 /** confirm is the exact word DELETE. */
 export async function deleteAdminUser(input: { userId: string; confirm: string; reason: string }): Promise<string | null> {
-  const data = await run<{ adminDeleteUser: { ok: boolean; userErrors?: { message: string }[] } }>(DELETE_USER, { input }, 'mutation')
+  const data = await run<{ adminDeleteUser: { ok: boolean; userErrors?: { message: string }[] } }>(AdminDeleteUserDocument, { input }, 'mutation')
   const payload = data.adminDeleteUser
   return payload.userErrors?.[0]?.message ?? (payload.ok ? null : 'That did not work. Try again.')
 }

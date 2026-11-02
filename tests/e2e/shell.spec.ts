@@ -9,9 +9,13 @@ import { samplePdf } from './support/sample-pdf'
  */
 const ENTRIES: [name: string, href: string][] = [
   ['Home', '/home'],
-  ['My Notes', '/notes'],
-  ['Explore', '/search'],
   ['Subjects', '/subjects'],
+  ['My Notes', '/notes'],
+  ['Quick notes', '/quick-notes'],
+  ['Flashcards', '/flashcards'],
+  ['Projects', '/projects'],
+  ['Upload', '/upload'],
+  ['Explore', '/search'],
   ['Groups', '/groups'],
   ['Classrooms', '/classes'],
   ['Exams', '/exams'],

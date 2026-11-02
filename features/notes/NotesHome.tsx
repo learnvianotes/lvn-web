@@ -245,6 +245,7 @@ export function NotesHome() {
           <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex animate-rise flex-col gap-1.5">
+                <p className="text-xs font-bold uppercase tracking-wider text-inverse-muted">{t('kicker')}</p>
                 <p className="text-sm font-medium text-inverse-muted">{t(`greeting.${daypart()}`, { name: firstName })}</p>
                 <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                   {all.length ? t('heroWithNotes') : t('heroFirst')}

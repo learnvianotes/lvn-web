@@ -56,9 +56,10 @@ export function StudentIdAdmin() {
     if (enabled === undefined) return
     setSwitchError(null)
     try {
-      const res = await setEnabled({ variables: { input: { enabled: !enabled } } })
-      const problem = res.data?.setStudentIdVerificationEnabled.userErrors[0]
-      if (problem) setSwitchError(studentIdErrorMessage(problem, copy))
+      const res = await setEnabled({ variables: { enabled: !enabled } })
+      const payload = res.data?.setStudentIdVerificationEnabled
+      const problem = payload?.userErrors[0]
+      if (problem || !payload?.ok) setSwitchError(problem ? studentIdErrorMessage(problem, copy) : t('failed'))
       else await enabledQ.refetch()
     } catch (e) {
       setSwitchError(shown(e, copy))

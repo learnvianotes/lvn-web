@@ -7,13 +7,17 @@ import {
   BookOpen,
   CalendarDays,
   Compass,
+  FileUp,
+  FolderKanban,
   GraduationCap,
   House,
+  Layers,
   Library,
   ListChecks,
   Menu,
   MessagesSquare,
   NotebookPen,
+  PenLine,
   Plus,
   Search,
   ShieldCheck,
@@ -50,10 +54,14 @@ type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp; staf
  */
 const ENTRIES: Entry[] = [
   { href: '/home', key: 'home', icon: House },
+  { href: '/subjects', key: 'subjects', icon: BookOpen, match: /^\/subjects(\/|$)/ },
   { href: '/notes', key: 'notes', icon: NotebookPen, match: /^\/notes(\/|$)/ },
+  { href: '/quick-notes', key: 'quickNotes', icon: PenLine, match: /^\/quick-notes(\/|$)/ },
+  { href: '/flashcards', key: 'flashcards', icon: Layers, match: /^\/flashcards(\/|$)/ },
+  { href: '/projects', key: 'projects', icon: FolderKanban, match: /^\/projects(\/|$)/ },
+  { href: '/upload', key: 'upload', icon: FileUp, match: /^\/upload(\/|$)/ },
   { href: '/search', key: 'explore', icon: Compass },
   { href: '/admin', key: 'admin', icon: ShieldCheck, match: /^\/admin(\/|$)/, staff: true },
-  { href: '/subjects', key: 'subjects', icon: BookOpen, match: /^\/subjects(\/|$)/ },
   { href: '/groups', key: 'groups', icon: Users },
   { href: '/classes', key: 'classes', icon: GraduationCap },
   { href: '/exams', key: 'exams', icon: CalendarDays },
@@ -187,7 +195,7 @@ function Nav() {
       {entries.map(({ href, key, icon: Icon, match }) => {
         const active = match ? match.test(path) : path === href || path.startsWith(`${href}/`)
         return (
-          <Link key={key} href={href} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg')}>
+          <Link key={key} href={href} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg', key === 'subjects' && !active && 'bg-sky-50 font-semibold text-sky-900 ring-1 ring-sky-700/30 dark:bg-sky-950/40 dark:text-sky-100')}>
             <Icon className="size-[18px] shrink-0" aria-hidden />
             {t(`entries.${key}`)}
           </Link>

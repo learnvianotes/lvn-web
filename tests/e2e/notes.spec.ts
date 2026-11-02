@@ -193,8 +193,8 @@ test('the owner shares with a person, changes their role and removes them', asyn
   await page.getByRole('button', { name: 'Share', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Share this note' })
   await expect(dialog.getByRole('radio', { name: /Private/ })).toBeChecked()
-  // Readers see the published version, so a note that was never published cannot go public.
-  await expect(dialog.getByRole('radio', { name: /Public/ })).toBeDisabled()
+  // Public can be chosen before the note is published; readers see it once a version exists.
+  await expect(dialog.getByRole('radio', { name: /Public/ })).toBeEnabled()
   await expect(dialog.getByText('Not shared with anyone yet.')).toBeVisible()
 
   await dialog.getByLabel('Handle or email').fill('@ravi')

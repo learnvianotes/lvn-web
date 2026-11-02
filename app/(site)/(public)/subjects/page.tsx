@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { listSubjects } from '@/features/subjects/data'
-import { SubjectGrid } from '@/features/subjects/SubjectGrid'
+import { SubjectBrowser } from '@/features/subjects/SubjectBrowser'
 
 // Rendered on request, never at build time (the API is not there while images build); the subjects are cached an hour.
 export const dynamic = 'force-dynamic'
@@ -12,8 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** Every subject LearnViaNotes organises notes by (owner, 2026-10-14: the app's own, not /core). */
-export default async function SubjectsPage() {
+export default async function SubjectsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const t = await getTranslations('subjects')
+  const { q } = await searchParams
   const subjects = await listSubjects().catch(() => [])
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
@@ -21,7 +22,7 @@ export default async function SubjectsPage() {
         <h1 className="text-3xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="max-w-2xl text-muted">{t('lead')}</p>
       </header>
-      {subjects.length ? <SubjectGrid subjects={subjects} /> : <p className="text-muted">{t('unavailable')}</p>}
+      {subjects.length ? <SubjectBrowser subjects={subjects} initialQuery={q ?? ''} /> : <p className="text-muted">{t('unavailable')}</p>}
     </div>
   )
 }

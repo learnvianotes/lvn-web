@@ -1,0 +1,160 @@
+# Admin and analytics operations that used to be parsed from strings in lib/platform-api.ts.
+
+query InstitutionDomains($status: DomainReviewStatus) {
+  institutionDomains(status: $status) {
+    domain
+    status
+    requests
+    firstSeenAt
+  }
+}
+
+mutation ReviewInstitutionDomain($input: DecideDomainReviewInput!) {
+  reviewInstitutionDomain(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+mutation SetGlobalRole($input: SetGlobalRoleInput!) {
+  setGlobalRole(input: $input) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+query AdminErrors($since: DateTime) {
+  adminErrors(since: $since) {
+    code
+    count
+    firstSeen
+    lastSeen
+    sampleMessage
+    userIds
+  }
+}
+
+query UsersByIds($ids: [UUID!]!) {
+  usersByIds(ids: $ids) {
+    id
+    displayName
+    email
+    globalRole
+  }
+}
+
+query AdminUsage($from: DateTime, $to: DateTime) {
+  adminUsage(from: $from, to: $to) {
+    dau
+    wau
+    mau
+    from
+    to
+    topEvents {
+      name
+      count
+    }
+    topFeatures {
+      name
+      count
+    }
+  }
+}
+
+query AdminUserActivity($userId: UUID!, $first: Int) {
+  adminUserActivity(userId: $userId, first: $first) {
+    name
+    occurredAt
+    platform
+    props
+    appVersion
+  }
+}
+
+mutation IngestAnalytics($input: IngestAnalyticsInput!) {
+  ingestAnalytics(input: $input) {
+    ok
+    userErrors {
+      code
+      message
+    }
+  }
+}
+
+query AnalyticsOptOut {
+  viewer {
+    id
+    analyticsOptOut
+  }
+}
+
+mutation SetAnalyticsOptOut($optOut: Boolean!) {
+  setAnalyticsOptOut(optOut: $optOut) {
+    ok
+    userErrors {
+      message
+      code
+    }
+  }
+}
+
+fragment AdminManagedUserFields on AdminManagedUser {
+  id
+  accountStatus
+  createdAt
+  dateOfBirth
+  displayName
+  email
+  globalRole
+  handle
+  statusReason
+}
+
+query AdminUsers($status: AdminUserStatusFilter!, $search: String, $first: Int) {
+  adminUsers(status: $status, search: $search, first: $first) {
+    total
+    users {
+      ...AdminManagedUserFields
+    }
+  }
+}
+
+mutation AdminUpdateUser($input: AdminUpdateUserInput!) {
+  adminUpdateUser(input: $input) {
+    user {
+      ...AdminManagedUserFields
+    }
+    userErrors {
+      code
+      message
+    }
+  }
+}
+
+mutation AdminSetAccountStanding($input: AdminSetAccountStandingInput!) {
+  adminSetAccountStanding(input: $input) {
+    user {
+      ...AdminManagedUserFields
+    }
+    userErrors {
+      code
+      message
+    }
+  }
+}
+
+mutation AdminDeleteUser($input: AdminDeleteUserInput!) {
+  adminDeleteUser(input: $input) {
+    ok
+    userErrors {
+      code
+      message
+    }
+  }
+}

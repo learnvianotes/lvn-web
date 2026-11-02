@@ -56,7 +56,8 @@ test('an admin sees Admin in the sidebar; a student does not', async ({ page }, 
   const nav = page.getByRole('navigation', { name: 'Main' })
   await expect(nav.getByRole('link', { name: 'Admin', exact: true })).toHaveAttribute('href', '/admin')
   const labels = await nav.getByRole('link').allTextContents()
-  expect(labels.slice(0, 4)).toEqual(['Home', 'My Notes', 'Explore', 'Admin'])
+  expect(labels.slice(0, 4)).toEqual(['Home', 'Subjects', 'My Notes', 'Quick notes'])
+  expect(labels).toContain('Admin')
   await shot(page, 'sidebar_admin')
 
   await mockApi(page, {})

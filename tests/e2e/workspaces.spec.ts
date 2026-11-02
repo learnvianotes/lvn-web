@@ -139,7 +139,7 @@ test('a showcase note credits the team and its mentor', async ({ page }) => {
       note: {
         __typename: 'Note', id: NOTE_ID, title: 'Heap visualiser', slug: 'heap-visualiser', kind: 'PROJECT', visibility: 'PUBLIC', viewerAccess: 'READER',
         viewerCan: { __typename: 'NotePermissions', edit: false, publish: false, changeVisibility: false, delete: false, share: false, fork: true },
-        owner: asha, folder: null, tags: [], topics: [], draftRevision: null, draftUpdatedAt: new Date().toISOString(), publishedAt: new Date().toISOString(), publishedVersion: null, forkingEnabled: true, moderation: null, forkedFrom: null, cardCount: 0, deletedAt: null,
+        owner: asha, folder: null, tags: [], topics: [], draftRevision: null, draftUpdatedAt: new Date().toISOString(), publishedAt: new Date().toISOString(), publishedVersion: null, allowForks: true, forkCount: 0, moderation: null, forkedFrom: null, cardCount: 0, deletedAt: null,
         cards: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } },
       },
     }),
