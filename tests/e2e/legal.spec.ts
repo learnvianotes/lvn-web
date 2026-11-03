@@ -30,8 +30,8 @@ test('the Grievance page names the officer and commits to 24 hours, 7 days and 3
   // config/legal.ts is filled in: the officer and the mailbox are named, and no gap is left on the page.
   await expect(page.getByRole('note')).not.toContainText('Still to be filled in')
   await expect(page.locator('mark')).toHaveCount(0)
-  await expect(page.getByText('K Manideep', { exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'manideepk70@gmail.com' })).toHaveAttribute('href', 'mailto:manideepk70@gmail.com')
+  await expect(page.getByText('LearnViaNotes Admin', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'learnvianotes@gmail.com' })).toHaveAttribute('href', 'mailto:learnvianotes@gmail.com')
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Grievance Redressal' })).toHaveAttribute('href', '/legal/grievance')
 })
 

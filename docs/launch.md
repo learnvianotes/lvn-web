@@ -20,7 +20,7 @@ to the new VM.
 
 | Launch item | State | Where |
 | --- | --- | --- |
-| Privacy, Terms and Grievance pages, operator named in config | Built. All filled in: operator, address, courts (Bengaluru), Grievance Officer (K Manideep) and mailbox | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
+| Privacy, Terms and Grievance pages, operator named in config | Built. All filled in: operator, address, courts (Bengaluru), Grievance Officer (LearnViaNotes Admin) and mailbox | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
 | Grievances resolved within 7 days, removals within 36 h | Built | `features/legal/Grievance.tsx`, Terms §9 |
 | Date of birth at sign-up, refusing under-18s, every answer confirmed | Built (web, phone, API) | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE`); `lib/age.ts`, `components/auth/AgeCheck.tsx` |
 | Google Analytics only after consent, synced across tabs | Built; off until `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set | lvn-backend ADR-0092; `lib/consent.ts`, `lib/analytics.ts` |
@@ -112,7 +112,7 @@ emails.
 ## Decisions waiting for the owner
 
 1. **The legal details** (`config/legal.ts`) are filled in (2026-11-03): courts in Bengaluru, Grievance Officer
-   K Manideep at manideepk70@gmail.com. A `grievance@learnvianotes.in` mailbox
+   LearnViaNotes Admin at learnvianotes@gmail.com. A `grievance@learnvianotes.in` mailbox
    ([infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)) can replace the address later.
 2. **`TERMS_VERSION`** is bumped to `2026-11-03` in lvn-web (`features/legal/documents.ts`), owner's decision
    (2026-11-03): the Privacy Policy and Terms changed materially (adults only, Google Analytics, the Grievance page),

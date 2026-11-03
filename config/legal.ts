@@ -11,9 +11,9 @@ export const LEGAL = {
   /** City whose courts hear disputes under the Terms. */
   courtsCity: 'Bengaluru',
   /** The Grievance Officer's name (IT Rules 2021, rule 3(2); SPDI Rules 2011, rule 5(9)). */
-  grievanceOfficer: 'K Manideep',
+  grievanceOfficer: 'LearnViaNotes Admin',
   /** Mailbox for privacy and grievance mail, e.g. grievance@learnvianotes.in. */
-  email: 'manideepk70@gmail.com',
+  email: 'learnvianotes@gmail.com',
 }
 
 export type LegalField = keyof typeof LEGAL
