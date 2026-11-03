@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
  * The legal documents people accept (lvn-backend §15.2). One version covers all three; it must equal the API's
  * TERMS_VERSION (contexts/users/src/domain/rules.ts), and changing it asks every signed-in person to accept again.
  */
-export const TERMS_VERSION = '2026-10-08'
+export const TERMS_VERSION = '2026-11-03'
 
 export type LegalDocument = 'terms' | 'privacy' | 'licence' | 'grievance'
 
