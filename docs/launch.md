@@ -119,8 +119,8 @@ emails.
    so every account accepts them again. lvn-backend (`contexts/users/src/domain/rules.ts`) must get the same value in
    the same release: the API's version is the one people accept.
 3. **Which Firebase project is production for the rewrite.**
-   - `config/firebase-projects.json` says `learnvianotes-2e2d7`: the old site's project, so returning Google users
-     keep their Firebase UID (ADR-0007).
+   - `config/firebase-projects.json` says `learnvianotes-in`: production now uses this new project (owner's decision,
+     2026-11-03), not the old site's. Google accounts from the old site's project are not carried over automatically.
    - Development uses `learnvianotes-com`.
    - Beta should use `learnvianotes-test`, still to be created ([infra.md §1](runbooks/infra.md#1-the-test-firebase-project)).
      Until then beta offers email sign-in only.
