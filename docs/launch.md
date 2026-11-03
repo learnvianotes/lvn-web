@@ -20,7 +20,7 @@ to the new VM.
 
 | Launch item | State | Where |
 | --- | --- | --- |
-| Privacy, Terms and Grievance pages, operator named in config | Built. Operator and address are filled in. **The courts city, the Grievance Officer and the mailbox are still blank** | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
+| Privacy, Terms and Grievance pages, operator named in config | Built. All filled in: operator, address, courts (Bengaluru), Grievance Officer (K Manideep) and mailbox | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
 | Grievances resolved within 7 days, removals within 36 h | Built | `features/legal/Grievance.tsx`, Terms §9 |
 | Date of birth at sign-up, refusing under-18s, every answer confirmed | Built (web, phone, API) | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE`); `lib/age.ts`, `components/auth/AgeCheck.tsx` |
 | Google Analytics only after consent, synced across tabs | Built; off until `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set | lvn-backend ADR-0092; `lib/consent.ts`, `lib/analytics.ts` |
@@ -111,12 +111,13 @@ emails.
 
 ## Decisions waiting for the owner
 
-1. **The rest of the legal details** (`config/legal.ts`): the courts city, the Grievance Officer and the mailbox (see
-   [infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)). The operator and address are in.
-2. **`TERMS_VERSION`.** The Privacy Policy and Terms changed materially: adults only, Google Analytics, the Grievance
-   page. Bump `TERMS_VERSION` in lvn-web (`features/legal/documents.ts`) and lvn-backend
-   (`contexts/users/src/domain/rules.ts`) together once the text is final, so every account accepts it again. It is
-   left at `2026-10-08` while the text is still a draft.
+1. **The legal details** (`config/legal.ts`) are filled in (2026-11-03): courts in Bengaluru, Grievance Officer
+   K Manideep at manideepk70@gmail.com. A `grievance@learnvianotes.in` mailbox
+   ([infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)) can replace the address later.
+2. **`TERMS_VERSION`** is bumped to `2026-11-03` in lvn-web (`features/legal/documents.ts`), owner's decision
+   (2026-11-03): the Privacy Policy and Terms changed materially (adults only, Google Analytics, the Grievance page),
+   so every account accepts them again. lvn-backend (`contexts/users/src/domain/rules.ts`) must get the same value in
+   the same release: the API's version is the one people accept.
 3. **Which Firebase project is production for the rewrite.**
    - `config/firebase-projects.json` says `learnvianotes-2e2d7`: the old site's project, so returning Google users
      keep their Firebase UID (ADR-0007).

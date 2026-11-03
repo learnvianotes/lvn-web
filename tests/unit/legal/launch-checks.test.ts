@@ -9,6 +9,10 @@ describe('missingLegalFields', () => {
     expect(missingLegalFields({ ...filled, address: ' ', email: '' })).toEqual(['address', 'email'])
     expect(missingLegalFields(filled)).toEqual([])
   })
+
+  it('config/legal.ts has every detail a production build needs', () => {
+    expect(missingLegalFields()).toEqual([])
+  })
 })
 
 const prod = 'learnvianotes-2e2d7'
