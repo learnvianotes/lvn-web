@@ -1,5 +1,5 @@
 {
   "comment": "Firebase projects for Google sign-in (lvn-backend ADR-0007, ADR-0093). A production build (NEXT_PUBLIC_APP_ENV=production) must use `production`; any other build must not (lib/launch-checks.ts). `test` is the sandbox's; development builds use their own.",
-  "production": "learnvianotes-2e2d7",
+  "production": "learnvianotes-in",
   "test": "learnvianotes-test"
 }

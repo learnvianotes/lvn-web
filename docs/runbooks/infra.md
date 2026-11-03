@@ -37,14 +37,15 @@ The project can stay on the free Spark plan: only Authentication is used (ADR-00
 
 ## 2. Production's Firebase project
 
-`config/firebase-projects.json` names `learnvianotes-2e2d7`, the old site's project, so returning Google users keep
-their accounts (ADR-0007). Confirm this before launch (see [launch.md](../launch.md)).
+`config/firebase-projects.json` names `learnvianotes-in`. Production now uses this new project (owner's decision,
+2026-11-03), not the old site's, so Google accounts from the old site's project are not carried over automatically
+(see [launch.md](../launch.md)).
 
 - Add `www.learnvianotes.in` to its Authorized domains, if it isn't there already.
 - On its OAuth web client, add JavaScript origin `https://www.learnvianotes.in` and redirect URI
   `https://www.learnvianotes.in/__/auth/handler`, and keep the existing `firebaseapp.com` handler (same as §1).
 - Its web config goes into the `production` environment's variables, as in §1.
-  `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` stays `<project-id>.firebaseapp.com`.
+  `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` stays `<project-id>.firebaseapp.com` (`learnvianotes-in.firebaseapp.com`).
 - A production build accepts no other project, and no other build accepts this one.
 
 ## 3. Google Analytics (optional, ADR-0092)

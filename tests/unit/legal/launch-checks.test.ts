@@ -15,7 +15,7 @@ describe('missingLegalFields', () => {
   })
 })
 
-const prod = 'learnvianotes-2e2d7'
+const prod = 'learnvianotes-in'
 
 describe('firebaseProblem (lvn-backend ADR-0093)', () => {
   it('a production build needs the production project', () => {
