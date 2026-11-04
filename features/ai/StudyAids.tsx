@@ -12,6 +12,7 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import { cn } from '@/lib/cn'
 import { useLive } from '@/features/notifications/live'
 import { CardView } from '@/features/notes/render/CardView'
+import { PracticeQuizProvider } from '@/features/notes/render/interactive'
 import { Markdown } from '@/features/notes/render/Markdown'
 
 /**
@@ -37,13 +38,15 @@ const POLL_MS = 3000
 function AidBody({ aid }: { aid: Aid }) {
   if (aid.markdown != null) return <Markdown source={aid.markdown} className="flex flex-col gap-2.5 text-[0.95rem] leading-relaxed" />
   return (
-    <div className="flex flex-col gap-3">
-      {(aid.cards ?? []).map((c, i) => (
-        <div key={i} className="rounded-2xl border border-border bg-bg p-4">
-          <CardView id={`${aid.id}-${i}`} type={c.type as CardType} content={c.content} />
-        </div>
-      ))}
-    </div>
+    <PracticeQuizProvider>
+      <div className="flex flex-col gap-3">
+        {(aid.cards ?? []).map((c, i) => (
+          <div key={i} className="rounded-2xl border border-border bg-bg p-4">
+            <CardView id={`${aid.id}-${i}`} type={c.type as CardType} content={c.content} />
+          </div>
+        ))}
+      </div>
+    </PracticeQuizProvider>
   )
 }
 

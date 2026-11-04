@@ -5,13 +5,16 @@
 import type {
   AdminUsageContentQuery,
   AdminUsageEngagementQuery,
+  AdminUsageFeaturesQuery,
   AdminUsageFunnelQuery,
   AdminUsageGrowthQuery,
   AdminUsageOverviewQuery,
   AdminUsageQuery,
   AdminUsageRetentionQuery,
+  AdminUsageSearchQualityQuery,
   AdminUsageSubjectsQuery,
   AdminUsageVerificationQuery,
+  AdminUsageVersionsQuery,
 } from '@/graphql/generated/graphql'
 import { funnelRows, share, type CsvTable } from './shape'
 
@@ -143,4 +146,36 @@ export function verificationCsv(data: AdminUsageVerificationQuery): CsvTable[] {
 
 export function funnelCsv(data: AdminUsageFunnelQuery): CsvTable[] {
   return [{ name: 'funnel', header: ['step', 'people', 'of_first_step', 'of_previous_step'], rows: funnelRows(data.adminFunnel).map((r) => [r.name, r.users, r.ofFirst, r.ofPrevious]) }]
+}
+
+/** Feature use and quiz starts (ADR-0107). Ids in lower case, as the events send them. */
+export function featuresCsv(data: AdminUsageFeaturesQuery): CsvTable[] {
+  const u = data.adminFeatureUsage
+  return [
+    { name: 'totals', header: ['metric', 'value'], rows: [['feature_use_events', u.events], ['quiz_starts', u.quizStarts.starts]] },
+    { name: 'features', header: ['feature', 'users', 'events'], rows: u.features.map((r) => [r.feature.toLowerCase(), r.users, r.events]) },
+    hidden(u.hiddenSmallGroups),
+    { name: 'quiz_starts', header: ['kind', 'users', 'starts'], rows: u.quizStarts.byKind.map((r) => [r.kind.toLowerCase(), r.users, r.starts]) },
+    { name: 'quiz_starts_hidden', header: ['hidden_small_groups'], rows: [[u.quizStarts.hiddenSmallGroups]] },
+  ]
+}
+
+/** Searches and zero-result searches by scope. A scope of "none" is a search sent without one (older clients). */
+export function searchQualityCsv(data: AdminUsageSearchQualityQuery): CsvTable[] {
+  const q = data.adminSearchQuality
+  return [
+    { name: 'totals', header: ['metric', 'value'], rows: [['searches', q.searches], ['zero_results', q.zeroResults], ['zero_result_rate', q.zeroResultRate ?? null]] },
+    { name: 'by_scope', header: ['scope', 'users', 'searches', 'zero_results', 'zero_result_rate'], rows: q.byScope.map((r) => [r.scope?.toLowerCase() ?? 'none', r.users, r.searches, r.zeroResults, r.zeroResultRate ?? null]) },
+    hidden(q.hiddenSmallGroups),
+  ]
+}
+
+/** People per platform and app version. A version of "none" is an event without one. */
+export function versionsCsv(data: AdminUsageVersionsQuery): CsvTable[] {
+  const v = data.adminVersionAdoption
+  return [
+    { name: 'platforms', header: ['platform', 'users', 'events'], rows: v.platforms.map((p) => [p.platform, p.users, p.events]) },
+    { name: 'versions', header: ['platform', 'app_version', 'users', 'share', 'events'], rows: v.platforms.flatMap((p) => p.versions.map((r) => [p.platform, r.appVersion ?? 'none', r.users, r.share, r.events])) },
+    hidden(v.hiddenSmallGroups),
+  ]
 }

@@ -36,6 +36,7 @@ import type { PageRect } from './geometry'
 import { ACTIVE, ConversionBanner, ConvertDialog } from './convert'
 import { AreaActions, FindBar, HighlightCard, HighlightsList, OutlineList, SelectionActions, ToolButton } from './parts'
 import { PdfViewer, type AreaSelection, type Mark, type OutlineItem, type PdfViewerHandle, type TextSelection } from './PdfViewer'
+import { useFeatureUse } from '@/lib/analytics'
 
 type Panel = 'notes' | 'highlights' | 'contents'
 type Anchored = { cardId: string; anchor: CardAnchor }
@@ -51,6 +52,7 @@ const paragraph = (text: string) => ({ type: 'doc', content: [{ type: 'paragraph
  * it and can start notes of their own on it.
  */
 export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string }) {
+  useFeatureUse('pdf_viewer')
   const t = useTranslations('reader')
   const client = useApolloClient()
   const router = useRouter()

@@ -10,6 +10,7 @@ import { MakeNotesFromTranscriptDocument, TranscribeAudioDocument, TranscribeCap
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { captionsFromEvent, speechRecognitionCtor, type SpeechRec } from './captions'
+import { trackFeature } from '@/lib/analytics'
 
 /**
  * A voice note recorded in the browser (lvn-backend ADR-0062): MediaRecorder, Opus in WebM (MP4 where WebM is not
@@ -80,6 +81,7 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
   const start = async () => {
     const type = recordingType()
     if (!type || !navigator.mediaDevices?.getUserMedia) return setState('unsupported')
+    trackFeature('voice_note')
     try {
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
     } catch {

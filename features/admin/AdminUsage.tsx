@@ -10,13 +10,16 @@ import { useViewerRole } from '@/features/admin/useViewerRole'
 import {
   ContentPanel,
   EngagementPanel,
+  FeaturesPanel,
   FunnelPanel,
   GrowthPanel,
   OverviewPanel,
   RetentionPanel,
+  SearchQualityPanel,
   SubjectsPanel,
   USAGE_TABS,
   VerificationPanel,
+  VersionsPanel,
   type PanelProps,
   type UsageTab,
 } from '@/features/admin/usage/panels'
@@ -35,6 +38,9 @@ const PANELS: Record<UsageTab, (props: PanelProps) => ReactNode> = {
   retention: RetentionPanel,
   verification: VerificationPanel,
   funnel: FunnelPanel,
+  features: FeaturesPanel,
+  search: SearchQualityPanel,
+  versions: VersionsPanel,
 }
 
 /** Tabs that draw a series per day or week; the others are totals for the range. */

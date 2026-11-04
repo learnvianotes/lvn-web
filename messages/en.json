@@ -3654,7 +3654,10 @@
       "subjects": "Subjects",
       "retention": "Retention",
       "verification": "Verification",
-      "funnel": "Funnel"
+      "funnel": "Funnel",
+      "features": "Features",
+      "search": "Search quality",
+      "versions": "Versions"
     },
     "range": {
       "label": "Date range",
@@ -3789,6 +3792,74 @@
       "showTable": "Show as a table",
       "date": "Bucket",
       "name": "Name"
+    },
+    "featureUse": {
+      "events": "Feature uses",
+      "quizStarts": "Quizzes started",
+      "title": "People per feature",
+      "peopleEvents": "{users} people · {events} uses",
+      "note": "A feature counts once per browser tab it is used in, not per click. Opted-out and deleted accounts are left out.",
+      "quizTitle": "Quizzes started by kind",
+      "kind": "Kind",
+      "starts": "Starts"
+    },
+    "featureName": {
+      "notes_editor": "Note editor",
+      "page_editor": "Handwritten pages",
+      "pdf_viewer": "PDF reader",
+      "voice_note": "Voice notes",
+      "quick_capture": "Quick capture",
+      "read_aloud": "Read aloud",
+      "class_quiz": "Class quizzes",
+      "shared_quiz": "Shared quizzes",
+      "flashcards_review": "Flashcard review",
+      "exam_plan": "Exam plan",
+      "focus": "Focus sessions",
+      "groups": "Groups",
+      "classroom": "Classes",
+      "doubts": "Doubts",
+      "ai_assist": "AI help",
+      "resources": "Resources",
+      "search": "Search",
+      "profile": "Profile",
+      "settings": "Settings"
+    },
+    "quizKind": {
+      "class": "Class quiz",
+      "shared": "Shared quiz",
+      "note": "Quiz in a note",
+      "practice": "AI practice"
+    },
+    "searchQuality": {
+      "searches": "Searches",
+      "zeroResults": "Found nothing",
+      "zeroRate": "Zero-result rate",
+      "zeroRateHint": "Searches that found nothing in any scope",
+      "byScope": "By scope",
+      "scope": "Scope",
+      "noScope": "No scope sent (older app)",
+      "note": "Only the scope and the number of words are recorded, never what was searched."
+    },
+    "searchScope": {
+      "all": "Everything",
+      "notes": "Notes",
+      "people": "People",
+      "groups": "Groups",
+      "classrooms": "Classes",
+      "resources": "Resources",
+      "topics": "Topics"
+    },
+    "versions": {
+      "platform": "{platform}: {users} people, {events} events",
+      "platformName": {
+        "WEB": "Web",
+        "MOBILE": "Mobile app"
+      },
+      "version": "Version",
+      "share": "Share of people",
+      "events": "Events",
+      "none": "No version sent",
+      "note": "Someone on two versions counts in both, so shares can add up to more than 100%."
     }
   },
   "consent": {

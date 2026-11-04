@@ -10,6 +10,7 @@ import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { InlineText, RichDoc } from '@/features/notes/render/RichText'
 import { ClassQuizDocument, SubmitQuizAttemptDocument, type ClassQuizFieldsFragment } from '@/graphql/generated/graphql'
 import type { Doc, Inline } from '@/lib/contracts/validation'
+import { trackQuizStart } from '@/lib/analytics'
 import { cn } from '@/lib/cn'
 import { isNotThere } from '@/lib/query'
 import { scoreOf } from './ClassQuizzes'
@@ -69,6 +70,8 @@ export function QuizPage({ classroomId, quizId }: { classroomId: string; quizId:
 function TakeQuiz({ quiz, practice, onDone }: { quiz: Quiz; practice: boolean; onDone: () => void }) {
   const t = useTranslations('classes.quiz')
   const [submit, submitting] = useMutation(SubmitQuizAttemptDocument)
+  // Answering begins: a quiz start (lvn-backend ADR-0107), a retake included.
+  useEffect(() => trackQuizStart('class'), [])
   const [answers, setAnswers] = useState<Answers>({})
   const [error, setError] = useState<string | null>(null)
   // One id per submission, kept until it is answered: a retry is the same attempt (ADR-0064).

@@ -11,21 +11,24 @@ import {
   AdminUsageContentDocument,
   AdminUsageDocument,
   AdminUsageEngagementDocument,
+  AdminUsageFeaturesDocument,
   AdminUsageFunnelDocument,
   AdminUsageGrowthDocument,
   AdminUsageOverviewDocument,
   AdminUsageRetentionDocument,
+  AdminUsageSearchQualityDocument,
   AdminUsageSubjectsDocument,
   AdminUsageVerificationDocument,
+  AdminUsageVersionsDocument,
   type AdminSubjectMetric,
   type MetricsInterval,
 } from '@/graphql/generated/graphql'
 import { formatBytes } from '@/features/admin/metrics'
 import { BarList, LineChart, RetentionHeatmap } from './charts'
-import { contentCsv, engagementCsv, funnelCsv, growthCsv, overviewCsv, retentionCsv, subjectsCsv, verificationCsv } from './csv'
+import { contentCsv, engagementCsv, featuresCsv, funnelCsv, growthCsv, overviewCsv, retentionCsv, searchQualityCsv, subjectsCsv, verificationCsv, versionsCsv } from './csv'
 import { csvFileName, downloadCsv, funnelRows, istToday, rangeVariables, share, toCsv, valueOn, withShares, type CsvTable, type DayRange } from './shape'
 
-export const USAGE_TABS = ['overview', 'growth', 'engagement', 'content', 'subjects', 'retention', 'verification', 'funnel'] as const
+export const USAGE_TABS = ['overview', 'growth', 'engagement', 'content', 'subjects', 'retention', 'verification', 'funnel', 'features', 'search', 'versions'] as const
 export type UsageTab = (typeof USAGE_TABS)[number]
 
 /** Database steps the API knows (adminFunnel, ADR-0105). */
@@ -414,6 +417,141 @@ export function FunnelPanel({ range }: PanelProps) {
             note={t('funnel.note')}
           />
           <TabFooter tab="funnel" tables={funnelCsv({ adminFunnel: steps })} range={range} />
+        </>
+      ) : null}
+    </Panel>
+  )
+}
+
+// --- First-party events v2 (lvn-backend ADR-0107) ---------------------------------------------------------------
+
+/** A plain table of aggregates, with a caption and an empty note. */
+function CountTable({ caption, header, rows }: { caption: string; header: string[]; rows: { key: string; cells: ReactNode[] }[] }) {
+  const t = useTranslations('adminUsage')
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-border bg-surface p-4">
+      <table className="w-full text-left text-sm">
+        <caption className="pb-2 text-left font-semibold">{caption}</caption>
+        <thead>
+          <tr>
+            {header.map((h, i) => (
+              <th key={h} scope="col" className={`border-b border-border px-2 py-1 font-medium text-muted${i ? ' text-right' : ''}`}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key}>
+              {row.cells.map((cell, i) =>
+                i ? (
+                  <td key={i} className="px-2 py-1 text-right">{cell}</td>
+                ) : (
+                  <th key={i} scope="row" className="px-2 py-1 font-normal">{cell}</th>
+                ),
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!rows.length ? <p className="pt-2 text-sm text-muted">{t('chart.empty')}</p> : null}
+    </div>
+  )
+}
+
+/** A wire id shown by its label when the messages have one, else as it is. */
+function useLabel(prefix: string) {
+  const t = useTranslations('adminUsage')
+  return (id: string) => (t.has(`${prefix}.${id}`) ? t(`${prefix}.${id}`) : id)
+}
+
+export function FeaturesPanel({ range }: PanelProps) {
+  const t = useTranslations('adminUsage')
+  const f = useFormat()
+  const feature = useLabel('featureName')
+  const quiz = useLabel('quizKind')
+  const { data, previousData, error, loading, refetch } = useQuery(AdminUsageFeaturesDocument, { variables: rangeVariables(range), fetchPolicy: 'cache-and-network' })
+  const u = (data ?? previousData)?.adminFeatureUsage
+  return (
+    <Panel tab="features" error={error} loading={loading} hasData={!!u} onRetry={() => void refetch()}>
+      {u ? (
+        <>
+          <Stats>
+            <Stat label={t('featureUse.events')} value={f.n(u.events)} />
+            <Stat label={t('featureUse.quizStarts')} value={f.n(u.quizStarts.starts)} />
+          </Stats>
+          <BarList
+            title={t('featureUse.title')}
+            valueLabel={t('people')}
+            bars={u.features.map((row) => ({ key: row.feature, label: feature(row.feature.toLowerCase()), value: row.users, display: t('featureUse.peopleEvents', { users: f.n(row.users), events: f.n(row.events) }) }))}
+            note={t('featureUse.note')}
+          />
+          <HiddenGroups count={u.hiddenSmallGroups} />
+          <CountTable
+            caption={t('featureUse.quizTitle')}
+            header={[t('featureUse.kind'), t('featureUse.starts'), t('people')]}
+            rows={u.quizStarts.byKind.map((row) => ({ key: row.kind, cells: [quiz(row.kind.toLowerCase()), f.n(row.starts), f.n(row.users)] }))}
+          />
+          <HiddenGroups count={u.quizStarts.hiddenSmallGroups} />
+          <TabFooter tab="features" generatedAt={u.generatedAt} tables={featuresCsv({ adminFeatureUsage: u })} range={range} />
+        </>
+      ) : null}
+    </Panel>
+  )
+}
+
+export function SearchQualityPanel({ range }: PanelProps) {
+  const t = useTranslations('adminUsage')
+  const f = useFormat()
+  const scope = useLabel('searchScope')
+  const { data, previousData, error, loading, refetch } = useQuery(AdminUsageSearchQualityDocument, { variables: rangeVariables(range), fetchPolicy: 'cache-and-network' })
+  const q = (data ?? previousData)?.adminSearchQuality
+  return (
+    <Panel tab="search" error={error} loading={loading} hasData={!!q} onRetry={() => void refetch()}>
+      {q ? (
+        <>
+          <Stats>
+            <Stat label={t('searchQuality.searches')} value={f.n(q.searches)} />
+            <Stat label={t('searchQuality.zeroResults')} value={f.n(q.zeroResults)} />
+            <Stat label={t('searchQuality.zeroRate')} value={f.pct(q.zeroResultRate ?? null)} hint={t('searchQuality.zeroRateHint')} />
+          </Stats>
+          <CountTable
+            caption={t('searchQuality.byScope')}
+            header={[t('searchQuality.scope'), t('searchQuality.searches'), t('searchQuality.zeroResults'), t('searchQuality.zeroRate'), t('people')]}
+            rows={q.byScope.map((row) => ({
+              key: row.scope ?? 'none',
+              cells: [row.scope ? scope(row.scope.toLowerCase()) : t('searchQuality.noScope'), f.n(row.searches), f.n(row.zeroResults), f.pct(row.zeroResultRate ?? null), f.n(row.users)],
+            }))}
+          />
+          <p className="text-xs text-muted">{t('searchQuality.note')}</p>
+          <HiddenGroups count={q.hiddenSmallGroups} />
+          <TabFooter tab="search" generatedAt={q.generatedAt} tables={searchQualityCsv({ adminSearchQuality: q })} range={range} />
+        </>
+      ) : null}
+    </Panel>
+  )
+}
+
+export function VersionsPanel({ range }: PanelProps) {
+  const t = useTranslations('adminUsage')
+  const f = useFormat()
+  const { data, previousData, error, loading, refetch } = useQuery(AdminUsageVersionsDocument, { variables: rangeVariables(range), fetchPolicy: 'cache-and-network' })
+  const v = (data ?? previousData)?.adminVersionAdoption
+  return (
+    <Panel tab="versions" error={error} loading={loading} hasData={!!v} onRetry={() => void refetch()}>
+      {v ? (
+        <>
+          {v.platforms.map((p) => (
+            <CountTable
+              key={p.platform}
+              caption={t('versions.platform', { platform: t.has(`versions.platformName.${p.platform}`) ? t(`versions.platformName.${p.platform}`) : p.platform, users: f.n(p.users), events: f.n(p.events) })}
+              header={[t('versions.version'), t('people'), t('versions.share'), t('versions.events')]}
+              rows={p.versions.map((row) => ({ key: row.appVersion ?? 'none', cells: [row.appVersion ?? t('versions.none'), f.n(row.users), f.pct(row.share), f.n(row.events)] }))}
+            />
+          ))}
+          {!v.platforms.length ? <p className="text-sm text-muted">{t('chart.empty')}</p> : null}
+          <p className="text-xs text-muted">{t('versions.note')}</p>
+          <HiddenGroups count={v.hiddenSmallGroups} />
+          <TabFooter tab="versions" generatedAt={v.generatedAt} tables={versionsCsv({ adminVersionAdoption: v })} range={range} />
         </>
       ) : null}
     </Panel>

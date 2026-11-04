@@ -21,6 +21,7 @@ import {
   type FocusSessionFieldsFragment,
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { trackFeature } from '@/lib/analytics'
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
@@ -93,6 +94,7 @@ export function FocusMode() {
             e.preventDefault()
             setProblem(null)
             setCounted(null)
+            trackFeature('focus')
             const res = await start({ variables: { input: { minutes, breakMinutes, topicKey: topic?.key ?? null, meetUrl: meetUrl.trim() || null } } })
             const message = res.data?.startFocusSession.userErrors[0]?.message
             if (message) setProblem(message)
