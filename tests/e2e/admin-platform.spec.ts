@@ -262,35 +262,40 @@ test('usage shows active people, top pages and one person’s timeline', async (
   await shot(page, 'admin_usage')
 })
 
-test('an admin filters users, corrects a date of birth, and deletes only after typing DELETE', async ({ page }, info) => {
+test('an admin filters users, corrects an age, and deletes only after typing DELETE', async ({ page }, info) => {
   test.skip(info.project.name === 'phone', 'the drawer is the same form')
+  // Registered before lvn-backend ADR-0104: a date of birth, which decides the age.
+  const ashaId = '01920000-0000-7000-8000-0000000000a1'
   const asha = {
     __typename: 'AdminManagedUser',
-    id: '01920000-0000-7000-8000-0000000000a1',
+    id: ashaId,
     displayName: 'Asha Rao',
     email: 'asha@example.com',
     handle: 'asharao',
-    dateOfBirth: '2004-05-01',
+    age: 22,
+    dateOfBirth: '2004-05-01' as string | null,
     globalRole: 'STUDENT',
     accountStatus: 'ACTIVE',
     createdAt: '2026-01-01T00:00:00.000Z',
-    statusReason: null,
+    statusReason: null as string | null,
   }
   let accounts = [
+    // Registered since ADR-0104: an age, and no date of birth.
     {
-      __typename: 'AdminManagedUser',
+      ...asha,
       id: raviId,
       displayName: 'Ravi Kumar',
       email: 'ravi@college.edu',
       handle: 'ravik',
-      dateOfBirth: '2014-04-02',
-      globalRole: 'STUDENT',
+      age: 12,
+      dateOfBirth: null,
       accountStatus: 'AGE_BLOCKED',
       createdAt: '2026-10-01T00:00:00.000Z',
-      statusReason: 'Date of birth is under the requirement.',
+      statusReason: 'Below the minimum age for an account.',
     },
     asha,
   ]
+  const ageOf = (dateOfBirth: string) => Math.floor((Date.now() - Date.parse(`${dateOfBirth}T00:00:00Z`)) / (365.25 * 86_400_000))
   const listed = (v: Record<string, unknown>) =>
     accounts.filter((account) => {
       const status = String(v.status ?? '')
@@ -307,8 +312,12 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
         return { adminUsers: { __typename: 'AdminUserList', total: users.length, users } }
       },
       AdminUpdateUser: (v) => {
-        const input = v.input as { userId: string; displayName: string; email: string; dateOfBirth: string }
-        accounts = accounts.map((account) => (account.id === input.userId ? { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth, accountStatus: 'ACTIVE', statusReason: null } : account))
+        const input = v.input as { userId: string; displayName: string; email: string; age?: number; dateOfBirth?: string }
+        accounts = accounts.map((account) => {
+          if (account.id !== input.userId) return account
+          const age = input.dateOfBirth ? ageOf(input.dateOfBirth) : (input.age ?? account.age)
+          return { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth ?? account.dateOfBirth, age, accountStatus: age >= 18 ? 'ACTIVE' : 'AGE_BLOCKED', statusReason: age >= 18 ? null : account.statusReason }
+        })
         const user = accounts.find((row) => row.id === input.userId)
         return { adminUpdateUser: { __typename: 'AdminUserPayload', user, userErrors: [] } }
       },
@@ -336,19 +345,31 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   await page.getByRole('textbox', { name: 'Search' }).fill('nobody')
   await expect(page.getByText('No accounts in this list.')).toBeVisible()
   await page.getByRole('textbox', { name: 'Search' }).fill('')
-  await expect(page.getByText('ravi@college.edu')).toBeVisible()
+  await expect(page.getByText('ravi@college.edu · Age-blocked · Age 12')).toBeVisible()
   await page.getByRole('button', { name: 'Open' }).click()
   const drawer = page.getByRole('dialog', { name: 'Ravi Kumar' })
-  await expect(drawer.getByText('Date of birth is under the requirement.')).toBeVisible()
-  await drawer.getByLabel('Date of birth').fill('2004-04-02')
+  await expect(drawer.getByText('Below the minimum age for an account.')).toBeVisible()
+  // No date of birth on this account: none is shown, and the age is what gets corrected.
+  await expect(drawer.getByLabel('Date of birth')).toHaveCount(0)
+  const age = drawer.getByRole('textbox', { name: 'Age', exact: true })
+  await expect(age).toHaveValue('12')
+  await expect(age).toHaveAttribute('inputmode', 'numeric')
+  await age.fill('22')
   await drawer.getByRole('button', { name: 'Save details' }).click()
   await expect(drawer.getByRole('alert')).toHaveText('Add a reason first.')
-  await drawer.getByPlaceholder('Why you are making this change').first().fill('The date of birth was typed wrong.')
+  await drawer.getByPlaceholder('Why you are making this change').first().fill('The age was typed wrong.')
+  for (const typed of ['22.5', '0', '121', '']) {
+    await age.fill(typed)
+    await drawer.getByRole('button', { name: 'Save details' }).click()
+    await expect(drawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 1 to 120.')
+  }
+  expect(calls.filter((call) => call.op === 'AdminUpdateUser')).toHaveLength(0)
+  await age.fill('22')
   await drawer.getByRole('button', { name: 'Save details' }).click()
   await expect(drawer.getByText('Age check: unblocked.')).toBeVisible()
-  expect(calls.find((call) => call.op === 'AdminUpdateUser')?.variables).toMatchObject({
-    input: { userId: raviId, dateOfBirth: '2004-04-02', displayName: 'Ravi Kumar', email: 'ravi@college.edu', reason: 'The date of birth was typed wrong.' },
-  })
+  const update = calls.find((call) => call.op === 'AdminUpdateUser')?.variables as { input: Record<string, unknown> }
+  expect(update).toMatchObject({ input: { userId: raviId, age: 22, displayName: 'Ravi Kumar', email: 'ravi@college.edu', reason: 'The age was typed wrong.' } })
+  expect(update.input).not.toHaveProperty('dateOfBirth')
   await drawer.getByRole('button', { name: 'Block' }).click()
   await expect(drawer.getByRole('alert')).toHaveText('Add a reason first.')
   await drawer.getByPlaceholder('Why you are making this change').nth(1).fill('Asked to pause the account.')
@@ -379,6 +400,36 @@ test('an admin filters users, corrects a date of birth, and deletes only after t
   expect(calls.find((call) => call.op === 'AdminDeleteUser')?.variables).toEqual({
     input: { userId: raviId, confirm: 'DELETE', reason: 'Duplicate account.' },
   })
+
+  // An account with a date of birth shows it, and is corrected by it: never by an age, which the API refuses there.
+  await page.getByRole('button', { name: 'Active', exact: true }).click()
+  await expect(page.getByText('asha@example.com · Active · Age 22')).toBeVisible()
+  await page.getByRole('button', { name: 'Open' }).click()
+  // Titled by the name, which this part changes.
+  const ashaDrawer = page.getByRole('dialog', { name: /^Asha R/ })
+  const dob = ashaDrawer.getByLabel('Date of birth')
+  await expect(dob).toHaveValue('2004-05-01')
+  await expect(dob).toHaveAccessibleDescription('The date of birth decides this account’s age: 22 years now.')
+  await expect(ashaDrawer.getByRole('textbox', { name: 'Age', exact: true })).toHaveCount(0)
+  // A name alone runs no age check, and sends neither an age nor a date.
+  await ashaDrawer.getByLabel('Name', { exact: true }).fill('Asha R.')
+  await ashaDrawer.getByPlaceholder('Why you are making this change').first().fill('Asked for a shorter name.')
+  await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
+  await expect(ashaDrawer.getByRole('status')).toHaveText('Saved.')
+  const named = calls.filter((call) => call.op === 'AdminUpdateUser').at(-1)?.variables as { input: Record<string, unknown> }
+  expect(named.input).toMatchObject({ userId: ashaId, displayName: 'Asha R.', reason: 'Asked for a shorter name.' })
+  expect(named.input).not.toHaveProperty('age')
+  expect(named.input).not.toHaveProperty('dateOfBirth')
+  await dob.fill('2014-04-02')
+  await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
+  await expect(ashaDrawer.getByRole('status')).toHaveText('Age check: still under age.')
+  const dated = calls.filter((call) => call.op === 'AdminUpdateUser').at(-1)?.variables as { input: Record<string, unknown> }
+  expect(dated.input).toMatchObject({ userId: ashaId, dateOfBirth: '2014-04-02' })
+  expect(dated.input).not.toHaveProperty('age')
+  // The age-blocked account passes again once its date is corrected.
+  await dob.fill('2004-05-01')
+  await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
+  await expect(ashaDrawer.getByRole('status')).toHaveText('Age check: unblocked.')
 })
 
 test('the profile can opt out of usage analytics', async ({ page }) => {

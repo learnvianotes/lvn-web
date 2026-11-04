@@ -17,7 +17,7 @@ export function Terms() {
       <ul>
         <li>Anyone may read public notes and subjects without an account.</li>
         <li>
-          Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. You give your real date of birth when you
+          Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. You give your real age when you
           sign up, and by creating an account you confirm you are {ACCOUNTS_FROM_AGE} or older. We delete accounts that
           belong to someone younger.
         </li>

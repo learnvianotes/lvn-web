@@ -28,7 +28,7 @@ export function Privacy() {
       <h2>1. What we collect</h2>
       <ul>
         <li>
-          <strong>Account:</strong> your name, email address, handle and date of birth; your password, stored only as a
+          <strong>Account:</strong> your name, email address, handle and age (or date of birth, if you gave one); your password, stored only as a
           secure hash, or the Google account you sign in with.
         </li>
         <li>
@@ -74,9 +74,9 @@ export function Privacy() {
 
       <h2>3. Who can have an account</h2>
       <p>
-        Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. We ask your date of birth when you create an
-        account and keep it with your account; it is never shown to anyone. If the date you give is under {ACCOUNTS_FROM_AGE},
-        we don’t create the account and don’t keep the date; if a sign-in with Google had already created it, we delete it
+        Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. We ask your age when you create an
+        account and keep it with your account; it is never shown to anyone. If the age you give is under {ACCOUNTS_FROM_AGE},
+        we don’t create the account and don’t keep the age; if a sign-in with Google had already created it, we delete it
         straight away. If we learn that an account belongs to someone under {ACCOUNTS_FROM_AGE}, we delete it.
       </p>
 
@@ -114,7 +114,7 @@ export function Privacy() {
       <ul>
         <li>
           <strong>See and take your data:</strong> your profile page → Your data → Download your data gives you an archive
-          of everything we hold about you: your account with your date of birth and the terms you accepted, your notes and
+          of everything we hold about you: your account with your age (or date of birth, if you gave one) and the terms you accepted, your notes and
           files, your posts and comments, your study progress and every learning activity event.
         </li>
         <li><strong>Correct it:</strong> edit your details on your profile page, or email us.</li>

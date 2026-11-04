@@ -1,13 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { canSeeSection } from '@/features/admin/AdminNav'
 import { useViewerRole } from '@/features/admin/useViewerRole'
+import { AGE_INPUT, AGE_MAX, AGE_MIN } from '@/lib/age'
 import {
+  ageEditOf,
   deleteAdminUser,
   isUnknownFieldError,
   loadAdminUsers,
@@ -22,7 +24,10 @@ import {
 const FILTERS: AdminUserStatusFilter[] = ['AGE_BLOCKED', 'BLOCKED_OR_SUSPENDED', 'ACTIVE']
 const DELETE_WORD = 'DELETE'
 
-/** Platform admins: search accounts, correct a date of birth, block, suspend, unblock, or delete. */
+/**
+ * Platform admins: search accounts, correct an age (or the date of birth of an account that has one, lvn-backend
+ * ADR-0104), block, suspend, unblock, or delete.
+ */
 export function AdminUsers() {
   const t = useTranslations('adminUsers')
   const { role, ready } = useViewerRole()
@@ -77,7 +82,10 @@ export function AdminUsers() {
             <article className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">
               <div className="min-w-0">
                 <p className="font-semibold">{user.displayName}</p>
-                <p className="text-sm text-muted">{user.email} · {t(`status.${user.accountStatus}`)}</p>
+                <p className="text-sm text-muted">
+                  {user.email} · {t(`status.${user.accountStatus}`)}
+                  {user.age !== null ? ` · ${t('ageInList', { age: user.age })}` : null}
+                </p>
               </div>
               <Button size="sm" variant="secondary" onClick={() => setOpenUser(user)}>{t('open')}</Button>
             </article>
@@ -99,18 +107,22 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [dob, setDob] = useState('')
+  const [age, setAge] = useState('')
   const [reason, setReason] = useState('')
   const [blockReason, setBlockReason] = useState('')
   const [until, setUntil] = useState('')
   const [deleteReason, setDeleteReason] = useState('')
   const [confirmText, setConfirmText] = useState('')
-  const [outcome, setOutcome] = useState<AgeOutcome | null>(null)
+  // After a save: the age check unblocked the account, or left it under age; otherwise 'saved'.
+  const [outcome, setOutcome] = useState<AgeOutcome | 'saved' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const ageHintId = useId()
   useEffect(() => {
     setName(user?.displayName ?? '')
     setEmail(user?.email ?? '')
     setDob(user?.dateOfBirth ?? '')
+    setAge(user?.age != null ? String(user.age) : '')
     setReason('')
     setBlockReason('')
     setUntil('')
@@ -124,19 +136,27 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
   const save = async () => {
     if (!user) return
     if (!reason.trim()) return setError(t('reasonNeeded'))
+    // Only a changed age, or a changed date of birth on an account that has one (lvn-backend ADR-0104).
+    const ageEdit = ageEditOf(user, { age, dateOfBirth: dob })
+    if (ageEdit === 'invalid') return setError(t('ageInvalid', { min: AGE_MIN, max: AGE_MAX }))
+    // The API runs the age check on a new age or date, and on any save of an age-blocked account.
+    const wasBlocked = user.accountStatus === 'AGE_BLOCKED'
+    const ageChecked = 'age' in ageEdit || 'dateOfBirth' in ageEdit || wasBlocked
     setBusy(true)
     setError(null)
+    setOutcome(null)
     try {
-      const result = await updateAdminUser({ userId: user.id, reason: reason.trim(), displayName: name.trim(), email: email.trim(), dateOfBirth: dob })
+      const result = await updateAdminUser({ userId: user.id, reason: reason.trim(), displayName: name.trim(), email: email.trim(), ...ageEdit })
       if (result.problem) setError(result.problem)
       else {
         if (result.user) {
           setName(result.user.displayName)
           setEmail(result.user.email)
           setDob(result.user.dateOfBirth ?? '')
+          setAge(result.user.age != null ? String(result.user.age) : '')
           onUser(result.user)
         }
-        setOutcome(result.outcome)
+        setOutcome(ageChecked && result.outcome === 'still_under_age' ? 'still_under_age' : wasBlocked && result.outcome === 'unblocked' ? 'unblocked' : 'saved')
         onChanged()
       }
     } catch (e) {
@@ -209,16 +229,30 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
               <span className="font-medium">{t('email')}</span>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">{t('dob')}</span>
-              <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-            </label>
+            {/* A stored date of birth decides the age, so it is what gets corrected; other accounts give an age. */}
+            {user.dateOfBirth !== null ? (
+              <div className="flex flex-col gap-1 text-sm">
+                <label className="flex flex-col gap-1">
+                  <span className="font-medium">{t('dob')}</span>
+                  <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} aria-describedby={user.age !== null ? ageHintId : undefined} />
+                </label>
+                {user.age !== null ? <p id={ageHintId} className="text-xs text-muted">{t('dobHint', { age: user.age })}</p> : null}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 text-sm">
+                <label className="flex flex-col gap-1">
+                  <span className="font-medium">{t('age')}</span>
+                  <Input {...AGE_INPUT} className="max-w-32" value={age} onChange={(e) => setAge(e.target.value)} aria-describedby={ageHintId} />
+                </label>
+                <p id={ageHintId} className="text-xs text-muted">{t('ageHint')}</p>
+              </div>
+            )}
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('reason')}</span>
               <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonHint')} />
             </label>
             <Button type="submit" disabled={busy}>{busy ? t('saving') : t('save')}</Button>
-            {outcome ? <p role="status" className="text-sm font-medium">{outcome === 'unblocked' ? t('unblocked') : t('stillUnderAge')}</p> : null}
+            {outcome ? <p role="status" className="text-sm font-medium">{outcome === 'unblocked' ? t('unblocked') : outcome === 'still_under_age' ? t('stillUnderAge') : t('saved')}</p> : null}
           </form>
           <form className="flex flex-col gap-3 border-t border-border pt-4" onSubmit={(e) => e.preventDefault()}>
             <label className="flex flex-col gap-1 text-sm">
