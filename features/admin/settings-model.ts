@@ -1,6 +1,6 @@
 /** Client checks for platform settings, including the floor the product never crosses. */
 
-export const SETTING_CATEGORIES = ['auth', 'verification', 'uploads', 'ai', 'search', 'accounts'] as const
+export const SETTING_CATEGORIES = ['auth', 'verification', 'uploads', 'ai', 'search', 'accounts', 'legal'] as const
 
 export const ACCOUNT_MINIMUM_AGE_KEY = 'account_minimum_age'
 export const MINIMUM_ACCOUNT_AGE = 18
@@ -23,10 +23,13 @@ export type SettingShape = {
 
 export type SettingIssue = 'boolean' | 'required' | 'integer' | 'min' | 'max' | 'maxLength' | 'pattern' | 'minimumAge'
 
-/** Turning these off, turning the allowlist on, or changing an age, is confirmed before it is saved. */
+/**
+ * Turning these off, turning the allowlist on, or changing an age or the terms version, is confirmed before it is
+ * saved. A new terms version asks every signed-in person to accept again (lvn-backend ADR-0103).
+ */
 const RISKY_WHEN_OFF = new Set(['google_sign_in', 'student_id_verification', 'uploads_enabled', 'ai_public_pipeline', 'search_hybrid'])
 const RISKY_WHEN_ON = new Set(['access_allowlist_enabled'])
-const RISKY_WHEN_CHANGED = new Set([ACCOUNT_MINIMUM_AGE_KEY, 'digital_consent_age'])
+const RISKY_WHEN_CHANGED = new Set([ACCOUNT_MINIMUM_AGE_KEY, 'digital_consent_age', 'terms_version'])
 
 /** The lowest integer the control accepts. account_minimum_age is never below 18, whatever the server sent. */
 export function effectiveIntegerMin(setting: SettingShape): number | null {

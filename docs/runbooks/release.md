@@ -30,7 +30,9 @@ first deploy: the web's deploy refuses until `/opt/lvn/lvn.sh` exists.
   deploy. CI's "launch readiness" job shows the same error on every push.
 - `config/legal.ts` → `RETENTION` matches reality: the backup schedule, log retention and Google Analytics → Admin →
   Data retention.
-- `TERMS_VERSION` is bumped in both repositories once the legal text is final ([launch.md](../launch.md)).
+- The final legal text is published: its version is the last entry of `PUBLISHED_TERMS_VERSIONS`
+  (`features/legal/documents.ts`). The API's `terms_published_versions` lists the same versions, and
+  /admin/settings → Legal has it in effect ([launch.md](../launch.md), lvn-backend ADR-0103).
 - Production has a VM again, and the GitHub environments exist in both repositories ([infra.md §4](infra.md#4-deploy-credentials)).
 
 ## Releasing

@@ -2,16 +2,19 @@ import { FileText } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { LEGAL_FIELD_LABELS, missingLegalFields } from '@/config/legal'
-import { LEGAL_DOCUMENTS, TERMS_VERSION, type LegalDocument } from './documents'
+import { LEGAL_DOCUMENTS, type LegalDocument } from './documents'
+import { getDisplayedTermsVersion } from './terms-version'
 
 /**
  * The frame of the Terms, the Privacy Policy, the content licence and the Grievance page (§15.2): the version people
- * accepted, links between them, and — until the owner's lawyer has reviewed them — a banner saying they are drafts and
- * which of the operator's details (config/legal.ts) are still blank. A production build refuses while any is blank.
+ * accept (the API's Query.termsVersion, refreshed every minute; lvn-backend ADR-0103), links between them, and — until
+ * the owner's lawyer has reviewed them — a banner saying they are drafts and which of the operator's details
+ * (config/legal.ts) are still blank. A production build refuses while any is blank.
  */
-export function LegalPage({ doc, children }: { doc: LegalDocument; children: ReactNode }) {
+export async function LegalPage({ doc, children }: { doc: LegalDocument; children: ReactNode }) {
   const current = LEGAL_DOCUMENTS[doc]
   const missing = missingLegalFields()
+  const version = await getDisplayedTermsVersion()
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10">
       <nav aria-label="Legal" className="flex flex-wrap gap-2 text-sm">
@@ -26,7 +29,7 @@ export function LegalPage({ doc, children }: { doc: LegalDocument; children: Rea
           <FileText className="size-7 text-accent" aria-hidden />
           {current.title}
         </h1>
-        <p className="text-sm text-muted">Version {TERMS_VERSION}</p>
+        <p className="text-sm text-muted">Version {version}</p>
       </header>
       <p role="note" className="rounded-2xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
         Draft for review. This text was written for LearnViaNotes’ owner to review with a lawyer before launch.

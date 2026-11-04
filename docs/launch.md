@@ -114,10 +114,13 @@ emails.
 1. **The legal details** (`config/legal.ts`) are filled in (2026-11-03): courts in Bengaluru, Grievance Officer
    LearnViaNotes Admin at learnvianotes@gmail.com. A `grievance@learnvianotes.in` mailbox
    ([infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)) can replace the address later.
-2. **`TERMS_VERSION`** is bumped to `2026-11-03` in lvn-web (`features/legal/documents.ts`), owner's decision
-   (2026-11-03): the Privacy Policy and Terms changed materially (adults only, Google Analytics, the Grievance page),
-   so every account accepts them again. lvn-backend (`contexts/users/src/domain/rules.ts`) must get the same value in
-   the same release: the API's version is the one people accept.
+2. **The terms version** is `2026-11-03`, owner's decision (2026-11-03): the Privacy Policy and Terms changed
+   materially (adults only, Google Analytics, the Grievance page), so every account accepts them again. It is the
+   newest entry of `PUBLISHED_TERMS_VERSIONS` in lvn-web (`features/legal/documents.ts`). The version people accept
+   is the API's (lvn-backend ADR-0103), and a platform admin can switch it on /admin/settings → Legal. They can only
+   pick a version that is both on that list and on the API's `terms_published_versions` allowlist (owner default
+   (a); the owner may veto it). Keep the allowlist equal to `PUBLISHED_TERMS_VERSIONS`. The admin card names any
+   version that is on only one of them.
 3. **Which Firebase project is production for the rewrite.**
    - `config/firebase-projects.json` says `learnvianotes-in`: production now uses this new project (owner's decision,
      2026-11-03), not the old site's. Google accounts from the old site's project are not carried over automatically.

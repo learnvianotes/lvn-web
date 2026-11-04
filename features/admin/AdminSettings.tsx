@@ -1,24 +1,27 @@
 'use client'
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
-import { useMutation, useQuery } from '@apollo/client/react'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { AdminSettingsDocument, ResetAdminSettingDocument, UpdateAdminSettingDocument, type AdminSettingsQuery } from '@/graphql/generated/graphql'
+import { AdminSettingsDocument, AdminTermsStatusDocument, ResetAdminSettingDocument, UpdateAdminSettingDocument, type AdminSettingsQuery } from '@/graphql/generated/graphql'
 import { AiCheckSettingsCard } from '@/features/admin/AiCheckSettings'
+import { TermsVersionCard } from '@/features/admin/AdminTermsVersion'
 import { STUDENT_ID_AI_SETTING_KEYS } from '@/lib/platform-api'
 import { microUsdToUsd } from '@/features/admin/metrics'
 import { effectiveIntegerMin, groupSettings, isRiskyChange, validateSetting, type SettingIssue, type SettingShape } from '@/features/admin/settings-model'
+import { TERMS_VERSION_KEY } from '@/features/admin/terms-model'
 import { cn } from '@/lib/cn'
 
 type Setting = AdminSettingsQuery['adminSettings'][number]
 
 export function AdminSettings() {
   const t = useTranslations('adminSettings')
+  const client = useApolloClient()
   const { data, error, previousData, refetch } = useQuery(AdminSettingsDocument, { fetchPolicy: 'cache-and-network' })
   // Keep the last list while a save refetches, so a draft in another row is not thrown away.
   const allSettings = data?.adminSettings ?? previousData?.adminSettings
@@ -44,6 +47,12 @@ export function AdminSettings() {
   }, [categoryKey])
   if (CombinedGraphQLErrors.is(error) && error.errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return <p className="text-muted">{t('notAllowed')}</p>
   if (!settings) return error ? <Alert tone="error">{t('failed')}</Alert> : <p className="text-muted">{t('loading')}</p>
+
+  // The published-versions allowlist decides what the terms version card offers, so a save there refreshes it too.
+  const refreshLegal = () => {
+    void refetch()
+    void client.refetchQueries({ include: [AdminTermsStatusDocument] })
+  }
 
   const reveal = (category: string) => {
     setClosed((current) => {
@@ -113,7 +122,11 @@ export function AdminSettings() {
                 <ul id={`settings-panel-${group.category}`} className="flex flex-col gap-3">
                   {group.settings.map((setting) => (
                     <li key={setting.key}>
-                      <SettingRow setting={setting} onSaved={() => void refetch()} />
+                      {setting.key === TERMS_VERSION_KEY ? (
+                        <TermsVersionCard overridden={setting.overridden} onSaved={() => void refetch()} />
+                      ) : (
+                        <SettingRow setting={setting} onSaved={group.category === 'legal' ? refreshLegal : () => void refetch()} />
+                      )}
                     </li>
                   ))}
                 </ul>

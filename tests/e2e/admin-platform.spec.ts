@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { mockApi, USER } from './support/notes-api'
 
@@ -388,4 +389,66 @@ test('the profile can opt out of usage analytics', async ({ page }) => {
   await choice.click()
   await expect(choice).toHaveAttribute('aria-checked', 'true')
   expect(calls.find((call) => call.op === 'SetAnalyticsOptOut')?.variables).toEqual({ optOut: true })
+})
+
+test('an admin switches the terms version only after confirming everyone is asked again', async ({ page }, info) => {
+  test.skip(info.project.name === 'phone', 'the form is the same')
+  // lvn-backend ADR-0103: the API allows 2026-10-08 and 2026-11-03, the versions this web build publishes.
+  const constraints = { __typename: 'AdminSettingConstraints', min: null, max: null, maxLength: 10, pattern: '^\\d{4}-\\d{2}-\\d{2}$', nullable: false }
+  let current = '2026-11-03'
+  let source = 'DEFAULT'
+  const catalog = () => [
+    { __typename: 'AdminSetting', key: 'terms_version', type: 'STRING', category: 'legal', description: 'Version of the Terms people accept.', value: current, overridden: source === 'SETTING', updatedAt: '2026-11-03T00:00:00.000Z', constraints },
+    {
+      __typename: 'AdminSetting',
+      key: 'terms_published_versions',
+      type: 'STRING',
+      category: 'legal',
+      description: 'Terms versions whose text the web has published.',
+      value: '2026-10-08,2026-11-03',
+      overridden: false,
+      updatedAt: '2026-11-03T00:00:00.000Z',
+      constraints: { ...constraints, maxLength: 1000, pattern: '^\\d{4}-\\d{2}-\\d{2}(,\\d{4}-\\d{2}-\\d{2})*$' },
+    },
+  ]
+  const calls = await mockApi(
+    page,
+    {
+      AdminSettings: () => ({ adminSettings: catalog() }),
+      AdminTermsStatus: () => ({ adminTermsStatus: { __typename: 'AdminTermsStatus', current, source, publishedVersions: ['2026-10-08', '2026-11-03'], acceptedCurrent: 12, acceptedOlder: null, lastChange: null } }),
+      UpdateAdminSetting: (v) => {
+        const input = v.input as { key: string; value: string }
+        current = input.value
+        source = 'SETTING'
+        return { updateAdminSetting: { __typename: 'AdminSettingPayload', setting: catalog()[0], ...none } }
+      },
+    },
+    { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' },
+  )
+
+  await page.goto('/admin/settings#legal')
+  await expect(page.getByRole('heading', { level: 2, name: 'Legal' })).toBeVisible()
+  const card = page.getByRole('article', { name: 'Terms version', exact: true })
+  await expect(card.getByText('Fewer than 5')).toBeVisible()
+  await expect(card.getByText('12', { exact: true })).toBeVisible()
+  await expect(page.getByRole('article', { name: 'Published terms versions' })).toBeVisible()
+  const { violations } = await new AxeBuilder({ page }).include('#legal').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+  expect(violations.map((v) => v.id)).toEqual([])
+
+  const picker = card.getByLabel('Version people accept')
+  await expect(picker).toHaveValue('2026-11-03')
+  await picker.selectOption('2026-10-08')
+  await card.getByRole('button', { name: 'Switch to 2026-10-08' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Switch the terms to 2026-10-08?' })
+  await expect(dialog.getByText('Every signed-in person will be asked to accept the Terms, Privacy Policy and content licence again')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(dialog).toBeHidden()
+  expect(calls.some((call) => call.op === 'UpdateAdminSetting')).toBe(false)
+
+  await card.getByRole('button', { name: 'Switch to 2026-10-08' }).click()
+  await dialog.getByRole('button', { name: 'Switch to 2026-10-08' }).click()
+  await expect.poll(() => calls.find((call) => call.op === 'UpdateAdminSetting')?.variables).toEqual({ input: { key: 'terms_version', value: '2026-10-08' } })
+  await expect(card.getByText('Switched to 2026-10-08.')).toBeVisible()
+  await expect(card.getByRole('button', { name: 'Use the server default' })).toBeVisible()
+  await expect(picker).toHaveValue('2026-10-08')
 })

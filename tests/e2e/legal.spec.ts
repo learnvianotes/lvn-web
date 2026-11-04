@@ -10,7 +10,9 @@ import { mockApi } from './support/notes-api'
 test('the three documents are public, versioned and linked from every page', async ({ page }) => {
   await page.goto('/legal/terms')
   await expect(page.getByRole('heading', { level: 1, name: 'Terms of Service' })).toBeVisible()
-  await expect(page.getByText(`Version ${TERMS_VERSION}`)).toBeVisible()
+  // The version in effect is the API's (tests/e2e/support/ssr-api.mjs answers 2026-10-08), not this build's newest.
+  expect(TERMS_VERSION).not.toBe('2026-10-08')
+  await expect(page.getByText('Version 2026-10-08')).toBeVisible()
   await expect(page.getByRole('note')).toContainText('Draft for review')
   await page.getByRole('navigation', { name: 'Legal' }).first().getByRole('link', { name: 'Privacy Policy' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeVisible()
