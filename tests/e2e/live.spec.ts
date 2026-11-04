@@ -274,10 +274,14 @@ test('a new learner opens their own profile from their account, rendered by the 
   await expect(page.getByText('No public notes yet.')).toBeVisible()
 })
 
-test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {
-  const { TERMS_VERSION } = await import('../../features/legal/documents')
+test('the documents the web shows are the version the API asks people to accept', async ({ request, page }) => {
+  // An admin chooses the version (lvn-backend ADR-0103), only among those this web build publishes.
+  const { isPublishedTermsVersion } = await import('../../features/legal/documents')
   const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })
-  expect(((await res.json()) as { data: { termsVersion: string } }).data.termsVersion).toBe(TERMS_VERSION)
+  const version = ((await res.json()) as { data: { termsVersion: string } }).data.termsVersion
+  expect(isPublishedTermsVersion(version)).toBe(true)
+  await page.goto('/legal/terms')
+  await expect(page.getByText(`Version ${version}`)).toBeVisible()
 })
 
 /** The API as a teacher made for the test would call it; and SQL on the local environment's database (E2E_VM). */

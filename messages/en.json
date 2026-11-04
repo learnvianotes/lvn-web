@@ -3188,7 +3188,7 @@
   },
   "adminSettings": {
     "title": "Configuration",
-    "lead": "How sign-in, verification, uploads, AI, search and accounts behave. A custom value replaces the server default until you reset it.",
+    "lead": "How sign-in, verification, uploads, AI, search, accounts and the legal terms behave. A custom value replaces the server default until you reset it.",
     "jump": "On this page",
     "loading": "Loading…",
     "failed": "Settings could not load. Try again.",
@@ -3199,7 +3199,8 @@
       "uploads": "Uploads",
       "ai": "AI",
       "search": "Search",
-      "accounts": "Accounts"
+      "accounts": "Accounts",
+      "legal": "Legal"
     },
     "keys": {
       "google_sign_in": "Google sign-in",
@@ -3216,7 +3217,9 @@
       "search_timeout_ms": "Search timeout",
       "account_minimum_age": "Minimum account age",
       "digital_consent_age": "Digital consent age",
-      "access_allowlist_enabled": "Beta allowlist"
+      "access_allowlist_enabled": "Beta allowlist",
+      "terms_version": "Terms version",
+      "terms_published_versions": "Published terms versions"
     },
     "default": "Default",
     "custom": "Custom",
@@ -3255,8 +3258,62 @@
       "access_allowlist_enabled": "Turn on the beta allowlist? Only emails on the list will be able to sign in or create an account.",
       "account_minimum_age": "Change the minimum account age to {value}? People younger than that cannot register. It can never be below 18.",
       "digital_consent_age": "Change the digital consent age to {value}?",
-      "generic": "Save this change to {name}?"
+      "generic": "Save this change to {name}?",
+      "terms_version": "Change the terms version to {value}? Every signed-in person will be asked to accept the Terms, Privacy Policy and content licence again."
     }
+  },
+  "adminTerms": {
+    "title": "Terms version",
+    "lead": "The version of the Terms of Service, Privacy Policy and content licence that people accept. The text ships with the web app, so only versions this web build publishes and the API allows can be chosen.",
+    "loading": "Loading…",
+    "failed": "The terms version could not load. Try again.",
+    "notAllowed": "Only platform admins change the terms version.",
+    "current": "In effect",
+    "source": "Comes from",
+    "sources": {
+      "SETTING": "Custom",
+      "ENV": "Server environment",
+      "DEFAULT": "Default"
+    },
+    "sourceHints": {
+      "SETTING": "Saved on this page.",
+      "ENV": "The server’s TERMS_VERSION variable.",
+      "DEFAULT": "The API’s built-in version."
+    },
+    "acceptedCurrent": "Accepted {version}",
+    "acceptedOlder": "Accepted an older version (asked again)",
+    "fewerThan": "Fewer than {n}",
+    "lastChange": "Last change",
+    "changed": "{who} changed it",
+    "changedFrom": "{who} changed it from {previous}",
+    "removedAccount": "a removed account",
+    "neverChanged": "Not changed on this page yet.",
+    "currentUnpublished": "{version} is in effect, but this web build has no text for it, so the legal pages show {shown}. Switch to a published version, or deploy the web build that publishes {version}.",
+    "webOnly": "{count, plural, one {Published on the web but not allowed by the API yet: {versions}. Add it} other {Published on the web but not allowed by the API yet: {versions}. Add them}} to “Published terms versions” below to offer {count, plural, one {it} other {them}}.",
+    "apiOnly": "{count, plural, one {Allowed by the API but not published by this web build: {versions}. It} other {Allowed by the API but not published by this web build: {versions}. They}} cannot be chosen here.",
+    "noneSelectable": "No version is both published on the web and allowed by the API. Check “Published terms versions” below.",
+    "choose": "Version people accept",
+    "chooseHint": "Only versions published on the web and listed in “Published terms versions”. Other API servers follow within about 15 seconds; the legal pages within a minute.",
+    "choosePlaceholder": "Choose a version",
+    "option": "{version}: {summary}",
+    "optionCurrent": "{version} (in effect): {summary}",
+    "switch": "Switch version",
+    "switchTo": "Switch to {version}",
+    "reset": "Use the server default",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "confirmTitle": "Switch the terms to {version}?",
+    "confirmSwitch": "People will accept version {version} instead of {current}, at sign-up and when asked again.",
+    "confirmSummary": "What changed: {summary}",
+    "confirmEveryone": "Every signed-in person will be asked to accept the Terms, Privacy Policy and content licence again before they can keep using LearnViaNotes.",
+    "confirmEveryoneReset": "If the default is a different version, every signed-in person will be asked to accept the Terms, Privacy Policy and content licence again before they can keep using LearnViaNotes.",
+    "confirmCounts": "People who accepted {current}: {accepted}.",
+    "confirmAction": "Switch to {version}",
+    "confirmResetTitle": "Use the server default version?",
+    "confirmReset": "This removes the version saved here ({current}). The server’s TERMS_VERSION variable applies, else the API’s built-in version.",
+    "confirmResetAction": "Use the default",
+    "switched": "Switched to {version}. Signed-in people are asked to accept it.",
+    "resetDone": "The server default applies now."
   },
   "adminPlans": {
     "title": "Plans & pricing",

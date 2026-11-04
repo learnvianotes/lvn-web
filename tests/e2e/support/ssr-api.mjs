@@ -30,6 +30,9 @@ const answer = (query, variables) => {
     return { search: { notes: graphs ? notes.slice(0, 1).map((n) => ({ note: { id: n.id, title: n.title, slug: n.slug, kind: n.kind ?? 'NOTE', publishedAt: n.publishedAt, owner: { displayName: n.owner?.displayName ?? 'Ravi Kumar' } } })) : [] } }
   }
   if (query.includes('query TopicResources(')) return { resources: { edges: [] } }
+  // The terms version an admin chose (lvn-backend ADR-0103): an older published one, so the legal pages' label is
+  // seen to come from the API rather than this build's newest version (tests/e2e/legal.spec.ts).
+  if (query.includes('query LegalTermsVersion')) return { termsVersion: '2026-10-08' }
   // One-click unsubscribe (lvn-backend ADR-0050): the token "good" turns off class emails; anything else is refused.
   if (query.includes('unsubscribeEmail(')) {
     return { unsubscribeEmail: variables.token === 'good' ? { kind: 'CLASSROOM_POST', userErrors: [] } : { kind: null, userErrors: [{ message: 'This unsubscribe link is not valid.' }] } }

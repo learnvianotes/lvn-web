@@ -138,6 +138,24 @@ mutation ResetAdminSetting($key: String!) {
   }
 }
 
+# The terms version in effect, where it comes from, the versions the API allows and who accepted it (lvn-backend
+# ADR-0103). Changed with UpdateAdminSetting / ResetAdminSetting on key terms_version.
+query AdminTermsStatus {
+  adminTermsStatus {
+    current
+    source
+    publishedVersions
+    acceptedCurrent
+    acceptedOlder
+    lastChange {
+      actorId
+      actorDisplayName
+      at
+      previous
+    }
+  }
+}
+
 fragment AdminPlanFields on AdminPlan {
   id
   code
