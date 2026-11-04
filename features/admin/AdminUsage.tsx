@@ -1,85 +1,156 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import type { MetricsInterval } from '@/graphql/generated/graphql'
 import { canSeeSection } from '@/features/admin/AdminNav'
 import { useViewerRole } from '@/features/admin/useViewerRole'
-import { loadUsageSummary, loadUserTimeline, PlatformError, type TimelineEntry, type UsageSummary } from '@/lib/platform-api'
+import {
+  ContentPanel,
+  EngagementPanel,
+  FunnelPanel,
+  GrowthPanel,
+  OverviewPanel,
+  RetentionPanel,
+  SubjectsPanel,
+  USAGE_TABS,
+  VerificationPanel,
+  type PanelProps,
+  type UsageTab,
+} from '@/features/admin/usage/panels'
+import { lastDays, rangeIssue, type DayRange, type RangeIssue } from '@/features/admin/usage/shape'
+import { loadUserTimeline, type TimelineEntry } from '@/lib/platform-api'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const PRESETS = [7, 30, 90] as const
 
-/** DAU, WAU and MAU, the features and actions people use, and one person's timeline. */
+const PANELS: Record<UsageTab, (props: PanelProps) => ReactNode> = {
+  overview: OverviewPanel,
+  growth: GrowthPanel,
+  engagement: EngagementPanel,
+  content: ContentPanel,
+  subjects: SubjectsPanel,
+  retention: RetentionPanel,
+  verification: VerificationPanel,
+  funnel: FunnelPanel,
+}
+
+/** Tabs that draw a series per day or week; the others are totals for the range. */
+const WITH_INTERVAL: ReadonlySet<UsageTab> = new Set(['growth', 'engagement'])
+
+/**
+ * The admin usage dashboard: aggregate counts in tabs over an IST date range, a CSV of what each tab shows, and one
+ * person's timeline behind an explicit "Look up a user" (lvn-backend ADR-0105, ADR-0106). Opted-out accounts are
+ * never counted and any breakdown group under 5 people is hidden by the API.
+ */
 export function AdminUsage() {
   const t = useTranslations('adminUsage')
-  const format = useFormatter()
   const { role, ready } = useViewerRole()
-  const [summary, setSummary] = useState<UsageSummary | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const load = useCallback(async () => {
-    try {
-      setSummary(await loadUsageSummary())
-      setError(null)
-    } catch (e) {
-      setError(e instanceof PlatformError && e.forbidden ? t('notAllowed') : t('failed'))
-    }
-  }, [t])
-  useEffect(() => {
-    if (ready && canSeeSection(role, 'usage')) void load()
-  }, [ready, role, load])
+  const [tab, setTab] = useState<UsageTab>('overview')
+  const [range, setRange] = useState<DayRange>(() => lastDays(30))
+  const [draft, setDraft] = useState<DayRange>(range)
+  const [issue, setIssue] = useState<RangeIssue | null>(null)
+  const [interval, setBucket] = useState<MetricsInterval>('DAY')
+  const [lookUp, setLookUp] = useState(false)
   if (!ready) return <p className="text-muted">{t('loading')}</p>
   if (!canSeeSection(role, 'usage')) return <p className="text-muted">{t('notAllowed')}</p>
+
+  const apply = (next: DayRange) => {
+    const problem = rangeIssue(next)
+    setIssue(problem)
+    if (!problem) {
+      setDraft(next)
+      setRange(next)
+    }
+  }
+  const Active = PANELS[tab]
+  const showsRange = tab !== 'retention'
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <Button type="button" variant="secondary" size="sm" aria-expanded={lookUp} aria-controls="user-timeline-section" onClick={() => setLookUp((v) => !v)}>
+            {lookUp ? t('hideLookUp') : t('lookUpUser')}
+          </Button>
+        </div>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      {summary ? (
-        <>
-          <dl className="grid gap-3 sm:grid-cols-3">
-            <Stat label={t('dau')} value={format.number(summary.dau)} />
-            <Stat label={t('wau')} value={format.number(summary.wau)} />
-            <Stat label={t('mau')} value={format.number(summary.mau)} />
-          </dl>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Rank title={t('pages')} rows={summary.topFeatures} empty={t('noPages')} />
-            <Rank title={t('features')} rows={summary.topEvents} empty={t('noFeatures')} />
+
+      {lookUp ? <Timeline /> : null}
+
+      <form
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4"
+        aria-label={t('range.label')}
+        onSubmit={(e) => {
+          e.preventDefault()
+          apply(draft)
+        }}
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">{t('range.from')}</span>
+            <Input type="date" value={draft.from} max={draft.to || undefined} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} disabled={!showsRange} />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">{t('range.to')}</span>
+            <Input type="date" value={draft.to} min={draft.from || undefined} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} disabled={!showsRange} />
+          </label>
+          <Button type="submit" size="sm" disabled={!showsRange}>{t('range.apply')}</Button>
+          <div className="flex flex-wrap gap-1" role="group" aria-label={t('range.presets')}>
+            {PRESETS.map((days) => (
+              <Button key={days} type="button" size="sm" variant="ghost" disabled={!showsRange} onClick={() => apply(lastDays(days))}>
+                {t('range.last', { days })}
+              </Button>
+            ))}
           </div>
-        </>
-      ) : null}
-      <Timeline />
-    </div>
-  )
-}
+          {WITH_INTERVAL.has(tab) ? (
+            <div className="flex gap-1" role="group" aria-label={t('interval.label')}>
+              {(['DAY', 'WEEK'] as const).map((value) => (
+                <Button key={value} type="button" size="sm" variant={interval === value ? 'primary' : 'secondary'} aria-pressed={interval === value} onClick={() => setBucket(value)}>
+                  {t(`interval.${value}`)}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <p className="text-xs text-muted">{showsRange ? t('range.shown', { from: range.from, to: range.to }) : t('range.notUsed')}</p>
+        {issue ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{t(`range.${issue}`)}</p> : null}
+      </form>
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
-      <dt className="text-sm text-muted">{label}</dt>
-      <dd className="text-3xl font-extrabold tracking-tight">{value}</dd>
-    </div>
-  )
-}
-
-function Rank({ title, rows, empty }: { title: string; rows: { name: string; count: number }[]; empty: string }) {
-  const format = useFormatter()
-  const id = title.toLowerCase().replace(/[^a-z]+/g, '-')
-  return (
-    <section aria-labelledby={id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
-      <h2 id={id} className="font-semibold">{title}</h2>
-      {!rows.length ? <p className="text-sm text-muted">{empty}</p> : null}
-      <ol className="flex flex-col gap-1">
-        {rows.map((row) => (
-          <li key={row.name} className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="truncate">{row.name}</span>
-            <span className="font-medium">{format.number(row.count)}</span>
-          </li>
+      <div role="tablist" aria-label={t('tabsLabel')} className="flex gap-1 overflow-x-auto border-b border-border">
+        {USAGE_TABS.map((key) => (
+          <button
+            key={key}
+            id={`usage-tab-${key}`}
+            role="tab"
+            type="button"
+            aria-selected={key === tab}
+            aria-controls="usage-tabpanel"
+            tabIndex={key === tab ? 0 : -1}
+            onClick={() => setTab(key)}
+            onKeyDown={(e) => {
+              const i = USAGE_TABS.indexOf(key)
+              const next = e.key === 'ArrowRight' ? USAGE_TABS[(i + 1) % USAGE_TABS.length] : e.key === 'ArrowLeft' ? USAGE_TABS[(i - 1 + USAGE_TABS.length) % USAGE_TABS.length] : null
+              if (next) {
+                e.preventDefault()
+                setTab(next)
+                document.getElementById(`usage-tab-${next}`)?.focus()
+              }
+            }}
+            className={`-mb-px min-h-11 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-semibold ${key === tab ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-fg'}`}
+          >
+            {t(`tab.${key}`)}
+          </button>
         ))}
-      </ol>
-    </section>
+      </div>
+      <section id="usage-tabpanel" role="tabpanel" aria-labelledby={`usage-tab-${tab}`} className="flex flex-col gap-4">
+        <Active range={range} interval={interval} />
+      </section>
+    </div>
   )
 }
 
@@ -105,7 +176,7 @@ function Timeline() {
     }
   }
   return (
-    <section aria-labelledby="user-timeline" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
+    <section id="user-timeline-section" aria-labelledby="user-timeline" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <h2 id="user-timeline" className="font-semibold">{t('timeline')}</h2>
       <p className="text-sm text-muted">{t('timelineLead')}</p>
       <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(e) => { e.preventDefault(); void look() }}>

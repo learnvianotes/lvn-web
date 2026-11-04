@@ -1,0 +1,201 @@
+# Admin usage dashboard (/admin/usage): aggregates from lvn-backend #62/#63 (ADR-0105, ADR-0106). Counts only; any
+# breakdown group under 5 people is left out by the API and counted in hiddenSmallGroups.
+
+fragment AdminRange on AdminMetricsRange {
+  firstDay
+  lastDay
+  timeZone
+}
+
+query AdminUsageOverview($from: DateTime, $to: DateTime) {
+  adminMetrics(from: $from, to: $to) {
+    generatedAt
+    users {
+      total
+      newLast7Days
+      newLast30Days
+      active
+    }
+  }
+  adminEngagement(from: $from, to: $to, interval: DAY) {
+    dau
+    wau
+    mau
+    stickiness
+    range {
+      ...AdminRange
+    }
+  }
+  adminGrowth(from: $from, to: $to, interval: DAY) {
+    totals {
+      signUps
+      verifications
+    }
+    series {
+      date
+      signUps
+    }
+  }
+}
+
+query AdminUsageGrowth($from: DateTime, $to: DateTime, $interval: MetricsInterval) {
+  adminGrowth(from: $from, to: $to, interval: $interval) {
+    generatedAt
+    interval
+    hiddenSmallGroups
+    range {
+      ...AdminRange
+    }
+    totals {
+      signUps
+      emailVerified
+      registrationsCompleted
+      verifications
+    }
+    series {
+      date
+      signUps
+      emailVerified
+      registrationsCompleted
+      verifications
+    }
+    signUpMethods {
+      method
+      users
+    }
+  }
+}
+
+query AdminUsageEngagement($from: DateTime, $to: DateTime, $interval: MetricsInterval) {
+  adminEngagement(from: $from, to: $to, interval: $interval) {
+    generatedAt
+    interval
+    dau
+    wau
+    mau
+    stickiness
+    range {
+      ...AdminRange
+    }
+    series {
+      date
+      activeUsers
+      learningMinutes
+      quizAttempts
+      notesCreated
+      doubtsAsked
+      doubtsAnswered
+    }
+  }
+}
+
+query AdminUsageContent($from: DateTime, $to: DateTime) {
+  adminContentStats(from: $from, to: $to) {
+    generatedAt
+    range {
+      ...AdminRange
+    }
+    notes {
+      created
+      private
+      shared
+      unlisted
+      public
+    }
+    uploads {
+      files
+      bytes
+      hiddenSmallGroups
+      byPurpose {
+        purpose
+        files
+        bytes
+      }
+    }
+    doubts {
+      asked
+      answered
+      resolved
+      answers
+      medianHoursToFirstAnswer
+    }
+    places {
+      groups
+      groupPosts
+      classrooms
+      classroomPosts
+    }
+    sharing {
+      noteShares
+      placeShares
+      saves
+    }
+    scans {
+      clean
+      pending
+      failed
+      infected
+    }
+  }
+}
+
+query AdminUsageSubjects($by: AdminSubjectMetric!, $first: Int, $from: DateTime, $to: DateTime) {
+  adminTopSubjects(by: $by, first: $first, from: $from, to: $to) {
+    generatedAt
+    by
+    hiddenSmallGroups
+    range {
+      ...AdminRange
+    }
+    subjects {
+      subjectId
+      title
+      value
+      users
+    }
+  }
+}
+
+query AdminUsageRetention($weeks: Int) {
+  adminRetention(weeks: $weeks) {
+    generatedAt
+    firstWeek
+    lastWeek
+    timeZone
+    hiddenSmallGroups
+    cohorts {
+      start
+      size
+      returned
+    }
+  }
+}
+
+query AdminUsageVerification($from: DateTime, $to: DateTime) {
+  adminVerificationStats(from: $from, to: $to) {
+    generatedAt
+    range {
+      ...AdminRange
+    }
+    requested
+    approved
+    rejected
+    pending
+    medianHoursToDecision
+    oldestPendingHours
+    hiddenSmallGroups
+    byMethod {
+      method
+      requested
+      approved
+      rejected
+    }
+  }
+}
+
+query AdminUsageFunnel($since: DateTime, $steps: [String!]!) {
+  adminFunnel(since: $since, steps: $steps) {
+    name
+    users
+  }
+}
