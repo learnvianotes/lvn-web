@@ -424,7 +424,7 @@ input AdminSetAccountStandingInput {
 """
 One application setting. `value` is `true` or `false`, a decimal integer, text, or empty when an integer is cleared.
 `overridden` is false when no admin has saved a row: `value` is then the environment variable or the built-in default.
-Categories: auth, verification, uploads, ai, search, accounts.
+Categories: auth, verification, uploads, ai, search, accounts, notes, legal.
 """
 type AdminSetting {
   category: String!
@@ -482,6 +482,47 @@ Bytes are a decimal string. Files are those stored: uploaded, processing, ready 
 type AdminStorageMetrics {
   bytes: String!
   files: Int!
+}
+
+"""The latest save or reset of the terms_version setting."""
+type AdminTermsChange {
+  """Null when that account is gone or deleted."""
+  actorDisplayName: String
+
+  """The admin who made it. Null when that account is gone."""
+  actorId: UUID
+  at: DateTime!
+
+  """The version in effect before the change."""
+  previous: String
+}
+
+"""
+The terms version that signUp, completeRegistration and acceptTerms require (Query.termsVersion), and who has accepted
+it (ADR-0103). Counts are accounts that are not deleted, by their latest Terms acceptance, the same rule as
+User.termsAccepted. A count below 5 is null, so a small group is not shown. Change the version with
+updateAdminSetting(key: "terms_version"); it must be one of publishedVersions (setting terms_published_versions).
+"""
+type AdminTermsStatus {
+  """
+  Accounts whose latest acceptance is the current version. Null when fewer than 5.
+  """
+  acceptedCurrent: Int
+
+  """
+  Accounts whose latest acceptance is another version; they are asked to accept again. Null when fewer than 5.
+  """
+  acceptedOlder: Int
+  current: String!
+
+  """Null when no admin has saved or reset terms_version."""
+  lastChange: AdminTermsChange
+
+  """
+  Versions whose text the web has published, oldest first. Only these may be chosen.
+  """
+  publishedVersions: [String!]!
+  source: TermsVersionSource!
 }
 
 input AdminUpdateUserInput {
@@ -4608,6 +4649,11 @@ type Query {
   adminSettings: [AdminSetting!]!
 
   """
+  Platform admins. The terms version in effect, where it comes from, the published versions and acceptance counts.
+  """
+  adminTermsStatus: AdminTermsStatus!
+
+  """
   Platform admins. Usage between `from` and `to`. Omit them for the last 30 days.
   """
   adminUsage(from: DateTime, to: DateTime): AdminUsageSummary!
@@ -4942,7 +4988,7 @@ type Query {
   teachers(search: String!): [User!]!
 
   """
-  Version of the Terms, Privacy Policy and public-content licence a new account accepts (§15.2)
+  Version of the Terms, Privacy Policy and public-content licence a new account accepts (§15.2). A platform admin can change it (ADR-0103), so read it here instead of hard-coding it.
   """
   termsVersion: String!
 
@@ -6507,6 +6553,15 @@ enum TeacherStatus {
 
   """The TEACHER role"""
   VERIFIED
+}
+
+"""
+Where a value in effect comes from: a saved admin setting, the environment variable, or the built-in default.
+"""
+enum TermsVersionSource {
+  DEFAULT
+  ENV
+  SETTING
 }
 
 """A topic of the notes subgraph"""
