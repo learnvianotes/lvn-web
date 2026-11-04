@@ -64,10 +64,10 @@ test('every page a learner uses has no serious or critical WCAG 2.2 AA violation
   await page.getByLabel('Your name').fill('Axe Learner')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`a11y passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
-  // Every date of birth is confirmed in words before it is sent (lvn-backend ADR-0091).
+  // Every age is confirmed before it is sent (lvn-backend ADR-0091, ADR-0104).
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 

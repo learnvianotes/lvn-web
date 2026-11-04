@@ -38,10 +38,10 @@ test('a new learner signs up with email, keeps the session across a reload, sign
   await page.getByLabel('Your name').fill('Live Test')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
-  // Every date of birth is confirmed in words before it is sent (lvn-backend ADR-0091).
+  // Every age is confirmed before it is sent (lvn-backend ADR-0091, ADR-0104).
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('heading', { name: 'Live Test' })).toBeVisible()
@@ -76,7 +76,7 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByLabel('Your name').fill('Live Writer')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -140,7 +140,7 @@ test('a learner adds a picture to a note: it goes to storage, and is there after
   await page.getByLabel('Your name').fill('Live Picture')
   await page.getByLabel('Email', { exact: true }).fill(`live-media-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -169,7 +169,7 @@ test('a learner reads a PDF beside a new note: a highlight and a passage in the 
   await page.getByLabel('Your name').fill('Live Reader')
   await page.getByLabel('Email', { exact: true }).fill(`live-pdf-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -212,7 +212,7 @@ test('a learner converts a PDF into cards with the real engine, and checks them 
   await page.getByLabel('Your name').fill('Live Converter')
   await page.getByLabel('Email', { exact: true }).fill(`live-convert-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -239,7 +239,7 @@ test('a notification reaches the bell live: the data export the worker builds (l
   await page.getByLabel('Your name').fill('Live Bell')
   await page.getByLabel('Email', { exact: true }).fill(`live-bell-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -260,7 +260,7 @@ test('a new learner opens their own profile from their account, rendered by the 
   await page.getByLabel('Your name').fill('Live Profile')
   await page.getByLabel('Email', { exact: true }).fill(`live-profile-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -299,7 +299,7 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-teacher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Teacher', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-teacher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Teacher', age: 36, acceptedTermsVersion: termsVersion },
   })
   const teacher = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
@@ -311,7 +311,7 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   await page.getByLabel('Your name').fill('Live Learner')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -375,7 +375,7 @@ test('a learner starts a project workspace, a teacher mentors it and answers a d
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-mentor-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Mentor', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-mentor-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Mentor', age: 36, acceptedTermsVersion: termsVersion },
   })
   const mentor = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${mentor.user.id}'`)
@@ -386,7 +386,7 @@ test('a learner starts a project workspace, a teacher mentors it and answers a d
   await page.getByLabel('Your name').fill('Live Builder')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -433,7 +433,7 @@ test('a group’s owner hides a reported post from the Reports tab, and puts it 
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const account = async (who: string, name: string) => {
     const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '2000-01-01', acceptedTermsVersion: termsVersion },
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, age: 26, acceptedTermsVersion: termsVersion },
     })
     sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
     return up.signUp.session
@@ -446,7 +446,7 @@ test('a group’s owner hides a reported post from the Reports tab, and puts it 
   await page.getByLabel('Your name').fill('Live Lead')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -498,7 +498,7 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-owner-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Owner', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-owner-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Owner', age: 31, acceptedTermsVersion: termsVersion },
   })
   const owner = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${owner.user.id}'`)
@@ -510,7 +510,7 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   await page.getByLabel('Your name').fill('Live Joiner')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -540,7 +540,7 @@ test('a platform admin suspends a learner, who reads why on their account and is
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -550,7 +550,7 @@ test('a platform admin suspends a learner, who reads why on their account and is
   await page.getByLabel('Your name').fill('Live Suspended')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -583,14 +583,14 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-voucher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Vouching Teacher ${stamp}`, dateOfBirth: '1985-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-voucher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Vouching Teacher ${stamp}`, age: 41, acceptedTermsVersion: termsVersion },
   })
   const teacher = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
   // People search indexes a new account in the background (lvn-backend ADR-0055), and the teacher picker searches once:
   // on a busy machine the index can lag behind signing the learner up. Wait until the teacher can be found.
   const probe = await api<{ signUp: { session: { accessToken: string } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken } } }', {
-    input: { email: `live-probe-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Probe', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-probe-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Probe', age: 36, acceptedTermsVersion: termsVersion },
   })
   await expect
     .poll(async () => (await api<{ search: { people: { id: string }[] } }>('query ($q: String!) { search(query: $q, scopes: [PEOPLE], first: 8) { people { id } } }', { q: `Vouching Teacher ${stamp}` }, probe.signUp.session.accessToken)).search.people.some((p) => p.id === teacher.user.id), { timeout: 30_000 })
@@ -600,7 +600,7 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   await page.getByLabel('Your name').fill('Live Learner Without Email')
   await page.getByLabel('Email', { exact: true }).fill(`live-novouch-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2004-01-01')
+  await page.getByLabel('Your age').fill('22')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -625,7 +625,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   const word = `zorbix${Date.now().toString(36)}${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } | null; userErrors: { message: string }[] } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } userErrors { message } } }', {
-    input: { email: `live-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', age: 31, acceptedTermsVersion: termsVersion },
   })
   if (!up.signUp.session) throw new Error(`sign-up refused: ${up.signUp.userErrors[0]?.message}`)
   const author = up.signUp.session
@@ -647,7 +647,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await page.getByLabel('Your name').fill('Live Searcher')
   await page.getByLabel('Email', { exact: true }).fill(`live-searcher-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -680,7 +680,7 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.getByLabel('Your name').fill('Live Asker')
   await page.getByLabel('Email', { exact: true }).fill(`live-ai-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -726,7 +726,7 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.getByLabel('Your name').fill('Live Questioner')
   await page.getByLabel('Email', { exact: true }).fill(`live-ask-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -760,7 +760,7 @@ test('a public note gets its study aids from the real model, on its public page 
   const stamp = `${Date.now()}${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } | null; userErrors: { message: string }[] } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } userErrors { message } } }', {
-    input: { email: `live-aids-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Aids', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-aids-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Aids', age: 31, acceptedTermsVersion: termsVersion },
   })
   if (!up.signUp.session) throw new Error(`sign-up refused: ${up.signUp.userErrors[0]?.message}`)
   const author = up.signUp.session
@@ -794,7 +794,7 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.getByLabel('Your name').fill('Live Tidier')
   await page.getByLabel('Email', { exact: true }).fill(`live-tidy-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -825,7 +825,7 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.getByLabel('Your name').fill('Live Cleaner')
   await page.getByLabel('Email', { exact: true }).fill(`live-clean-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -860,7 +860,7 @@ test('a teacher makes a class quiz from a note with the real model and publishes
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const signUp = async (who: string, name: string) =>
-    (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', { input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion } })).signUp.session
+    (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', { input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, age: 36, acceptedTermsVersion: termsVersion } })).signUp.session
   const teacher = await signUp('quiz-teacher', 'Quiz Teacher')
   const student = await signUp('quiz-student', 'Quiz Student')
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
@@ -913,7 +913,7 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
   const password = `live passphrase ${stamp}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email, password, displayName: 'Live AI Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email, password, displayName: 'Live AI Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -969,7 +969,7 @@ test('a learner’s reading reaches the learning events: the note opened and the
   await page.getByLabel('Your name').fill('Live Reader')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -999,7 +999,7 @@ test('a learner reviews the flashcard of their note, and the day shows in their 
   await page.getByLabel('Your name').fill('Live Reviewer')
   await page.getByLabel('Email', { exact: true }).fill(`live-review-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1041,7 +1041,7 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await page.getByLabel('Your name').fill('Live Rhythm')
   await page.getByLabel('Email', { exact: true }).fill(`live-rhythm-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1078,7 +1078,7 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await page.getByLabel('Your name').fill('Live Exams')
   await page.getByLabel('Email', { exact: true }).fill(`live-exams-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1119,7 +1119,7 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-teach-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-teach-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -1128,7 +1128,7 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   await page.getByLabel('Your name').fill(`Live New Teacher ${stamp}`)
   await page.getByLabel('Email', { exact: true }).fill(`live-new-teacher-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('1988-01-01')
+  await page.getByLabel('Your age').fill('38')
   await page.getByText('Teach', { exact: true }).click()
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
@@ -1169,7 +1169,7 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-res-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-res-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -1179,7 +1179,7 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   await page.getByLabel('Your name').fill('Live Reader')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1223,7 +1223,7 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const signUp = async (who: string, name: string) =>
     (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, age: 31, acceptedTermsVersion: termsVersion },
     })).signUp.session
   const admin = await signUp('cat-admin', 'Live Admin')
   const author = await signUp('cat-author', 'Live Author')
@@ -1240,7 +1240,7 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   await page.getByLabel('Your name').fill('Live Catalogue Reader')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1282,7 +1282,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await page.getByLabel('Your name').fill('Live Shell')
   await page.getByLabel('Email', { exact: true }).fill(`live-shell-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1313,7 +1313,7 @@ test('a learner saves someone’s public note and finds it in Bookmarks (lvn-bac
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-saved-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-saved-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', age: 31, acceptedTermsVersion: termsVersion },
   })
   const author = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${author.user.id}'`)
@@ -1327,7 +1327,7 @@ test('a learner saves someone’s public note and finds it in Bookmarks (lvn-bac
   await page.getByLabel('Your name').fill('Live Saver')
   await page.getByLabel('Email', { exact: true }).fill(`live-saver-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1347,7 +1347,7 @@ test('a learner follows a topic and finds someone’s public note on it in For Y
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const verified = async (who: string) => {
     const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Live ${who}`, dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Live ${who}`, age: 31, acceptedTermsVersion: termsVersion },
     })
     sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
     return up.signUp.session.accessToken
@@ -1365,7 +1365,7 @@ test('a learner follows a topic and finds someone’s public note on it in For Y
   await page.getByLabel('Your name').fill('Live Follower')
   await page.getByLabel('Email', { exact: true }).fill(`live-follower-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
@@ -1399,7 +1399,7 @@ test('a group’s admin chooses its picture from this computer; it goes to stora
   const password = `live passphrase ${stamp}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email, password, displayName: 'Live Admin', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email, password, displayName: 'Live Admin', age: 31, acceptedTermsVersion: termsVersion },
   })
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
   const name = `Live picture club ${stamp}`

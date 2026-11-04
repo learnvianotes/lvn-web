@@ -107,6 +107,7 @@ mutation SetAnalyticsOptOut($optOut: Boolean!) {
 fragment AdminManagedUserFields on AdminManagedUser {
   id
   accountStatus
+  age
   createdAt
   dateOfBirth
   displayName

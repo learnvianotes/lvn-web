@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageRefusedAt, birthDateInWords, markAgeRefused, REFUSED_FOR_MS } from '@/lib/age'
+import { AGE_MAX, AGE_MIN, ageRefusedAt, markAgeRefused, parseAge, REFUSED_FOR_MS } from '@/lib/age'
 
 const memory = () => {
   const m = new Map<string, string>()
@@ -31,15 +31,25 @@ describe('the refusal remembered on the device (lvn-backend ADR-0091)', () => {
   })
 })
 
-describe('birthDateInWords', () => {
-  it('spells the date out, so a wrong year stands out', () => {
-    expect(birthDateInWords('2001-03-14')).toBe('14 March 2001')
-    expect(birthDateInWords('2004-02-29')).toBe('29 February 2004')
+describe('parseAge (lvn-backend ADR-0104)', () => {
+  it('reads whole years from 1 to 120, the range the API accepts', () => {
+    expect([AGE_MIN, AGE_MAX]).toEqual([1, 120])
+    expect(parseAge('1')).toEqual({ age: 1 })
+    expect(parseAge('17')).toEqual({ age: 17 })
+    expect(parseAge(' 34 ')).toEqual({ age: 34 })
+    expect(parseAge('120')).toEqual({ age: 120 })
   })
 
-  it('is empty for anything that is not a real date', () => {
-    expect(birthDateInWords('')).toBe('')
-    expect(birthDateInWords('2003-02-29')).toBe('')
-    expect(birthDateInWords('14/03/2001')).toBe('')
+  it('asks for an age when there is none', () => {
+    expect(parseAge('')).toEqual({ problem: 'required' })
+    expect(parseAge('   ')).toEqual({ problem: 'required' })
+  })
+
+  it('refuses anything that is not a whole number', () => {
+    for (const text of ['17.5', '17,5', '1e2', '18 years', 'eighteen', '+18', '0x12', '١٨']) expect(parseAge(text)).toEqual({ problem: 'whole' })
+  })
+
+  it('refuses whole numbers outside 1 to 120', () => {
+    for (const text of ['0', '-3', '121', '999', '99999999999999999999']) expect(parseAge(text)).toEqual({ problem: 'range' })
   })
 })

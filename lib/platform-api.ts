@@ -13,6 +13,7 @@
  */
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import type { DocumentNode } from 'graphql'
+import { parseAge } from '@/lib/age'
 import { apolloClient } from '@/lib/apollo'
 import {
   AdminDeleteUserDocument,
@@ -427,7 +428,10 @@ export type AgeOutcome = 'unblocked' | 'still_under_age'
 export type AdminManagedUser = {
   id: string
   accountStatus: AccountStatus
+  /** Whole years now (lvn-backend ADR-0104): from the date of birth when there is one, else the age given. */
+  age: number | null
   createdAt: string
+  /** YYYY-MM-DD, only for accounts that gave one (before ADR-0104) or had one set by an admin. */
   dateOfBirth: string | null
   displayName: string
   email: string
@@ -440,6 +444,7 @@ export type AdminManagedUser = {
 type RawUser = {
   id: string
   accountStatus?: string | null
+  age?: number | null
   createdAt?: string | null
   dateOfBirth?: string | null
   displayName?: string | null
@@ -458,6 +463,7 @@ function userOf(raw: RawUser): AdminManagedUser {
   return {
     id: raw.id,
     accountStatus: statusOf(raw.accountStatus),
+    age: raw.age ?? null,
     createdAt: raw.createdAt ?? '',
     dateOfBirth: raw.dateOfBirth ?? null,
     displayName: raw.displayName ?? '',
@@ -468,7 +474,7 @@ function userOf(raw: RawUser): AdminManagedUser {
   }
 }
 
-/** A corrected date of birth comes back as ACTIVE when it passes, and stays AGE_BLOCKED when it does not. */
+/** A corrected age or date of birth comes back as ACTIVE when it passes, and stays AGE_BLOCKED when it does not. */
 export function ageOutcomeOf(status: string | null | undefined): AgeOutcome | null {
   if (status === 'ACTIVE') return 'unblocked'
   if (status === 'AGE_BLOCKED') return 'still_under_age'
@@ -481,7 +487,29 @@ export async function loadAdminUsers(filter: { status: AdminUserStatusFilter; se
   return { total: data.adminUsers.total ?? 0, users: (data.adminUsers.users ?? []).map(userOf) }
 }
 
-export type AdminUserEdit = { userId: string; reason: string; displayName: string; email: string; dateOfBirth: string }
+/**
+ * At most one of `age` and `dateOfBirth`, and only when it changes (lvn-backend ADR-0104): the API refuses both
+ * together, refuses `age` on an account whose date of birth decides its age, and restarts a declared age's clock on
+ * every `age` it is sent.
+ */
+export type AdminUserEdit = { userId: string; reason: string; displayName: string; email: string } & (
+  | { age?: number; dateOfBirth?: never }
+  | { age?: never; dateOfBirth?: string }
+)
+
+/**
+ * The age part of an admin's edit, from what the form holds (lvn-backend ADR-0104). An account with a date of birth is
+ * corrected by its date; one without, by an age in whole years. A value left as it was sends nothing, and an empty
+ * age on an account that never had one is left alone. 'invalid' when the age typed is not a whole number from
+ * AGE_MIN to AGE_MAX.
+ */
+export function ageEditOf(user: Pick<AdminManagedUser, 'age' | 'dateOfBirth'>, form: { age: string; dateOfBirth: string }): { age: number } | { dateOfBirth: string } | Record<string, never> | 'invalid' {
+  if (user.dateOfBirth !== null) return form.dateOfBirth === user.dateOfBirth ? {} : { dateOfBirth: form.dateOfBirth }
+  if (!form.age.trim() && user.age === null) return {}
+  const parsed = parseAge(form.age)
+  if ('problem' in parsed) return 'invalid'
+  return parsed.age === user.age ? {} : { age: parsed.age }
+}
 
 export async function updateAdminUser(input: AdminUserEdit): Promise<{ problem: string | null; outcome: AgeOutcome | null; user: AdminManagedUser | null }> {
   type Payload = { user?: RawUser | null; userErrors?: { message: string }[] }
