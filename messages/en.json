@@ -3628,7 +3628,7 @@
   },
   "adminUsage": {
     "title": "Usage",
-    "lead": "People who used LearnViaNotes, the features and actions they used, and one person's activity. Opted-out accounts are not included.",
+    "lead": "How many people use LearnViaNotes and what they do, as counts over a date range in India Standard Time. Opted-out accounts are never counted, and any breakdown group of fewer than 5 people is hidden.",
     "dau": "Daily active",
     "wau": "Weekly active",
     "mau": "Monthly active",
@@ -3644,7 +3644,152 @@
     "noEvents": "No activity for that person.",
     "loading": "Loading…",
     "notAllowed": "You cannot view usage.",
-    "failed": "Usage could not be loaded. Try again."
+    "failed": "Usage could not be loaded. Try again.",
+    "tabsLabel": "Usage sections",
+    "tab": {
+      "overview": "Overview",
+      "growth": "Growth",
+      "engagement": "Engagement",
+      "content": "Content",
+      "subjects": "Subjects",
+      "retention": "Retention",
+      "verification": "Verification",
+      "funnel": "Funnel"
+    },
+    "range": {
+      "label": "Date range",
+      "from": "From (IST)",
+      "to": "To (IST)",
+      "apply": "Apply",
+      "presets": "Quick ranges",
+      "last": "Last {days} days",
+      "shown": "Showing {from} to {to}, India Standard Time.",
+      "notUsed": "Retention always shows the last 12 sign-up weeks.",
+      "incomplete": "Choose both a start and an end day.",
+      "order": "The start day must be on or before the end day.",
+      "span": "Choose at most 366 days."
+    },
+    "interval": {
+      "label": "Group by",
+      "DAY": "Day",
+      "WEEK": "Week"
+    },
+    "lookUpUser": "Look up a user",
+    "hideLookUp": "Hide user lookup",
+    "retry": "Try again",
+    "exportCsv": "Export CSV",
+    "generatedAt": "Counted {when} IST",
+    "hiddenGroups": "{count, plural, one {# small group hidden} other {# small groups hidden}} (fewer than 5 people each).",
+    "count": "Count",
+    "people": "People",
+    "kpi": {
+      "users": "Accounts",
+      "active": "{count, number} active",
+      "newToday": "New today",
+      "newTodayHint": "Shown when the range ends today.",
+      "new7": "New in the last 7 days",
+      "stickiness": "Stickiness",
+      "stickinessHint": "Average daily active people over 30 days, divided by monthly active.",
+      "verified": "Verified per sign-up",
+      "verifiedHint": "Verifications in the range divided by sign-ups in the range."
+    },
+    "growth": {
+      "signUps": "Sign-ups",
+      "emailVerified": "Emails verified",
+      "registrations": "Registrations finished",
+      "verifications": "Verifications",
+      "chart": "Sign-ups over time",
+      "methods": "Sign-up method"
+    },
+    "method": {
+      "EMAIL": "Email",
+      "GOOGLE": "Google",
+      "GITHUB": "GitHub",
+      "LINKEDIN": "LinkedIn"
+    },
+    "engagement": {
+      "active": "Active people",
+      "activeUsers": "Active people",
+      "learning": "Learning",
+      "learningMinutes": "Learning minutes",
+      "quizAttempts": "Quiz attempts"
+    },
+    "content": {
+      "notes": "Notes",
+      "created": "Created",
+      "public": "Public",
+      "shared": "Shared",
+      "unlisted": "Unlisted",
+      "private": "Private",
+      "uploads": "Uploads",
+      "files": "Files",
+      "bytes": "Size",
+      "scansFlagged": "Infected files",
+      "scansHint": "{clean, number} clean, {pending, number} pending, {failed, number} failed",
+      "byPurpose": "Uploads by purpose",
+      "doubts": "Doubts",
+      "asked": "Asked",
+      "answered": "Answered",
+      "resolved": "Resolved",
+      "answers": "Answers",
+      "medianAnswer": "Median hours to first answer",
+      "places": "Groups, classrooms and sharing",
+      "groups": "Groups created",
+      "classrooms": "Classrooms created",
+      "posts": "{count, number} posts",
+      "noteShares": "Note shares",
+      "saves": "Saves"
+    },
+    "subjects": {
+      "by": "Rank subjects by",
+      "caption": "Top subjects by {metric}",
+      "subject": "Subject",
+      "metric": {
+        "NOTES": "Notes",
+        "LEARNING_TIME": "Learning minutes",
+        "SAVES": "Saves"
+      }
+    },
+    "retention": {
+      "lead": "Share of each sign-up week active again in the weeks after, {first} to {last}. The last column is this week, still in progress.",
+      "caption": "Weekly retention by sign-up week",
+      "cohort": "Sign-up week",
+      "size": "People",
+      "week": "Week {n}"
+    },
+    "verification": {
+      "pending": "Waiting now",
+      "oldest": "Oldest waiting {hours} h",
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "median": "Median hours to decision",
+      "byMethod": "By method",
+      "method": "Method"
+    },
+    "verificationMethod": {
+      "COLLEGE_ID": "College ID",
+      "DOCUMENTS": "Documents",
+      "INSTITUTIONAL_EMAIL": "Institution email",
+      "TEACHER": "Teacher"
+    },
+    "funnel": {
+      "title": "From sign-up to coming back",
+      "lead": "People who reached each step since {since}, each step after the one before.",
+      "note": "In brackets: share of the step before · share of the first step.",
+      "step": {
+        "signed_up": "Signed up",
+        "email_verified": "Verified their email",
+        "first_note": "Made a first note",
+        "returned_d7": "Came back after 7 days"
+      }
+    },
+    "chart": {
+      "empty": "Nothing in this range.",
+      "showTable": "Show as a table",
+      "date": "Bucket",
+      "name": "Name"
+    }
   },
   "consent": {
     "region": "Analytics cookies",

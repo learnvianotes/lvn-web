@@ -239,6 +239,18 @@ test('usage shows active people, top pages and one person’s timeline', async (
           ],
         },
       }),
+      AdminUsageOverview: () => ({
+        adminMetrics: { __typename: 'AdminMetrics', generatedAt: '2026-10-25T09:00:00.000Z', users: { __typename: 'AdminUserMetrics', total: 5000, newLast7Days: 70, newLast30Days: 300, active: 2500 } },
+        adminEngagement: {
+          __typename: 'AdminEngagement',
+          dau: 128,
+          wau: 640,
+          mau: 2104,
+          stickiness: 0.2,
+          range: { __typename: 'AdminMetricsRange', firstDay: '2026-09-26', lastDay: '2026-10-25', timeZone: 'Asia/Kolkata' },
+        },
+        adminGrowth: { __typename: 'AdminGrowth', totals: { __typename: 'AdminGrowthTotals', signUps: 300, verifications: 90 }, series: [] },
+      }),
       AdminUserActivity: () => ({
         adminUserActivity: [
           { __typename: 'UserActivityEvent', name: 'page_view', occurredAt: '2026-10-25T09:00:00.000Z', platform: 'WEB', props: null, appVersion: null },
@@ -252,8 +264,9 @@ test('usage shows active people, top pages and one person’s timeline', async (
   await expect(page.getByText('128')).toBeVisible()
   await expect(page.getByText('640')).toBeVisible()
   await expect(page.getByText('2,104')).toBeVisible()
-  await expect(page.getByText('flashcards', { exact: true })).toBeVisible()
-  await expect(page.getByText('note_open')).toBeVisible()
+  await expect(page.getByText('flashcards', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('note_open', { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Look up a user' }).click()
   await page.getByPlaceholder('User id').fill(USER)
   await page.getByRole('button', { name: 'Show activity' }).click()
   await expect(page.getByText('page_view')).toBeVisible()

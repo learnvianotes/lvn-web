@@ -276,6 +276,20 @@ type AdminContentMetrics {
   topics: Int!
 }
 
+"""
+What was created in the window. Cached in each API process for about 5 minutes.
+"""
+type AdminContentStats {
+  doubts: AdminDoubtStats!
+  generatedAt: DateTime!
+  notes: AdminNoteCreationCounts!
+  places: AdminPlaceCounts!
+  range: AdminMetricsRange!
+  scans: AdminScanCounts!
+  sharing: AdminSharingCounts!
+  uploads: AdminUploadStats!
+}
+
 """A contest as its writers see it"""
 type AdminContest {
   """How many have started it"""
@@ -312,6 +326,67 @@ input AdminDeleteUserInput {
   userId: UUID!
 }
 
+"""Doubts in group workspaces. Deleted doubts and answers are left out."""
+type AdminDoubtStats {
+  """
+  Doubts whose first answer from someone other than the asker came in the window.
+  """
+  answered: Int!
+
+  """Answers posted."""
+  answers: Int!
+  asked: Int!
+
+  """
+  Median hours from asking to that first answer, for the doubts answered in the window, one decimal. Null when none.
+  """
+  medianHoursToFirstAnswer: Float
+  resolved: Int!
+}
+
+"""
+Activity. A person is active on a day when they signed in or refreshed a session, sent a usage event, or recorded
+learning (by their own learning day) that day. Accounts that opted out of analytics and deleted accounts are never
+counted as active. dau is the last day of the range; wau and mau its last 7 and 30 days (they can reach before
+`range.from`). stickiness is the average daily active people over those 30 days divided by mau (0 to 1; 0 when mau
+is 0). Cached in each API process for about 5 minutes.
+"""
+type AdminEngagement {
+  dau: Int!
+  generatedAt: DateTime!
+  interval: MetricsInterval!
+  mau: Int!
+  range: AdminMetricsRange!
+  series: [AdminEngagementPoint!]!
+  stickiness: Float!
+  wau: Int!
+}
+
+type AdminEngagementPoint {
+  """Distinct active people in the bucket (see AdminEngagement)."""
+  activeUsers: Int!
+
+  """The bucket's first day, YYYY-MM-DD."""
+  date: String!
+
+  """
+  Doubts whose first answer from someone other than the asker came in the bucket.
+  """
+  doubtsAnswered: Int!
+  doubtsAsked: Int!
+
+  """
+  Learning minutes (focus, reviews, quizzes), by each learner's own day; imported old-site time is left out.
+  """
+  learningMinutes: Int!
+
+  """Notes created and not deleted. Synced study pages are left out."""
+  notesCreated: Int!
+
+  """Class-quiz and shared-quiz attempts submitted."""
+  quizAttempts: Int!
+}
+
 """One error code in the window, with who it affected."""
 type AdminErrorGroup {
   code: String!
@@ -322,6 +397,47 @@ type AdminErrorGroup {
 
   """At most 100 distinct account ids."""
   userIds: [UUID!]!
+}
+
+"""
+Sign-ups and verifications. Cached in each API process for about 5 minutes. Methods with fewer than 5 accounts are
+left out of signUpMethods and counted in hiddenSmallGroups.
+"""
+type AdminGrowth {
+  generatedAt: DateTime!
+  hiddenSmallGroups: Int!
+  interval: MetricsInterval!
+  range: AdminMetricsRange!
+  series: [AdminGrowthPoint!]!
+  signUpMethods: [AdminSignUpMethodCount!]!
+  totals: AdminGrowthTotals!
+}
+
+"""
+One bucket. Accounts deleted since, and the study publisher, are left out.
+"""
+type AdminGrowthPoint {
+  """The bucket's first day, YYYY-MM-DD."""
+  date: String!
+
+  """Login emails verified (a provider sign-up verifies it at once)."""
+  emailVerified: Int!
+
+  """Registrations finished (age and terms)."""
+  registrationsCompleted: Int!
+
+  """Accounts created."""
+  signUps: Int!
+
+  """Accounts that became verified students or teachers."""
+  verifications: Int!
+}
+
+type AdminGrowthTotals {
+  emailVerified: Int!
+  registrationsCompleted: Int!
+  signUps: Int!
+  verifications: Int!
 }
 
 """
@@ -365,9 +481,43 @@ type AdminMetrics {
   verification: AdminVerificationMetrics!
 }
 
+"""
+The days a result covers: whole calendar days in `timeZone` (Asia/Kolkata). `from` is midnight at the start of
+`firstDay`, `to` midnight after `lastDay` (exclusive). A last day after today is today.
+"""
+type AdminMetricsRange {
+  """YYYY-MM-DD."""
+  firstDay: String!
+  from: DateTime!
+
+  """YYYY-MM-DD, inclusive."""
+  lastDay: String!
+  timeZone: String!
+  to: DateTime!
+}
+
 type AdminModerationMetrics {
   openAppeals: Int!
   openReports: Int!
+}
+
+"""
+Notes created in the window and not deleted, by their visibility now. Synced study pages are left out.
+"""
+type AdminNoteCreationCounts {
+  created: Int!
+  private: Int!
+  public: Int!
+  shared: Int!
+  unlisted: Int!
+}
+
+"""Created in the window and not deleted."""
+type AdminPlaceCounts {
+  classroomPosts: Int!
+  classrooms: Int!
+  groupPosts: Int!
+  groups: Int!
 }
 
 """
@@ -408,6 +558,55 @@ input AdminPlanEntitlementInput {
 type AdminPlanPayload {
   plan: AdminPlan
   userErrors: [UserError!]!
+}
+
+"""
+Weekly retention, oldest cohort first, the last one this week. Past weeks come from the nightly rollup, this week is
+counted live. A cohort with fewer than 5 people (at any week counted) is left out and counted in hiddenSmallGroups; a
+week nobody signed up in is left out and not counted. Cached in each API process for about 5 minutes.
+"""
+type AdminRetention {
+  cohortInterval: CohortInterval!
+  cohorts: [AdminRetentionCohort!]!
+
+  """
+  The first and the last (this) sign-up week asked for, Mondays, YYYY-MM-DD.
+  """
+  firstWeek: String!
+  generatedAt: DateTime!
+  hiddenSmallGroups: Int!
+  lastWeek: String!
+  timeZone: String!
+}
+
+"""
+The people who signed up in one week and the share of them active in each week since. Active as in AdminEngagement
+(a session started or refreshed, a usage event, or learning that day); accounts that opted out of analytics and
+deleted accounts are in no cohort.
+"""
+type AdminRetentionCohort {
+  """
+  returned[n] is the share (0 to 1, three decimals) of the cohort active in the n-th week after the sign-up week;
+  returned[0] is the sign-up week itself and the last value is this week, still in progress. Each share is over the
+  cohort as it was when that week was counted.
+  """
+  returned: [Float!]!
+
+  """People who signed up that week, as last counted. Always at least 5."""
+  size: Int!
+
+  """The sign-up week's Monday, YYYY-MM-DD (IST)."""
+  start: String!
+}
+
+"""
+Scan results of those uploads. failed is a scanner error or a scan that used up its attempts.
+"""
+type AdminScanCounts {
+  clean: Int!
+  failed: Int!
+  infected: Int!
+  pending: Int!
 }
 
 type AdminScanMetrics {
@@ -487,11 +686,55 @@ enum AdminSettingType {
 }
 
 """
+noteShares are notes shared with one person; placeShares with a group or class.
+"""
+type AdminSharingCounts {
+  noteShares: Int!
+  placeShares: Int!
+  saves: Int!
+}
+
+"""
+Accounts created in the window by how they signed up. A provider counts when it was linked within a minute of sign-up.
+"""
+type AdminSignUpMethodCount {
+  method: SignUpMethod!
+  users: Int!
+}
+
+"""
 Bytes are a decimal string. Files are those stored: uploaded, processing, ready or quarantined.
 """
 type AdminStorageMetrics {
   bytes: String!
   files: Int!
+}
+
+type AdminSubjectCount {
+  subjectId: UUID!
+  title: String!
+
+  """
+  Distinct people behind value: note owners, learners or savers. Always at least 5.
+  """
+  users: Int!
+
+  """Notes, minutes or saves, as AdminTopSubjects.by says."""
+  value: Int!
+}
+
+"""Which measure ranks subjects in adminTopSubjects."""
+enum AdminSubjectMetric {
+  """
+  Minutes people spent with the subject's topics open (studying and reading).
+  """
+  LEARNING_TIME
+
+  """Notes created in the window with a topic in the subject."""
+  NOTES
+
+  """Saves of notes with a topic in the subject."""
+  SAVES
 }
 
 """The latest save or reset of the terms_version setting."""
@@ -535,6 +778,18 @@ type AdminTermsStatus {
   source: TermsVersionSource!
 }
 
+"""
+Subjects ranked by `by`, at most `first`. A subject with fewer than 5 distinct people behind it is never listed and is
+counted in hiddenSmallGroups. Cached in each API process for about 5 minutes.
+"""
+type AdminTopSubjects {
+  by: AdminSubjectMetric!
+  generatedAt: DateTime!
+  hiddenSmallGroups: Int!
+  range: AdminMetricsRange!
+  subjects: [AdminSubjectCount!]!
+}
+
 input AdminUpdateUserInput {
   """
   Whole years, 1 to 120, as of now (ADR-0104). The age gate runs again. Refused (VALIDATION) on an account that has
@@ -554,6 +809,28 @@ input AdminUpdateUserInput {
   """
   reason: String!
   userId: UUID!
+}
+
+"""Bytes are a decimal string."""
+type AdminUploadPurposeCount {
+  bytes: String!
+  files: Int!
+
+  """
+  A FilePurpose value: ATTACHMENT, COVER, VOICE_NOTE, AVATAR, IMPORT, VERIFICATION_DOCUMENT, GROUP_PICTURE, COLLEGE_ID or PAGE_IMAGE.
+  """
+  purpose: String!
+}
+
+"""
+Files people uploaded in the window that are still stored. Server-made data exports are left out. A purpose with fewer
+than 5 distinct uploaders is left out of byPurpose (still in files and bytes) and counted in hiddenSmallGroups.
+"""
+type AdminUploadStats {
+  byPurpose: [AdminUploadPurposeCount!]!
+  bytes: String!
+  files: Int!
+  hiddenSmallGroups: Int!
 }
 
 """
@@ -608,6 +885,23 @@ enum AdminUserStatusFilter {
   BLOCKED_OR_SUSPENDED
 }
 
+"""
+A verification route: the request's method, with a college ID card (ADR-0099) apart from other documents.
+"""
+enum AdminVerificationMethod {
+  COLLEGE_ID
+  DOCUMENTS
+  INSTITUTIONAL_EMAIL
+  TEACHER
+}
+
+type AdminVerificationMethodCount {
+  approved: Int!
+  method: AdminVerificationMethod!
+  rejected: Int!
+  requested: Int!
+}
+
 type AdminVerificationMetrics {
   """Domains waiting for a decision (ACADEMIC_QUEUED or NEEDS_REVIEW)."""
   domainReviews: Int!
@@ -619,6 +913,32 @@ type AdminVerificationMetrics {
 
   """Pending college-ID reviews."""
   studentIdQueue: Int!
+}
+
+"""
+Verification requests of every purpose. requested counts requests made in the window; approved and rejected count
+decisions made in it. pending and oldestPendingHours describe the queue now, whatever the window. A method with fewer
+than 5 distinct requesters is left out of byMethod and counted in hiddenSmallGroups. Cached for about 5 minutes.
+"""
+type AdminVerificationStats {
+  approved: Int!
+  byMethod: [AdminVerificationMethodCount!]!
+  generatedAt: DateTime!
+  hiddenSmallGroups: Int!
+
+  """
+  Median hours from request to decision, for decisions in the window, one decimal. Null when none.
+  """
+  medianHoursToDecision: Float
+
+  """
+  Hours the oldest pending request has waited, one decimal. Null when nothing is pending.
+  """
+  oldestPendingHours: Float
+  pending: Int!
+  range: AdminMetricsRange!
+  rejected: Int!
+  requested: Int!
 }
 
 """
@@ -1617,6 +1937,13 @@ Where the client recorded the event. Backend failures are stored by the server a
 enum ClientPlatform {
   MOBILE
   WEB
+}
+
+"""
+How retention cohorts are grouped by sign-up date. WEEK: IST weeks, Monday to Sunday.
+"""
+enum CohortInterval {
+  WEEK
 }
 
 type Comment {
@@ -3031,6 +3358,14 @@ type MentorInviteItem {
   group: Group!
   id: UUID!
   invitedBy: User!
+}
+
+"""
+How a series is grouped. WEEK starts on Monday (ISO); the first week starts on the window's first day and can be shorter.
+"""
+enum MetricsInterval {
+  DAY
+  WEEK
 }
 
 input ModerateContentInput {
@@ -4648,8 +4983,18 @@ type Query {
   """
   adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!
 
+  """
+  Platform admins. Notes, uploads, scans, doubts, places and sharing created in the window. At most 366 days.
+  """
+  adminContentStats(from: DateTime, to: DateTime): AdminContentStats!
+
   """Platform admins: every contest, drafts included"""
   adminContests: [AdminContest!]!
+
+  """
+  Platform admins. DAU, WAU, MAU, stickiness and activity per DAY (when omitted) or WEEK. At most 366 days.
+  """
+  adminEngagement(from: DateTime, interval: MetricsInterval, to: DateTime): AdminEngagement!
 
   """
   Platform admins. Errors since `since`, or the last 90 days. Grouped by code.
@@ -4657,9 +5002,19 @@ type Query {
   adminErrors(since: DateTime): [AdminErrorGroup!]!
 
   """
-  Platform admins. Ordered steps. A person counts at a step when each earlier step happened first.
+  Platform admins. 1 to 5 ordered steps, each a usage event name (page_view, note_open, note_upload, search, download,
+  sign_in) or a step read from the database (ADR-0105): signed_up (account created), email_verified (login email
+  verified), first_note (the account's first note), returned_d7 (active again 7 or more days after signing up, and
+  after the previous step: a sign-in or session refresh, a usage event, or learning). A person counts at a step when
+  each earlier step happened first; each step's time is its first occurrence since `since` (default: 30 days ago).
+  Database steps leave out deleted accounts and accounts that opted out of analytics.
   """
   adminFunnel(since: DateTime, steps: [String!]!): [FunnelStep!]!
+
+  """
+  Platform admins. Sign-ups and verifications per DAY (when omitted) or WEEK. Omit from and to for the last 30 days. At most 366 days.
+  """
+  adminGrowth(from: DateTime, interval: MetricsInterval, to: DateTime): AdminGrowth!
 
   """Platform admins. Counts for the dashboard."""
   adminMetrics(from: DateTime, to: DateTime): AdminMetrics!
@@ -4670,6 +5025,11 @@ type Query {
   adminPlans: [AdminPlan!]!
 
   """
+  Platform admins. Retention by sign-up week: the last `weeks` weeks (1 to 52, 12 when omitted), this week included.
+  """
+  adminRetention(cohortInterval: CohortInterval = WEEK, weeks: Int): AdminRetention!
+
+  """
   Platform admins. Every application setting, with its type, description and validation.
   """
   adminSettings: [AdminSetting!]!
@@ -4678,6 +5038,11 @@ type Query {
   Platform admins. The terms version in effect, where it comes from, the published versions and acceptance counts.
   """
   adminTermsStatus: AdminTermsStatus!
+
+  """
+  Platform admins. Top subjects by notes, learning time or saves. first is 1 to 50, 10 when omitted. At most 366 days.
+  """
+  adminTopSubjects(by: AdminSubjectMetric!, first: Int, from: DateTime, to: DateTime): AdminTopSubjects!
 
   """
   Platform admins. Usage between `from` and `to`. Omit them for the last 30 days.
@@ -4691,6 +5056,11 @@ type Query {
   Platform admins. Accounts in one standing, optionally matched on name, email or handle.
   """
   adminUsers(first: Int, search: String, status: AdminUserStatusFilter!): AdminUserList!
+
+  """
+  Platform admins. Verification requests and decisions in the window and the queue now. At most 366 days.
+  """
+  adminVerificationStats(from: DateTime, to: DateTime): AdminVerificationStats!
   aiAnswer(id: UUID!): AiAnswer
 
   """
@@ -6213,6 +6583,16 @@ input SignUpInput {
   email: String!
   institutionalEmail: String
   password: String!
+}
+
+"""
+How an account was created: a password or an email link (EMAIL), or a sign-in provider.
+"""
+enum SignUpMethod {
+  EMAIL
+  GITHUB
+  GOOGLE
+  LINKEDIN
 }
 
 type SignedUrl {
