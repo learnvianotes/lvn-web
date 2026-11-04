@@ -263,7 +263,7 @@ Inverse copy: "Turn your notes into knowledge that sticks." / "Learn, revise and
 
 Sign in h1 "Sign in". Lead "Welcome back. Pick up where you left off." Fields Email, Password. Submit "Sign in". "Forgot your password?" → `/reset`. "New to LearnViaNotes? Create an account". Errors: "Enter a valid email address.", "Required", or "Something went wrong. Try again." Provider buttons only when configured.
 
-Sign up h1 "Create your account". Fields: name, email, password (hint "At least 10 characters. Avoid passwords you use elsewhere."), date of birth, optional college email, terms checkbox. "I'm here to" Learn or Teach. Submit "Create account".
+Sign up h1 "Create your account". Fields: name, email, password (hint "At least 10 characters. Avoid passwords you use elsewhere."), age in whole years (number pad, no date picker), optional college email, terms checkbox. "I'm here to" Learn or Teach. Submit "Create account".
 
 Details: "Almost there". Reset: "Reset your password" then "Choose a new password". Verify and the OAuth callback use their `auth.verify` and `auth.callback` strings, including "Checking your link…" and "Signing you in…".
 

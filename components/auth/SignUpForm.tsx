@@ -14,11 +14,11 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { SignInOptionsDocument, SignUpDocument } from '@/graphql/generated/graphql'
-import { markAgeRefused } from '@/lib/age'
+import { AGE_INPUT, markAgeRefused } from '@/lib/age'
 import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { refusalMessage } from '@/lib/limit-error'
 import { AgeBlocked } from './AgeBlocked'
-import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
+import { ageField, AgeRefused, ConfirmAge, useAgeMessage, useAgeRefused } from './AgeCheck'
 import { InviteOnlyNotice } from './InviteOnlyNotice'
 import { applyProblems } from './forms'
 import { ProviderButtons } from './ProviderButtons'
@@ -28,16 +28,18 @@ const schema = z.object({
   displayName: z.string().trim().min(1),
   email: z.email(),
   password: z.string().min(10),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  age: ageField,
   institutionalEmail: z.union([z.literal(''), z.email()]),
   terms: z.literal(true),
 })
-type Values = z.infer<typeof schema>
-const FIELDS = ['displayName', 'email', 'password', 'dateOfBirth', 'institutionalEmail'] as const
+type Fields = z.input<typeof schema>
+type Values = z.output<typeof schema>
+const FIELDS = ['displayName', 'email', 'password', 'age', 'institutionalEmail'] as const
 
 /**
- * Email + password registration with the details of ADR-0017; Google, GitHub and LinkedIn above it. The date of birth is
- * confirmed in words before anything is sent; a refusal (lvn-backend ADR-0091) closes this form on the device for a day.
+ * Email + password registration with the details of ADR-0017; Google, GitHub and LinkedIn above it. The age, in whole
+ * years (lvn-backend ADR-0104), is confirmed before anything is sent; a refusal (ADR-0091) closes this form on the
+ * device for a day.
  */
 export function SignUpForm() {
   const t = useTranslations('auth.signUp')
@@ -54,15 +56,15 @@ export function SignUpForm() {
   // "I teach" leads to the application to teach after sign-up (lvn-backend ADR-0073).
   const [teaches, setTeaches] = useState(false)
   const refused = useAgeRefused()
-  // The values waiting for "Is this right?" about the date of birth.
+  // The values waiting for "Is this right?" about the age.
   const [pending, setPending] = useState<Values | null>(null)
   const [sending, setSending] = useState(false)
-  const form = useForm<Values>({
+  const form = useForm<Fields, unknown, Values>({
     resolver: zodResolver(schema),
-    defaultValues: { displayName: '', email: '', password: '', dateOfBirth: '', institutionalEmail: '', terms: false as unknown as true },
+    defaultValues: { displayName: '', email: '', password: '', age: '', institutionalEmail: '', terms: false as unknown as true },
   })
   const { errors, isSubmitting } = form.formState
-  const dateOfBirth = form.watch('dateOfBirth')
+  const ageMessage = useAgeMessage()
 
   const onSubmit = form.handleSubmit((values) => {
     setGeneral(null)
@@ -70,6 +72,7 @@ export function SignUpForm() {
     setPending(values)
   })
 
+  // Only `age` is sent; the deprecated `dateOfBirth` is for phone builds from before ADR-0104.
   const send = async ({ terms: _terms, institutionalEmail, ...values }: Values) => {
     setSending(true)
     try {
@@ -136,8 +139,8 @@ export function SignUpForm() {
         <Field label={t('password')} hint={t('passwordHint')} error={message('password', t('passwordHint'))}>
           <Input type="password" autoComplete="new-password" {...form.register('password')} />
         </Field>
-        <Field label={t('dob')} hint={<BirthDateHint value={dateOfBirth} hint={t('dobHint')} />} error={message('dateOfBirth', te('required'))}>
-          <Input type="date" autoComplete="bday" {...form.register('dateOfBirth')} />
+        <Field label={t('age')} hint={t('ageHint')} error={ageMessage(errors.age)}>
+          <Input {...AGE_INPUT} className="max-w-32" {...form.register('age')} />
         </Field>
         <Field label={t('institutionalEmail')} hint={t('institutionalHint')} error={message('institutionalEmail', te('email'))}>
           <Input type="email" inputMode="email" {...form.register('institutionalEmail')} />
@@ -149,13 +152,13 @@ export function SignUpForm() {
         {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-red-600 dark:text-red-400">{t('termsRequired')}</p> : null}
         <Button type="submit" size="lg" disabled={isSubmitting || sending || !options}>{t('submit')}</Button>
       </form>
-      <ConfirmBirthDate
-        value={pending?.dateOfBirth ?? null}
+      <ConfirmAge
+        age={pending?.age ?? null}
         busy={sending}
         onConfirm={() => pending && void send(pending)}
         onChange={() => {
           setPending(null)
-          form.setFocus('dateOfBirth')
+          form.setFocus('age')
         }}
       />
       <p className="text-center text-sm text-muted">

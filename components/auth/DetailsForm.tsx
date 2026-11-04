@@ -13,28 +13,30 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { CompleteRegistrationDocument, SignInOptionsDocument, SignOutDocument, ViewerDocument } from '@/graphql/generated/graphql'
-import { markAgeRefused } from '@/lib/age'
+import { AGE_INPUT, markAgeRefused } from '@/lib/age'
 import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { signedInDestination } from '@/lib/auth/destination'
 import { signedOut } from '@/lib/auth/session'
 import { AgeBlocked } from './AgeBlocked'
-import { AgeRefused, BirthDateHint, ConfirmBirthDate, useAgeRefused } from './AgeCheck'
+import { ageField, AgeRefused, ConfirmAge, useAgeMessage, useAgeRefused } from './AgeCheck'
 import { applyProblems } from './forms'
 
 const schema = z.object({
   displayName: z.string().trim().min(1),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  age: ageField,
   institutionalEmail: z.union([z.literal(''), z.email()]),
   terms: z.literal(true),
 })
-type Values = z.infer<typeof schema>
-const FIELDS = ['displayName', 'dateOfBirth', 'institutionalEmail'] as const
+type Fields = z.input<typeof schema>
+type Values = z.output<typeof schema>
+const FIELDS = ['displayName', 'age', 'institutionalEmail'] as const
 
 /**
- * Registration details for accounts created by Google, GitHub or LinkedIn (ADR-0017), given once. The date of birth is
- * confirmed in words before it is sent. An answer under the minimum age (lvn-backend ADR-0091) makes the API erase this
- * unfinished account; the page then signs out here and shows the refusal. A refusal already on this device only closes
- * the form: the account is left alone, and the person may sign out.
+ * Registration details for accounts created by Google, GitHub or LinkedIn (ADR-0017), given once. The age, in whole
+ * years (lvn-backend ADR-0104), is confirmed before it is sent. An answer under the minimum age (ADR-0091) signs out
+ * here and shows the outcome: AGE_RESTRICTED (the account is held) names who to contact, UNDER_MINIMUM_AGE shows the
+ * refusal. A refusal already on this device only closes the form: the account is left alone, and the person may sign
+ * out.
  */
 export function DetailsForm() {
   const t = useTranslations('auth.details')
@@ -52,9 +54,9 @@ export function DetailsForm() {
   const refused = useAgeRefused()
   const [pending, setPending] = useState<Values | null>(null)
   const [sending, setSending] = useState(false)
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { displayName: '', dateOfBirth: '', institutionalEmail: '', terms: false as unknown as true } })
+  const form = useForm<Fields, unknown, Values>({ resolver: zodResolver(schema), defaultValues: { displayName: '', age: '', institutionalEmail: '', terms: false as unknown as true } })
   const { errors, isSubmitting } = form.formState
-  const dateOfBirth = form.watch('dateOfBirth')
+  const ageMessage = useAgeMessage()
 
   // Provider accounts arrive with a name; offer it.
   const name = viewer?.viewer?.displayName
@@ -78,6 +80,7 @@ export function DetailsForm() {
     router.replace(to)
   }
 
+  // Only `age` is sent; the deprecated `dateOfBirth` is for phone builds from before ADR-0104.
   const send = async ({ terms: _terms, institutionalEmail, ...values }: Values) => {
     setSending(true)
     try {
@@ -134,8 +137,8 @@ export function DetailsForm() {
         <Field label={ts('name')} error={message('displayName', te('required'))}>
           <Input autoComplete="name" {...form.register('displayName')} />
         </Field>
-        <Field label={ts('dob')} hint={<BirthDateHint value={dateOfBirth} hint={ts('dobHint')} />} error={message('dateOfBirth', te('required'))}>
-          <Input type="date" autoComplete="bday" {...form.register('dateOfBirth')} />
+        <Field label={ts('age')} hint={ts('ageHint')} error={ageMessage(errors.age)}>
+          <Input {...AGE_INPUT} className="max-w-32" {...form.register('age')} />
         </Field>
         <Field label={ts('institutionalEmail')} hint={ts('institutionalHint')} error={message('institutionalEmail', te('email'))}>
           <Input type="email" inputMode="email" {...form.register('institutionalEmail')} />
@@ -147,13 +150,13 @@ export function DetailsForm() {
         {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-red-600 dark:text-red-400">{ts('termsRequired')}</p> : null}
         <Button type="submit" size="lg" disabled={isSubmitting || sending || !options}>{t('submit')}</Button>
       </form>
-      <ConfirmBirthDate
-        value={pending?.dateOfBirth ?? null}
+      <ConfirmAge
+        age={pending?.age ?? null}
         busy={sending}
         onConfirm={() => pending && void send(pending)}
         onChange={() => {
           setPending(null)
-          form.setFocus('dateOfBirth')
+          form.setFocus('age')
         }}
       />
     </div>

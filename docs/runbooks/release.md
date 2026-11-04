@@ -43,7 +43,7 @@ first deploy: the web's deploy refuses until `/opt/lvn/lvn.sh` exists.
    git -C lvn-web switch -c release/2026-11 main && git -C lvn-web push -u origin release/2026-11
    ```
    Fixes found on beta go on these branches, then back into `main`.
-2. Check beta: the landing page, a subject, sign-up with an adult date of birth (the email arrives),
+2. Check beta: the landing page, a subject, sign-up with an adult age (the email arrives),
    `/legal/grievance`, `/robots.txt` (`Disallow: /`), and that `/no-such-page` answers 404.
 3. Production, once it has a VM: tag the release commit in **both** repositories with the same tag, lvn-backend first:
    ```bash

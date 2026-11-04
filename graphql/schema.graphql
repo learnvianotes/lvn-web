@@ -325,11 +325,21 @@ type AdminErrorGroup {
 }
 
 """
-An account as a platform admin sees it, including a date of birth (YYYY-MM-DD) and the standing reason.
+An account as a platform admin sees it, including its age (ADR-0104) and the standing reason.
 """
 type AdminManagedUser {
   accountStatus: AccountStatus!
+
+  """
+  Whole years now (ADR-0104): from dateOfBirth when there is one, else the age given at registration plus the whole
+  years since, which is never more than the real age. Null before registration is finished.
+  """
+  age: Int
   createdAt: DateTime!
+
+  """
+  YYYY-MM-DD. Only accounts that have one: registered before ADR-0104, or set by an admin. Null otherwise.
+  """
   dateOfBirth: String
   displayName: String!
   email: String!
@@ -412,7 +422,7 @@ input AdminSetAccountStandingInput {
   reason: String!
 
   """
-  ACTIVE lifts a block or suspension. BLOCKED is indefinite. SUSPENDED needs until. AGE_BLOCKED is refused: correct the date of birth.
+  ACTIVE lifts a block or suspension. BLOCKED is indefinite. SUSPENDED needs until. AGE_BLOCKED is refused: correct the age or date of birth.
   """
   status: AccountStatus!
 
@@ -527,14 +537,20 @@ type AdminTermsStatus {
 
 input AdminUpdateUserInput {
   """
-  YYYY-MM-DD. The age gate runs again. A date that clears an age block needs reason.
+  Whole years, 1 to 120, as of now (ADR-0104). The age gate runs again. Refused (VALIDATION) on an account that has
+  a date of birth, which decides the age (correct dateOfBirth instead), and together with dateOfBirth.
+  """
+  age: Int
+
+  """
+  YYYY-MM-DD. The age gate runs again; a date of birth decides the age over a declared one. Not together with age.
   """
   dateOfBirth: String
   displayName: String
   email: String
 
   """
-  Why this change is being made. Required, including when a new date of birth lets an under-age account pass.
+  Why this change is being made. Required, including when a new age or date of birth lets an under-age account pass.
   """
   reason: String!
   userId: UUID!
@@ -1709,7 +1725,17 @@ After a provider sign-in (no signUp call): the same details, collected once
 """
 input CompleteRegistrationInput {
   acceptedTermsVersion: String!
-  dateOfBirth: String!
+
+  """
+  Whole years, 1 to 120 (ADR-0104). Required, unless an app from before ADR-0104 sends dateOfBirth instead. When both
+  are sent, age is used and dateOfBirth is ignored.
+  """
+  age: Int
+
+  """
+  YYYY-MM-DD, from apps released before ADR-0104. The age it gives today is stored, not the date.
+  """
+  dateOfBirth: String @deprecated(reason: "Send age, in whole years. Ignored when age is sent.")
   displayName: String!
   institutionalEmail: String
 }
@@ -3173,7 +3199,7 @@ type Mutation {
   adminSetAccountStanding(input: AdminSetAccountStandingInput!): AdminUserPayload!
 
   """
-  Platform admins. Edits name, email or date of birth and re-runs the age gate. A passing date of birth clears AGE_BLOCKED. Audited.
+  Platform admins. Edits name, email, age or date of birth and re-runs the age gate. A passing age clears AGE_BLOCKED. Audited.
   """
   adminUpdateUser(input: AdminUpdateUserInput!): AdminUserPayload!
   answerClassroomInvite(input: AnswerClassroomInviteInput!): ClassroomPayload!
@@ -6167,12 +6193,22 @@ input SignInWithGoogleInput {
 }
 
 """
-Registration (ADR-0017, ADR-0019): date of birth is required (YYYY-MM-DD). A college or organisation email is
+Registration (ADR-0017, ADR-0019, ADR-0104): the age in whole years is required. A college or organisation email is
 optional; it receives a 6-digit code. `acceptedTermsVersion` must be Query.termsVersion.
 """
 input SignUpInput {
   acceptedTermsVersion: String!
-  dateOfBirth: String!
+
+  """
+  Whole years, 1 to 120 (ADR-0104). Required, unless an app from before ADR-0104 sends dateOfBirth instead. When both
+  are sent, age is used and dateOfBirth is ignored.
+  """
+  age: Int
+
+  """
+  YYYY-MM-DD, from apps released before ADR-0104. The age it gives today is stored, not the date.
+  """
+  dateOfBirth: String @deprecated(reason: "Send age, in whole years. Ignored when age is sent.")
   displayName: String!
   email: String!
   institutionalEmail: String
