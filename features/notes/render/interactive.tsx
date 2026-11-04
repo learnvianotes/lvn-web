@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { Doc, Inline } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
+import { trackQuizStart, type QuizStartKind } from '@/lib/analytics'
 import { track } from '@/lib/learning'
 import { InlineText, RichDoc } from './RichText'
 
@@ -14,6 +15,14 @@ import { InlineText, RichDoc } from './RichText'
  */
 
 const QuizTopics = createContext<string[] | null>(null)
+
+/** What a quiz card's first answer starts (lvn-backend ADR-0107): a note's own quiz, or AI-made practice. */
+const QuizKind = createContext<Extract<QuizStartKind, 'note' | 'practice'>>('note')
+
+/** Marks the quiz cards inside as AI-made practice for their quiz_start. */
+export function PracticeQuizProvider({ children }: { children: ReactNode }) {
+  return <QuizKind value="practice">{children}</QuizKind>
+}
 
 /** The topics of the note being read, for its quiz results; without it a quiz records nothing. */
 export function QuizTopicsProvider({ topicKeys, children }: { topicKeys: string[]; children: ReactNode }) {
@@ -52,11 +61,14 @@ export function QuestionCardView({ content }: { content: { prompt: Doc; answer: 
 export function QuizCardView({ id, content }: { id?: string; content: { question: Doc; choices: { id: string; content: Inline }[]; correct: string[]; multiple: boolean; explanation?: Doc } }) {
   const t = useTranslations('notes.reader')
   const topicKeys = useContext(QuizTopics)
+  const kind = useContext(QuizKind)
   const [picked, setPicked] = useState<string[]>([])
   const [checked, setChecked] = useState(false)
   const right = checked && picked.length === content.correct.length && picked.every((p) => content.correct.includes(p))
   const toggle = (id: string) => {
     if (checked) return
+    // The first answer picked starts the quiz; the tracker keeps one start per kind per page view.
+    trackQuizStart(kind)
     setPicked((p) => (content.multiple ? (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]) : [id]))
   }
   return (

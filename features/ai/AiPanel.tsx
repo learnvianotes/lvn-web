@@ -53,8 +53,10 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import { cn } from '@/lib/cn'
 import { AiResultPanel } from './AiAction'
 import { CardView } from '@/features/notes/render/CardView'
+import { PracticeQuizProvider } from '@/features/notes/render/interactive'
 import { Markdown } from '@/features/notes/render/Markdown'
 import { AnswerList, AskForm } from './AskAi'
+import { trackFeature } from '@/lib/analytics'
 
 /**
  * AI tasks on a note (lvn-backend ADR-0059): one menu for every task, results beside the note that only their maker
@@ -130,6 +132,7 @@ export function useRunAiTask(noteId: string, enabled = true) {
   const allowance = state.data?.myAiAllowance
   const spent = allowance?.limitToday != null && allowance.usedToday >= allowance.limitToday
   const run = async (task: AiTask, lang: AiLanguage = 'ENGLISH', cardIds?: string[]) => {
+    trackFeature('ai_assist')
     setError(null)
     setLimit(false)
     const { result, error } = await attempt(() =>
@@ -402,7 +405,9 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
           <li key={i} className={cn('flex gap-3 rounded-xl border p-3 transition', chosen.has(i) ? 'border-accent/40 bg-bg' : 'border-border bg-surface-2 opacity-60')}>
             <input type="checkbox" checked={chosen.has(i)} onChange={() => toggle(i)} aria-label={t('pick', { n: i + 1 })} className="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
             <div className="min-w-0 flex-1 text-sm">
-              <CardView id={`${a.id}-${i}`} type={c.type as CardType} content={c.content} />
+              <PracticeQuizProvider>
+                <CardView id={`${a.id}-${i}`} type={c.type as CardType} content={c.content} />
+              </PracticeQuizProvider>
             </div>
           </li>
         ))}

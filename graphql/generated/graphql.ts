@@ -969,6 +969,17 @@ export type QuizAnswerInput = {
   questionId: string;
 };
 
+/** What kind of quiz a quiz_start event started: the @lvn/contracts QuizStartKind id in upper case. */
+export type QuizStartKind =
+  /** A classroom quiz. */
+  | 'CLASS'
+  /** The quiz cards of a note. */
+  | 'NOTE'
+  /** Practice questions: AI-made, or a topic's quiz. */
+  | 'PRACTICE'
+  /** A shared or public quiz. */
+  | 'SHARED';
+
 export type QuizVisibility =
   | 'PRIVATE'
   | 'PUBLIC'
@@ -1593,16 +1604,66 @@ export type UpdateWeeklyTaskInput = {
   target?: number | null | undefined;
 };
 
+/**
+ * One usage event. The names and the props each may carry are in @lvn/contracts (USAGE_EVENT_NAMES, sanitizeUsageProps;
+ * ADR-0107).
+ */
 export type UsageEventInput = {
+  /** MAJOR.MINOR[.PATCH[.BUILD]] with an optional -prerelease and +build, at most 32 characters; anything else is not stored. */
   appVersion?: string | null | undefined;
-  /** One of: page_view, note_open, note_upload, search, download, sign_in. */
+  /** One of: page_view, note_open, note_upload, search, download, sign_in, feature_use, search_no_results, quiz_start. */
   name: string;
   occurredAt?: string | null | undefined;
   platform: ClientPlatform;
-  /** A small object. A string `feature` is counted in top features. At most 1024 characters. */
+  /**
+   * A small object: at most 1024 characters as JSON and 16 keys, or the batch is refused.
+   * feature_use: { feature } (a UsageFeature id, lower case, e.g. "pdf_viewer"; required).
+   * search_no_results: { scope, wordCount } (a UsageSearchScope id, e.g. "notes", and a whole number; both required).
+   * quiz_start: { kind } (a QuizStartKind id, e.g. "shared"; required).
+   * search: { scope, wordCount } (both optional; `words` is read as wordCount).
+   * A missing or unknown required value refuses the batch; every other key is dropped. The other events keep short
+   * tokens (letters, digits, _ . : -, at most 40, not an id), numbers and booleans under keys that do not name personal
+   * data or text; everything else is dropped. A string `feature` is counted in adminUsage's top features.
+   */
   props?: unknown;
+  /** Letters, digits, _ and -, at most 64; anything else is replaced by the server's session. */
   sessionId?: string | null | undefined;
 };
+
+/**
+ * A product area a feature_use event names: the @lvn/contracts UsageFeature id in upper case (NOTES_EDITOR is
+ * notes_editor).
+ */
+export type UsageFeature =
+  | 'AI_ASSIST'
+  | 'CLASSROOM'
+  | 'CLASS_QUIZ'
+  | 'DOUBTS'
+  | 'EXAM_PLAN'
+  | 'FLASHCARDS_REVIEW'
+  | 'FOCUS'
+  | 'GROUPS'
+  | 'NOTES_EDITOR'
+  | 'PAGE_EDITOR'
+  | 'PDF_VIEWER'
+  | 'PROFILE'
+  | 'QUICK_CAPTURE'
+  | 'READ_ALOUD'
+  | 'RESOURCES'
+  | 'SEARCH'
+  | 'SETTINGS'
+  | 'SHARED_QUIZ'
+  | 'VOICE_NOTE';
+
+/** Where a search was made: the @lvn/contracts UsageSearchScope id in upper case. ALL is a search across every scope. */
+export type UsageSearchScope =
+  | 'ALL'
+  | 'CLASSROOMS'
+  | 'GROUPS'
+  | 'NOTES'
+  | 'PEOPLE'
+  | 'RESOURCES'
+  | 'TOPICS';
 
 export type VerificationMethod =
   | 'DOCUMENTS'
@@ -1763,6 +1824,30 @@ export type AdminUsageFunnelQueryVariables = Exact<{
 
 
 export type AdminUsageFunnelQuery = { adminFunnel: Array<{ name: string, users: number }> };
+
+export type AdminUsageFeaturesQueryVariables = Exact<{
+  from?: string | null | undefined;
+  to?: string | null | undefined;
+}>;
+
+
+export type AdminUsageFeaturesQuery = { adminFeatureUsage: { generatedAt: string, events: number, hiddenSmallGroups: number, range: { firstDay: string, lastDay: string, timeZone: string }, features: Array<{ feature: UsageFeature, users: number, events: number }>, quizStarts: { starts: number, hiddenSmallGroups: number, byKind: Array<{ kind: QuizStartKind, users: number, starts: number }> } } };
+
+export type AdminUsageSearchQualityQueryVariables = Exact<{
+  from?: string | null | undefined;
+  to?: string | null | undefined;
+}>;
+
+
+export type AdminUsageSearchQualityQuery = { adminSearchQuality: { generatedAt: string, searches: number, zeroResults: number, zeroResultRate: number | null, hiddenSmallGroups: number, range: { firstDay: string, lastDay: string, timeZone: string }, byScope: Array<{ scope: UsageSearchScope | null, users: number, searches: number, zeroResults: number, zeroResultRate: number | null }> } };
+
+export type AdminUsageVersionsQueryVariables = Exact<{
+  from?: string | null | undefined;
+  to?: string | null | undefined;
+}>;
+
+
+export type AdminUsageVersionsQuery = { adminVersionAdoption: { generatedAt: string, hiddenSmallGroups: number, range: { firstDay: string, lastDay: string, timeZone: string }, platforms: Array<{ platform: ClientPlatform, users: number, events: number, versions: Array<{ appVersion: string | null, users: number, events: number, share: number }> }> } };
 
 export type AdminMetricsQueryVariables = Exact<{
   from?: string | null | undefined;
@@ -4317,6 +4402,9 @@ export const AdminUsageSubjectsDocument = {"kind":"Document","definitions":[{"ki
 export const AdminUsageRetentionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsageRetention"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"weeks"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminRetention"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"weeks"},"value":{"kind":"Variable","name":{"kind":"Name","value":"weeks"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"firstWeek"}},{"kind":"Field","name":{"kind":"Name","value":"lastWeek"}},{"kind":"Field","name":{"kind":"Name","value":"timeZone"}},{"kind":"Field","name":{"kind":"Name","value":"hiddenSmallGroups"}},{"kind":"Field","name":{"kind":"Name","value":"cohorts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"start"}},{"kind":"Field","name":{"kind":"Name","value":"size"}},{"kind":"Field","name":{"kind":"Name","value":"returned"}}]}}]}}]}}]} as unknown as DocumentNode<AdminUsageRetentionQuery, AdminUsageRetentionQueryVariables>;
 export const AdminUsageVerificationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsageVerification"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"from"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"to"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminVerificationStats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"from"}}},{"kind":"Argument","name":{"kind":"Name","value":"to"},"value":{"kind":"Variable","name":{"kind":"Name","value":"to"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"range"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AdminRange"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requested"}},{"kind":"Field","name":{"kind":"Name","value":"approved"}},{"kind":"Field","name":{"kind":"Name","value":"rejected"}},{"kind":"Field","name":{"kind":"Name","value":"pending"}},{"kind":"Field","name":{"kind":"Name","value":"medianHoursToDecision"}},{"kind":"Field","name":{"kind":"Name","value":"oldestPendingHours"}},{"kind":"Field","name":{"kind":"Name","value":"hiddenSmallGroups"}},{"kind":"Field","name":{"kind":"Name","value":"byMethod"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"method"}},{"kind":"Field","name":{"kind":"Name","value":"requested"}},{"kind":"Field","name":{"kind":"Name","value":"approved"}},{"kind":"Field","name":{"kind":"Name","value":"rejected"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AdminRange"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AdminMetricsRange"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstDay"}},{"kind":"Field","name":{"kind":"Name","value":"lastDay"}},{"kind":"Field","name":{"kind":"Name","value":"timeZone"}}]}}]} as unknown as DocumentNode<AdminUsageVerificationQuery, AdminUsageVerificationQueryVariables>;
 export const AdminUsageFunnelDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsageFunnel"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"since"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"steps"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminFunnel"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"since"},"value":{"kind":"Variable","name":{"kind":"Name","value":"since"}}},{"kind":"Argument","name":{"kind":"Name","value":"steps"},"value":{"kind":"Variable","name":{"kind":"Name","value":"steps"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"users"}}]}}]}}]} as unknown as DocumentNode<AdminUsageFunnelQuery, AdminUsageFunnelQueryVariables>;
+export const AdminUsageFeaturesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsageFeatures"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"from"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"to"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminFeatureUsage"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"from"}}},{"kind":"Argument","name":{"kind":"Name","value":"to"},"value":{"kind":"Variable","name":{"kind":"Name","value":"to"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"range"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AdminRange"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"events"}},{"kind":"Field","name":{"kind":"Name","value":"hiddenSmallGroups"}},{"kind":"Field","name":{"kind":"Name","value":"features"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"feature"}},{"kind":"Field","name":{"kind":"Name","value":"users"}},{"kind":"Field","name":{"kind":"Name","value":"events"}}]}},{"kind":"Field","name":{"kind":"Name","value":"quizStarts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"starts"}},{"kind":"Field","name":{"kind":"Name","value":"hiddenSmallGroups"}},{"kind":"Field","name":{"kind":"Name","value":"byKind"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"users"}},{"kind":"Field","name":{"kind":"Name","value":"starts"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AdminRange"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AdminMetricsRange"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstDay"}},{"kind":"Field","name":{"kind":"Name","value":"lastDay"}},{"kind":"Field","name":{"kind":"Name","value":"timeZone"}}]}}]} as unknown as DocumentNode<AdminUsageFeaturesQuery, AdminUsageFeaturesQueryVariables>;
+export const AdminUsageSearchQualityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsageSearchQuality"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"from"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"to"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminSearchQuality"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"from"}}},{"kind":"Argument","name":{"kind":"Name","value":"to"},"value":{"kind":"Variable","name":{"kind":"Name","value":"to"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"range"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AdminRange"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"searches"}},{"kind":"Field","name":{"kind":"Name","value":"zeroResults"}},{"kind":"Field","name":{"kind":"Name","value":"zeroResultRate"}},{"kind":"Field","name":{"kind":"Name","value":"hiddenSmallGroups"}},{"kind":"Field","name":{"kind":"Name","value":"byScope"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"scope"}},{"kind":"Field","name":{"kind":"Name","value":"users"}},{"kind":"Field","name":{"kind":"Name","value":"searches"}},{"kind":"Field","name":{"kind":"Name","value":"zeroResults"}},{"kind":"Field","name":{"kind":"Name","value":"zeroResultRate"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AdminRange"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AdminMetricsRange"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstDay"}},{"kind":"Field","name":{"kind":"Name","value":"lastDay"}},{"kind":"Field","name":{"kind":"Name","value":"timeZone"}}]}}]} as unknown as DocumentNode<AdminUsageSearchQualityQuery, AdminUsageSearchQualityQueryVariables>;
+export const AdminUsageVersionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsageVersions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"from"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"to"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminVersionAdoption"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"from"}}},{"kind":"Argument","name":{"kind":"Name","value":"to"},"value":{"kind":"Variable","name":{"kind":"Name","value":"to"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"range"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AdminRange"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"hiddenSmallGroups"}},{"kind":"Field","name":{"kind":"Name","value":"platforms"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"platform"}},{"kind":"Field","name":{"kind":"Name","value":"users"}},{"kind":"Field","name":{"kind":"Name","value":"events"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"appVersion"}},{"kind":"Field","name":{"kind":"Name","value":"users"}},{"kind":"Field","name":{"kind":"Name","value":"events"}},{"kind":"Field","name":{"kind":"Name","value":"share"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AdminRange"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AdminMetricsRange"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstDay"}},{"kind":"Field","name":{"kind":"Name","value":"lastDay"}},{"kind":"Field","name":{"kind":"Name","value":"timeZone"}}]}}]} as unknown as DocumentNode<AdminUsageVersionsQuery, AdminUsageVersionsQueryVariables>;
 export const AdminMetricsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminMetrics"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"from"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"to"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminMetrics"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"from"},"value":{"kind":"Variable","name":{"kind":"Name","value":"from"}}},{"kind":"Argument","name":{"kind":"Name","value":"to"},"value":{"kind":"Variable","name":{"kind":"Name","value":"to"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"total"}},{"kind":"Field","name":{"kind":"Name","value":"newLast7Days"}},{"kind":"Field","name":{"kind":"Name","value":"newLast30Days"}},{"kind":"Field","name":{"kind":"Name","value":"active"}}]}},{"kind":"Field","name":{"kind":"Name","value":"content"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notes"}},{"kind":"Field","name":{"kind":"Name","value":"publicNotes"}},{"kind":"Field","name":{"kind":"Name","value":"subjects"}},{"kind":"Field","name":{"kind":"Name","value":"topics"}},{"kind":"Field","name":{"kind":"Name","value":"groups"}},{"kind":"Field","name":{"kind":"Name","value":"classrooms"}}]}},{"kind":"Field","name":{"kind":"Name","value":"ai"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"from"}},{"kind":"Field","name":{"kind":"Name","value":"to"}},{"kind":"Field","name":{"kind":"Name","value":"tasksRun"}},{"kind":"Field","name":{"kind":"Name","value":"failures"}},{"kind":"Field","name":{"kind":"Name","value":"promptTokens"}},{"kind":"Field","name":{"kind":"Name","value":"completionTokens"}},{"kind":"Field","name":{"kind":"Name","value":"costMicroUsd"}},{"kind":"Field","name":{"kind":"Name","value":"byProvider"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"provider"}},{"kind":"Field","name":{"kind":"Name","value":"tasksRun"}},{"kind":"Field","name":{"kind":"Name","value":"failures"}},{"kind":"Field","name":{"kind":"Name","value":"promptTokens"}},{"kind":"Field","name":{"kind":"Name","value":"completionTokens"}},{"kind":"Field","name":{"kind":"Name","value":"costMicroUsd"}}]}},{"kind":"Field","name":{"kind":"Name","value":"byModel"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"provider"}},{"kind":"Field","name":{"kind":"Name","value":"model"}},{"kind":"Field","name":{"kind":"Name","value":"tasksRun"}},{"kind":"Field","name":{"kind":"Name","value":"failures"}},{"kind":"Field","name":{"kind":"Name","value":"promptTokens"}},{"kind":"Field","name":{"kind":"Name","value":"completionTokens"}},{"kind":"Field","name":{"kind":"Name","value":"costMicroUsd"}}]}},{"kind":"Field","name":{"kind":"Name","value":"byTask"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task"}},{"kind":"Field","name":{"kind":"Name","value":"tasksRun"}},{"kind":"Field","name":{"kind":"Name","value":"failures"}},{"kind":"Field","name":{"kind":"Name","value":"promptTokens"}},{"kind":"Field","name":{"kind":"Name","value":"completionTokens"}},{"kind":"Field","name":{"kind":"Name","value":"costMicroUsd"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"storage"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"bytes"}},{"kind":"Field","name":{"kind":"Name","value":"files"}}]}},{"kind":"Field","name":{"kind":"Name","value":"verification"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"studentIdQueue"}},{"kind":"Field","name":{"kind":"Name","value":"pendingRequests"}},{"kind":"Field","name":{"kind":"Name","value":"domainReviews"}}]}},{"kind":"Field","name":{"kind":"Name","value":"moderation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"openReports"}},{"kind":"Field","name":{"kind":"Name","value":"openAppeals"}}]}}]}}]}}]} as unknown as DocumentNode<AdminMetricsQuery, AdminMetricsQueryVariables>;
 export const AdminSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"overridden"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"constraints"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"min"}},{"kind":"Field","name":{"kind":"Name","value":"max"}},{"kind":"Field","name":{"kind":"Name","value":"maxLength"}},{"kind":"Field","name":{"kind":"Name","value":"pattern"}},{"kind":"Field","name":{"kind":"Name","value":"nullable"}}]}}]}}]}}]} as unknown as DocumentNode<AdminSettingsQuery, AdminSettingsQueryVariables>;
 export const UpdateAdminSettingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateAdminSetting"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateAdminSettingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateAdminSetting"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setting"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"overridden"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"constraints"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"min"}},{"kind":"Field","name":{"kind":"Name","value":"max"}},{"kind":"Field","name":{"kind":"Name","value":"maxLength"}},{"kind":"Field","name":{"kind":"Name","value":"pattern"}},{"kind":"Field","name":{"kind":"Name","value":"nullable"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"userErrors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateAdminSettingMutation, UpdateAdminSettingMutationVariables>;

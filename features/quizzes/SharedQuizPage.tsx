@@ -3,10 +3,11 @@
 import { useMutation, useQuery } from '@apollo/client/react'
 import { ListChecks } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { InlineText, RichDoc } from '@/features/notes/render/RichText'
 import { SharedQuizByLinkDocument, SharedQuizDocument, SubmitSharedQuizAttemptDocument, type SharedQuizQuestionFieldsFragment } from '@/graphql/generated/graphql'
+import { trackQuizStart } from '@/lib/analytics'
 import type { Doc, Inline } from '@/lib/contracts/validation'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -35,6 +36,11 @@ export function SharedQuizPage({ token }: { token: string }) {
   const [busy, setBusy] = useState(false)
   const [submit] = useMutation(SubmitSharedQuizAttemptDocument)
   const op = useRef<string | null>(null)
+  // The questions are on screen to answer: a quiz start (lvn-backend ADR-0107).
+  const quizId = quiz?.id
+  useEffect(() => {
+    if (quizId) trackQuizStart('shared')
+  }, [quizId])
 
   const send = async () => {
     if (!quiz) return

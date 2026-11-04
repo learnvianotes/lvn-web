@@ -28,6 +28,7 @@ import { cardMenu, SlashMenu } from './slash'
 import { PageEditor } from '../pages/PageEditor'
 import { RecordDialog } from './Recorder'
 import { CardRail } from '../view/CardRail'
+import { useFeatureUse } from '@/lib/analytics'
 
 export interface NoteEditorProps {
   noteId: string
@@ -69,6 +70,7 @@ const SAFE_LINK = /^(https?:\/\/|mailto:)/i
  */
 export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion, onAnchor, onEditor, compact = false, tabs, panel, contentPanel, aside }: NoteEditorProps) {
   const t = useTranslations('notes.editor')
+  useFeatureUse('notes_editor')
   // Keeps `uploads.enabled` current for the slash menu, drop and paste (lvn-backend ADR-0097).
   useUploadsEnabled()
   const anchorRef = useRef(onAnchor)

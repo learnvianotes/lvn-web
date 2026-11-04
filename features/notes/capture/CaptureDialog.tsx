@@ -16,6 +16,7 @@ import { mimeOf, uploadToNote, UploadError } from '@/features/notes/media'
 import { newCardId } from '@/features/notes/model/doc'
 import { compressPicture } from './compress'
 import { addToTray, sizeLabel, type TrayItem } from './tray'
+import { useFeatureUse } from '@/lib/analytics'
 
 type Busy = { adding: true } | { upload: number; of: number; progress: number } | { making: true } | null
 
@@ -30,6 +31,7 @@ const key = () => `t${Date.now()}-${next++}`
  */
 export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onClose: () => void; folderId?: string | null }) {
   const t = useTranslations('notes.capture')
+  useFeatureUse(open ? 'quick_capture' : null)
   const client = useApolloClient()
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)

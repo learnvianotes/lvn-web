@@ -67,6 +67,44 @@ const fixtures = new Map<unknown, unknown>([
     { adminVerificationStats: { generatedAt: at, range, requested: 50, approved: 30, rejected: 10, pending: 10, medianHoursToDecision: 20.5, oldestPendingHours: 48, hiddenSmallGroups: 0, byMethod: [{ method: 'COLLEGE_ID', requested: 50, approved: 30, rejected: 10 }] } },
   ],
   [docs.AdminUsageFunnelDocument, { adminFunnel: [{ name: 'signed_up', users: 100 }, { name: 'email_verified', users: 80 }] }],
+  [
+    docs.AdminUsageFeaturesDocument,
+    {
+      adminFeatureUsage: {
+        generatedAt: at,
+        range,
+        events: 900,
+        hiddenSmallGroups: 3,
+        features: [{ feature: 'PDF_VIEWER', users: 61, events: 400 }, { feature: 'FLASHCARDS_REVIEW', users: 22, events: 90 }],
+        quizStarts: { starts: 75, hiddenSmallGroups: 1, byKind: [{ kind: 'SHARED', users: 9, starts: 30 }] },
+      },
+    },
+  ],
+  [
+    docs.AdminUsageSearchQualityDocument,
+    {
+      adminSearchQuality: {
+        generatedAt: at,
+        range,
+        searches: 200,
+        zeroResults: 30,
+        zeroResultRate: 0.15,
+        hiddenSmallGroups: 2,
+        byScope: [{ scope: 'NOTES', users: 40, searches: 150, zeroResults: 20, zeroResultRate: 0.133 }, { scope: null, users: 12, searches: 50, zeroResults: 10, zeroResultRate: 0.2 }],
+      },
+    },
+  ],
+  [
+    docs.AdminUsageVersionsDocument,
+    {
+      adminVersionAdoption: {
+        generatedAt: at,
+        range,
+        hiddenSmallGroups: 4,
+        platforms: [{ platform: 'WEB', users: 300, events: 5000, versions: [{ appVersion: '0.2.0', users: 250, events: 4000, share: 0.833 }, { appVersion: null, users: 60, events: 1000, share: 0.2 }] }],
+      },
+    },
+  ],
 ])
 
 const api = vi.hoisted(() => ({ calls: [] as { doc: unknown; variables: unknown }[], fail: new Map<unknown, unknown>(), role: 'PLATFORM_ADMIN' as string | null }))
@@ -147,6 +185,50 @@ describe('admin usage dashboard (/admin/usage)', () => {
       expect(container!.querySelector('[role="tabpanel"]')!.textContent).toContain(needle)
       if (name === 'Retention') expect(container!.querySelector('[data-testid="retention-heatmap"] caption')?.textContent).toBe('Weekly retention by sign-up week')
     }
+  })
+
+  it('shows feature use, search quality and app versions with their hidden groups', async () => {
+    await mount()
+    expect(queried().has(docs.AdminUsageFeaturesDocument)).toBe(false)
+    const panel = () => container!.querySelector('[role="tabpanel"]')!
+    const hidden = () => [...container!.querySelectorAll('[data-testid="hidden-groups"]')].map((n) => n.textContent)
+
+    await click(tab('Features'))
+    expect(queried().has(docs.AdminUsageFeaturesDocument)).toBe(true)
+    for (const v of ['PDF reader', '61 people · 400 uses', 'Flashcard review', 'Shared quiz', '75']) expect(panel().textContent).toContain(v)
+    expect(hidden()).toEqual(['3 small groups hidden (fewer than 5 people each).', '1 small group hidden (fewer than 5 people each).'])
+
+    await click(tab('Search quality'))
+    for (const v of ['200', '15%', 'Notes', '13.3%', 'No scope sent (older app)', 'never what was searched']) expect(panel().textContent).toContain(v)
+    expect(hidden()).toEqual(['2 small groups hidden (fewer than 5 people each).'])
+
+    await click(tab('Versions'))
+    for (const v of ['Web: 300 people, 5,000 events', '0.2.0', '83.3%', 'No version sent']) expect(panel().textContent).toContain(v)
+    expect(hidden()).toEqual(['4 small groups hidden (fewer than 5 people each).'])
+    const vars = api.calls.find((c) => c.doc === docs.AdminUsageVersionsDocument)!.variables as { from: string; to: string }
+    expect(vars.from).toMatch(/T18:30:00\.000Z$/)
+  })
+
+  it('exports the new tabs with lower-case ids and their hidden counts', async () => {
+    const blobs: Blob[] = []
+    const create = vi.spyOn(URL, 'createObjectURL').mockImplementation((b) => (blobs.push(b as Blob), 'blob:x'))
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    await mount()
+    for (const name of ['Features', 'Search quality', 'Versions']) {
+      await click(tab(name))
+      await click(button('Export CSV')!)
+    }
+    const [features, search, versions] = await Promise.all(blobs.map((b) => b.text()))
+    expect(features).toContain('feature,users,events')
+    expect(features).toContain('pdf_viewer,61,400')
+    expect(features).toContain('shared,9,30')
+    expect(search).toContain('scope,users,searches,zero_results,zero_result_rate')
+    expect(search).toContain('none,12,50,10,0.2')
+    expect(versions).toContain('platform,app_version,users,share,events')
+    expect(versions).toContain('WEB,none,60,0.2,1000')
+    for (const csv of [features, search, versions]) expect(csv).toContain('hidden_small_groups')
+    create.mockRestore()
+    revoke.mockRestore()
   })
 
   it('draws charts with a table of the same figures', async () => {

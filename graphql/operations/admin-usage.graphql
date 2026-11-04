@@ -199,3 +199,71 @@ query AdminUsageFunnel($since: DateTime, $steps: [String!]!) {
     users
   }
 }
+
+# First-party usage events v2 (lvn-backend ADR-0107)
+
+query AdminUsageFeatures($from: DateTime, $to: DateTime) {
+  adminFeatureUsage(from: $from, to: $to) {
+    range {
+      ...AdminRange
+    }
+    generatedAt
+    events
+    hiddenSmallGroups
+    features {
+      feature
+      users
+      events
+    }
+    quizStarts {
+      starts
+      hiddenSmallGroups
+      byKind {
+        kind
+        users
+        starts
+      }
+    }
+  }
+}
+
+query AdminUsageSearchQuality($from: DateTime, $to: DateTime) {
+  adminSearchQuality(from: $from, to: $to) {
+    range {
+      ...AdminRange
+    }
+    generatedAt
+    searches
+    zeroResults
+    zeroResultRate
+    hiddenSmallGroups
+    byScope {
+      scope
+      users
+      searches
+      zeroResults
+      zeroResultRate
+    }
+  }
+}
+
+query AdminUsageVersions($from: DateTime, $to: DateTime) {
+  adminVersionAdoption(from: $from, to: $to) {
+    range {
+      ...AdminRange
+    }
+    generatedAt
+    hiddenSmallGroups
+    platforms {
+      platform
+      users
+      events
+      versions {
+        appVersion
+        users
+        events
+        share
+      }
+    }
+  }
+}

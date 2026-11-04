@@ -43,7 +43,7 @@ export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 export type AssignableRole = 'MANAGER' | 'TEACHER' | 'STUDENT'
 
 /** Names `UsageEventInput` accepts. Anything else is refused with VALIDATION. */
-export const USAGE_EVENT_NAMES = ['page_view', 'note_open', 'note_upload', 'search', 'download', 'sign_in'] as const
+export const USAGE_EVENT_NAMES = ['page_view', 'note_open', 'note_upload', 'search', 'download', 'sign_in', 'feature_use', 'search_no_results', 'quiz_start'] as const
 
 export type IdCardFieldsView = {
   name: string | null
@@ -160,6 +160,8 @@ export type UsageEventInput = {
   platform: 'WEB'
   occurredAt: string
   props?: Record<string, string | number | boolean>
+  /** This build's version (lvn-backend ADR-0107); left out when it is not a version. */
+  appVersion?: string
 }
 
 export type ErrorEventInput = {

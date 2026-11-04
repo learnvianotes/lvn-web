@@ -14,6 +14,7 @@ import { AiAnswerDocument, AiStateDocument, AskAiAboutDoubtDocument, AskAiDocume
 import { cn } from '@/lib/cn'
 import { useLive } from '@/features/notifications/live'
 import { Markdown } from '@/features/notes/render/Markdown'
+import { trackFeature } from '@/lib/analytics'
 
 /**
  * Ask AI (lvn-backend ADR-0060): a question over the notes the asker may read — one note, their notes, their groups'
@@ -56,6 +57,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
 
   const submit = async (event?: React.FormEvent) => {
     event?.preventDefault()
+    trackFeature('ai_assist')
     setError(null)
     setLimit(false)
     try {

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { uploadPageImage } from '@/features/beta/api'
 import { NotePagesDocument, SaveNotePagesDocument } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { useFeatureUse } from '@/lib/analytics'
 import { PhotoScan } from './PhotoScan'
 import {
   addStroke,
@@ -44,6 +45,7 @@ const MARKER = '#0284c7'
  * Pointer events carry pressure (a mouse is treated as 0.5) and work with a finger or a stylus.
  */
 export function PageEditor({ noteId }: { noteId: string }) {
+  useFeatureUse('page_editor')
   const t = useTranslations('notes.pages')
   const client = useApolloClient()
   const loaded = useQuery(NotePagesDocument, { variables: { noteId }, fetchPolicy: 'network-only' })

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { trackFeature } from '@/lib/analytics'
 
 /**
  * Read aloud (ADR-0025): the browser's own text-to-speech (Web Speech API) — free, offline, nothing leaves the device.
@@ -41,6 +42,7 @@ export function useReadAloud(cards: () => SpokenCard[]) {
   const play = useCallback(
     (fromId?: string) => {
       if (!supported) return
+      trackFeature('read_aloud')
       window.speechSynthesis.cancel()
       const mine = ++run.current
       const list = cards().filter((c) => c.text.trim())
