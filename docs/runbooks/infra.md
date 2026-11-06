@@ -91,8 +91,8 @@ secret `LVN_BACKEND_READ_TOKEN` (read access to `learnvianotes/lvn-backend`) is 
 
 ## 5. The grievance mailbox
 
-`learnvianotes.in` has no MX record today, so mail to it bounces. The Grievance page needs a working address, e.g.
-`grievance@learnvianotes.in`; it goes into `config/legal.ts` → `LEGAL.email`.
+`learnvianotes.in` has no MX record today, so mail to it bounces. The Grievance page needs a working address,
+`support@learnvianotes.in` (`lib/site.ts`; `config/legal.ts` → `LEGAL.email` uses that constant).
 
 DNS is at GoDaddy. In either option:
 
@@ -102,7 +102,7 @@ DNS is at GoDaddy. In either option:
 
 | Option | DNS records to add | Replies come from |
 | --- | --- | --- |
-| Zoho Mail free plan | the verification TXT, MX `mx.zoho.in` / `mx2.zoho.in` / `mx3.zoho.in`, SPF TXT, DKIM TXT (exact values on Zoho's setup page) | `grievance@learnvianotes.in` |
+| Zoho Mail free plan | the verification TXT, MX `mx.zoho.in` / `mx2.zoho.in` / `mx3.zoho.in`, SPF TXT, DKIM TXT (exact values on Zoho's setup page) | `support@learnvianotes.in` |
 | Forwarding to Gmail (a forwarding service such as ImprovMX) | the service's MX records and SPF TXT | your Gmail, unless you set up “Send mail as” with SMTP |
 
 *(Unverified)* Zoho's free-plan limits, and whether forwarding services include SMTP on their free tier. The API's own

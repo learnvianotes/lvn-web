@@ -33,7 +33,7 @@ test('the Grievance page names the officer and commits to 24 hours, 7 days and 3
   await expect(page.getByRole('note')).not.toContainText('Still to be filled in')
   await expect(page.locator('mark')).toHaveCount(0)
   await expect(page.getByText('LearnViaNotes Admin', { exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'learnvianotes@gmail.com' })).toHaveAttribute('href', 'mailto:learnvianotes@gmail.com')
+  await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Grievance Redressal' })).toHaveAttribute('href', '/legal/grievance')
 })
 

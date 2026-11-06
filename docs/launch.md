@@ -112,8 +112,8 @@ emails.
 ## Decisions waiting for the owner
 
 1. **The legal details** (`config/legal.ts`) are filled in (2026-11-03): courts in Bengaluru, Grievance Officer
-   LearnViaNotes Admin at learnvianotes@gmail.com. A `grievance@learnvianotes.in` mailbox
-   ([infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)) can replace the address later.
+   LearnViaNotes Admin at support@learnvianotes.in (`lib/site.ts`, also `config/legal.ts`).
+   ([infra.md §5](runbooks/infra.md#5-the-grievance-mailbox) is how that mailbox receives mail.)
 2. **The terms version** is `2026-11-03`, owner's decision (2026-11-03): the Privacy Policy and Terms changed
    materially (adults only, Google Analytics, the Grievance page), so every account accepts them again. It is the
    newest entry of `PUBLISHED_TERMS_VERSIONS` in lvn-web (`features/legal/documents.ts`). The version people accept

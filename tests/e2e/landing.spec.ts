@@ -55,6 +55,7 @@ test('sitemap lists the subjects and their topics, resources and the legal pages
   expect(xml).toContain('/subjects/dsa</loc>')
   expect(xml).toContain('/subjects/dsa/shortest-paths</loc>')
   expect(xml).toContain('/resources</loc>')
+  expect(xml).toContain('/plans</loc>')
   for (const path of ['/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) expect(xml).toContain(`${path}</loc>`)
   expect(xml).not.toContain('/core')
   // Every listed address is a real page.
@@ -68,9 +69,17 @@ test('every kind of public address answers a real 404 when there is nothing ther
   }
 })
 
-test('outside production, robots.txt keeps the whole site out of search engines', async ({ request }) => {
-  // The e2e build is a development build (production: allow and the sitemap, app/robots.ts).
-  expect(await (await request.get('/robots.txt')).text()).toMatch(/User-Agent: \*\s+Disallow: \//)
+test('robots.txt allows the public site, blocks private areas, and points at the sitemap', async ({ request }) => {
+  const res = await request.get('/robots.txt')
+  expect(res.headers()['content-type']).toMatch(/text\/plain/)
+  const text = await res.text()
+  expect(text).toMatch(/User-Agent: \*/)
+  expect(text).toMatch(/Allow: \/\s/)
+  expect(text).not.toMatch(/^Disallow: \/\s*$/m)
+  for (const path of ['/admin', '/dashboard', '/home', '/settings', '/api', '/oauth', '/__/']) expect(text).toContain(`Disallow: ${path}`)
+  expect(text).toContain('/sitemap.xml')
+  const sitemap = await request.get('/sitemap.xml')
+  expect(sitemap.headers()['content-type']).toMatch(/application\/xml|text\/xml/)
 })
 
 test('every public page has its own title, description and canonical link', async ({ page }) => {

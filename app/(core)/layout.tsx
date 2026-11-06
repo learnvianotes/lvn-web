@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { APP_NAME } from '@core/config'
-import { SITE_DESCRIPTION } from '@core/app/title'
 import { env } from '@/lib/env'
+import { SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site'
 import { PAPER, themeBootScript } from '@/lib/theme'
 // The old site's global styles, in its order; feature styles are imported by their components.
 import '@tabler/icons-webfont/dist/tabler-icons.min.css'
@@ -19,10 +19,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
   title: APP_NAME,
   description: SITE_DESCRIPTION,
+  keywords: [...SITE_KEYWORDS],
   applicationName: APP_NAME,
   appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: 'default' },
   other: { 'mobile-web-app-capable': 'yes' },
-  openGraph: { siteName: APP_NAME },
+  openGraph: { siteName: APP_NAME, type: 'website', title: APP_NAME, description: SITE_DESCRIPTION },
+  twitter: { card: 'summary', title: APP_NAME, description: SITE_DESCRIPTION },
   icons: {
     icon: [
       { url: '/icons/icon-16.png', sizes: '16x16', type: 'image/png' },

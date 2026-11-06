@@ -222,6 +222,22 @@ query SubjectShelf($filters: SearchFilters, $scopes: [SearchScope!]) {
   }
 }
 
+# Indexable resource pages for sitemap.xml. Guests may read `resources` (approved only).
+query SitemapResources($after: String) {
+  resources(first: 100, after: $after) {
+    edges {
+      node {
+        id
+        indexable
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
 query TopicResources($topicId: UUID!) {
   resources(filter: { topicId: $topicId }, first: 10) {
     edges {
