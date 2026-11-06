@@ -17,8 +17,14 @@ describe('safeLinkHref', () => {
     '//evil.example',
     '/notes/1',
     'https://evil.example\\\n.good.example',
+    ' javascript:alert(1)',
+    'https://user:pass@books.example.com/clean-code',
     '',
   ])('rejects %j', (href) => {
     expect(safeLinkHref(href, { mailto: true })).toBeNull()
+  })
+
+  it('returns the canonical URL, so a raw value cannot disagree with the parsed one', () => {
+    expect(safeLinkHref('https://books.example.com')).toBe('https://books.example.com/')
   })
 })

@@ -25,6 +25,8 @@ import {
   removeImage,
   scalePercent,
   straighten,
+  inkColor,
+  pageImageSrc,
   strokePath,
   strokeWidth,
   undo,
@@ -253,7 +255,7 @@ export function PageEditor({ noteId }: { noteId: string }) {
                 key={stroke.id}
                 d={strokePath(stroke)}
                 fill="none"
-                stroke={stroke.color}
+                stroke={inkColor(stroke.color)}
                 strokeWidth={strokeWidth(stroke)}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -261,7 +263,9 @@ export function PageEditor({ noteId }: { noteId: string }) {
               />
             ))}
           </svg>
-          {page.images.map((image) => (
+          {page.images.map((image) => {
+            const src = pageImageSrc(image.href)
+            return (
             <div
               key={image.id}
               data-image
@@ -291,9 +295,11 @@ export function PageEditor({ noteId }: { noteId: string }) {
                 window.addEventListener('pointerup', end)
               }}
             >
-              {/* Placed by the author on this page; the href is their upload or scan. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image.href} alt={image.name} draggable={false} className="h-full w-full select-none object-contain" />
+              {/* Placed by the author on this page; the href is their upload, scan, or a data URL of the file they just picked. */}
+              {src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt={image.name} draggable={false} className="h-full w-full select-none object-contain" />
+              ) : null}
               {selected === image.id ? (
                 <>
                   <button type="button" data-handle="resize" aria-label={t('resize')} className="absolute -bottom-2 -right-2 size-4 rounded-full border border-sky-700 bg-white" />
@@ -325,7 +331,8 @@ export function PageEditor({ noteId }: { noteId: string }) {
                 </>
               ) : null}
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
       <PhotoScan open={scan} onClose={() => setScan(false)} onImage={place} />

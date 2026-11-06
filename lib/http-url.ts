@@ -8,8 +8,10 @@ export function safeLinkHref(href: string | null | undefined, options?: { mailto
   if (!href || CONTROL_OR_BACKSLASH.test(href)) return null
   try {
     const url = new URL(href)
-    if (url.protocol === 'http:' || url.protocol === 'https:') return href
-    if (options?.mailto && url.protocol === 'mailto:') return href
+    // The canonical URL, not the raw string: the parser strips or rewrites characters the raw value still has.
+    if (url.username || url.password) return null
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.href
+    if (options?.mailto && url.protocol === 'mailto:') return url.href
     return null
   } catch {
     return null

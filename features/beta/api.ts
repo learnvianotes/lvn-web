@@ -10,6 +10,8 @@ import {
 } from '@/graphql/generated/graphql'
 import { publicNotePath } from '@/features/public-notes/paths'
 import { type ShareAudience, wireVisibility } from '@/features/notes/share/visibility'
+import { env } from '@/lib/env'
+import { STORAGE_PUT_REFUSED, storagePutRequest } from '@/lib/upload-target'
 
 /**
  * Helpers around the generated beta operations (graphql/operations/beta.graphql).
@@ -139,10 +141,12 @@ export async function uploadVoiceNote(client: ApolloClient, noteId: string, file
 }
 
 function putFile(intent: { uploadUrl: string; uploadHeaders: { name: string; value: string }[] }, file: Blob): Promise<void> {
+  const target = storagePutRequest(intent, { appEnv: env.NEXT_PUBLIC_APP_ENV, storageOrigins: env.NEXT_PUBLIC_STORAGE_ORIGINS })
+  if (!target) return Promise.reject(new Error(STORAGE_PUT_REFUSED))
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
-    xhr.open('PUT', intent.uploadUrl)
-    for (const header of intent.uploadHeaders) if (header.name.toLowerCase() !== 'content-length') xhr.setRequestHeader(header.name, header.value)
+    xhr.open('PUT', target.url)
+    for (const header of target.headers) xhr.setRequestHeader(header.name, header.value)
     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`upload ${xhr.status}`)))
     xhr.onerror = () => reject(new Error('upload failed'))
     xhr.send(file)

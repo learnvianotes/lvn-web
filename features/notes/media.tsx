@@ -6,7 +6,10 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState, type
 import { CompleteNoteUploadDocument, CreateNoteUploadDocument, type CardFieldsFragment, type MediaFieldsFragment } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
 import { reportClientError, trackUsage } from '@/lib/analytics'
+import { env } from '@/lib/env'
+import { safeLinkHref } from '@/lib/http-url'
 import { isLimitCode, refusalMessage } from '@/lib/limit-error'
+import { STORAGE_PUT_REFUSED, storagePutRequest } from '@/lib/upload-target'
 
 /**
  * Pictures, video, audio and files on notes (lvn-backend §8.1): uploads go straight to storage with a pre-signed PUT,
@@ -68,7 +71,10 @@ const SIZES = [
 
 /** A `srcset` of the sizes made so far, or undefined before there are any. */
 export function srcSetOf(file: MediaInfo): string | undefined {
-  const parts = SIZES.flatMap(([key, width]) => (file[key] ? [`${file[key]} ${file.width ? Math.min(width, file.width) : width}w`] : []))
+  const parts = SIZES.flatMap(([key, width]) => {
+    const href = safeLinkHref(file[key])
+    return href ? [`${href} ${file.width ? Math.min(width, file.width) : width}w`] : []
+  })
   return parts.length ? parts.join(', ') : undefined
 }
 
@@ -98,12 +104,13 @@ async function mutateUpload<T>(run: () => Promise<T>): Promise<T> {
 
 /** PUTs a file to a pre-signed URL with exactly the headers the API asked for; progress is 0–1. */
 export function putToStorage(intent: { uploadUrl: string; uploadHeaders: { name: string; value: string }[] }, file: Blob, onProgress: (p: number) => void): Promise<void> {
+  const target = storagePutRequest(intent, { appEnv: env.NEXT_PUBLIC_APP_ENV, storageOrigins: env.NEXT_PUBLIC_STORAGE_ORIGINS })
+  if (!target) return Promise.reject(new UploadError(STORAGE_PUT_REFUSED))
   return new Promise<void>((resolve, reject) => {
     // XMLHttpRequest, not fetch: it reports upload progress.
     const xhr = new XMLHttpRequest()
-    xhr.open('PUT', intent.uploadUrl)
-    // Browsers set Content-Length themselves and refuse to have it set.
-    for (const h of intent.uploadHeaders) if (h.name.toLowerCase() !== 'content-length') xhr.setRequestHeader(h.name, h.value)
+    xhr.open('PUT', target.url)
+    for (const h of target.headers) xhr.setRequestHeader(h.name, h.value)
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total)
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) resolve()

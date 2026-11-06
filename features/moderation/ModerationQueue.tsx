@@ -264,6 +264,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
 function ResourceCase({ resource: r }: { resource: NonNullable<Case['resource']> }) {
   const t = useTranslations('moderation.queue')
   const types = useTranslations('resources.type')
+  const href = safeLinkHref(r.url)
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
       <p className="text-muted">{t('resourceLead')}</p>
@@ -272,8 +273,8 @@ function ResourceCase({ resource: r }: { resource: NonNullable<Case['resource']>
         {r.author ? ` · ${r.author}` : ''}
         {r.isbn ? ` · ISBN ${r.isbn}` : ''}
       </p>
-      {safeLinkHref(r.url) ? (
-        <a href={r.url} rel="ugc nofollow noopener" target="_blank" className="break-all font-semibold text-accent hover:underline">
+      {href ? (
+        <a href={href} rel="ugc nofollow noopener" target="_blank" className="break-all font-semibold text-accent hover:underline">
           {r.url}
         </a>
       ) : (

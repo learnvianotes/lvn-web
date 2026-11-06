@@ -25,7 +25,10 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
     </figcaption>
   ) : null
   if (!file && store.loading) return <div aria-hidden className="h-48 animate-pulse rounded-xl bg-surface-2" />
-  if (!file) {
+  const picture = safeLinkHref(file?.mediumUrl ?? file?.url)
+  const playback = safeLinkHref(file?.playbackUrl ?? file?.url)
+  const poster = safeLinkHref(file?.posterUrl)
+  if (!file || (type === 'image' && !picture) || ((type === 'video' || type === 'audio') && !playback)) {
     return (
       <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted">
         <ImageOff className="size-4" aria-hidden />
@@ -39,7 +42,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
         <figure>
           {/* eslint-disable-next-line @next/next/no-img-element -- short-lived storage URLs, not for next/image */}
           <img
-            src={file.mediumUrl ?? file.url}
+            src={picture ?? undefined}
             srcSet={srcSetOf(file)}
             sizes="(min-width: 48rem) 48rem, 100vw"
             width={file.width ?? undefined}
@@ -54,7 +57,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
     case 'video':
       return (
         <figure>
-          <video src={file.playbackUrl ?? file.url} poster={file.posterUrl ?? undefined} controls preload="metadata" playsInline className="w-full rounded-xl bg-black shadow-sm" />
+          <video src={playback ?? undefined} poster={poster ?? undefined} controls preload="metadata" playsInline className="w-full rounded-xl bg-black shadow-sm" />
           {caption}
         </figure>
       )
@@ -62,7 +65,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
       return (
         <figure className="rounded-xl border border-border bg-surface-2 p-3">
           <p className="mb-2 truncate text-sm font-medium">{file.fileName}</p>
-          <audio src={file.playbackUrl ?? file.url} controls preload="metadata" className="w-full" />
+          <audio src={playback ?? undefined} controls preload="metadata" className="w-full" />
           {caption}
         </figure>
       )

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
+import { safeLinkHref } from '@/lib/http-url'
 import { proofKind } from './proof'
 
 /**
@@ -10,13 +11,18 @@ import { proofKind } from './proof'
  */
 export function ProofPreview({ url, mime, name, openLabel, failedLabel }: { url: string; mime: string; name: string; openLabel: string; failedLabel: string }) {
   const kind = proofKind(mime, name)
+  const href = safeLinkHref(url)
   return (
     <div className="flex flex-col gap-2">
-      {kind === 'image' ? <ZoomImage url={url} name={name} /> : null}
-      {kind === 'pdf' ? <PdfEmbed url={url} name={name} failedLabel={failedLabel} /> : null}
-      <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-fit items-center text-sm font-medium text-accent hover:underline">
-        {openLabel}
-      </a>
+      {href && kind === 'image' ? <ZoomImage url={href} name={name} /> : null}
+      {href && kind === 'pdf' ? <PdfEmbed url={href} name={name} failedLabel={failedLabel} /> : null}
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-fit items-center text-sm font-medium text-accent hover:underline">
+          {openLabel}
+        </a>
+      ) : (
+        <span className="text-sm text-muted">{failedLabel}</span>
+      )}
     </div>
   )
 }

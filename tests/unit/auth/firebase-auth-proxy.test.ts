@@ -32,9 +32,15 @@ describe('redirects the helper asks the browser to follow', () => {
     expect(rewriteFirebaseLocation('/__/auth/handler?apiKey=test-key', project)).toBe('/__/auth/handler?apiKey=test-key')
   })
 
-  it('drops any other host', () => {
+  it('drops any other host, including user content on Google and a lookalike host', () => {
     expect(rewriteFirebaseLocation('https://evil.example/__/auth/handler', project)).toBeNull()
     expect(rewriteFirebaseLocation('http://accounts.google.com/o/oauth2/auth', project)).toBeNull()
+    expect(rewriteFirebaseLocation('https://evil.googleusercontent.com/phish', project)).toBeNull()
+    expect(rewriteFirebaseLocation('https://sites.google.com/view/phish', project)).toBeNull()
+    expect(rewriteFirebaseLocation('https://www.google.com/url?q=https://evil.example', project)).toBeNull()
+    expect(rewriteFirebaseLocation('https://storage.googleapis.com/bucket/phish.html', project)).toBeNull()
+    expect(rewriteFirebaseLocation('https://user:pass@accounts.google.com/o/oauth2/auth', project)).toBeNull()
+    expect(rewriteFirebaseLocation('https://apis.google.com/js/api.js', project)).toBe('https://apis.google.com/js/api.js')
   })
 })
 
