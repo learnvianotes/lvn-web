@@ -159,10 +159,11 @@ describe('media cards (P2c-2)', () => {
   })
 
   it('offer the picture sizes the server made, never wider than the original (ADR-0041)', () => {
-    const file = { url: 'o', mimeType: 'image/jpeg', fileName: 'a.jpg', sizeBytes: 1 }
+    const file = { url: 'https://storage.example/o', mimeType: 'image/jpeg', fileName: 'a.jpg', sizeBytes: 1 }
     expect(srcSetOf(file)).toBeUndefined()
-    expect(srcSetOf({ ...file, width: 2400, thumbUrl: 't', mediumUrl: 'm', largeUrl: 'l' })).toBe('t 320w, m 960w, l 1920w')
-    expect(srcSetOf({ ...file, width: 500, thumbUrl: 't', mediumUrl: 'm', largeUrl: 'l' })).toBe('t 320w, m 500w, l 500w')
-    expect(srcSetOf({ ...file, width: null, thumbUrl: 't', mediumUrl: null, largeUrl: null })).toBe('t 320w')
+    expect(srcSetOf({ ...file, width: 2400, thumbUrl: 'https://storage.example/t', mediumUrl: 'https://storage.example/m', largeUrl: 'https://storage.example/l' })).toBe('https://storage.example/t 320w, https://storage.example/m 960w, https://storage.example/l 1920w')
+    expect(srcSetOf({ ...file, width: 500, thumbUrl: 'https://storage.example/t', mediumUrl: 'https://storage.example/m', largeUrl: 'https://storage.example/l' })).toBe('https://storage.example/t 320w, https://storage.example/m 500w, https://storage.example/l 500w')
+    expect(srcSetOf({ ...file, width: null, thumbUrl: 'https://storage.example/t', mediumUrl: null, largeUrl: null })).toBe('https://storage.example/t 320w')
+    expect(srcSetOf({ ...file, width: 2400, thumbUrl: 'javascript:alert(1)', mediumUrl: 'https://storage.example/m', largeUrl: null })).toBe('https://storage.example/m 960w')
   })
 })

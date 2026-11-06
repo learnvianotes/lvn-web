@@ -1,3 +1,5 @@
+import { safeLinkHref } from '@/lib/http-url'
+
 /** A page of a note: ink strokes and placed pictures, in page units (0–1). */
 
 export type DrawTool = 'pen' | 'marker' | 'eraser' | 'ruler'
@@ -143,6 +145,23 @@ export function removeImage(page: NotePage, id: string): NotePage {
 
 export function updatePage(pages: NotePage[], index: number, edit: (page: NotePage) => NotePage): NotePage[] {
   return pages.map((page, i) => (i === index ? edit(page) : page))
+}
+
+const INK = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+const DATA_IMAGE = /^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/]+=*$/i
+
+/** A colour safe to put on an SVG stroke. Anything else (a url(), a script) is the pen default. */
+export function inkColor(color: string, fallback = '#1d4ed8'): string {
+  return INK.test(color) ? color : fallback
+}
+
+/**
+ * A page picture safe to use as an img src: a data URL this editor made, a blob preview, or an http(s) read URL.
+ */
+export function pageImageSrc(href: string): string | null {
+  if (DATA_IMAGE.test(href)) return href
+  if (href.startsWith('blob:') && !/[\s<>"']/.test(href)) return href
+  return safeLinkHref(href)
 }
 
 /** SVG path in a 100×100 viewBox. Ruler strokes ignore the in-between points. */

@@ -22,6 +22,7 @@ import {
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { trackFeature } from '@/lib/analytics'
+import { meetHref } from './meet'
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
@@ -59,6 +60,7 @@ export function FocusMode() {
     return () => clearInterval(timer)
   }, [session])
   const phase = session ? phaseOf(session, now) : null
+  const sessionMeet = meetHref(session?.meetUrl)
 
   return (
     <section aria-labelledby="focus-mode" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
@@ -71,8 +73,8 @@ export function FocusMode() {
             {clock(phase.left)}
           </p>
           <p className="text-sm text-muted">{phase.phase === 'FOCUS' ? t('focusing', { minutes: session.plannedMinutes }) : phase.phase === 'BREAK' ? t('resting') : t('done')}</p>
-          {session.meetUrl ? (
-            <a href={session.meetUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-accent hover:underline">
+          {sessionMeet ? (
+            <a href={sessionMeet} target="_blank" rel="noreferrer" className="text-sm font-medium text-accent hover:underline">
               {t('openMeet')}
             </a>
           ) : null}
@@ -94,8 +96,13 @@ export function FocusMode() {
             e.preventDefault()
             setProblem(null)
             setCounted(null)
+            const trimmedMeet = meetUrl.trim()
+            if (trimmedMeet && !meetHref(trimmedMeet)) {
+              setProblem(t('meetInvalid'))
+              return
+            }
             trackFeature('focus')
-            const res = await start({ variables: { input: { minutes, breakMinutes, topicKey: topic?.key ?? null, meetUrl: meetUrl.trim() || null } } })
+            const res = await start({ variables: { input: { minutes, breakMinutes, topicKey: topic?.key ?? null, meetUrl: trimmedMeet || null } } })
             const message = res.data?.startFocusSession.userErrors[0]?.message
             if (message) setProblem(message)
           }}
@@ -219,7 +226,9 @@ export function Buddies() {
       ))}
       {!list.buddies.length ? <p className="text-sm text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-2">
-        {list.buddies.map((b) => (
+        {list.buddies.map((b) => {
+          const join = meetHref(b.meetUrl)
+          return (
           <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
             <span className="flex flex-col">
               <span className="font-medium">
@@ -233,8 +242,8 @@ export function Buddies() {
               <span className="text-muted">{t('together', { counted: b.together.countedDays, target: b.together.target })}</span>
             </span>
             <span className="flex items-center gap-2">
-              {b.studyingNow && b.meetUrl ? (
-                <a href={b.meetUrl} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
+              {b.studyingNow && join ? (
+                <a href={join} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
                   {t('join')}
                 </a>
               ) : null}
@@ -243,7 +252,8 @@ export function Buddies() {
               </button>
             </span>
           </li>
-        ))}
+          )
+        })}
       </ul>
       {list.sent.map((s) => (
         <p key={s.id} className="flex items-center justify-between text-sm text-muted">

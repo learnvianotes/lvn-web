@@ -31,7 +31,12 @@ export const FIREBASE_AUTH_HELPER_HEADERS: { key: string; value: string }[] = [
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
 ]
 
-const REDIRECT_HOST = /(^|\.)((accounts\.google|google|googleapis|gstatic|googleusercontent)\.com)$/
+/**
+ * Hosts the helper may send the browser to. Any subdomain of google.com, googleapis.com, gstatic.com, or
+ * googleusercontent.com is not enough: those include user content and Google's own open redirects.
+ * Sign-in only needs Google's account host (and apis.google.com for the older endpoint).
+ */
+const ALLOWED_REDIRECT_HOSTS = new Set(['accounts.google.com', 'apis.google.com'])
 
 /** The firebaseapp.com URL for this helper path, or null when the project or the path must not be proxied. */
 export function firebaseAuthUpstream(projectId: string | undefined, segments: string[], search: string): URL | null {
@@ -62,10 +67,10 @@ export function rewriteFirebaseLocation(location: string, projectId: string): st
   } catch {
     return null
   }
-  if (url.protocol !== 'https:') return null
+  if (url.protocol !== 'https:' || url.username || url.password) return null
   const host = url.hostname.toLowerCase()
   if (host === `${projectId}.firebaseapp.com`) return safeAuthPath(`${url.pathname}${url.search}`)
-  if (REDIRECT_HOST.test(host)) return url.toString()
+  if (ALLOWED_REDIRECT_HOSTS.has(host)) return url.toString()
   return null
 }
 

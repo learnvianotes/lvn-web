@@ -82,6 +82,8 @@ export default function nextConfig(phase: string): NextConfig {
     const problems = launchProblems({
       appEnv: process.env.NEXT_PUBLIC_APP_ENV ?? 'development',
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? '',
+      apiUrl: process.env.NEXT_PUBLIC_API_URL ?? '',
+      liveUrl: process.env.NEXT_PUBLIC_LIVE_URL ?? '',
       firebaseProject: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
     })
     if (problems.length) throw new Error(`Launch check failed:\n  - ${problems.join('\n  - ')}`)

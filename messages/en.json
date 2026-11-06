@@ -2576,6 +2576,7 @@
     "onTopic": "On {title}",
     "noTopic": "Any topic",
     "meet": "Google Meet link (optional; your buddies can join)",
+    "meetInvalid": "A Meet link looks like https://meet.google.com/abc-defg-hij",
     "start": "Start focusing",
     "end": "End the session",
     "focusing": "Focusing: {minutes} minutes, then a rest.",

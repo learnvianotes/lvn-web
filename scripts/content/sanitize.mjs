@@ -54,7 +54,7 @@ const CLASS_MAP = {
 
 /** Elements removed entirely (page chrome duplicated by the app). */
 const REMOVE_SELECTORS = [
-  'script', 'style', 'link', 'meta', 'noscript', 'button',
+  'script', 'style', 'link', 'meta', 'noscript', 'button', 'foreignObject', 'iframe', 'object', 'embed',
   '.topic-nav-bar', '.eyebrow', '.pagetitle', '.page-title', '.ptitle', '.ptag', '.page-tag',
   '.copy-btn', '.lang-tabs', '.code-header',
 ]
@@ -278,17 +278,23 @@ export function normalizeFragment(root, doc) {
       } else if (name === 'style') {
         const s = filterStyle(attr.value)
         s ? el.setAttribute('style', s) : el.removeAttribute('style')
-      } else if (name === 'href') {
+      } else if (name === 'href' || name.endsWith(':href')) {
         const v = attr.value.trim()
-        if (/^(https?:|mailto:)/i.test(v)) {
+        const fragment = v.startsWith('#') && !/[\s<>"']/.test(v)
+        const web = /^(https?:|mailto:)/i.test(v) && !/[\u0000-\u001F\\]/.test(v)
+        if (fragment) {
+          // SVG marker and shape references stay.
+        } else if (web) {
           el.setAttribute('target', '_blank')
           el.setAttribute('rel', 'noopener noreferrer')
-        } else {
+        } else if (name === 'href') {
           // Legacy intra-page links have no meaning in the new app → unwrap.
           const span = doc.createElement('span')
           while (el.firstChild) span.appendChild(el.firstChild)
           el.replaceWith(span)
           break
+        } else {
+          el.removeAttribute(attr.name)
         }
       }
     }

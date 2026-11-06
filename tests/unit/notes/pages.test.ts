@@ -16,6 +16,8 @@ import {
   removeImage,
   scalePercent,
   straighten,
+  inkColor,
+  pageImageSrc,
   strokePath,
   undo,
   updateImage,
@@ -118,6 +120,16 @@ describe('note pages', () => {
     }])
     expect(loaded[0]?.strokes[0]).toMatchObject({ tool: 'pen', straight: true, points: [{ x: 0.1, y: 0.2, p: 0.5 }] })
     expect(loaded[0]?.images[0]?.href).toBe('')
+  })
+
+  it('paints only a hex ink colour and only a picture URL the page can show', () => {
+    expect(inkColor('#1d4ed8')).toBe('#1d4ed8')
+    expect(inkColor('red')).toBe('#1d4ed8')
+    expect(inkColor('url(https://evil.example/log)')).toBe('#1d4ed8')
+    expect(pageImageSrc('data:image/png;base64,iVBORw0KGgo=')).toBe('data:image/png;base64,iVBORw0KGgo=')
+    expect(pageImageSrc('https://storage.example/page.png')).toBe('https://storage.example/page.png')
+    expect(pageImageSrc('javascript:alert(1)')).toBeNull()
+    expect(pageImageSrc('data:image/svg+xml;base64,PHN2Zy8+')).toBeNull()
   })
 
   it('keeps at most 40 undo steps', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { missingLegalFields } from '@/config/legal'
-import { firebaseProblem, isLocalSite, launchProblems, productionFirebaseProject } from '@/lib/launch-checks'
+import { firebaseProblem, isLocalSite, launchProblems, productionFirebaseProject, transportProblem } from '@/lib/launch-checks'
 
 const filled = { operator: 'Asha Rao', address: '1 MG Road, Bengaluru, Karnataka 560001', courtsCity: 'Bengaluru', grievanceOfficer: 'Asha Rao', email: 'grievance@learnvianotes.in' }
 
@@ -58,6 +58,30 @@ describe('launchProblems (lvn-backend ADR-0093)', () => {
     expect(isLocalSite('https://localhost.example.com')).toBe(false)
     // A real address is checked whatever else is set.
     expect(launchProblems({ appEnv: 'production', siteUrl: 'https://www.learnvianotes.in', firebaseProject: prod, legal: { ...filled, operator: '' } })).toHaveLength(1)
+  })
+
+  it('refuses a production launch whose site, API, or live socket is cleartext', () => {
+    expect(transportProblem('api', 'http://api.learnvianotes.in/graphql')).toMatch(/https:\/\//)
+    expect(transportProblem('live', 'ws://live.learnvianotes.in/graphql/live')).toMatch(/wss:\/\//)
+    expect(transportProblem('site', 'https://www.learnvianotes.in')).toBeNull()
+    const problems = launchProblems({
+      appEnv: 'production',
+      siteUrl: 'https://www.learnvianotes.in',
+      apiUrl: 'http://api.learnvianotes.in/graphql',
+      liveUrl: 'ws://live.learnvianotes.in/graphql/live',
+      firebaseProject: prod,
+      legal: filled,
+    })
+    expect(problems.some((problem) => problem.includes('NEXT_PUBLIC_API_URL'))).toBe(true)
+    expect(problems.some((problem) => problem.includes('NEXT_PUBLIC_LIVE_URL'))).toBe(true)
+    expect(launchProblems({
+      appEnv: 'production',
+      siteUrl: 'https://www.learnvianotes.in',
+      apiUrl: 'https://api.learnvianotes.in/graphql',
+      liveUrl: 'wss://live.learnvianotes.in/graphql/live',
+      firebaseProject: prod,
+      legal: filled,
+    })).toEqual([])
   })
 
   it('lets other builds through with the gaps shown on the pages', () => {

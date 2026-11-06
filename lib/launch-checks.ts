@@ -16,6 +16,10 @@ export interface BuildFacts {
   appEnv: string
   /** NEXT_PUBLIC_SITE_URL */
   siteUrl?: string
+  /** NEXT_PUBLIC_API_URL. A production launch must call the API over https. */
+  apiUrl?: string
+  /** NEXT_PUBLIC_LIVE_URL. When set on a production launch, it must be wss. */
+  liveUrl?: string
   /** NEXT_PUBLIC_FIREBASE_PROJECT_ID; empty when this build has no Google sign-in */
   firebaseProject?: string
   /** The production project's id (config/firebase-projects.json) */
@@ -42,10 +46,30 @@ export function firebaseProblem(appEnv: string, project: string, production: str
 /** Whether the site's address is this machine: such a build serves only here (audits), never a deployment. */
 export const isLocalSite = (siteUrl: string): boolean => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(siteUrl)
 
+/**
+ * Why this production address is not safe to ship, or null when it is.
+ * Empty values are ignored: a missing variable is reported by env validation, not here.
+ */
+export function transportProblem(kind: 'site' | 'api' | 'live', value: string | undefined): string | null {
+  if (!value) return null
+  if (kind === 'live') {
+    if (value.startsWith('wss://')) return null
+    return `NEXT_PUBLIC_LIVE_URL must be wss:// in a production build (got ${value}). Access tokens go over that socket.`
+  }
+  if (value.startsWith('https://')) return null
+  const name = kind === 'site' ? 'NEXT_PUBLIC_SITE_URL' : 'NEXT_PUBLIC_API_URL'
+  return `${name} must be https:// in a production build (got ${value}). Session tokens must not travel in cleartext.`
+}
+
 /** Why this build may not go ahead; empty when it may. */
-export function launchProblems({ appEnv, siteUrl = '', firebaseProject = '', productionProject = productionFirebaseProject(), legal = LEGAL }: BuildFacts): string[] {
+export function launchProblems({ appEnv, siteUrl = '', apiUrl, liveUrl, firebaseProject = '', productionProject = productionFirebaseProject(), legal = LEGAL }: BuildFacts): string[] {
   if (appEnv === 'production' && isLocalSite(siteUrl)) return []
   const problems: string[] = []
+  if (appEnv === 'production') {
+    for (const problem of [transportProblem('site', siteUrl), transportProblem('api', apiUrl), transportProblem('live', liveUrl)]) {
+      if (problem) problems.push(problem)
+    }
+  }
   const firebase = firebaseProblem(appEnv, firebaseProject, productionProject)
   if (firebase) problems.push(firebase)
   if (appEnv === 'production') {

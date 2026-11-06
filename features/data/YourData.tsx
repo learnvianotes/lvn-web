@@ -18,6 +18,7 @@ import {
 } from '@/graphql/generated/graphql'
 import { trackUsage } from '@/lib/analytics'
 import { formatBytes, putToStorage, UploadError } from '@/features/notes/media'
+import { safeLinkHref } from '@/lib/http-url'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 
 const IMPORT_TYPES: Record<string, string> = { zip: 'application/zip', md: 'text/markdown', markdown: 'text/markdown', txt: 'text/plain' }
@@ -55,6 +56,7 @@ function ExportPart() {
   useQuery(MyDataExportsDocument, { skip: !preparing, pollInterval: 4_000, fetchPolicy: 'network-only' })
   const [request, requesting] = useMutation(RequestDataExportDocument, { refetchQueries: [MyDataExportsDocument] })
   const [error, setError] = useState<string | null>(null)
+  const downloadHref = latest?.status === 'READY' ? safeLinkHref(latest.downloadUrl) : null
 
   return (
     <div className="flex flex-col gap-3">
@@ -62,11 +64,11 @@ function ExportPart() {
         <h3 className="font-semibold">{t('heading')}</h3>
         <p className="text-sm text-muted">{t('lead')}</p>
       </div>
-      {latest?.status === 'READY' && latest.downloadUrl ? (
+      {downloadHref && latest?.status === 'READY' ? (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
           <CircleCheck className="size-5 text-emerald-600" aria-hidden />
           <span className="flex-1">{t('ready', { size: formatBytes(latest.sizeBytes ?? 0), date: new Date(latest.expiresAt!).toLocaleDateString() })}</span>
-          <a href={latest.downloadUrl} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
+          <a href={downloadHref} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
             <Download className="size-4" aria-hidden />
             {t('download')}
           </a>
