@@ -8,6 +8,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { ThemeSync } from '@/components/theme/ThemeSync'
 import { landingHoldScript } from '@/lib/auth/hint'
 import { env } from '@/lib/env'
+import { SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site'
 import { PAPER, themeBootScript } from '@/lib/theme'
 import '../globals.css'
 
@@ -20,9 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
     title: { default: t('name'), template: `%s · ${t('name')}` },
-    description: t('description'),
+    description: SITE_DESCRIPTION,
+    keywords: [...SITE_KEYWORDS],
     applicationName: t('name'),
-    openGraph: { siteName: t('name'), type: 'website' },
+    openGraph: { siteName: t('name'), type: 'website', title: t('name'), description: SITE_DESCRIPTION },
+    twitter: { card: 'summary', title: t('name'), description: SITE_DESCRIPTION },
     icons: {
       // The SVG is crisp at every size; PNGs cover browsers without SVG favicons. Rendered by branding/render-icons.mjs.
       icon: [

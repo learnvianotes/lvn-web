@@ -6,7 +6,7 @@ Both go through `.github/workflows/deploy.yml`. CI (`ci.yml`) checks every push.
 
 | Push | Deploys to | Web build | GitHub environment |
 | --- | --- | --- | --- |
-| a `release/**` branch | beta, `https://beta.learnvianotes.in` | `NEXT_PUBLIC_APP_ENV=sandbox`: noindex, robots `Disallow: /`, the test Firebase project | `beta` |
+| a `release/**` branch | beta, `https://beta.learnvianotes.in` | `NEXT_PUBLIC_APP_ENV=sandbox`: page noindex, robots allows `/` and disallows private areas, the test Firebase project | `beta` |
 | a `v*` tag, e.g. `v1.0.0` | production, `https://www.learnvianotes.in` | `NEXT_PUBLIC_APP_ENV=production`: launch checks, sitemap, the production Firebase project | `production`, with a required reviewer |
 
 **Production has no VM for now:** its server was deleted on 2026-10-22. A `v*` tag builds the image and then stops at
@@ -44,7 +44,7 @@ first deploy: the web's deploy refuses until `/opt/lvn/lvn.sh` exists.
    ```
    Fixes found on beta go on these branches, then back into `main`.
 2. Check beta: the landing page, a subject, sign-up with an adult age (the email arrives),
-   `/legal/grievance`, `/robots.txt` (`Disallow: /`), and that `/no-such-page` answers 404.
+   `/legal/grievance`, `/robots.txt` (`Allow: /`, private areas disallowed, Sitemap set), and that `/no-such-page` answers 404.
 3. Production, once it has a VM: tag the release commit in **both** repositories with the same tag, lvn-backend first:
    ```bash
    git -C lvn-backend tag -a v1.0.0 -m "v1.0.0" && git -C lvn-backend push origin v1.0.0

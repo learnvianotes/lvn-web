@@ -1,9 +1,11 @@
 import type { MetadataRoute } from 'next'
+import { SITE_DESCRIPTION } from '@/lib/site'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'LearnViaNotes',
     short_name: 'LearnViaNotes',
+    description: SITE_DESCRIPTION,
     start_url: '/',
     display: 'standalone',
     background_color: '#f6f8fb',

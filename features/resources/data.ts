@@ -1,7 +1,7 @@
 import 'server-only'
 import { print } from 'graphql'
 import { cache } from 'react'
-import { PublicResourceDocument } from '@/graphql/generated/graphql'
+import { PublicResourceDocument, SitemapResourcesDocument } from '@/graphql/generated/graphql'
 import { serverEnv } from '@/lib/server-env'
 
 /**
@@ -22,6 +22,32 @@ export interface PublicResource {
 }
 
 const QUERY = print(PublicResourceDocument)
+const SITEMAP = print(SitemapResourcesDocument)
+
+type SitemapAnswer = {
+  resources: { edges: { node: { id: string; indexable: boolean } }[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }
+}
+
+/** Approved resources search engines may index, for sitemap.xml. Guests can read this list. */
+export async function listIndexableResources(limit = 5_000): Promise<{ id: string }[]> {
+  const out: { id: string }[] = []
+  let after: string | null = null
+  do {
+    const res = await fetch(serverEnv.apiUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query: SITEMAP, variables: { after } }),
+      next: { revalidate: 300, tags: ['resources'] },
+      signal: AbortSignal.timeout(5_000),
+    })
+    if (!res.ok) throw new Error(`API answered HTTP ${res.status}`)
+    const body = (await res.json()) as { data?: SitemapAnswer; errors?: { message: string }[] }
+    if (body.errors?.length || !body.data) throw new Error(`API error: ${body.errors?.[0]?.message ?? 'no data'}`)
+    out.push(...body.data.resources.edges.map((e) => e.node).filter((n) => n.indexable).map((n) => ({ id: n.id })))
+    after = body.data.resources.pageInfo.hasNextPage ? body.data.resources.pageInfo.endCursor : null
+  } while (after && out.length < limit)
+  return out.slice(0, limit)
+}
 
 export const getResource = cache(async (id: string): Promise<PublicResource | null> => {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null

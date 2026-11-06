@@ -3,6 +3,7 @@ import { getCatalog } from '@/features/core-content/source'
 import { LEGAL_DOCUMENTS } from '@/features/legal/documents'
 import { listPublicNotes } from '@/features/public-notes/data'
 import { publicNotePath } from '@/features/public-notes/paths'
+import { listIndexableResources } from '@/features/resources/data'
 import { listSubjects } from '@/features/subjects/data'
 import { env } from '@/lib/env'
 
@@ -13,18 +14,25 @@ import { env } from '@/lib/env'
 export const dynamic = 'force-dynamic'
 
 /**
- * Static pages (the landing page, subjects, resources and the legal pages), the subjects and their topics, and public
- * notes (/n/[slug]-[id]) from the API; /core only while the old notes are on (owner, 2026-10-14). Without the API the
- * rest still ships. Every address here answers 200; anything else on the site answers 404.
+ * Static pages (the landing page, subjects, resources, plans and the legal pages), the subjects and their topics,
+ * public notes (/n/[slug]-[id]) and indexable resource pages from the public API; /core only while the old notes are
+ * on (owner, 2026-10-14). Without the API the static pages still ship. Profiles have no public list, so they are not
+ * included. Auth, dashboard, admin and settings are not included. This file is a metadata route outside those layouts.
+ * Every address here answers 200; anything else on the site answers 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.NEXT_PUBLIC_SITE_URL
-  const [notes, subjects] = await Promise.all([listPublicNotes().catch(() => []), listSubjects().catch(() => [])])
+  const [notes, subjects, resources] = await Promise.all([
+    listPublicNotes().catch(() => []),
+    listSubjects().catch(() => []),
+    listIndexableResources().catch(() => []),
+  ])
   const core = env.NEXT_PUBLIC_CORE_ENABLED ? getCatalog() : null
   return [
     { url: `${base}/` },
     { url: `${base}/subjects` },
     { url: `${base}/resources` },
+    { url: `${base}/plans` },
     ...Object.values(LEGAL_DOCUMENTS).map((d) => ({ url: `${base}${d.path}` })),
     ...subjects.flatMap((s) => [{ url: `${base}/subjects/${s.slug}` }, ...s.topics.flatMap((t) => [t, ...t.children]).map((t) => ({ url: `${base}/subjects/${s.slug}/${t.slug}` }))]),
     ...(core
@@ -35,5 +43,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ]
       : []),
     ...notes.map((n) => ({ url: `${base}${publicNotePath(n)}`, ...(n.publishedAt ? { lastModified: new Date(n.publishedAt) } : {}) })),
+    ...resources.map((r) => ({ url: `${base}/resources/${r.id}` })),
   ]
 }

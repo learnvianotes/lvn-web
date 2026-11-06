@@ -3,6 +3,8 @@
  * these in; until then the pages show each gap, and a production build refuses to run (lib/launch-checks.ts). They are
  * the same for every environment, so they live here rather than in the environment.
  */
+import { SUPPORT_EMAIL } from '../lib/site'
+
 export const LEGAL = {
   /** Legal name of the person or company that operates LearnViaNotes (the data fiduciary). */
   operator: 'K Manideep & K Thrishank',
@@ -12,8 +14,8 @@ export const LEGAL = {
   courtsCity: 'Bengaluru',
   /** The Grievance Officer's name (IT Rules 2021, rule 3(2); SPDI Rules 2011, rule 5(9)). */
   grievanceOfficer: 'LearnViaNotes Admin',
-  /** Mailbox for privacy and grievance mail, e.g. grievance@learnvianotes.in. */
-  email: 'learnvianotes@gmail.com',
+  /** Mailbox for support, privacy and grievance mail (lib/site.ts). */
+  email: SUPPORT_EMAIL,
 }
 
 export type LegalField = keyof typeof LEGAL
