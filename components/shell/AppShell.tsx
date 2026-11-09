@@ -47,6 +47,7 @@ import { cn } from '@/lib/cn'
 import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
 import { useUploadsEnabled } from '@/features/notes/uploads'
+import { TOUR_MENU_EVENT } from '@/lib/walkthrough'
 
 type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp; staff?: boolean }
 
@@ -93,9 +94,22 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
   const admin = path.startsWith('/admin')
   const menuButton = useRef<HTMLButtonElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
-  useEffect(() => setOpen(false), [path])
+  const tourMenu = useRef(false)
   useEffect(() => {
-    if (!open) return
+    const onTourMenu = (event: Event) => {
+      const want = (event as CustomEvent<boolean>).detail === true
+      tourMenu.current = want
+      setOpen(want)
+    }
+    window.addEventListener(TOUR_MENU_EVENT, onTourMenu)
+    return () => window.removeEventListener(TOUR_MENU_EVENT, onTourMenu)
+  }, [])
+  useEffect(() => {
+    if (tourMenu.current) return
+    setOpen(false)
+  }, [path])
+  useEffect(() => {
+    if (!open || tourMenu.current) return
     const button = menuButton.current
     closeButton.current?.focus()
     const previous = document.body.style.overflow
@@ -142,7 +156,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
         {admin ? null : footer}
       </div>
       {app && open ? (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('menu')}>
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal={tourMenu.current ? undefined : true} aria-label={t('menu')}>
           <button type="button" aria-label={t('close')} className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-2xl">
             <div className="flex items-center justify-between">
@@ -199,11 +213,11 @@ function Nav() {
     }
   }
   return (
-    <nav aria-label={t('nav')} data-tour="nav" className="flex flex-1 flex-col gap-1">
+    <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-1">
       {entries.map(({ href, key, icon: Icon, match }) => {
         const active = match ? match.test(path) : path === href || path.startsWith(`${href}/`)
         return (
-          <Link key={key} href={href} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg', key === 'subjects' && !active && 'bg-sky-50 font-semibold text-sky-900 ring-1 ring-sky-700/30 dark:bg-sky-950/40 dark:text-sky-100')}>
+          <Link key={key} href={href} data-tour={key} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg', key === 'subjects' && !active && 'bg-sky-50 font-semibold text-sky-900 ring-1 ring-sky-700/30 dark:bg-sky-950/40 dark:text-sky-100')}>
             <Icon className="size-[18px] shrink-0" aria-hidden />
             {t(`entries.${key}`)}
           </Link>

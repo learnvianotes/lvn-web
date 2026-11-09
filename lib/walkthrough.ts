@@ -6,6 +6,8 @@
 
 const KEY = 'lvn.walkthrough'
 export const WALKTHROUGH_EVENT = 'lvn:walkthrough'
+/** Ask the phone drawer to open (`true`) or close (`false`) while the tour is spotlighting a nav item. */
+export const TOUR_MENU_EVENT = 'lvn:tour-menu'
 
 export type WalkthroughState = { pending: string | null; dismissed: string[] }
 
@@ -64,6 +66,12 @@ export function dismissWalkthrough(userId: string, store: Store | null = browser
 export function requestWalkthrough(): void {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new Event(WALKTHROUGH_EVENT))
+}
+
+/** Opens or closes the phone navigation drawer for the tour. Desktop ignores it. */
+export function setTourMenu(open: boolean): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(TOUR_MENU_EVENT, { detail: open }))
 }
 
 /** Keyboard intent for the tour. Tab stays in the dialog; arrows move steps; Escape skips. */

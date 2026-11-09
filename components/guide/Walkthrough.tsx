@@ -8,41 +8,45 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { ViewerDocument } from '@/graphql/generated/graphql'
-import { dismissWalkthrough, shouldAutoShowWalkthrough, tourKeyAction, WALKTHROUGH_EVENT } from '@/lib/walkthrough'
+import { dismissWalkthrough, setTourMenu, shouldAutoShowWalkthrough, tourKeyAction, WALKTHROUGH_EVENT } from '@/lib/walkthrough'
 
+/** One spotlight per area. `drawer` opens the phone menu so the item can be seen. */
 const STEPS = [
-  { id: 'notes', targets: ['nav', 'menu'] },
-  { id: 'search', targets: ['search'] },
-  { id: 'together', targets: ['nav', 'menu'] },
-  { id: 'account', targets: ['account'] },
-  { id: 'guide', targets: [] },
+  { id: 'notes', target: 'notes', drawer: true },
+  { id: 'search', target: 'explore', drawer: true },
+  { id: 'groups', target: 'groups', drawer: true },
+  { id: 'classes', target: 'classes', drawer: true },
+  { id: 'guide', target: 'guide', drawer: true },
+  { id: 'account', target: 'account', drawer: false },
+  { id: 'done', target: null, drawer: false },
 ] as const
 
 type StepId = (typeof STEPS)[number]['id']
+
+const phoneQuery = '(max-width: 1023px)'
 
 function focusable(root: HTMLElement): HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true')
 }
 
-/** The first on-screen element marked for this step, clipped to the viewport. */
-function targetBox(names: readonly string[]): DOMRect | null {
-  for (const name of names) {
-    for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)) {
-      const r = el.getBoundingClientRect()
-      const x = Math.max(0, r.left)
-      const y = Math.max(0, r.top)
-      const right = Math.min(window.innerWidth, r.right)
-      const bottom = Math.min(window.innerHeight, r.bottom)
-      if (right - x < 8 || bottom - y < 8) continue
-      const pad = 6
-      const left = Math.max(4, x - pad)
-      const top = Math.max(4, y - pad)
-      const holeRight = Math.min(window.innerWidth - 4, right + pad)
-      const holeBottom = Math.min(window.innerHeight - 4, bottom + pad)
-      return new DOMRect(left, top, holeRight - left, holeBottom - top)
-    }
+/** The visible element for this step. Hidden copies (the desktop sidebar on a phone, or the reverse) are skipped. */
+function targetElement(name: string | null): HTMLElement | null {
+  if (!name) return null
+  for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)) {
+    const r = el.getBoundingClientRect()
+    if (r.width >= 8 && r.height >= 8) return el
   }
   return null
+}
+
+function holeFor(el: HTMLElement): DOMRect {
+  const r = el.getBoundingClientRect()
+  const pad = 6
+  const left = Math.max(4, r.left - pad)
+  const top = Math.max(4, r.top - pad)
+  const right = Math.min(window.innerWidth - 4, r.right + pad)
+  const bottom = Math.min(window.innerHeight - 4, r.bottom + pad)
+  return new DOMRect(left, top, Math.max(8, right - left), Math.max(8, bottom - top))
 }
 
 function place(hole: DOMRect | null, panelWidth: number, panelHeight: number): { top: number; left: number } {
@@ -51,14 +55,19 @@ function place(hole: DOMRect | null, panelWidth: number, panelHeight: number): {
   const vw = window.innerWidth
   const vh = window.innerHeight
   if (!hole) return { top: Math.max(margin, (vh - panelHeight) / 2), left: Math.max(margin, (vw - panelWidth) / 2) }
-  if (hole.height > vh * 0.45 && hole.left < 80 && hole.right + gap + panelWidth <= vw - margin) {
-    return { top: Math.max(margin, Math.min(80, vh - margin - panelHeight)), left: hole.right + gap }
+  // On a phone the drawer fills the left side. The card sits at the bottom, or at the top when the item is low in the list.
+  if (window.matchMedia(phoneQuery).matches) {
+    const bottom = Math.max(margin, vh - panelHeight - margin)
+    return { top: hole.top > bottom - 8 ? margin : bottom, left: margin }
+  }
+  // A sidebar item gets the card in the page, beside that item, not over the middle of the content.
+  if (hole.left < 280) {
+    const left = Math.min(Math.max(hole.right + gap, 280), vw - margin - panelWidth)
+    const top = Math.max(margin, Math.min(hole.top, vh - margin - panelHeight))
+    return { top, left }
   }
   let top = hole.bottom + gap
-  if (top + panelHeight > vh - margin) {
-    const above = hole.top - gap - panelHeight
-    top = above >= margin ? above : Math.max(margin, vh - margin - panelHeight)
-  }
+  if (top + panelHeight > vh - margin) top = Math.max(margin, hole.top - gap - panelHeight)
   let left = hole.left
   if (left + panelWidth > vw - margin) left = vw - margin - panelWidth
   if (left < margin) left = margin
@@ -66,8 +75,8 @@ function place(hole: DOMRect | null, panelWidth: number, panelHeight: number): {
 }
 
 /**
- * A short tour of the signed-in shell, shown once after a profile is created and again from the guide.
- * Tab stays in the dialog, arrows move steps, Escape skips. The spotlight does not animate when reduced motion is on.
+ * A short tour of the signed-in shell. It runs once after the profile is created, and again from the guide.
+ * On a phone it opens the navigation drawer and spotlights each item. Skip, Back and Next are on every step.
  */
 export function Walkthrough() {
   const t = useTranslations('guide.tour')
@@ -86,6 +95,7 @@ export function Walkthrough() {
   const bodyId = useId()
 
   const close = useCallback(() => {
+    setTourMenu(false)
     if (viewerId) dismissWalkthrough(viewerId)
     setOpen(false)
   }, [viewerId])
@@ -117,6 +127,16 @@ export function Walkthrough() {
   }, [params, pathname, router])
 
   useEffect(() => {
+    if (!open) {
+      setTourMenu(false)
+      return
+    }
+    const current = STEPS[step]!
+    const phone = window.matchMedia(phoneQuery).matches
+    setTourMenu(phone && current.drawer)
+  }, [open, step])
+
+  useEffect(() => {
     if (!open) return
     previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const previousOverflow = document.body.style.overflow
@@ -134,21 +154,39 @@ export function Walkthrough() {
 
   useLayoutEffect(() => {
     if (!open) return
+    let cancelled = false
+    let frame = 0
+    let tries = 0
     const measure = () => {
+      if (cancelled) return
       const current = STEPS[step]!
-      const hole = targetBox(current.targets)
-      const panel = dialogRef.current
-      const width = panel?.offsetWidth ?? Math.min(360, window.innerWidth - 24)
-      const height = panel?.offsetHeight ?? 220
-      const pos = place(hole, width, height)
-      setBox({ top: pos.top, left: pos.left, hole: hole ? { x: hole.x, y: hole.y, w: hole.width, h: hole.height } : null })
+      const phone = window.matchMedia(phoneQuery).matches
+      const el = targetElement(current.target)
+      // The phone drawer mounts a frame after the tour asks for it.
+      if (phone && current.drawer && !el && tries < 20) {
+        tries += 1
+        frame = requestAnimationFrame(measure)
+        return
+      }
+      if (el) el.scrollIntoView({ block: phone ? 'start' : 'center', inline: 'nearest', behavior: 'auto' })
+      // Read the box on the next frame, after the sidebar or drawer has scrolled.
+      frame = requestAnimationFrame(() => {
+        if (cancelled) return
+        const now = targetElement(current.target)
+        const hole = now ? holeFor(now) : null
+        const panel = dialogRef.current
+        const width = panel?.offsetWidth ?? Math.min(360, window.innerWidth - 24)
+        const height = panel?.offsetHeight ?? 280
+        const pos = place(hole, width, height)
+        setBox({ top: pos.top, left: pos.left, hole: hole ? { x: hole.x, y: hole.y, w: hole.width, h: hole.height } : null })
+      })
     }
-    measure()
+    frame = requestAnimationFrame(measure)
     window.addEventListener('resize', measure)
-    window.addEventListener('scroll', measure, true)
     return () => {
+      cancelled = true
+      cancelAnimationFrame(frame)
       window.removeEventListener('resize', measure)
-      window.removeEventListener('scroll', measure, true)
     }
   }, [open, step])
 
@@ -160,13 +198,14 @@ export function Walkthrough() {
       const root = dialogRef.current
       if (action === 'skip') {
         event.preventDefault()
+        event.stopPropagation()
         close()
         return
       }
       if (action === 'next') {
         event.preventDefault()
-        setStep((n) => (n >= STEPS.length - 1 ? n : n + 1))
         if (step >= STEPS.length - 1) close()
+        else setStep((n) => n + 1)
         return
       }
       if (action === 'back') {
@@ -178,13 +217,13 @@ export function Walkthrough() {
       const items = focusable(root)
       if (!items.length) return
       const first = items[0]!
-      const last = items[items.length - 1]!
+      const lastItem = items[items.length - 1]!
       const active = document.activeElement
       const inside = active instanceof Node && root.contains(active)
       if (action === 'tab-prev' && (active === first || !inside)) {
         event.preventDefault()
-        last.focus()
-      } else if (action === 'tab-next' && (active === last || !inside)) {
+        lastItem.focus()
+      } else if (action === 'tab-next' && (active === lastItem || !inside)) {
         event.preventDefault()
         first.focus()
       }
@@ -197,8 +236,8 @@ export function Walkthrough() {
 
   const current = STEPS[step]!
   const last = step === STEPS.length - 1
-  const menu = (current.targets as readonly string[]).includes('menu') && !targetBox(['nav'])
-  const bodyKey = menu && (current.id === 'notes' || current.id === 'together') ? (`${current.id}BodyMenu` as const) : (`${current.id}Body` as const)
+  const bodyKey = `${current.id}Body` as `${StepId}Body`
+  const titleKey = `${current.id}Title` as `${StepId}Title`
 
   return createPortal(
     <div className="fixed inset-0 z-[80]">
@@ -214,7 +253,7 @@ export function Walkthrough() {
       {box?.hole ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute rounded-xl ring-2 ring-accent motion-reduce:transition-none motion-safe:transition-all motion-safe:duration-200"
+          className="pointer-events-none absolute rounded-xl ring-2 ring-accent motion-reduce:transition-none"
           style={{ top: box.hole.y, left: box.hole.x, width: box.hole.w, height: box.hole.h }}
         />
       ) : null}
@@ -224,17 +263,17 @@ export function Walkthrough() {
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        className="absolute rounded-2xl border border-border bg-bg p-4 text-fg shadow-2xl outline-none motion-reduce:transition-none motion-safe:transition-[top,left] motion-safe:duration-200"
+        className="absolute rounded-2xl border border-border bg-bg p-4 text-fg shadow-2xl outline-none motion-reduce:transition-none"
         style={{ top: box?.top ?? 0, left: box?.left ?? 12, width: 'min(22.5rem,calc(100vw-1.5rem))', visibility: box ? 'visible' : 'hidden' }}
       >
         <p className="text-xs font-medium text-muted">{t('progress', { step: step + 1, total: STEPS.length })}</p>
         <h2 id={titleId} ref={titleRef} tabIndex={-1} className="mt-1 text-lg font-bold tracking-tight outline-none">
-          {t(`${current.id}Title` as `${StepId}Title`)}
+          {t(titleKey)}
         </h2>
         <p id={bodyId} className="mt-2 text-sm leading-6 text-muted">
           {t(bodyKey)}
         </p>
-        {current.id === 'guide' ? (
+        {current.id === 'done' ? (
           <p className="mt-3">
             <Link href="/guide" className="text-sm font-medium text-accent hover:underline" onClick={() => close()}>
               {t('openGuide')}
@@ -242,20 +281,18 @@ export function Walkthrough() {
           </p>
         ) : null}
         <p className="mt-2 text-xs text-muted">{t('keys')}</p>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" variant="ghost" onClick={() => close()}>
-            {t('skip')}
-          </Button>
+        <div className="mt-4 flex flex-col gap-2">
           <div className="flex gap-2">
-            {step > 0 ? (
-              <Button type="button" variant="secondary" onClick={() => setStep((n) => n - 1)}>
-                {t('back')}
-              </Button>
-            ) : null}
-            <Button type="button" onClick={() => (last ? close() : setStep((n) => n + 1))}>
+            <Button type="button" variant="secondary" className="min-w-0 flex-1" disabled={step === 0} onClick={() => setStep((n) => Math.max(0, n - 1))}>
+              {t('back')}
+            </Button>
+            <Button type="button" className="min-w-0 flex-1" onClick={() => (last ? close() : setStep((n) => n + 1))}>
               {last ? t('done') : t('next')}
             </Button>
           </div>
+          <Button type="button" variant="secondary" className="w-full border-2" onClick={() => close()}>
+            {t('skip')}
+          </Button>
         </div>
       </div>
     </div>,
