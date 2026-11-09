@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Compass,
   FileUp,
+  CircleHelp,
   FolderKanban,
   GraduationCap,
   House,
@@ -31,8 +32,9 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Logo } from '@/components/brand/Logo'
+import { Walkthrough } from '@/components/guide/Walkthrough'
 import { AppearanceMenu } from '@/components/theme/AppearanceMenu'
 import { LimitNotice } from '@/components/ui/limit-notice'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
@@ -72,6 +74,7 @@ const ENTRIES: Entry[] = [
   { href: '/community', key: 'community', icon: MessagesSquare },
   { href: '/ask', key: 'ask', icon: Sparkles },
   { href: '/saved', key: 'saved', icon: Bookmark },
+  { href: '/guide', key: 'guide', icon: CircleHelp, match: /^\/guide(\/|$)/ },
 ]
 
 /**
@@ -120,6 +123,11 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
         {app ? <TopBar menuButton={menuButton} open={open} onMenu={() => setOpen(true)} pinned={admin} /> : visitor}
         {app ? <VerifyEmailBanner /> : null}
         {app ? <DeletionBanner /> : null}
+        {app ? (
+          <Suspense fallback={null}>
+            <Walkthrough />
+          </Suspense>
+        ) : null}
         <main
           id="main"
           className={
@@ -191,7 +199,7 @@ function Nav() {
     }
   }
   return (
-    <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-1">
+    <nav aria-label={t('nav')} data-tour="nav" className="flex flex-1 flex-col gap-1">
       {entries.map(({ href, key, icon: Icon, match }) => {
         const active = match ? match.test(path) : path === href || path.startsWith(`${href}/`)
         return (
@@ -258,7 +266,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
   return (
     <header className={cn('z-30 shrink-0 border-b border-border bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-bg/70', pinned ? 'relative' : 'sticky top-0')}>
       <div className={cn('mx-auto flex h-14 min-w-0 items-center gap-1 px-3 sm:gap-2 sm:px-4', pinned ? 'max-w-none' : 'max-w-6xl')}>
-        <button ref={menuButton} type="button" aria-label={t('menu')} aria-expanded={open} onClick={onMenu} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
+        <button ref={menuButton} type="button" data-tour="menu" aria-label={t('menu')} aria-expanded={open} onClick={onMenu} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg lg:hidden">
           <Menu className="size-5" aria-hidden />
         </button>
         <button
@@ -268,6 +276,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
             // The palette on the page takes the event; without one, the search page.
             if (window.dispatchEvent(new Event(OPEN_SEARCH_EVENT, { cancelable: true }))) router.push('/search')
           }}
+          data-tour="search"
           className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" aria-hidden />
@@ -277,7 +286,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
           <AppearanceMenu />
           <NotificationBell />
-          <Link href="/profile" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
+          <Link href="/profile" data-tour="account" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
             {(viewer?.displayName ?? '?').slice(0, 1).toUpperCase()}
           </Link>
         </div>

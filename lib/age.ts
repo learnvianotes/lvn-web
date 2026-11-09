@@ -1,11 +1,11 @@
 /**
- * Accounts are for adults (lvn-backend ADR-0091). The API decides — the forms never name the cut-off — and this module
- * keeps what the browser needs:
+ * Accounts start at 8 (config/legal.ts ACCOUNTS_FROM_AGE). Ages 8 to 17 can sign up; the account is restricted until 18,
+ * with no parent-consent step. Under 8 is refused (ADR-0091). This module keeps what the browser needs:
  * - a refusal is remembered on this device for a day, so going back and answering again doesn't reopen sign-up. It
  *   closes the sign-up forms here and turns Google Analytics off on the device (no tracking of children, ADR-0092), and
  *   nothing else: it never deletes or signs out anyone;
- * - the age typed in whole years (lvn-backend ADR-0104), checked before the "Is this right?" step every answer goes
- *   through. The API checks it again.
+ * - the age typed in whole years (lvn-backend ADR-0104). Email sign-up still asks "Is this right?" before it is sent.
+ *   The create-profile step sends the checked age straight away. The API checks it again.
  */
 
 import { setAnalyticsConsent } from './consent'
@@ -60,8 +60,8 @@ export function subscribeAgeRefusal(listener: () => void): () => void {
   }
 }
 
-/** The ages the API accepts, in whole years (lvn-backend ADR-0104). The minimum age for an account is the API's alone. */
-export const AGE_MIN = 1
+/** Whole years an account form will send. Under 8 the form stops; 8 and over are sent. The API checks again. */
+export const AGE_MIN = 8
 export const AGE_MAX = 120
 
 /** Why an age field's text is not an age: empty, not a whole number, or outside AGE_MIN–AGE_MAX. */
@@ -86,3 +86,35 @@ export function parseAge(text: string): { age: number } | { problem: AgeProblem 
  * There is no autofill token for an age.
  */
 export const AGE_INPUT = { type: 'text', inputMode: 'numeric', autoComplete: 'off', spellCheck: false } as const
+
+const pad = (n: number) => String(n).padStart(2, '0')
+
+/** Local calendar date as YYYY-MM-DD, which is what `<input type="date">` uses. */
+export function isoLocalDate(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/**
+ * Inclusive birth dates for an account: `max` is the latest date on which someone is already AGE_MIN,
+ * `min` is the earliest date on which someone is still AGE_MAX.
+ */
+export function birthDateLimits(now = new Date()): { min: string; max: string } {
+  return {
+    min: isoLocalDate(new Date(now.getFullYear() - AGE_MAX, now.getMonth(), now.getDate())),
+    max: isoLocalDate(new Date(now.getFullYear() - AGE_MIN, now.getMonth(), now.getDate())),
+  }
+}
+
+/** Whole years since a YYYY-MM-DD birth date, or null when it is not a real calendar date. */
+export function ageFromBirthDate(iso: string, now = new Date()): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const born = new Date(year, month - 1, day)
+  if (born.getFullYear() !== year || born.getMonth() !== month - 1 || born.getDate() !== day) return null
+  let age = now.getFullYear() - year
+  if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1
+  return age
+}

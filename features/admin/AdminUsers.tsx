@@ -7,7 +7,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { canSeeSection } from '@/features/admin/AdminNav'
 import { useViewerRole } from '@/features/admin/useViewerRole'
-import { AGE_INPUT, AGE_MAX, AGE_MIN } from '@/lib/age'
+import { AGE_INPUT, AGE_MAX, AGE_MIN, birthDateLimits } from '@/lib/age'
 import {
   ageEditOf,
   deleteAdminUser,
@@ -234,7 +234,7 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
               <div className="flex flex-col gap-1 text-sm">
                 <label className="flex flex-col gap-1">
                   <span className="font-medium">{t('dob')}</span>
-                  <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} aria-describedby={user.age !== null ? ageHintId : undefined} />
+                  <Input type="date" min={birthDateLimits().min} max={birthDateLimits().max} value={dob} onChange={(e) => setDob(e.target.value)} aria-describedby={user.age !== null ? ageHintId : undefined} />
                 </label>
                 {user.age !== null ? <p id={ageHintId} className="text-xs text-muted">{t('dobHint', { age: user.age })}</p> : null}
               </div>

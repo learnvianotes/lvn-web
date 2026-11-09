@@ -163,7 +163,7 @@ test.describe('the age check (lvn-backend ADR-0091, ADR-0104)', () => {
     await expect(page).toHaveURL(/\/profile$/)
   })
 
-  test('takes only a whole number from 1 to 120, and shows the API’s age error on the field', async ({ page }) => {
+  test('takes only a whole number from 8 to 120, and shows the API’s age error on the field', async ({ page }) => {
     const calls = await mockApi(page, {
       SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'age'], 'Enter an age from 1 to 120.')] } }),
     })
@@ -174,8 +174,9 @@ test.describe('the age check (lvn-backend ADR-0091, ADR-0104)', () => {
       ['', 'Enter your age.'],
       ['17.5', 'Enter your age as a whole number.'],
       ['18 years', 'Enter your age as a whole number.'],
-      ['0', 'Enter an age from 1 to 120.'],
-      ['121', 'Enter an age from 1 to 120.'],
+      ['0', 'Enter an age from 8 to 120.'],
+      ['7', 'Enter an age from 8 to 120.'],
+      ['121', 'Enter an age from 8 to 120.'],
     ] as const) {
       await age.fill(text)
       await page.getByRole('button', { name: 'Create account' }).click()
@@ -252,9 +253,7 @@ test.describe('the age check (lvn-backend ADR-0091, ADR-0104)', () => {
     await page.getByLabel('Your age').fill('15')
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Continue' }).click()
-    const confirm = page.getByRole('dialog', { name: 'Is this right?' })
-    await expect(confirm).toContainText('You are 15 years old.')
-    await confirm.getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
     await expect(page).toHaveURL(/\/sign-up$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
     expect(completed).toBe(1)
@@ -403,20 +402,20 @@ test.describe('sign in', () => {
     }, 'signed-in')
     await page.goto('/sign-up/details')
     await expect(page.getByLabel('Date of birth')).toHaveCount(0)
-    await page.getByLabel('Your age').fill('22')
+    await page.getByLabel('Your age').fill('8')
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Continue' }).click()
-    await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
     await expect(page).toHaveURL(/\/home$/)
     const input = calls.find((c) => c.op === 'CompleteRegistration')!.variables.input as Record<string, unknown>
-    expect(input).toMatchObject({ displayName: 'Asha Rao', age: 22, institutionalEmail: null })
+    expect(input).toMatchObject({ displayName: 'Asha Rao', age: 8, institutionalEmail: null })
     expect(input).not.toHaveProperty('dateOfBirth')
 
     await page.goto('/sign-up/details?next=/subjects/dsa')
-    await page.getByLabel('Your age').fill('22')
+    await page.getByLabel('Your age').fill('17')
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Continue' }).click()
-    await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
     await expect(page).toHaveURL(/\/subjects\/dsa$/)
   })
 
@@ -432,17 +431,21 @@ test.describe('sign in', () => {
     await age.fill('20.5')
     await page.getByRole('button', { name: 'Continue' }).click()
     await expect(page.getByRole('alert').filter({ hasText: 'Enter your age as a whole number.' })).toBeVisible()
-    await age.fill('200')
+    await age.fill('7')
     await page.getByRole('button', { name: 'Continue' }).click()
-    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 1 to 120.' })).toBeVisible()
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 8 to 120.' })).toBeVisible()
     await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
     expect(calls.filter((c) => c.op === 'CompleteRegistration')).toHaveLength(0)
-    await age.fill('30')
+    await age.fill('200')
     await page.getByRole('button', { name: 'Continue' }).click()
-    const confirm = page.getByRole('dialog', { name: 'Is this right?' })
-    await expect(confirm).toContainText('You are 30 years old.')
-    await confirm.getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 8 to 120.' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    expect(calls.filter((c) => c.op === 'CompleteRegistration')).toHaveLength(0)
+    await age.fill('8')
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
     await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 1 to 120.' })).toBeVisible()
+    expect(calls.find((c) => c.op === 'CompleteRegistration')?.variables.input).toMatchObject({ age: 8 })
     await expect(age).toHaveAttribute('aria-invalid', 'true')
     await expect(page).toHaveURL(/\/sign-up\/details$/)
   })

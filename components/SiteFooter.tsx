@@ -11,6 +11,9 @@ export async function SiteFooter() {
         <p className="font-medium text-fg">{t('name')}</p>
         <p className="mt-1">{t('footer')}</p>
         <nav aria-label={t('legalNav')} className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+          <Link href="/guide" className="hover:text-fg hover:underline">
+            {t('nav.guide')}
+          </Link>
           {Object.values(LEGAL_DOCUMENTS).map((d) => (
             <Link key={d.path} href={d.path} className="hover:text-fg hover:underline">
               {d.title}

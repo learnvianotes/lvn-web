@@ -26,6 +26,7 @@ const ENTRIES: [name: string, href: string][] = [
   ['Community', '/community'],
   ['AI Assistant', '/ask'],
   ['Bookmarks', '/saved'],
+  ['Guide', '/guide'],
 ]
 const noProblems = { userErrors: [] }
 

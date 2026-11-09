@@ -10,7 +10,7 @@ import { useSession } from '@/state/session'
  * (Playwright treats accessible names as substrings).
  * Closed until asked for; from 768 px the same links sit in the header itself.
  */
-export function PublicMenu({ labels }: { labels: { menu: string; close: string; features: string; subjects: string; community: string; resources: string; start: string } }) {
+export function PublicMenu({ labels }: { labels: { menu: string; close: string; features: string; subjects: string; community: string; resources: string; start: string; guide: string } }) {
   const [open, setOpen] = useState(false)
   const signedIn = useSession((s) => s.status === 'signed-in')
   const panel = useRef<HTMLDivElement>(null)
@@ -50,6 +50,9 @@ export function PublicMenu({ labels }: { labels: { menu: string; close: string; 
             </Link>
             <Link href="/resources" className={item} onClick={() => setOpen(false)}>
               {labels.resources}
+            </Link>
+            <Link href="/guide" className={item} onClick={() => setOpen(false)}>
+              {labels.guide}
             </Link>
             {signedIn ? null : (
               <Link href="/sign-up" className="mt-1 inline-flex h-10 items-center justify-center rounded-full bg-accent px-4 text-sm font-semibold text-accent-fg" onClick={() => setOpen(false)}>

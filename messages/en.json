@@ -14,6 +14,7 @@
       "subjects": "Subjects",
       "community": "Community",
       "start": "Get Started",
+      "guide": "Guide",
       "menu": "Browse",
       "menuClose": "Close browse"
     },
@@ -260,7 +261,7 @@
       "confirm": "Yes, that’s right",
       "change": "Change it",
       "refusedTitle": "Sorry, you can’t create an account",
-      "refusedLead": "LearnViaNotes accounts are only for adults. You can still read every public note and subject without one.",
+      "refusedLead": "LearnViaNotes accounts start at age 8. You can still read every public note and subject without one.",
       "browse": "Read the public notes",
       "signOut": "Sign out",
       "blockedTitle": "This account couldn’t be activated",
@@ -326,7 +327,7 @@
       "remove": "Remove it",
       "declined": "Old-site data removed."
     },
-    "minor": "Some features stay off until a parent, guardian or your school confirms your account.",
+    "minor": "Some features stay off until you are 18. There is no parent or guardian step.",
     "analytics": {
       "title": "Usage analytics",
       "lead": "Help us see which pages are used. This stays on LearnViaNotes, with no third-party script, and never includes your name or email. Turning it off stops new usage events. Errors are still recorded so we can fix the app.",
@@ -2679,7 +2680,7 @@
     "verifiedLead": "Your classes can take students, and your teacher profile is public.",
     "declinedTitle": "Your last application wasn’t approved",
     "declinedLead": "{reason} You can apply again.",
-    "minor": "Teacher accounts are for adults.",
+    "minor": "Teaching starts at 18. Your student account stays as it is.",
     "accountCard": "Teach on LearnViaNotes",
     "accountPending": "Teacher application: being reviewed",
     "accountDeclined": "Teacher application: not approved — apply again",
@@ -2801,6 +2802,87 @@
     },
     "browse": "Browse the catalogue"
   },
+  "guide": {
+    "title": "Guide",
+    "description": "What you can do on LearnViaNotes: read and write notes, join groups and classrooms, and verify your profile.",
+    "lead": "A map of LearnViaNotes as it works today.",
+    "onThisPage": "On this page",
+    "replay": "Replay the walkthrough",
+    "helpTitle": "Need a hand?",
+    "helpLead": "Email us and a person will help. You can also replay the short tour of the menu, search and your account.",
+    "read": {
+      "title": "Read and find notes",
+      "lead": "Public notes are organised by subject and topic. You can search them and save the ones you want to come back to.",
+      "p1": "Subjects lists every subject. Open a topic to read the public notes and resources people have shared on it. You can read a public note without an account.",
+      "p2": "Search finds notes, topics, people, groups and classes. Explore in the menu opens the same search.",
+      "p3": "Bookmarks keeps notes and resources you want to come back to. Only you see that list.",
+      "link": "Browse subjects"
+    },
+    "write": {
+      "title": "Write your own notes",
+      "lead": "Your notes start private. You choose if anyone else can read them.",
+      "p1": "My Notes is your library. Create Note starts a blank note made of cards: text, headings, code and pictures. Quick notes is a scratchpad, and Projects keeps a brief and a small board for one piece of work.",
+      "p2": "Upload a PDF to read it as a note, or add photos that AI can turn into a note. On a note you can also record a voice note and transcribe it afterwards.",
+      "p3": "Share a note with named people, with an unlisted link, or publish it so anyone can find it. Readers of a public note see the published version. You can turn forks off. A fork is a private copy that still names you.",
+      "p4": "Making a note public can require a verified account, and confirming your sign-in email comes before some sharing actions.",
+      "link": "My Notes"
+    },
+    "groups": {
+      "title": "Groups",
+      "lead": "A group is a place to study with other students.",
+      "p1": "Start a group or search the public ones. A public group can be found, and people can ask to join. A private group is not listed: people join with its link, and you approve them.",
+      "p2": "Members can post, share a note (members read the published version), ask doubts and recommend resources.",
+      "link": "Open groups"
+    },
+    "classes": {
+      "title": "Classrooms",
+      "lead": "A class is run by a teacher.",
+      "p1": "Join with the class code your teacher gives you. The teacher or a TA lets you in. A class can post announcements and set quizzes.",
+      "p2": "A verified teacher can create a class. You can apply to teach straight away; students can join once a LearnViaNotes admin verifies you.",
+      "link": "Open classrooms"
+    },
+    "study": {
+      "title": "Study tools",
+      "lead": "Practice, a plan for an exam, and a weekly rhythm.",
+      "p1": "Flashcards flip front and back. Review brings those cards back when it is time, and you mark how well you knew each one.",
+      "p2": "Quizzes can come from a class or be ones you write and share with a link. Contests are a weekly set of timed questions. Your score is yours: nobody is listed.",
+      "p3": "Add an exam and its topics. LearnViaNotes spreads revision back from the date, and Readiness shows how well you know those topics. Rhythm is a weekly habit of planned days, not a streak you lose. It also has a focus timer and a few tasks for the week.",
+      "p4": "Ask AI answers from notes you can read and names the notes it used. On a note, AI tasks can summarise, explain, quiz or make flashcards. Results stay beside the note and do not change it. Each plan has a daily allowance. The Plans page lists what each plan includes; looking at a price does not charge you.",
+      "p5": "The Resources catalogue lists books, courses and tools members recommend. Moderators check each one before it is public. There are no shop links or prices. Home suggests what to pick up, and learning history and achievements record longer progress.",
+      "link": "Exams"
+    },
+    "profile": {
+      "title": "Profile and verification",
+      "lead": "Your account holds your name, study details and verification.",
+      "p1": "Add a department and year of study, and choose whether they show on your public profile. That profile is at your handle. You can follow people, connect with teachers, and edit a Skills tab.",
+      "p2": "Confirm the email you sign in with. A college or organisation email is checked with a code we send. Without one, ask a teacher who knows you to vouch for you, or send proof of study for the team to check. When college ID checks are turned on, you can send a photo of your card.",
+      "p3": "Until the account is verified, sharing, commenting and joining groups stay closed. Your own notes still work.",
+      "p4": "Notification settings choose what also reaches your email. Everything still shows in the app.",
+      "p5": "Accounts start at age 8. From 8 to 17 the account is restricted: some features stay off until 18, and there is no parent or guardian step. Age 7 cannot create an account.",
+      "link": "Your account"
+    },
+    "tour": {
+      "progress": "{step} of {total}",
+      "notesTitle": "Read and write notes",
+      "notesBody": "Subjects is where you read public notes. My Notes and Create Note are where you write. A note stays private until you share it.",
+      "notesBodyMenu": "Open the menu for Subjects, My Notes and Create Note. Public notes live under Subjects. A note you write stays private until you share it.",
+      "searchTitle": "Find notes and people",
+      "searchBody": "Search notes, topics, people, groups and classes from here. Explore in the menu opens the same search.",
+      "togetherTitle": "Groups and classrooms",
+      "togetherBody": "Groups are for studying with other students. Classrooms are where a teacher shares notes, announcements and quizzes. Community sits with them in the navigation.",
+      "togetherBodyMenu": "Groups are for studying with other students. Classrooms are where a teacher shares notes, announcements and quizzes. You will find both, and Community, in the menu.",
+      "accountTitle": "Your profile",
+      "accountBody": "Your name, study details and verification are on your account. Verifying, with a college email, a teacher, or our team, is what lets you share notes and join groups.",
+      "guideTitle": "That is the short tour",
+      "guideBody": "The guide explains each part, including exams, Rhythm, flashcards, quizzes and AI. You can replay this tour from that page.",
+      "openGuide": "Open the guide",
+      "keys": "Arrow keys move between steps. Escape skips.",
+      "skip": "Skip the tour",
+      "back": "Back",
+      "next": "Next",
+      "done": "Done"
+    }
+  },
   "shell": {
     "skip": "Skip to content",
     "nav": "Main",
@@ -2832,7 +2914,8 @@
       "ask": "AI Assistant",
       "saved": "Bookmarks",
       "quizzes": "Quizzes",
-      "contests": "Contests"
+      "contests": "Contests",
+      "guide": "Guide"
     }
   },
   "saved": {
@@ -3253,7 +3336,7 @@
       "max": "At most {max}.",
       "maxLength": "At most {max} characters.",
       "pattern": "That does not match the required pattern.",
-      "minimumAge": "The minimum age cannot be below 18."
+      "minimumAge": "The minimum age cannot be below 8."
     },
     "risky": {
       "google_sign_in": "Turn off Google sign-in? People will not be able to sign in with Google until you turn it back on.",
@@ -3262,7 +3345,7 @@
       "ai_public_pipeline": "Turn off the public AI pipeline? Public notes will stop getting AI study aids until you turn it back on.",
       "search_hybrid": "Turn off hybrid search? Search will stop combining words and meaning until you turn it back on.",
       "access_allowlist_enabled": "Turn on the beta allowlist? Only emails on the list will be able to sign in or create an account.",
-      "account_minimum_age": "Change the minimum account age to {value}? People younger than that cannot register. It can never be below 18.",
+      "account_minimum_age": "Change the minimum account age to {value}? People younger than that cannot register. It can never be below 8.",
       "digital_consent_age": "Change the digital consent age to {value}?",
       "generic": "Save this change to {name}?",
       "terms_version": "Change the terms version to {value}? Every signed-in person will be asked to accept the Terms, Privacy Policy and content licence again."

@@ -44,10 +44,10 @@ describe('admin settings', () => {
   const uploads = setting({ key: 'uploads_enabled', type: 'BOOLEAN' })
   const budget = setting({ key: 'ai_monthly_budget_micro_usd', type: 'INTEGER', constraints: { min: null, max: null, maxLength: null, pattern: null, nullable: true } })
 
-  it('never accepts an account minimum age below 18', () => {
-    expect(effectiveIntegerMin(age)).toBe(18)
-    expect(validateSetting(age, '17')).toBe('minimumAge')
-    expect(validateSetting(age, '18')).toBeNull()
+  it('never accepts an account minimum age below 8', () => {
+    expect(effectiveIntegerMin(age)).toBe(8)
+    expect(validateSetting(age, '7')).toBe('minimumAge')
+    expect(validateSetting(age, '8')).toBeNull()
     expect(validateSetting(age, '21')).toBeNull()
     expect(validateSetting(age, '121')).toBe('max')
     expect(validateSetting(age, '')).toBe('required')

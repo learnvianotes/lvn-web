@@ -3,7 +3,8 @@
 export const SETTING_CATEGORIES = ['auth', 'verification', 'uploads', 'ai', 'search', 'accounts', 'legal'] as const
 
 export const ACCOUNT_MINIMUM_AGE_KEY = 'account_minimum_age'
-export const MINIMUM_ACCOUNT_AGE = 18
+/** Lowest value an admin may store for account_minimum_age. Matches config/legal.ts ACCOUNTS_FROM_AGE. */
+export const MINIMUM_ACCOUNT_AGE = 8
 
 export type SettingType = 'BOOLEAN' | 'INTEGER' | 'STRING'
 
@@ -31,7 +32,7 @@ const RISKY_WHEN_OFF = new Set(['google_sign_in', 'student_id_verification', 'up
 const RISKY_WHEN_ON = new Set(['access_allowlist_enabled'])
 const RISKY_WHEN_CHANGED = new Set([ACCOUNT_MINIMUM_AGE_KEY, 'digital_consent_age', 'terms_version'])
 
-/** The lowest integer the control accepts. account_minimum_age is never below 18, whatever the server sent. */
+/** The lowest integer the control accepts. account_minimum_age is never below 8, whatever the server sent. */
 export function effectiveIntegerMin(setting: SettingShape): number | null {
   if (setting.key === ACCOUNT_MINIMUM_AGE_KEY) return Math.max(setting.constraints.min ?? MINIMUM_ACCOUNT_AGE, MINIMUM_ACCOUNT_AGE)
   return setting.constraints.min

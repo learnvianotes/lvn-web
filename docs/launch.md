@@ -22,7 +22,7 @@ to the new VM.
 | --- | --- | --- |
 | Privacy, Terms and Grievance pages, operator named in config | Built. All filled in: operator, address, courts (Bengaluru), Grievance Officer (LearnViaNotes Admin) and mailbox | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
 | Grievances resolved within 7 days, removals within 36 h | Built | `features/legal/Grievance.tsx`, Terms §9 |
-| Age (whole years) at sign-up, refusing under-18s, every answer confirmed | Built (web, phone, API) | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE`), ADR-0104; `lib/age.ts`, `components/auth/AgeCheck.tsx` |
+| Age (whole years) at sign-up. Under 8 is refused. Ages 8 to 17 can sign up; the account is restricted until 18. Email sign-up still confirms the age; the create-profile step does not | Built (web, phone, API) | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE` = 8), ADR-0104; `config/legal.ts` `ACCOUNTS_FROM_AGE`; `lib/age.ts`, `components/auth/AgeCheck.tsx` |
 | Google Analytics only after consent, synced across tabs | Built; off until `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set | lvn-backend ADR-0092; `lib/consent.ts`, `lib/analytics.ts` |
 | Real 404s, robots.txt, sitemap | Built | `app/robots.ts`, `app/sitemap.ts`, `tests/e2e/landing.spec.ts` |
 | Brand blue, no purple | Built across web, phone and emails | lvn-backend ADR-0094 |
@@ -141,16 +141,18 @@ emails.
 ## How the age check works
 
 - **What people see.** Sign-up, and the details step after a first Google sign-in, ask the age in whole years
-  (lvn-backend ADR-0104) with nothing about the cut-off. There is no date picker.
+  (lvn-backend ADR-0104). There is no date picker.
   - A text box with the phone's number pad. The form refuses an empty answer, anything that is not a whole number
-    ("17.5", "18 years") and anything outside 1 to 120 before it sends anything; the API checks the same again and
-    its errors land on the same field.
-  - Every answer, adult or not, gets "Is this right?" ("You are 17 years old.") before it is sent. No answer stands
-    out, and one mistyped number can't refuse or hold anyone (FTC COPPA FAQ H.3, D.7: a neutral age screen).
+    ("17.5", "18 years") and anything outside 8 to 120 before it sends anything. Age 7 is refused here. Age 8 is sent.
+    The API checks the same again and its errors land on the same field.
+  - Email sign-up still asks "Is this right?" before the age is sent. The create-profile step (after a provider
+    sign-in) does not: Continue sends the checked age straight away.
   - Only `age` is sent. The API still takes the deprecated `dateOfBirth` from phone builds made before ADR-0104.
-- **What the API does** (`ACCOUNT_MINIMUM_AGE`, default 18; `0` turns it off):
-  - `signUp` refuses a younger date, and nothing is stored;
-  - `completeRegistration` erases the unfinished account a Google sign-in had just created, with the same refusal.
+- **What the API does** (`ACCOUNT_MINIMUM_AGE`, 8):
+  - `signUp` and `completeRegistration` accept ages 8 to 17. Those accounts are restricted until 18. There is no
+    parent-consent step. Contest bands and public achievements still stay private until 18.
+  - An age under 8 is refused, and nothing is stored. `completeRegistration` erases the unfinished account a provider
+    sign-in had just created, with the same refusal.
 - **The device remembers a refusal for a day.**
   - The sign-up forms show "Sorry, you can't create an account" instead, and analytics is set to "don't allow".
   - It deletes nothing and signs nobody out: on the details page it only offers Sign out.

@@ -17,6 +17,7 @@ import { SignInOptionsDocument, SignUpDocument } from '@/graphql/generated/graph
 import { AGE_INPUT, markAgeRefused } from '@/lib/age'
 import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { refusalMessage } from '@/lib/limit-error'
+import { queueWalkthrough } from '@/lib/walkthrough'
 import { AgeBlocked } from './AgeBlocked'
 import { ageField, AgeRefused, ConfirmAge, useAgeMessage, useAgeRefused } from './AgeCheck'
 import { InviteOnlyNotice } from './InviteOnlyNotice'
@@ -81,7 +82,11 @@ export function SignUpForm() {
       })
       const payload = data!.signUp
       // Creating an account still opens the account page. Signing in, with nowhere else to go, opens Home.
-      if (payload.session) return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'))
+      if (payload.session) {
+        // Email sign-up creates the profile here. Ages 8 to 17 are sent; the API marks the account restricted.
+        if (payload.session.user.registrationComplete) queueWalkthrough(payload.session.user.id)
+        return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'))
+      }
       // Too young for an account: nothing was created; this device keeps the form closed for a day.
       const ageHold = ageHoldFromProblems(payload.userErrors)
       if (ageHold) return setHold(ageHold)
