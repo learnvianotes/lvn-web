@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ACCOUNTS_FROM_AGE, RETENTION } from '@/config/legal'
+import { ACCOUNTS_FROM_AGE, FULL_ACCOUNT_FROM_AGE, RETENTION } from '@/config/legal'
 import { Fact, Mailbox } from './Fact'
 import { LEGAL_DOCUMENTS } from './documents'
 
@@ -17,9 +17,10 @@ export function Terms() {
       <ul>
         <li>Anyone may read public notes and subjects without an account.</li>
         <li>
-          Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. You give your real age when you
-          sign up, and by creating an account you confirm you are {ACCOUNTS_FROM_AGE} or older. We delete accounts that
-          belong to someone younger.
+          Accounts are for people who are {ACCOUNTS_FROM_AGE} or older. You give your real age when you sign up. From{' '}
+          {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE}, the account is restricted: some features stay off, and there is
+          no parent or guardian step. We do not create an account for someone under {ACCOUNTS_FROM_AGE}, and we delete an
+          account we learn belongs to someone younger than that.
         </li>
         <li>One person, one account. Keep your password safe and tell us if someone else gets into your account.</li>
       </ul>

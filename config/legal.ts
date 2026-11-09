@@ -36,9 +36,16 @@ export function missingLegalFields(values: Record<LegalField, string> = LEGAL): 
 
 /**
  * The youngest age that may hold an account, as the Privacy Policy and Terms state it. Must match the API's
- * ACCOUNT_MINIMUM_AGE (lvn-backend ADR-0091). The sign-up forms never show it.
+ * ACCOUNT_MINIMUM_AGE (lvn-backend ADR-0091). Someone younger than this does not get an account.
+ * Ages from this value until {@link FULL_ACCOUNT_FROM_AGE} can sign up; the account is restricted.
  */
-export const ACCOUNTS_FROM_AGE = 18
+export const ACCOUNTS_FROM_AGE = 8
+
+/**
+ * From {@link ACCOUNTS_FROM_AGE} until this age the account is restricted (some features stay off).
+ * There is no parent or guardian consent step. Contest bands and public achievements still use this age.
+ */
+export const FULL_ACCOUNT_FROM_AGE = 18
 
 /**
  * How long data is kept, as the Privacy Policy states it (lvn-backend spec §15.2, ADR-0018, ADR-0088, ADR-0089). Change

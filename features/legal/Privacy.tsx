@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ACCOUNTS_FROM_AGE, RETENTION } from '@/config/legal'
+import { ACCOUNTS_FROM_AGE, FULL_ACCOUNT_FROM_AGE, RETENTION } from '@/config/legal'
 import { ContactList, Fact } from './Fact'
 import { LEGAL_DOCUMENTS } from './documents'
 
@@ -19,7 +19,10 @@ export function Privacy() {
       <h2>The short version</h2>
       <ul>
         <li>You can read public notes and subjects without an account.</li>
-        <li>Accounts are for adults ({ACCOUNTS_FROM_AGE} or older).</li>
+        <li>
+          Accounts are for people aged {ACCOUNTS_FROM_AGE} or older. From then until {FULL_ACCOUNT_FROM_AGE}, some features
+          stay limited. There is no parent or guardian step.
+        </li>
         <li>With an account, we keep your details, your notes and your study activity so LearnViaNotes works for you on every device.</li>
         <li>Google Analytics runs only if you allow it, and you can change your mind at any time.</li>
         <li>You can download all your data or delete your account from your profile page.</li>
@@ -64,7 +67,7 @@ export function Privacy() {
       <h2>2. Why we use it</h2>
       <ul>
         <li>To run your account and show your notes to you and to the people you choose.</li>
-        <li>To keep the community safe: moderation, preventing abuse, and keeping accounts to adults.</li>
+        <li>To keep the community safe: moderation, preventing abuse, and keeping accounts to people aged {ACCOUNTS_FROM_AGE} or older.</li>
         <li>To plan your studying and recommend what to learn next, from your own learning activity.</li>
         <li>To fix problems and keep the service secure.</li>
         <li>To send you the emails you need (confirming your address, security notices) and the ones you asked for.</li>
@@ -74,10 +77,12 @@ export function Privacy() {
 
       <h2>3. Who can have an account</h2>
       <p>
-        Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. We ask your age when you create an
-        account and keep it with your account; it is never shown to anyone. If the age you give is under {ACCOUNTS_FROM_AGE},
-        we don’t create the account and don’t keep the age; if a sign-in with Google had already created it, we delete it
-        straight away. If we learn that an account belongs to someone under {ACCOUNTS_FROM_AGE}, we delete it.
+        Accounts are for people who are {ACCOUNTS_FROM_AGE} or older. We ask your age when you create an account and keep
+        it with your account; it is never shown to anyone. From {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE} the
+        account is restricted and some features stay off. There is no parent or guardian consent step. If the age you give
+        is under {ACCOUNTS_FROM_AGE}, we don’t create the account and don’t keep the age; if a sign-in with Google had
+        already created it, we delete it straight away. If we learn that an account belongs to someone under{' '}
+        {ACCOUNTS_FROM_AGE}, we delete it.
       </p>
 
       <h2>4. Who else sees it</h2>

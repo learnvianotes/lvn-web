@@ -13,7 +13,7 @@
  */
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import type { DocumentNode } from 'graphql'
-import { parseAge } from '@/lib/age'
+import { AGE_MAX, AGE_MIN, ageFromBirthDate, parseAge } from '@/lib/age'
 import { apolloClient } from '@/lib/apollo'
 import {
   AdminDeleteUserDocument,
@@ -506,7 +506,12 @@ export type AdminUserEdit = { userId: string; reason: string; displayName: strin
  * AGE_MIN to AGE_MAX.
  */
 export function ageEditOf(user: Pick<AdminManagedUser, 'age' | 'dateOfBirth'>, form: { age: string; dateOfBirth: string }): { age: number } | { dateOfBirth: string } | Record<string, never> | 'invalid' {
-  if (user.dateOfBirth !== null) return form.dateOfBirth === user.dateOfBirth ? {} : { dateOfBirth: form.dateOfBirth }
+  if (user.dateOfBirth !== null) {
+    if (form.dateOfBirth === user.dateOfBirth) return {}
+    const years = ageFromBirthDate(form.dateOfBirth)
+    if (years === null || years < AGE_MIN || years > AGE_MAX) return 'invalid'
+    return { dateOfBirth: form.dateOfBirth }
+  }
   if (!form.age.trim() && user.age === null) return {}
   const parsed = parseAge(form.age)
   if ('problem' in parsed) return 'invalid'

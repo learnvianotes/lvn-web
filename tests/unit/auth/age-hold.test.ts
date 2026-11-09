@@ -42,6 +42,9 @@ describe('an admin’s age correction (lvn-backend ADR-0104)', () => {
   it('leaves an account that never gave an age alone, and refuses an age that is not one', () => {
     expect(ageEditOf({ age: null, dateOfBirth: null }, { age: '', dateOfBirth: '' })).toEqual({})
     expect(ageEditOf({ age: null, dateOfBirth: null }, { age: '40', dateOfBirth: '' })).toEqual({ age: 40 })
-    for (const age of ['', '17.5', '0', '121', 'abc']) expect(ageEditOf(declared, { age, dateOfBirth: '' })).toBe('invalid')
+    for (const age of ['', '17.5', '0', '7', '121', 'abc']) expect(ageEditOf(declared, { age, dateOfBirth: '' })).toBe('invalid')
+    expect(ageEditOf({ age: 22, dateOfBirth: null }, { age: '8', dateOfBirth: '' })).toEqual({ age: 8 })
+    expect(ageEditOf({ age: 22, dateOfBirth: null }, { age: '17', dateOfBirth: '' })).toEqual({ age: 17 })
+    expect(ageEditOf(born, { age: '', dateOfBirth: '2090-01-15' })).toBe('invalid')
   })
 })

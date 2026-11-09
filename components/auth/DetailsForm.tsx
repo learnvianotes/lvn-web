@@ -17,8 +17,9 @@ import { AGE_INPUT, markAgeRefused } from '@/lib/age'
 import { ageHoldFromProblems, type AgeHold } from '@/lib/age-hold'
 import { signedInDestination } from '@/lib/auth/destination'
 import { signedOut } from '@/lib/auth/session'
+import { queueWalkthrough } from '@/lib/walkthrough'
 import { AgeBlocked } from './AgeBlocked'
-import { ageField, AgeRefused, ConfirmAge, useAgeMessage, useAgeRefused } from './AgeCheck'
+import { ageField, AgeRefused, useAgeMessage, useAgeRefused } from './AgeCheck'
 import { applyProblems } from './forms'
 
 const schema = z.object({
@@ -33,7 +34,7 @@ const FIELDS = ['displayName', 'age', 'institutionalEmail'] as const
 
 /**
  * Registration details for accounts created by Google, GitHub or LinkedIn (ADR-0017), given once. The age, in whole
- * years (lvn-backend ADR-0104), is confirmed before it is sent. An answer under the minimum age (ADR-0091) signs out
+ * years (lvn-backend ADR-0104), is checked by the form and then sent. An answer under 8 (ADR-0091) signs out
  * here and shows the outcome: AGE_RESTRICTED (the account is held) names who to contact, UNDER_MINIMUM_AGE shows the
  * refusal. A refusal already on this device only closes the form: the account is left alone, and the person may sign
  * out.
@@ -52,8 +53,6 @@ export function DetailsForm() {
   const [general, setGeneral] = useState<string | null>(null)
   const [hold, setHold] = useState<AgeHold | null>(null)
   const refused = useAgeRefused()
-  const [pending, setPending] = useState<Values | null>(null)
-  const [sending, setSending] = useState(false)
   const form = useForm<Fields, unknown, Values>({ resolver: zodResolver(schema), defaultValues: { displayName: '', age: '', institutionalEmail: '', terms: false as unknown as true } })
   const { errors, isSubmitting } = form.formState
   const ageMessage = useAgeMessage()
@@ -67,11 +66,6 @@ export function DetailsForm() {
     if (viewer?.viewer?.registrationComplete) router.replace(signedInDestination(next))
   }, [viewer, router, next])
 
-  const onSubmit = form.handleSubmit((values) => {
-    setGeneral(null)
-    setPending(values)
-  })
-
   /** Leaves this browser's session (and its cache) behind; the API side is already gone or is ended here. */
   const leave = async (to: string) => {
     await signOut().catch(() => undefined)
@@ -82,10 +76,11 @@ export function DetailsForm() {
 
   // Only `age` is sent; the deprecated `dateOfBirth` is for phone builds from before ADR-0104.
   const send = async ({ terms: _terms, institutionalEmail, ...values }: Values) => {
-    setSending(true)
     try {
       const { data } = await complete({ variables: { input: { ...values, institutionalEmail: institutionalEmail || null, acceptedTermsVersion: options?.termsVersion ?? '' } } })
-      const payload = data!.completeRegistration
+      // Extra fields on the payload (a welcome email, for example) are ignored: only ok and userErrors are read.
+      const payload = data?.completeRegistration
+      if (!payload) return setGeneral(te('generic'))
       const ageHold = ageHoldFromProblems(payload.userErrors)
       if (ageHold) {
         await signOut().catch(() => undefined)
@@ -101,14 +96,18 @@ export function DetailsForm() {
       }
       if (!payload.ok) return setGeneral(applyProblems(payload.userErrors, form.setError, FIELDS))
       await client.refetchQueries({ include: [ViewerDocument] })
+      const id = client.readQuery({ query: ViewerDocument })?.viewer?.id
+      if (id) queueWalkthrough(id)
       router.replace(institutionalEmail ? '/verify' : signedInDestination(next))
     } catch {
       setGeneral(te('generic'))
-    } finally {
-      setPending(null)
-      setSending(false)
     }
   }
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    setGeneral(null)
+    await send(values)
+  })
 
   const message = (n: (typeof FIELDS)[number], fallback: string) => (errors[n] ? (errors[n]!.type === 'server' ? errors[n]!.message : fallback) : undefined)
 
@@ -148,17 +147,8 @@ export function DetailsForm() {
           <span>{ts.rich('terms', legalLinks)}</span>
         </label>
         {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-red-600 dark:text-red-400">{ts('termsRequired')}</p> : null}
-        <Button type="submit" size="lg" disabled={isSubmitting || sending || !options}>{t('submit')}</Button>
+        <Button type="submit" size="lg" disabled={isSubmitting || !options}>{t('submit')}</Button>
       </form>
-      <ConfirmAge
-        age={pending?.age ?? null}
-        busy={sending}
-        onConfirm={() => pending && void send(pending)}
-        onChange={() => {
-          setPending(null)
-          form.setFocus('age')
-        }}
-      />
     </div>
   )
 }

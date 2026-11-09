@@ -300,7 +300,7 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
       displayName: 'Ravi Kumar',
       email: 'ravi@college.edu',
       handle: 'ravik',
-      age: 12,
+      age: 6,
       dateOfBirth: null,
       accountStatus: 'AGE_BLOCKED',
       createdAt: '2026-10-01T00:00:00.000Z',
@@ -329,7 +329,7 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
         accounts = accounts.map((account) => {
           if (account.id !== input.userId) return account
           const age = input.dateOfBirth ? ageOf(input.dateOfBirth) : (input.age ?? account.age)
-          return { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth ?? account.dateOfBirth, age, accountStatus: age >= 18 ? 'ACTIVE' : 'AGE_BLOCKED', statusReason: age >= 18 ? null : account.statusReason }
+          return { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth ?? account.dateOfBirth, age, accountStatus: age >= 8 ? 'ACTIVE' : 'AGE_BLOCKED', statusReason: age >= 8 ? null : account.statusReason }
         })
         const user = accounts.find((row) => row.id === input.userId)
         return { adminUpdateUser: { __typename: 'AdminUserPayload', user, userErrors: [] } }
@@ -358,14 +358,14 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
   await page.getByRole('textbox', { name: 'Search' }).fill('nobody')
   await expect(page.getByText('No accounts in this list.')).toBeVisible()
   await page.getByRole('textbox', { name: 'Search' }).fill('')
-  await expect(page.getByText('ravi@college.edu · Age-blocked · Age 12')).toBeVisible()
+  await expect(page.getByText('ravi@college.edu · Age-blocked · Age 6')).toBeVisible()
   await page.getByRole('button', { name: 'Open' }).click()
   const drawer = page.getByRole('dialog', { name: 'Ravi Kumar' })
   await expect(drawer.getByText('Below the minimum age for an account.')).toBeVisible()
   // No date of birth on this account: none is shown, and the age is what gets corrected.
   await expect(drawer.getByLabel('Date of birth')).toHaveCount(0)
   const age = drawer.getByRole('textbox', { name: 'Age', exact: true })
-  await expect(age).toHaveValue('12')
+  await expect(age).toHaveValue('6')
   await expect(age).toHaveAttribute('inputmode', 'numeric')
   await age.fill('22')
   await drawer.getByRole('button', { name: 'Save details' }).click()
@@ -374,7 +374,7 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
   for (const typed of ['22.5', '0', '121', '']) {
     await age.fill(typed)
     await drawer.getByRole('button', { name: 'Save details' }).click()
-    await expect(drawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 1 to 120.')
+    await expect(drawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 8 to 120.')
   }
   expect(calls.filter((call) => call.op === 'AdminUpdateUser')).toHaveLength(0)
   await age.fill('22')
@@ -433,16 +433,18 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
   expect(named.input).toMatchObject({ userId: ashaId, displayName: 'Asha R.', reason: 'Asked for a shorter name.' })
   expect(named.input).not.toHaveProperty('age')
   expect(named.input).not.toHaveProperty('dateOfBirth')
+  await dob.fill('2090-01-15')
+  await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
+  await expect(ashaDrawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 8 to 120.')
   await dob.fill('2014-04-02')
   await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
-  await expect(ashaDrawer.getByRole('status')).toHaveText('Age check: still under age.')
+  await expect(ashaDrawer.getByRole('status')).toHaveText('Saved.')
   const dated = calls.filter((call) => call.op === 'AdminUpdateUser').at(-1)?.variables as { input: Record<string, unknown> }
   expect(dated.input).toMatchObject({ userId: ashaId, dateOfBirth: '2014-04-02' })
   expect(dated.input).not.toHaveProperty('age')
-  // The age-blocked account passes again once its date is corrected.
   await dob.fill('2004-05-01')
   await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
-  await expect(ashaDrawer.getByRole('status')).toHaveText('Age check: unblocked.')
+  await expect(ashaDrawer.getByRole('status')).toHaveText('Saved.')
 })
 
 test('the profile can opt out of usage analytics', async ({ page }) => {

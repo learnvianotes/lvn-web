@@ -56,6 +56,7 @@ test('sitemap lists the subjects and their topics, resources and the legal pages
   expect(xml).toContain('/subjects/dsa/shortest-paths</loc>')
   expect(xml).toContain('/resources</loc>')
   expect(xml).toContain('/plans</loc>')
+  expect(xml).toContain('/guide</loc>')
   for (const path of ['/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) expect(xml).toContain(`${path}</loc>`)
   expect(xml).not.toContain('/core')
   // Every listed address is a real page.
@@ -84,7 +85,7 @@ test('robots.txt allows the public site, blocks private areas, and points at the
 
 test('every public page has its own title, description and canonical link', async ({ page }) => {
   const titles = new Set<string>()
-  for (const path of ['/', '/subjects', '/subjects/dsa', '/subjects/dsa/graphs', '/resources', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) {
+  for (const path of ['/', '/guide', '/subjects', '/subjects/dsa', '/subjects/dsa/graphs', '/resources', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']) {
     await page.goto(path)
     // Next streams the title in with the page; on a busy machine it can land just after the load event.
     await expect(page, path).toHaveTitle(/LearnViaNotes/)
@@ -93,7 +94,7 @@ test('every public page has its own title, description and canonical link', asyn
     expect(await page.locator('meta[name="description"]').getAttribute('content'), path).toMatch(/\w{20,}|\w+ \w+ \w+/)
     expect(await page.locator('link[rel="canonical"]').getAttribute('href'), path).toMatch(new RegExp(`^https?://[^/]+${path === '/' ? '/?' : path}$`))
   }
-  expect(titles.size).toBe(9)
+  expect(titles.size).toBe(10)
   // The landing page names the site for search results, with a "<" in no position to end the script.
   await page.goto('/')
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent())!) as { '@type': string }[]

@@ -70,6 +70,9 @@ test('every page a learner uses has no serious or critical WCAG 2.2 AA violation
   // Every age is confirmed before it is sent (lvn-backend ADR-0091, ADR-0104).
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
   await expect(page).toHaveURL(/\/profile$/)
+  const skipTour = page.getByRole('button', { name: 'Skip the tour' })
+  await skipTour.waitFor({ state: 'visible', timeout: 12_000 }).catch(() => undefined)
+  if (await skipTour.isVisible().catch(() => false)) await skipTour.click()
 
   const paths = [
     '/profile', '/profile/notifications', '/profile/people', '/profile/skills', '/home', '/notes', '/saved', '/search?q=graphs',
