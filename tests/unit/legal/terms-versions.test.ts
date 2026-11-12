@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isPublishedTermsVersion, legalLastUpdated, PUBLISHED_TERMS_VERSIONS, publishedTermsVersion, TERMS_VERSION } from '@/features/legal/documents'
 import { LegalPage } from '@/features/legal/LegalPage'
+import { AccountDeletionPage } from '@/features/legal/AccountDeletionPage'
 import { Privacy } from '@/features/legal/Privacy'
 import { Terms } from '@/features/legal/Terms'
 import { displayedTermsVersion, fetchTermsVersion, getDisplayedTermsVersion, TERMS_VERSION_REVALIDATE_SECONDS } from '@/features/legal/terms-version'
@@ -152,7 +153,34 @@ describe('the 13+ age rules and the processors the apps use', () => {
     expect(html).toContain('Sentry')
     expect(html).toContain('OpenAI')
     expect(html).toContain('Anthropic')
-    expect(html).toContain('Gemini')
+    expect(html).toContain('a model we run ourselves')
+    expect(html).not.toContain('Gemini')
     expect(html).not.toContain('hosting, storage and email')
+    expect(html).toContain('href="/delete-account"')
+  })
+})
+
+describe('the public account-deletion page', () => {
+  const html = () => renderToStaticMarkup(createElement(AccountDeletionPage))
+
+  it('names the real controls, the 14-day deletion, and what stays', () => {
+    const page = html()
+    expect(page).toContain('Your account')
+    expect(page).toContain('Delete your account')
+    expect(page).toContain('Your password')
+    expect(page).toContain('Type DELETE to confirm')
+    expect(page).toContain('Delete my account')
+    expect(page).toContain('Keep my account')
+    expect(page).toContain('14 days')
+    expect(page).toContain('mailto:support@learnvianotes.in')
+    expect(page).toContain('Deleted user')
+    expect(page).toContain('Move to trash')
+    expect(page).toContain('My Notes')
+    expect(page).toContain('Trash')
+    expect(page).toContain('Delete forever')
+    expect(page).toContain('Delete card')
+    expect(page).toContain('Remove picture')
+    expect(page).toContain('30 days')
+    expect(page).toContain('7 days')
   })
 })

@@ -104,9 +104,8 @@ export function Privacy() {
           </ul>
         </li>
         <li>
-          AI features send only the text needed for the task you asked for — never your name or account details — to the
-          provider configured for that task. The providers the service can use are OpenAI, Anthropic and Google (Gemini).
-          An administrator may instead use a model we run ourselves, or another service that speaks OpenAI’s API.
+          AI features send only the text needed for the task you asked for — never your name or account details — to
+          OpenAI (embeddings and chat) and Anthropic (chat). An administrator may instead use a model we run ourselves.
         </li>
         <li>Authorities, when the law requires it.</li>
       </ul>
@@ -116,8 +115,9 @@ export function Privacy() {
         <li>Your account, notes and files: until you delete them. Deleted notes stay in the trash for {RETENTION.trashDays} days.</li>
         <li>
           When you delete your account, it goes {RETENTION.deletionGraceDays} days after you ask (you can change your mind
-          until then). What you made public stays, shown as by “Deleted user”; everything else is deleted. Copies in our
-          backups are overwritten within {RETENTION.backupDays} days.
+          until then). <Link href="/delete-account">How to delete your account</Link> says the steps. What you made
+          public stays, shown as by “Deleted user”; everything else is deleted. Copies in our backups are overwritten
+          within {RETENTION.backupDays} days.
         </li>
         <li>Learning activity events: {RETENTION.learningEventsMonths} months, then only as totals.</li>
         <li>Data exports you download: {RETENTION.exportDays} days.</li>
@@ -134,7 +134,10 @@ export function Privacy() {
           files, your posts and comments, your study progress and every learning activity event.
         </li>
         <li><strong>Correct it:</strong> edit your details on your profile page, or email us.</li>
-        <li><strong>Delete it:</strong> your profile page → Delete account, or email us.</li>
+        <li>
+          <strong>Delete it:</strong> <Link href="/delete-account">How to delete your account</Link> — on Your account,
+          the section Delete your account — or email us.
+        </li>
         <li>
           <strong>Withdraw consent:</strong> turn Google Analytics off at any time from “Analytics choice” at the foot of
           every page; withdrawing is as easy as giving it. Deleting your account withdraws everything else.

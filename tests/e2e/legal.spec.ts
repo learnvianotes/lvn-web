@@ -21,6 +21,17 @@ test('the three documents are public, versioned and linked from every page', asy
   // The footer of every page.
   await page.goto('/')
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', '/legal/terms')
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Delete your account' })).toHaveAttribute('href', '/delete-account')
+})
+
+test('delete-account is public, and the privacy policy links to it', async ({ page }) => {
+  await page.goto('/delete-account')
+  await expect(page.getByRole('heading', { level: 1, name: 'Delete your account' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+  await expect(page.getByText('You can read this page without an account.')).toBeVisible()
+  await page.goto('/legal/privacy')
+  await page.getByRole('link', { name: 'How to delete your account' }).first().click()
+  await expect(page).toHaveURL(/\/delete-account$/)
 })
 
 test('the Grievance page names the officer and commits to 24 hours, 7 days and 36 hours', async ({ page }) => {
