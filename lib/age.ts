@@ -1,6 +1,7 @@
 /**
- * Accounts start at 8 (config/legal.ts ACCOUNTS_FROM_AGE). Ages 8 to 17 can sign up; the account is restricted until 18,
- * with no parent-consent step. Under 8 is refused (ADR-0091). This module keeps what the browser needs:
+ * Accounts start at 13 (config/legal.ts ACCOUNTS_FROM_AGE). Ages 13 to 17 can sign up; the account is restricted until
+ * 18, and those ages need verifiable parental or guardian consent (India’s DPDP Act). Under 13 is refused (ADR-0091).
+ * LearnViaNotes is not directed at children under 13. This module keeps what the browser needs:
  * - a refusal is remembered on this device for a day, so going back and answering again doesn't reopen sign-up. It
  *   closes the sign-up forms here and turns Google Analytics off on the device (no tracking of children, ADR-0092), and
  *   nothing else: it never deletes or signs out anyone;
@@ -8,6 +9,7 @@
  *   The create-profile step sends the checked age straight away. The API checks it again.
  */
 
+import { ACCOUNTS_FROM_AGE } from '@/config/legal'
 import { setAnalyticsConsent } from './consent'
 
 const KEY = 'lvn.age-refused'
@@ -60,8 +62,8 @@ export function subscribeAgeRefusal(listener: () => void): () => void {
   }
 }
 
-/** Whole years an account form will send. Under 8 the form stops; 8 and over are sent. The API checks again. */
-export const AGE_MIN = 8
+/** Whole years an account form will send. Under 13 the form stops; 13 and over are sent. The API checks again. */
+export const AGE_MIN = ACCOUNTS_FROM_AGE
 export const AGE_MAX = 120
 
 /** Why an age field's text is not an age: empty, not a whole number, or outside AGE_MIN–AGE_MAX. */

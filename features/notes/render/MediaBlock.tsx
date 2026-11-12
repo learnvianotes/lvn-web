@@ -25,9 +25,10 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
     </figcaption>
   ) : null
   if (!file && store.loading) return <div aria-hidden className="h-48 animate-pulse rounded-xl bg-surface-2" />
-  const picture = safeLinkHref(file?.mediumUrl ?? file?.url)
-  const playback = safeLinkHref(file?.playbackUrl ?? file?.url)
-  const poster = safeLinkHref(file?.posterUrl)
+  // blob: is the preview of a file just chosen on this device (media.tsx upload). Stored notes use http(s).
+  const picture = safeLinkHref(file?.mediumUrl ?? file?.url, { blob: true })
+  const playback = safeLinkHref(file?.playbackUrl ?? file?.url, { blob: true })
+  const poster = safeLinkHref(file?.posterUrl, { blob: true })
   if (!file || (type === 'image' && !picture) || ((type === 'video' || type === 'audio') && !playback)) {
     return (
       <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted">

@@ -26,12 +26,12 @@ describe('age hold', () => {
 })
 
 describe('an admin’s age correction (lvn-backend ADR-0104)', () => {
-  const declared = { age: 12, dateOfBirth: null }
+  const declared = { age: 16, dateOfBirth: null }
   const born = { age: 22, dateOfBirth: '2004-05-01' }
 
   it('sends a new age for an account without a date of birth, and only when it changed', () => {
     expect(ageEditOf(declared, { age: '22', dateOfBirth: '' })).toEqual({ age: 22 })
-    expect(ageEditOf(declared, { age: ' 12 ', dateOfBirth: '' })).toEqual({})
+    expect(ageEditOf(declared, { age: ' 16 ', dateOfBirth: '' })).toEqual({})
   })
 
   it('never sends an age for an account whose date of birth decides it, only a changed date', () => {
@@ -42,8 +42,9 @@ describe('an admin’s age correction (lvn-backend ADR-0104)', () => {
   it('leaves an account that never gave an age alone, and refuses an age that is not one', () => {
     expect(ageEditOf({ age: null, dateOfBirth: null }, { age: '', dateOfBirth: '' })).toEqual({})
     expect(ageEditOf({ age: null, dateOfBirth: null }, { age: '40', dateOfBirth: '' })).toEqual({ age: 40 })
-    for (const age of ['', '17.5', '0', '7', '121', 'abc']) expect(ageEditOf(declared, { age, dateOfBirth: '' })).toBe('invalid')
-    expect(ageEditOf({ age: 22, dateOfBirth: null }, { age: '8', dateOfBirth: '' })).toEqual({ age: 8 })
+    for (const age of ['', '17.5', '0', '7', '8', '12', '121', 'abc']) expect(ageEditOf(declared, { age, dateOfBirth: '' })).toBe('invalid')
+    expect(ageEditOf({ age: 22, dateOfBirth: null }, { age: '13', dateOfBirth: '' })).toEqual({ age: 13 })
+    expect(ageEditOf({ age: 22, dateOfBirth: null }, { age: '8', dateOfBirth: '' })).toBe('invalid')
     expect(ageEditOf({ age: 22, dateOfBirth: null }, { age: '17', dateOfBirth: '' })).toEqual({ age: 17 })
     expect(ageEditOf(born, { age: '', dateOfBirth: '2090-01-15' })).toBe('invalid')
   })

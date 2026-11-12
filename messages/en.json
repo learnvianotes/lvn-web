@@ -15,6 +15,7 @@
       "community": "Community",
       "start": "Get Started",
       "guide": "Guide",
+      "deleteAccount": "Delete your account",
       "menu": "Browse",
       "menuClose": "Close browse"
     },
@@ -261,7 +262,7 @@
       "confirm": "Yes, that’s right",
       "change": "Change it",
       "refusedTitle": "Sorry, you can’t create an account",
-      "refusedLead": "LearnViaNotes accounts start at age 8. You can still read every public note and subject without one.",
+      "refusedLead": "LearnViaNotes accounts start at age 13. You can still read every public note and subject without one.",
       "browse": "Read the public notes",
       "signOut": "Sign out",
       "blockedTitle": "This account couldn’t be activated",
@@ -327,7 +328,7 @@
       "remove": "Remove it",
       "declined": "Old-site data removed."
     },
-    "minor": "Some features stay off until you are 18. There is no parent or guardian step.",
+    "minor": "Some features stay off until you are 18. If you are under 18, a parent or guardian must give verifiable consent, in line with India’s Digital Personal Data Protection Act, 2023.",
     "analytics": {
       "title": "Usage analytics",
       "lead": "Help us see which pages are used. This stays on LearnViaNotes, with no third-party script, and never includes your name or email. Turning it off stops new usage events. Errors are still recorded so we can fix the app.",
@@ -2858,7 +2859,7 @@
       "p2": "Confirm the email you sign in with. A college or organisation email is checked with a code we send. Without one, ask a teacher who knows you to vouch for you, or send proof of study for the team to check. When college ID checks are turned on, you can send a photo of your card.",
       "p3": "Until the account is verified, sharing, commenting and joining groups stay closed. Your own notes still work.",
       "p4": "Notification settings choose what also reaches your email. Everything still shows in the app.",
-      "p5": "Accounts start at age 8. From 8 to 17 the account is restricted: some features stay off until 18, and there is no parent or guardian step. Age 7 cannot create an account.",
+      "p5": "Accounts start at age 13. LearnViaNotes is not directed at children under 13. From 13 to 17 a parent or guardian must give verifiable consent, in line with India’s Digital Personal Data Protection Act, 2023, and some features stay off until 18. Someone under 13 cannot create an account. If we learn an account belongs to someone under 13, we remove it.",
       "link": "Your account"
     },
     "tour": {
@@ -3319,7 +3320,7 @@
     "saveNamed": "Save {name}",
     "saving": "Saving…",
     "reset": "Reset to default",
-    "resetNamed": "Reset {name} to default",
+    "resetNamed": "Reset to default: {name}",
     "resetting": "Resetting…",
     "between": "From {min} to {max}.",
     "atLeast": "At least {min}.",
@@ -3338,7 +3339,7 @@
       "max": "At most {max}.",
       "maxLength": "At most {max} characters.",
       "pattern": "That does not match the required pattern.",
-      "minimumAge": "The minimum age cannot be below 8."
+      "minimumAge": "The minimum age cannot be below 13."
     },
     "risky": {
       "google_sign_in": "Turn off Google sign-in? People will not be able to sign in with Google until you turn it back on.",
@@ -3347,7 +3348,7 @@
       "ai_public_pipeline": "Turn off the public AI pipeline? Public notes will stop getting AI study aids until you turn it back on.",
       "search_hybrid": "Turn off hybrid search? Search will stop combining words and meaning until you turn it back on.",
       "access_allowlist_enabled": "Turn on the beta allowlist? Only emails on the list will be able to sign in or create an account.",
-      "account_minimum_age": "Change the minimum account age to {value}? People younger than that cannot register. It can never be below 8.",
+      "account_minimum_age": "Change the minimum account age to {value}? People younger than that cannot register. It can never be below 13.",
       "digital_consent_age": "Change the digital consent age to {value}?",
       "generic": "Save this change to {name}?",
       "terms_version": "Change the terms version to {value}? Every signed-in person will be asked to accept the Terms, Privacy Policy and content licence again."

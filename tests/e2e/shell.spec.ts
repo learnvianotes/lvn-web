@@ -130,13 +130,13 @@ test('Upload a PDF asks for a PDF, and the one chosen opens in the reader inside
 test('the search field opens the palette, and the avatar opens the account', async ({ page }) => {
   await mockApi(page, {})
   await page.goto('/home')
-  await expect(page.getByRole('link', { name: 'Your account' })).toHaveText('A')
-  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expect(page.getByRole('link', { name: 'Your account', exact: true })).toHaveText('A')
+  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await expect(palette).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(palette).toBeHidden()
-  await page.getByRole('link', { name: 'Your account' }).click()
+  await page.getByRole('link', { name: 'Your account', exact: true }).click()
   await expect(page).toHaveURL(/\/profile$/)
 })
 
@@ -144,7 +144,7 @@ test('“or ask AI”: the search field takes the words to Ask AI as a question,
   const aiState = { aiStatus: { __typename: 'AiStatus', available: true, reason: null }, myAiAllowance: { __typename: 'AiAllowance', usedToday: 0, limitToday: 200_000, resetsAt: new Date(Date.now() + 3_600_000).toISOString() } }
   const calls = await mockApi(page, { AiState: () => aiState, MyAiAnswers: () => ({ myAiAnswers: [] }) })
   await page.goto('/home')
-  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
   await page.getByRole('combobox').fill('why is a heap a tree')
   await page.getByRole('button', { name: 'Ask AI: “why is a heap a tree”' }).click()
   await expect(page).toHaveURL(/\/ask\?q=why%20is%20a%20heap%20a%20tree$/)
@@ -189,6 +189,6 @@ test('a public page keeps what happened on it when the app’s frame arrives wit
   await page.goto('/unsubscribe?t=good')
   await page.getByRole('button', { name: 'Stop these emails' }).click()
   await expect(page.getByRole('status')).toHaveText("Done. You won't get the weekly email.")
-  await expect(page.getByRole('link', { name: 'Your account' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Your account', exact: true })).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: 'Done.' })).toHaveText("Done. You won't get the weekly email.")
 })

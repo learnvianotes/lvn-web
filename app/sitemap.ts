@@ -14,7 +14,7 @@ import { env } from '@/lib/env'
 export const dynamic = 'force-dynamic'
 
 /**
- * Static pages (the landing page, the guide, subjects, resources, plans and the legal pages), the subjects and their topics,
+ * Static pages (the landing page, the guide, account deletion, subjects, resources, plans and the legal pages), the subjects and their topics,
  * public notes (/n/[slug]-[id]) and indexable resource pages from the public API; /core only while the old notes are
  * on (owner, 2026-10-14). Without the API the static pages still ship. Profiles have no public list, so they are not
  * included. Auth, dashboard, admin and settings are not included. This file is a metadata route outside those layouts.
@@ -31,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: `${base}/` },
     { url: `${base}/guide` },
+    { url: `${base}/delete-account` },
     { url: `${base}/subjects` },
     { url: `${base}/resources` },
     { url: `${base}/plans` },

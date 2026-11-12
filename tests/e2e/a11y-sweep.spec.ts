@@ -39,7 +39,7 @@ async function report(findings: Finding[], info: { attach: (name: string, o: { b
 }
 
 test('every public page has no serious or critical WCAG 2.2 AA violation', async ({ page }, info) => {
-  const paths = ['/', '/sign-in', '/sign-up', '/reset', '/subjects', '/plans', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']
+  const paths = ['/', '/sign-in', '/sign-up', '/reset', '/subjects', '/plans', '/delete-account', '/legal/terms', '/legal/privacy', '/legal/content-licence', '/legal/grievance']
   const findings: Finding[] = []
   watchCsp(page, findings)
   for (const path of paths) findings.push(...(await audit(page, path)))

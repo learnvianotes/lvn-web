@@ -14,6 +14,9 @@ export async function SiteFooter() {
           <Link href="/guide" className="hover:text-fg hover:underline">
             {t('nav.guide')}
           </Link>
+          <Link href="/delete-account" className="hover:text-fg hover:underline">
+            {t('nav.deleteAccount')}
+          </Link>
           {Object.values(LEGAL_DOCUMENTS).map((d) => (
             <Link key={d.path} href={d.path} className="hover:text-fg hover:underline">
               {d.title}

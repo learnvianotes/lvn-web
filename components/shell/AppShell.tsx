@@ -285,7 +285,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
         </button>
         <button
           type="button"
-          aria-label={t('search')}
+          aria-label={`${t('searchPlaceholder')} Ctrl K`}
           onClick={() => {
             // The palette on the page takes the event; without one, the search page.
             if (window.dispatchEvent(new Event(OPEN_SEARCH_EVENT, { cancelable: true }))) router.push('/search')

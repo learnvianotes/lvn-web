@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
 
 /**
- * The public guide, and the create-profile step: no age dialog, age 7 refused, age 8 sent,
+ * The public guide, and the create-profile step: no age dialog, age 12 refused, age 13 sent,
  * then the first-run tour. GraphQL is mocked. Email sign-up still confirms the age (auth.spec.ts).
  */
 
@@ -36,15 +36,16 @@ test('the guide is public, names real tools, and is linked from the footer', asy
   await expect(page.getByRole('heading', { name: 'Read and find notes' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Groups' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Classrooms' })).toBeVisible()
-  await expect(page.getByText('Accounts start at age 8.')).toBeVisible()
-  await expect(page.getByText('Age 7 cannot create an account.')).toBeVisible()
+  await expect(page.getByText('Accounts start at age 13.')).toBeVisible()
+  await expect(page.getByText('Someone under 13 cannot create an account.')).toBeVisible()
+  await expect(page.getByText('If we learn an account belongs to someone under 13, we remove it.')).toBeVisible()
   await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Guide' })).toHaveAttribute('href', '/guide')
   await expect(page.getByRole('link', { name: 'Replay the walkthrough' })).toHaveAttribute('href', /\/sign-in\?next=/)
   await expect(page).toHaveTitle(/Guide · LearnViaNotes/)
 })
 
-test('age 7 is refused on create-profile, age 8 continues with no dialog, and the tour plays once', async ({ page }) => {
+test('age 12 is refused on create-profile, age 13 continues with no dialog, and the tour plays once', async ({ page }) => {
   let registered = false
   const calls = await mock(page, () => registered)
   await page.route('**/graphql', async (route) => {
@@ -59,16 +60,16 @@ test('age 7 is refused on create-profile, age 8 continues with no dialog, and th
   await expect(page).toHaveURL(/\/sign-up\/details/)
   const age = page.getByLabel('Your age')
   await page.getByRole('checkbox').check()
-  await age.fill('7')
+  await age.fill('12')
   await page.getByRole('button', { name: 'Continue' }).click()
-  await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 8 to 120.' })).toBeVisible()
+  await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 13 to 120.' })).toBeVisible()
   await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
   expect(calls.filter((c) => c.op === 'CompleteRegistration')).toHaveLength(0)
-  await age.fill('8')
+  await age.fill('13')
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
   await expect(page).toHaveURL(/\/home$/)
-  expect(calls.find((c) => c.op === 'CompleteRegistration')?.variables.input).toMatchObject({ age: 8 })
+  expect(calls.find((c) => c.op === 'CompleteRegistration')?.variables.input).toMatchObject({ age: 13 })
 
   const tour = page.getByRole('dialog', { name: 'My Notes' })
   await expect(tour).toBeVisible()
