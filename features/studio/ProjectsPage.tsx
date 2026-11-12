@@ -56,7 +56,7 @@ export function ProjectsPage() {
       <div className="grid gap-3 lg:grid-cols-3">
         <section aria-labelledby="project-brief" className="flex flex-col gap-2 rounded-2xl border border-amber-700/20 bg-surface p-4">
           <h2 id="project-brief" className="text-sm font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">{t('brief')}</h2>
-          <textarea value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={t('briefPlaceholder')} className="min-h-40 w-full resize-y rounded-xl border border-border bg-bg px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-amber-600" />
+          <textarea value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={t('briefPlaceholder')} className="min-h-40 w-full resize-y rounded-xl border border-border bg-bg px-3 py-2 text-sm outline-none focus-visible:border-accent" />
         </section>
         <section aria-labelledby="project-board" className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
           <h2 id="project-board" className="text-sm font-bold uppercase tracking-wide text-muted">{t('board')}</h2>

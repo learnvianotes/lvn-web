@@ -101,10 +101,10 @@ body.scroll-locked { overflow: hidden; }
 }
 
 .ws-main { flex: 1; min-width: 0; }
-.ws-content { padding: 24px 32px 48px; }
+.ws-content { padding: 24px 32px 48px; min-width: 0; max-width: 100%; }
 .ws-scrim { display: none; }
 
-.topic { max-width: 860px; margin: 0 auto; }
+.topic { max-width: 860px; min-width: 0; margin: 0 auto; }
 .topic-head { display: grid; gap: 6px; margin-bottom: 24px; }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
 

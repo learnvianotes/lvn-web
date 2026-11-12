@@ -94,10 +94,10 @@ export function CardsTab({ kind, noteId, noteTitle, cards, study, canEdit, reade
   return (
     <>
       {own.length ? (
-        <section aria-label={t('inNote')} className="flex flex-col gap-3">
+        <section aria-label={t('inNote')} className="flex min-w-0 max-w-full flex-col gap-3">
           <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('inNote')}</h3>
           {own.map((c) => (
-            <div key={c.id} className="rounded-2xl border border-border bg-surface p-4">
+            <div key={c.id} className="min-w-0 max-w-full rounded-2xl border border-border bg-surface p-4">
               <CardView id={`tab-${c.id}`} type={c.type as CardType} content={c.content} />
             </div>
           ))}

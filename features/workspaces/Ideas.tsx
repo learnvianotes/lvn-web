@@ -29,7 +29,7 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
     <div className="flex flex-col gap-4">
       {group.viewerCan.post ? (
         <form
-          className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3"
+          className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3 focus-within:border-accent"
           onSubmit={(e) => {
             e.preventDefault()
             void attempt(async () => {
@@ -45,7 +45,7 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
           <label className="sr-only" htmlFor="new-idea">
             {t('ideaLabel')}
           </label>
-          <textarea id="new-idea" value={text} rows={2} onChange={(e) => setText(e.target.value)} placeholder={t('ideaPlaceholder')} className="resize-y bg-transparent text-sm focus:outline-none" />
+          <textarea id="new-idea" value={text} rows={2} onChange={(e) => setText(e.target.value)} placeholder={t('ideaPlaceholder')} className="resize-y border-0 bg-transparent text-sm focus:outline-none" />
           <Button type="submit" size="sm" className="self-end" disabled={creating.loading || !text.trim()}>
             {t('shareIdea')}
           </Button>

@@ -73,9 +73,9 @@ export function CardView({ id, type, content, highlighted, onAnchor }: { id: str
       case 'code':
       case 'diagram':
         return (
-          <figure className="overflow-hidden rounded-xl border border-border bg-surface-2">
+          <figure className="min-w-0 max-w-full rounded-xl border border-border bg-surface-2">
             {type === 'code' && (c.filename || c.language) ? <figcaption className="border-b border-border px-3 py-1.5 font-mono text-xs text-muted">{c.filename || c.language}</figcaption> : null}
-            <pre className="overflow-x-auto p-3 font-mono text-sm leading-relaxed">
+            <pre className="lvn-code-scroll p-3 font-mono text-sm leading-relaxed">
               <code>{type === 'code' ? c.code : c.source}</code>
             </pre>
             {type === 'diagram' && c.caption ? (
@@ -135,7 +135,7 @@ export function CardView({ id, type, content, highlighted, onAnchor }: { id: str
   if (!body) return null
   const anchor = cardAnchor(content)
   return (
-    <section data-card-id={id} data-card-type={type} className={cn('flex flex-col rounded-lg transition-colors', highlighted && 'bg-accent-soft ring-2 ring-accent/30')}>
+    <section data-card-id={id} data-card-type={type} className={cn('flex min-w-0 max-w-full flex-col rounded-lg transition-colors', highlighted && 'bg-accent-soft ring-2 ring-accent/30')}>
       {body}
       {anchor ? (
         onAnchor ? (

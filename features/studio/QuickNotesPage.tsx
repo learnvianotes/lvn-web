@@ -31,7 +31,7 @@ export function QuickNotesPage() {
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={t('placeholder')}
-          className="min-h-[52dvh] w-full resize-y rounded-2xl border border-teal-800/20 bg-white px-4 py-4 text-base leading-8 text-slate-900 shadow-inner outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:bg-slate-950 dark:text-slate-100"
+          className="min-h-[52dvh] w-full resize-y rounded-2xl border border-teal-800/20 bg-white px-4 py-4 text-base leading-8 text-slate-900 shadow-inner outline-none focus-visible:border-accent dark:bg-slate-950 dark:text-slate-100"
           style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, rgb(20 184 166 / 0.28) 32px)' }}
         />
       </label>

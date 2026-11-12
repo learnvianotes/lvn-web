@@ -84,7 +84,7 @@ export function SearchPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
-      <label className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 shadow-sm focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
+      <label className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 shadow-sm focus-within:border-accent">
         <Search className="size-5 text-muted" aria-hidden />
         <span className="sr-only">{t('label')}</span>
         <input
@@ -95,7 +95,7 @@ export function SearchPage() {
             go({ q: e.target.value })
           }}
           placeholder={t('placeholder')}
-          className="h-14 flex-1 bg-transparent text-lg placeholder:text-muted focus:outline-none focus-visible:outline-none"
+          className="h-14 min-w-0 flex-1 border-0 bg-transparent text-lg placeholder:text-muted outline-none"
         />
       </label>
       <div role="tablist" aria-label={t('tabs.label')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">

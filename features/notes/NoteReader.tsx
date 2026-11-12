@@ -96,7 +96,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
         <NoteTabPanel idBase={idBase} tab="content" current={tab} keepMounted>
           <CardRail sections={headings.map((h) => ({ key: h.id, text: cardPlainText('heading', h.content) }))} onGo={(i) => document.getElementById(`card-${headings[i]?.id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })} />
           <QuizTopicsProvider topicKeys={(meta.topics ?? []).map((x) => `topic:${x.id}`)}>
-            <div className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
+            <div className="flex min-w-0 max-w-full flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
               {cards.map((c) => (
                 <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
               ))}

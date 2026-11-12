@@ -39,9 +39,9 @@ function AidBody({ aid }: { aid: Aid }) {
   if (aid.markdown != null) return <Markdown source={aid.markdown} className="flex flex-col gap-2.5 text-[0.95rem] leading-relaxed" />
   return (
     <PracticeQuizProvider>
-      <div className="flex flex-col gap-3">
+      <div className="flex min-w-0 max-w-full flex-col gap-3">
         {(aid.cards ?? []).map((c, i) => (
-          <div key={i} className="rounded-2xl border border-border bg-bg p-4">
+          <div key={i} className="min-w-0 max-w-full rounded-2xl border border-border bg-bg p-4">
             <CardView id={`${aid.id}-${i}`} type={c.type as CardType} content={c.content} />
           </div>
         ))}
@@ -73,7 +73,7 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
     }
   }
   return (
-    <section aria-labelledby="study-aids" className="flex flex-col gap-4 rounded-3xl border border-accent/25 bg-surface p-5 sm:p-6">
+    <section aria-labelledby="study-aids" className="flex min-w-0 max-w-full flex-col gap-4 rounded-3xl border border-accent/25 bg-surface p-5 sm:p-6">
       <header className="flex flex-col gap-1">
         <h2 id="study-aids" className="flex items-center gap-2 text-xl font-bold tracking-tight">
           <BookOpenCheck className="size-5 text-accent" aria-hidden />

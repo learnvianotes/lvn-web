@@ -210,7 +210,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         <div className="flex flex-col gap-2 px-1">
           <textarea
             rows={1}
-            className={cn('w-full resize-none overflow-hidden bg-transparent font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
+            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
             placeholder={t('untitled')}
             aria-label={t('title')}
             value={title}
@@ -234,10 +234,10 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
 
         {!focus ? tabs : null}
         {pages && !focus ? <PageEditor noteId={noteId} /> : null}
-        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel || pages} className={showPanel || pages ? 'hidden' : 'flex flex-col gap-4'}>
+        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel || pages} className={showPanel || pages ? 'hidden' : 'flex min-w-0 max-w-full flex-col gap-4'}>
           {wide ? <EditorRail editor={editor} /> : null}
           <Toolbar editor={editor} sticky={compact ? 'top-0' : 'top-14'} />
-          <div className={cn('lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
+          <div className={cn('lvn-editor relative min-w-0 max-w-full rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
             {editor ? <CardHandle editor={editor} /> : null}
             {editor ? <SelectionMenu editor={editor} /> : null}
             <EditorContent editor={editor} />
