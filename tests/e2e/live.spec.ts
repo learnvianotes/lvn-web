@@ -684,7 +684,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await expect(page.getByRole('link', { name: /Spanning trees(?! visualiser)/ })).toHaveCount(0)
 
   await page.goto('/notes')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await palette.getByRole('combobox').fill(group)
   await palette.getByRole('option', { name: new RegExp(`${group} · Group`) }).click()
@@ -1333,7 +1333,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   }
   // The top bar: the avatar opens the account, and Create Note makes a note that opens.
   await page.goto('/home')
-  await page.getByRole('link', { name: 'Your account' }).click()
+  await page.getByRole('link', { name: 'Your account', exact: true }).click()
   await expect(page).toHaveURL(/\/profile$/)
   if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
   await page.getByRole('button', { name: 'Create Note' }).click()
@@ -1451,6 +1451,6 @@ test('a group’s admin chooses its picture from this computer; it goes to stora
   await page.getByLabel('Choose a picture').setInputFiles({ name: 'club.png', mimeType: 'image/png', buffer: png })
   await expect(page.getByText('Picture saved.')).toBeVisible({ timeout: 15_000 })
   const picture = page.getByRole('img', { name: `The picture of ${name}` })
-  await expect(picture).toBeVisible()
-  await expect.poll(() => picture.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
+  await expect(picture).toHaveCount(2)
+  await expect.poll(() => picture.first().evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
 })

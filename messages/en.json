@@ -3320,7 +3320,7 @@
     "saveNamed": "Save {name}",
     "saving": "Saving…",
     "reset": "Reset to default",
-    "resetNamed": "Reset {name} to default",
+    "resetNamed": "Reset to default: {name}",
     "resetting": "Resetting…",
     "between": "From {min} to {max}.",
     "atLeast": "At least {min}.",

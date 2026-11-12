@@ -7,6 +7,8 @@ describe('safeLinkHref', () => {
     expect(safeLinkHref('http://localhost:3000/file')).toBe('http://localhost:3000/file')
     expect(safeLinkHref('mailto:ada@example.com')).toBeNull()
     expect(safeLinkHref('mailto:ada@example.com', { mailto: true })).toBe('mailto:ada@example.com')
+    expect(safeLinkHref('blob:http://localhost:3000/11111111-1111-1111-1111-111111111111')).toBeNull()
+    expect(safeLinkHref('blob:http://localhost:3000/11111111-1111-1111-1111-111111111111', { blob: true })).toBe('blob:http://localhost:3000/11111111-1111-1111-1111-111111111111')
   })
 
   it.each([

@@ -221,7 +221,7 @@ test('configuration validates age, confirms a risky switch, shows a user error a
   await expect(timeoutInput).toHaveValue('9999')
   await timeout.getByRole('button', { name: 'Save Search timeout' }).click()
   await expect(timeout.getByText('That timeout is not allowed.')).toBeVisible()
-  await timeout.getByRole('button', { name: 'Reset Search timeout to default' }).click()
+  await timeout.getByRole('button', { name: 'Reset to default: Search timeout' }).click()
   await expect.poll(() => calls.find((call) => call.op === 'ResetAdminSetting')?.variables).toEqual({ key: 'search_timeout_ms' })
   await expect(timeout.getByText('Default', { exact: true })).toBeVisible()
   expect(await seriousViolations(page)).toEqual([])
