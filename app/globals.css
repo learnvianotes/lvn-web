@@ -169,14 +169,77 @@ html[data-landing='away'] { visibility: hidden; }
 body { font-family: var(--font-sans); min-height: 100dvh; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
+/* Text fields: one border, not that outline stacked on the field (a bright double box — the search
+   overlay, inputs, textareas). Unlayered, so it wins over Tailwind's outline and ring utilities.
+   Checkboxes, radios and buttons keep the outline. A field with no border of its own (border-0, inside
+   a labelled box) does not grow one. */
+input:not([type='button']):not([type='checkbox']):not([type='color']):not([type='file']):not([type='hidden']):not([type='image']):not([type='radio']):not([type='range']):not([type='reset']):not([type='submit']):focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+dialog:focus,
+dialog:focus-visible {
+  outline: none;
+}
+input:not([type='button']):not([type='checkbox']):not([type='color']):not([type='file']):not([type='hidden']):not([type='image']):not([type='radio']):not([type='range']):not([type='reset']):not([type='submit']):not(.border-0):not([aria-invalid='true']):focus-visible,
+textarea:not(.border-0):not([aria-invalid='true']):focus-visible,
+select:not([aria-invalid='true']):focus-visible {
+  border-color: var(--accent);
+}
+
+/* Code in a note (a code card, a fenced block, the editor). The pre scrolls sideways; the line stays
+   one line; flex and grid parents may shrink so the card does not widen the page or get clipped. A
+   sideways swipe scrolls the code, and a vertical one still scrolls the page. */
+.lvn-code-scroll {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+}
+.lvn-code-scroll code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  touch-action: pan-x pan-y;
+}
+/* Flex and grid items on the way up can shrink, so a long line scrolls inside the card
+   instead of widening the page or being clipped by a parent. */
+:where(.flex, .grid) > :has(.lvn-code-scroll) {
+  min-width: 0;
+  max-width: 100%;
+}
+/* ProseMirror and the code node view set white-space: pre-wrap, including an inline style on the
+   content element. important is what keeps the line one line so the pre can scroll. */
+.lvn-editor .ProseMirror pre.lvn-code-scroll,
+.lvn-editor .ProseMirror pre.lvn-code-scroll code,
+.lvn-editor .ProseMirror pre.lvn-code-scroll [data-node-view-content],
+.lvn-editor .ProseMirror pre.lvn-code-scroll [data-node-view-content-react] {
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
 /* The note editor (features/notes/editor): one Tiptap document whose top-level nodes are cards. */
+.lvn-editor,
+.lvn-editor .ProseMirror { min-width: 0; max-width: 100%; }
 .lvn-editor .ProseMirror { outline: none; display: flex; flex-direction: column; gap: 0.9rem; font-size: 1.0625rem; line-height: 1.7; }
 .lvn-editor .ProseMirror > .lvn-card,
-.lvn-editor .ProseMirror > [data-node-view-wrapper] { border-radius: 0.75rem; transition: background-color 0.2s, box-shadow 0.2s; }
+.lvn-editor .ProseMirror > [data-node-view-wrapper] { min-width: 0; max-width: 100%; border-radius: 0.75rem; transition: background-color 0.2s, box-shadow 0.2s; }
 .lvn-editor .ProseMirror p { min-height: 1.5em; }
 .lvn-editor .ProseMirror .lvn-card-text > p + p,
 .lvn-editor .ProseMirror blockquote p + p,

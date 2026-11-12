@@ -3,7 +3,7 @@
    scripts/content/sanitize.mjs. One look for every subject.
    ============================================================ */
 
-.prose { color: var(--text-2); font-size: 15px; line-height: 1.7; overflow-wrap: break-word; }
+.prose { color: var(--text-2); font-size: 15px; line-height: 1.7; overflow-wrap: break-word; min-width: 0; max-width: 100%; }
 .prose > * + * { margin-top: 14px; }
 .prose > div + div { margin-top: 18px; }
 .prose p + p { margin-top: 10px; }
@@ -45,6 +45,11 @@
 .prose .mono { font-family: var(--mono); font-size: 13.5px; color: var(--text); }
 
 /* Section boxes (scripts/content/sanitize.mjs → sectionize) */
+.prose .block,
+.prose .card {
+  min-width: 0;
+  max-width: 100%;
+}
 .prose .block {
   margin-top: 20px;
   padding: 0 20px 18px;
@@ -89,7 +94,7 @@
 /* Grids and cards */
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .grid--3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-.grid > * { margin: 0 !important; }
+.grid > * { margin: 0 !important; min-width: 0; max-width: 100%; }
 .card { padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
 .card > * + * { margin-top: 6px; }
 .card h3 { margin: 0 0 6px; font-size: 15px; }
@@ -164,17 +169,46 @@
 .prose th { background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 13px; }
 .prose tr:last-child td { border-bottom: 0; }
 
-/* Code */
+/* Code. The figure must not clip the scroller (overflow: hidden hid long lines on phones).
+   The pre scrolls sideways; white-space stays pre; a vertical swipe still moves the page. */
 .prose figure.code {
   position: relative;
   margin: 14px 0 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--code-bg);
-  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
 }
-.prose figure.code figcaption { padding: 6px 14px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
-.prose figure.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+.prose figure.code figcaption { padding: 6px 14px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.prose figure.code pre {
+  display: block;
+  margin: 0;
+  padding: 14px 16px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+}
+.prose figure.code pre code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  touch-action: pan-x pan-y;
+}
 .prose .copy-btn {
   position: absolute;
   top: 6px;

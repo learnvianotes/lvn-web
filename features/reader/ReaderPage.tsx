@@ -439,7 +439,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               {tab('contents', t('panels.contents'), ListTree)}
               <ToolButton icon={X} label={t('hidePanel')} onClick={() => setPanelOpen(false)} className="ml-auto lg:hidden" />
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3">
               <div className={cn(panel !== 'notes' && 'hidden')}>
                 {notesFailed ? (
                   <LoadFailed onRetry={retryNotes} />
@@ -464,7 +464,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
                     compact
                   />
                 ) : (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex min-w-0 max-w-full flex-col gap-4">
                     <div className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft p-4 text-sm">
                       <p>{t('readOnly')}</p>
                       {loaded.meta.viewerCan.fork ? (

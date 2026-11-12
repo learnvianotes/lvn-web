@@ -35,7 +35,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:py-12">
+    <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 py-8 sm:py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <header className="flex animate-rise flex-col gap-4">
         {note.topics.length ? (
@@ -80,7 +80,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
 
       <PublicMedia noteId={note.id} hasMedia={note.cards.some((c) => c.hasMedia)}>
         <QuizTopicsProvider topicKeys={note.topics.map((topic) => `topic:${topic.id}`)}>
-          <article className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
+          <article className="flex min-w-0 max-w-full flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
             {note.cards.map((c) => (
               <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
             ))}

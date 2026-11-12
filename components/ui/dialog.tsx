@@ -44,7 +44,7 @@ export function Dialog({ open, onClose, title, children, wide, side, sheet, pers
               </button>
             )}
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
         </div>
       ) : null}
     </dialog>

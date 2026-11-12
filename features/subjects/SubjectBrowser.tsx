@@ -26,7 +26,7 @@ export function SubjectBrowser({ subjects, initialQuery = '' }: { subjects: Subj
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">{t('search')}</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('searchPlaceholder')} className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-600" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('searchPlaceholder')} className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none focus-visible:border-accent" />
         </label>
         <label className="sm:w-64">
           <span className="sr-only">{t('filter')}</span>

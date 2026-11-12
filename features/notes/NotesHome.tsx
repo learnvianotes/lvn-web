@@ -351,7 +351,7 @@ export function NotesHome() {
               <label className="relative w-full sm:w-64">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
                 <span className="sr-only">{t('search')}</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-full border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-full border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none" />
               </label>
             ) : null}
           </div>

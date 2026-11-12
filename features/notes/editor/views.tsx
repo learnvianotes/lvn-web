@@ -68,7 +68,7 @@ export function QuoteView({ node, updateAttributes }: ReactNodeViewProps) {
       <NodeViewContent />
       <input
         contentEditable={false}
-        className="mt-1 w-full bg-transparent text-sm not-italic text-muted placeholder:text-muted/70 focus:outline-none"
+        className="mt-1 w-full border-0 bg-transparent text-sm not-italic text-muted placeholder:text-muted/70 focus:outline-none"
         placeholder={t('attribution')}
         aria-label={t('attribution')}
         value={(node.attrs.attribution as string) ?? ''}
@@ -100,7 +100,7 @@ export function CalloutView({ node, updateAttributes }: ReactNodeViewProps) {
           ))}
         </select>
         <input
-          className="min-w-0 flex-1 bg-transparent font-semibold placeholder:text-muted focus:outline-none"
+          className="min-w-0 flex-1 border-0 bg-transparent font-semibold placeholder:text-muted focus:outline-none"
           placeholder={t('calloutTitle')}
           aria-label={t('calloutTitle')}
           value={(node.attrs.title as string) ?? ''}
@@ -134,7 +134,7 @@ export function CodeLikeView({ node, updateAttributes }: ReactNodeViewProps) {
   const t = useTranslations('notes.editor')
   const kind = node.type.name
   return (
-    <NodeViewWrapper className="lvn-card overflow-hidden rounded-xl border border-border bg-surface-2" data-card={kind}>
+    <NodeViewWrapper className="lvn-card min-w-0 max-w-full rounded-xl border border-border bg-surface-2" data-card={kind}>
       <div contentEditable={false} className="flex items-center gap-2 border-b border-border px-3 py-1.5">
         {kind === 'codeCard' ? (
           <>
@@ -145,7 +145,7 @@ export function CodeLikeView({ node, updateAttributes }: ReactNodeViewProps) {
           <Label>{t(kind === 'markdownCard' ? 'markdown' : 'diagram')}</Label>
         )}
       </div>
-      <pre className="overflow-x-auto p-3 font-mono text-sm leading-relaxed">
+      <pre className="lvn-code-scroll p-3 font-mono text-sm leading-relaxed">
         <NodeViewContent<'code'> as="code" />
       </pre>
     </NodeViewWrapper>
@@ -200,7 +200,7 @@ export function TableView({ node, selected, editor, getPos }: ReactNodeViewProps
                 {row.map((cell, c) => (
                   <td key={c} className="border border-border p-0">
                     <input
-                      className={cn('w-full min-w-24 bg-transparent px-2 py-1.5 focus:bg-accent-soft focus:outline-none', r === 0 && data.hasHeaderRow && 'font-semibold')}
+                      className={cn('w-full min-w-24 border-0 bg-transparent px-2 py-1.5 focus:bg-accent-soft focus:outline-none', r === 0 && data.hasHeaderRow && 'font-semibold')}
                       aria-label={t('cell', { row: r + 1, column: c + 1 })}
                       value={inlineText(cell)}
                       onChange={(e) => setCell(r, c, e.target.value)}

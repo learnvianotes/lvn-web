@@ -96,7 +96,7 @@ export function SearchPalette() {
     >
       {open ? (
         <div className="flex max-h-[70vh] flex-col">
-          <label className="flex items-center gap-3 border-b border-border px-4">
+          <label className="flex items-center gap-3 border-b border-border px-4 focus-within:border-accent">
             <Search className="size-5 shrink-0 text-muted" aria-hidden />
             <span className="sr-only">{t('label')}</span>
             <input
@@ -115,7 +115,7 @@ export function SearchPalette() {
               aria-expanded={items.length > 0}
               aria-controls="search-results"
               aria-activedescendant={items[active] ? `search-${items[active].id}` : undefined}
-              className="h-14 flex-1 bg-transparent text-base placeholder:text-muted focus:outline-none focus-visible:outline-none"
+              className="h-14 min-w-0 flex-1 border-0 bg-transparent text-base placeholder:text-muted outline-none"
             />
             <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted sm:block">Esc</kbd>
           </label>
