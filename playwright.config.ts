@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { E2E_REVALIDATE_SECRET, LIVE_URL } from './tests/e2e/support/constants'
+import { E2E_GIT_SHA, E2E_REVALIDATE_SECRET, LIVE_URL } from './tests/e2e/support/constants'
 
 const port = Number(process.env.PORT ?? 3100)
 const ssrApiPort = 3199
@@ -36,6 +36,7 @@ export default defineConfig({
             NEXT_PUBLIC_FIREBASE_APP_ID: '1:0:web:e2e',
             API_INTERNAL_URL: `http://127.0.0.1:${ssrApiPort}/graphql`,
             REVALIDATE_SECRET: E2E_REVALIDATE_SECRET,
+            NEXT_PUBLIC_GIT_SHA: E2E_GIT_SHA,
           },
           port,
           timeout: 300_000,

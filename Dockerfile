@@ -34,6 +34,8 @@ ARG NEXT_PUBLIC_GITHUB_CLIENT_ID=
 ARG NEXT_PUBLIC_GITHUB_AUTHORIZE_URL=https://github.com/login/oauth/authorize
 ARG NEXT_PUBLIC_LINKEDIN_CLIENT_ID=
 ARG NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL=https://www.linkedin.com/oauth/v2/authorization
+# /version's commit. Omitted builds say "unknown"; deploy.yml passes the git SHA.
+ARG NEXT_PUBLIC_GIT_SHA=unknown
 RUN pnpm build
 
 FROM ${NODE_IMAGE}
