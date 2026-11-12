@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A versioning policy, a `/version` endpoint that reports the build's commit, and the version in the page footer.
+- A versioning policy, a `/version` endpoint that reports the build's commit, and the version in the page footer. https://github.com/learnvianotes/lvn-web/pull/68
 
 ## [0.5.0] - 2026-11-12
 
