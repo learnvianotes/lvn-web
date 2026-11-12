@@ -11,6 +11,8 @@ export async function register(): Promise<void> {
   const [Sentry, { sentryOptions }] = await Promise.all([import('@sentry/nextjs'), import('./lib/observability')])
   Sentry.init({
     ...sentryOptions(dsn, process.env.NEXT_PUBLIC_APP_ENV ?? 'development', process.env.NEXT_PUBLIC_APP_VERSION),
+    // `dataCollection` already refuses local variables and source lines. These integrations are the ones that would
+    // attach them, plus console breadcrumbs, if a future default turned the categories back on.
     integrations: (defaults) => defaults.filter((i) => !['LocalVariables', 'LocalVariablesAsync', 'ContextLines', 'Console'].includes(i.name)),
   })
 }

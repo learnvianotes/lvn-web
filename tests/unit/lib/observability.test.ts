@@ -5,7 +5,23 @@ import { scrubBreadcrumb, scrubEvent, sentryOptions } from '@/lib/observability'
 describe('Sentry scrubbing', () => {
   it('sends no personal data and no performance or replay data', () => {
     const options = sentryOptions('https://key@o1.ingest.sentry.io/2', 'production', '0.1.0')
-    expect(options).toMatchObject({ sendDefaultPii: false, includeLocalVariables: false, environment: 'production', release: '0.1.0' })
+    expect(options).toMatchObject({
+      environment: 'production',
+      release: '0.1.0',
+      dataCollection: {
+        userInfo: false,
+        cookies: false,
+        httpBodies: [],
+        urlQueryParams: false,
+        genAI: { inputs: false, outputs: false },
+        mcp: { inputs: false, outputs: false },
+        databaseQueryData: false,
+        stackFrameVariables: false,
+        frameContextLines: 0,
+      },
+    })
+    expect(options).not.toHaveProperty('sendDefaultPii')
+    expect(options).not.toHaveProperty('includeLocalVariables')
     expect(options).not.toHaveProperty('tracesSampleRate')
     expect(options).not.toHaveProperty('replaysSessionSampleRate')
   })
