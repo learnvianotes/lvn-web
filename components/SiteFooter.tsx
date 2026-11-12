@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { AnalyticsChoiceButton } from '@/components/analytics/Analytics'
 import { LEGAL_DOCUMENTS } from '@/features/legal/documents'
+import { releaseInfo } from '@/lib/release'
 
 export async function SiteFooter() {
   const t = await getTranslations('site')
+  const { version } = releaseInfo()
   return (
     <footer className="border-t border-border">
       <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-muted">
@@ -24,6 +26,7 @@ export async function SiteFooter() {
           ))}
           <AnalyticsChoiceButton />
         </nav>
+        <p className="mt-4 text-xs text-muted">v{version}</p>
       </div>
     </footer>
   )

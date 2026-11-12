@@ -28,8 +28,12 @@ const config: NextConfig = {
   output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
   reactStrictMode: true,
   poweredByHeader: false,
-  // Shown in the /core help centre and attached to feedback reports.
-  env: { NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION ?? version },
+  // Shown in the /core help centre, the site footer and /version, and attached to feedback reports.
+  // The commit is the build-time git SHA (Dockerfile ARG NEXT_PUBLIC_GIT_SHA). Empty means it was not passed.
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION ?? version,
+    NEXT_PUBLIC_GIT_SHA: process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
+  },
   // / and /core have separate root layouts, so an unmatched URL needs a 404 page of its own.
   experimental: { globalNotFound: true },
   async headers() {

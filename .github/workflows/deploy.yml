@@ -85,6 +85,7 @@ jobs:
             NEXT_PUBLIC_FIREBASE_APP_ID=${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
             NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_GIT_SHA=${{ github.sha }}
       - name: Deploy on the VM (fails unless the stack is healthy)
         env:
           IMAGE: ${{ steps.name.outputs.image }}
