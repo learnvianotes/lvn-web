@@ -329,7 +329,7 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
         accounts = accounts.map((account) => {
           if (account.id !== input.userId) return account
           const age = input.dateOfBirth ? ageOf(input.dateOfBirth) : (input.age ?? account.age)
-          return { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth ?? account.dateOfBirth, age, accountStatus: age >= 8 ? 'ACTIVE' : 'AGE_BLOCKED', statusReason: age >= 8 ? null : account.statusReason }
+          return { ...account, displayName: input.displayName, email: input.email, dateOfBirth: input.dateOfBirth ?? account.dateOfBirth, age, accountStatus: age >= 13 ? 'ACTIVE' : 'AGE_BLOCKED', statusReason: age >= 13 ? null : account.statusReason }
         })
         const user = accounts.find((row) => row.id === input.userId)
         return { adminUpdateUser: { __typename: 'AdminUserPayload', user, userErrors: [] } }
@@ -374,7 +374,7 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
   for (const typed of ['22.5', '0', '121', '']) {
     await age.fill(typed)
     await drawer.getByRole('button', { name: 'Save details' }).click()
-    await expect(drawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 8 to 120.')
+    await expect(drawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 13 to 120.')
   }
   expect(calls.filter((call) => call.op === 'AdminUpdateUser')).toHaveLength(0)
   await age.fill('22')
@@ -434,13 +434,15 @@ test('an admin filters users, corrects an age, and deletes only after typing DEL
   expect(named.input).not.toHaveProperty('age')
   expect(named.input).not.toHaveProperty('dateOfBirth')
   await dob.fill('2090-01-15')
+  // The date field's min and max would block the submit before the form can say why. Drop them so the app's check runs.
+  await dob.evaluate((el) => (el as HTMLInputElement).form?.setAttribute('novalidate', ''))
   await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
-  await expect(ashaDrawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 8 to 120.')
-  await dob.fill('2014-04-02')
+  await expect(ashaDrawer.getByRole('alert')).toHaveText('Enter the age as a whole number from 13 to 120.')
+  await dob.fill('2013-04-02')
   await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
   await expect(ashaDrawer.getByRole('status')).toHaveText('Saved.')
   const dated = calls.filter((call) => call.op === 'AdminUpdateUser').at(-1)?.variables as { input: Record<string, unknown> }
-  expect(dated.input).toMatchObject({ userId: ashaId, dateOfBirth: '2014-04-02' })
+  expect(dated.input).toMatchObject({ userId: ashaId, dateOfBirth: '2013-04-02' })
   expect(dated.input).not.toHaveProperty('age')
   await dob.fill('2004-05-01')
   await ashaDrawer.getByRole('button', { name: 'Save details' }).click()
@@ -459,7 +461,7 @@ test('the profile can opt out of usage analytics', async ({ page }) => {
 
 test('an admin switches the terms version only after confirming everyone is asked again', async ({ page }, info) => {
   test.skip(info.project.name === 'phone', 'the form is the same')
-  // lvn-backend ADR-0103: the API allows 2026-10-08 and 2026-11-03, the versions this web build publishes.
+  // lvn-backend ADR-0103: the API allowlist here matches the versions this web build publishes.
   const constraints = { __typename: 'AdminSettingConstraints', min: null, max: null, maxLength: 10, pattern: '^\\d{4}-\\d{2}-\\d{2}$', nullable: false }
   let current = '2026-11-03'
   let source = 'DEFAULT'
@@ -471,7 +473,7 @@ test('an admin switches the terms version only after confirming everyone is aske
       type: 'STRING',
       category: 'legal',
       description: 'Terms versions whose text the web has published.',
-      value: '2026-10-08,2026-11-03',
+      value: '2026-10-08,2026-11-03,2026-11-12',
       overridden: false,
       updatedAt: '2026-11-03T00:00:00.000Z',
       constraints: { ...constraints, maxLength: 1000, pattern: '^\\d{4}-\\d{2}-\\d{2}(,\\d{4}-\\d{2}-\\d{2})*$' },
@@ -481,7 +483,7 @@ test('an admin switches the terms version only after confirming everyone is aske
     page,
     {
       AdminSettings: () => ({ adminSettings: catalog() }),
-      AdminTermsStatus: () => ({ adminTermsStatus: { __typename: 'AdminTermsStatus', current, source, publishedVersions: ['2026-10-08', '2026-11-03'], acceptedCurrent: 12, acceptedOlder: null, lastChange: null } }),
+      AdminTermsStatus: () => ({ adminTermsStatus: { __typename: 'AdminTermsStatus', current, source, publishedVersions: ['2026-10-08', '2026-11-03', '2026-11-12'], acceptedCurrent: 12, acceptedOlder: null, lastChange: null } }),
       UpdateAdminSetting: (v) => {
         const input = v.input as { key: string; value: string }
         current = input.value

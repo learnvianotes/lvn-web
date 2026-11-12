@@ -19,6 +19,7 @@ export interface PublishedTermsVersion {
 export const PUBLISHED_TERMS_VERSIONS = [
   { version: '2026-10-08', summary: 'First Terms of Service, Privacy Policy and content licence.' },
   { version: '2026-11-03', summary: 'Adults only (18 and over), optional Google Analytics, the Grievance page and the operator’s details.' },
+  { version: '2026-11-12', summary: 'Accounts from age 13, verifiable parental or guardian consent for ages 13–17 (India’s DPDP Act), and the processors the service uses.' },
 ] as const satisfies readonly PublishedTermsVersion[]
 
 /**
@@ -26,6 +27,16 @@ export const PUBLISHED_TERMS_VERSIONS = [
  * version people accept is the API's `Query.termsVersion`, which an admin may set to any published version.
  */
 export const TERMS_VERSION: string = PUBLISHED_TERMS_VERSIONS[PUBLISHED_TERMS_VERSIONS.length - 1]!.version
+
+const LEGAL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const
+
+/** A published version (`YYYY-MM-DD`) as the legal pages’ “Last updated” line, for example `12 November 2026`. */
+export function legalLastUpdated(version: string = TERMS_VERSION): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(version)
+  const month = match ? LEGAL_MONTHS[Number(match[2]) - 1] : undefined
+  if (!match || !month) return version
+  return `${Number(match[3])} ${month} ${match[1]}`
+}
 
 /** True when this web app has published `version`. */
 export function isPublishedTermsVersion(version: string): boolean {

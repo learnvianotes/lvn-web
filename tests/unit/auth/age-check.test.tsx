@@ -10,13 +10,14 @@ import { ageField, ConfirmAge, useAgeMessage } from '@/components/auth/AgeCheck'
 describe('the age field', () => {
   it('turns the text typed into whole years, or names what is wrong with it', () => {
     expect(ageField.safeParse('22')).toEqual({ success: true, data: 22 })
-    expect(ageField.safeParse('8')).toEqual({ success: true, data: 8 })
+    expect(ageField.safeParse('13')).toEqual({ success: true, data: 13 })
     expect(ageField.safeParse('17')).toEqual({ success: true, data: 17 })
     const problem = (text: string) => ageField.safeParse(text).error?.issues[0]?.message
     expect(problem('')).toBe('required')
     expect(problem('17.5')).toBe('whole')
     expect(problem('0')).toBe('range')
-    expect(problem('7')).toBe('range')
+    expect(problem('8')).toBe('range')
+    expect(problem('12')).toBe('range')
     expect(problem('121')).toBe('range')
   })
 })
@@ -60,8 +61,9 @@ describe('the age check on screen', () => {
     const view = await mount(
       <Messages errors={[undefined, { type: 'custom', message: 'required' }, { type: 'custom', message: 'whole' }, { type: 'custom', message: 'range' }, { type: 'server', message: 'Enter an age from 1 to 120.' }]} />,
     )
-    expect([...view.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['-', 'Enter your age.', 'Enter your age as a whole number.', 'Enter an age from 8 to 120.', 'Enter an age from 1 to 120.'])
-    // The form names 8, not the old adult floor.
+    expect([...view.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['-', 'Enter your age.', 'Enter your age as a whole number.', 'Enter an age from 13 to 120.', 'Enter an age from 1 to 120.'])
+    // The form names 13, not the old floors of 8 and 18.
+    expect(view.textContent).not.toContain('8')
     expect(view.textContent).not.toContain('18')
   })
 

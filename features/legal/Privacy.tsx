@@ -20,8 +20,9 @@ export function Privacy() {
       <ul>
         <li>You can read public notes and subjects without an account.</li>
         <li>
-          Accounts are for people aged {ACCOUNTS_FROM_AGE} or older. From then until {FULL_ACCOUNT_FROM_AGE}, some features
-          stay limited. There is no parent or guardian step.
+          Accounts are for people aged {ACCOUNTS_FROM_AGE} or older. LearnViaNotes is not directed at children under{' '}
+          {ACCOUNTS_FROM_AGE}. From {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE}, some features stay limited, and a
+          parent or guardian must give verifiable consent, in line with India’s Digital Personal Data Protection Act, 2023.
         </li>
         <li>With an account, we keep your details, your notes and your study activity so LearnViaNotes works for you on every device.</li>
         <li>Google Analytics runs only if you allow it, and you can change your mind at any time.</li>
@@ -77,12 +78,13 @@ export function Privacy() {
 
       <h2>3. Who can have an account</h2>
       <p>
-        Accounts are for people who are {ACCOUNTS_FROM_AGE} or older. We ask your age when you create an account and keep
-        it with your account; it is never shown to anyone. From {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE} the
-        account is restricted and some features stay off. There is no parent or guardian consent step. If the age you give
-        is under {ACCOUNTS_FROM_AGE}, we don’t create the account and don’t keep the age; if a sign-in with Google had
-        already created it, we delete it straight away. If we learn that an account belongs to someone under{' '}
-        {ACCOUNTS_FROM_AGE}, we delete it.
+        LearnViaNotes is not directed at children under {ACCOUNTS_FROM_AGE}. Accounts are for people who are{' '}
+        {ACCOUNTS_FROM_AGE} or older. We ask your age when you create an account and keep it with your account; it is
+        never shown to anyone. From {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE} the account is restricted and some
+        features stay off, and you need verifiable consent from a parent or guardian, in line with India’s Digital
+        Personal Data Protection Act, 2023. If the age you give is under {ACCOUNTS_FROM_AGE}, we don’t create the account
+        and don’t keep the age; if a sign-in with Google had already created it, we delete it straight away. If we learn
+        that an account belongs to someone under {ACCOUNTS_FROM_AGE}, we remove it.
       </p>
 
       <h2>4. Who else sees it</h2>
@@ -91,12 +93,21 @@ export function Privacy() {
         <li>
           Service providers that run parts of LearnViaNotes for us, under contract and only for that:
           <ul>
-            <li>Amazon Web Services — hosting, storage and email delivery, in India;</li>
-            <li>Google — Google sign-in, push notifications to the phone app, and Google Analytics if you allow it;</li>
-            <li>our error-reporting service, which receives error reports as described above.</li>
+            <li>Amazon Web Services (Lightsail) — the servers the website and the API run on;</li>
+            <li>Cloudflare — R2, where files and backups are stored;</li>
+            <li>
+              Google — Firebase Authentication for Google sign-in, Firebase Cloud Messaging for push notifications to the
+              phone app, and Google Analytics if you allow it;
+            </li>
+            <li>Resend — the emails we send you;</li>
+            <li>Sentry — error reports, sent without your name, email, cookies or the query part of addresses.</li>
           </ul>
         </li>
-        <li>AI providers receive only the text needed for the task you asked for — never your name or account details.</li>
+        <li>
+          AI features send only the text needed for the task you asked for — never your name or account details — to the
+          provider configured for that task. The providers the service can use are OpenAI, Anthropic and Google (Gemini).
+          An administrator may instead use a model we run ourselves, or another service that speaks OpenAI’s API.
+        </li>
         <li>Authorities, when the law requires it.</li>
       </ul>
 

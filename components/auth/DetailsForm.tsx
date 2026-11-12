@@ -34,7 +34,7 @@ const FIELDS = ['displayName', 'age', 'institutionalEmail'] as const
 
 /**
  * Registration details for accounts created by Google, GitHub or LinkedIn (ADR-0017), given once. The age, in whole
- * years (lvn-backend ADR-0104), is checked by the form and then sent. An answer under 8 (ADR-0091) signs out
+ * years (lvn-backend ADR-0104), is checked by the form and then sent. An answer under 13 (ADR-0091) signs out
  * here and shows the outcome: AGE_RESTRICTED (the account is held) names who to contact, UNDER_MINIMUM_AGE shows the
  * refusal. A refusal already on this device only closes the form: the account is left alone, and the person may sign
  * out.
