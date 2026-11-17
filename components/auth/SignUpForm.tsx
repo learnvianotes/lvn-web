@@ -85,7 +85,7 @@ export function SignUpForm() {
       if (payload.session) {
         // Email sign-up creates the profile here. Ages 8 to 17 are sent; the API marks the account restricted.
         if (payload.session.user.registrationComplete) queueWalkthrough(payload.session.user.id)
-        return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'))
+        return await finish(payload.session, teaches ? '/teach' : institutionalEmail ? '/verify' : (next || '/profile'), payload.mfaRequired)
       }
       // Too young for an account: nothing was created; this device keeps the form closed for a day.
       const ageHold = ageHoldFromProblems(payload.userErrors)

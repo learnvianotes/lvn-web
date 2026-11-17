@@ -72,6 +72,8 @@ query SignInOptions {
 
 mutation SignUp($input: SignUpInput!) {
   signUp(input: $input) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -83,6 +85,8 @@ mutation SignUp($input: SignUpInput!) {
 
 mutation SignIn($input: SignInInput!) {
   signIn(input: $input) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -94,6 +98,8 @@ mutation SignIn($input: SignInInput!) {
 
 mutation RefreshSession {
   refreshSession(input: {}) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -108,6 +114,8 @@ mutation SignOut {
 
 mutation SignInWithGoogle($idToken: String!) {
   signInWithGoogle(input: { idToken: $idToken }) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -119,6 +127,8 @@ mutation SignInWithGoogle($idToken: String!) {
 
 mutation OAuthExchange($input: OAuthExchangeInput!) {
   oauthExchange(input: $input) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }

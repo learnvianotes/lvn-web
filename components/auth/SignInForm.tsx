@@ -46,7 +46,7 @@ export function SignInForm() {
       const payload = data!.signIn
       const ageHold = ageHoldFromProblems(payload.userErrors)
       if (ageHold) return setHold(ageHold)
-      if (payload.session) return finish(payload.session, next)
+      if (payload.session) return finish(payload.session, next, payload.mfaRequired)
       const blocked = payload.userErrors.find((error) => error.code === 'FORBIDDEN')
       const rest = blocked ? payload.userErrors.filter((error) => error !== blocked) : payload.userErrors
       if (blocked) setRefused(blocked.message)

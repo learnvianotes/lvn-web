@@ -2,6 +2,7 @@
 
 import { ApolloProvider } from '@apollo/client/react'
 import { useEffect, type ReactNode } from 'react'
+import { AdminMfaRedirect } from '@/components/auth/AdminMfaRedirect'
 import { apolloClient } from '@/lib/apollo'
 import { refreshSession } from '@/lib/auth/session'
 import { tellTimeZone } from '@/lib/learning'
@@ -14,5 +15,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (status === 'unknown') void refreshSession()
     if (status === 'signed-in') void tellTimeZone()
   }, [status])
-  return <ApolloProvider client={apolloClient()}>{children}</ApolloProvider>
+  return (
+    <ApolloProvider client={apolloClient()}>
+      <AdminMfaRedirect />
+      {children}
+    </ApolloProvider>
+  )
 }
