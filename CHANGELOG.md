@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A versioning policy, a `/version` endpoint that reports the build's commit, and the version in the page footer. https://github.com/learnvianotes/lvn-web/pull/68
 
+### Fixed
+
+- Leaving a page no longer records the cancelled request as a network error. A request that fails, or times out, still does. https://github.com/learnvianotes/lvn-web/pull/79
+
 ## [0.5.0] - 2026-11-12
 
 First managed version. This is what is on production at `31e8115`.

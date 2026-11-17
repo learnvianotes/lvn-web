@@ -15,13 +15,35 @@ function operationName(init?: RequestInit): string | undefined {
   }
 }
 
+function errorParts(err: unknown): { name: string; message: string } {
+  if (typeof err === 'string') return { name: '', message: err }
+  if (typeof err !== 'object' || err === null) return { name: '', message: '' }
+  return {
+    name: 'name' in err && typeof err.name === 'string' ? err.name : '',
+    message: 'message' in err && typeof err.message === 'string' ? err.message : '',
+  }
+}
+
+/** Chromium, Firefox, and the DOM abort a fetch with one of these when nothing was wrong with the network. */
+const ABORTED = /signal is aborted without reason|user aborted a request|operation was aborted/i
+
+/**
+ * Apollo's HttpLink calls `abort()` with no reason when a query unsubscribes (navigation, unmount, refetch).
+ * That cancellation is not a failed request. A timeout is, including the session check, which aborts with TimeoutError.
+ */
+export function isIntentionalAbort(err: unknown): boolean {
+  const { name, message } = errorParts(err)
+  if (name === 'TimeoutError' || /timeout/i.test(message)) return false
+  return name === 'AbortError' || ABORTED.test(message)
+}
+
 const isUnauthenticated = (body: { errors?: { extensions?: { code?: string } }[] }) => body.errors?.some((e) => e.extensions?.code === 'UNAUTHENTICATED') ?? false
 
 /**
  * Sends the access token, and when the API answers UNAUTHENTICATED to a request that carried one (it expired or the
  * session was revoked), refreshes once and retries. Cookies are included so refreshSession can rotate the cookie.
  */
-const authFetch: typeof fetch = async (input, init) => {
+export const authFetch: typeof fetch = async (input, init) => {
   const send = (token: string | null) => {
     const headers = new Headers(init?.headers)
     if (token) headers.set('authorization', `Bearer ${token}`)
@@ -33,7 +55,14 @@ const authFetch: typeof fetch = async (input, init) => {
   try {
     res = await send(token)
   } catch (error) {
-    reportClientError({ type: 'api.network', message: error instanceof Error ? error.message : 'network' })
+    if (!isIntentionalAbort(error)) {
+      reportClientError({
+        type: 'api.network',
+        message: error instanceof Error ? error.message : 'network',
+        stack: error instanceof Error ? error.stack : null,
+        route: operation,
+      })
+    }
     throw error
   }
   const body = await res.clone().json().catch(() => ({}))

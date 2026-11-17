@@ -28,7 +28,8 @@ export function refreshSession(): Promise<boolean> {
     // The empty restore must not wipe that token: it only describes the cookie this request saw.
     const tokenAtStart = useSession.getState().accessToken
     const attempt = new AbortController()
-    const attemptTimer = setTimeout(() => attempt.abort(), SESSION_CHECK_MS)
+    // TimeoutError, not a bare abort: Apollo cancels queries the same way, and those are not network failures.
+    const attemptTimer = setTimeout(() => attempt.abort(new DOMException('session-check timeout', 'TimeoutError')), SESSION_CHECK_MS)
     try {
       const res = await acrossTabs(() => fetch(env.NEXT_PUBLIC_API_URL, {
         method: 'POST',
