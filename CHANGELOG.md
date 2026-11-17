@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-17
+
 ### Security
 
 - Next.js is updated to 16.4.5, closing a flaw that could return one visitor's cached content to another (CVE-2026-119790). https://github.com/learnvianotes/lvn-web/pull/82
@@ -15,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Admins enter a code emailed to them before using admin tools, and can read an activity log of what admins changed. Ship this with the API change in learnvianotes/lvn-backend#92. https://github.com/learnvianotes/lvn-web/pull/80
 - Platform admins can browse content that is not private, and anyone can turn product update emails off. https://github.com/learnvianotes/lvn-web/pull/81
-- A versioning policy, a `/version` endpoint that reports the build's commit, and the version in the page footer. https://github.com/learnvianotes/lvn-web/pull/68
 
 ### Fixed
 
@@ -30,6 +31,7 @@ First managed version. This is what is on production at `31e8115`.
 - Sign-up from age 13. Ages 13–17 need a parent or guardian's consent, and the Privacy Policy and Terms are dated 2026-11-12.
 - A public page at `/delete-account` that explains how to delete an account.
 - One sign-in for the site.
+- A versioning policy, a `/version` endpoint that reports the build's commit, and the version in the page footer. https://github.com/learnvianotes/lvn-web/pull/68
 
 ### Changed
 
