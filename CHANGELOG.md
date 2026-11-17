@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Next.js is updated to 16.4.5, closing a flaw that could return one visitor's cached content to another (CVE-2026-119790).
+- Next.js is updated to 16.4.5, closing a flaw that could return one visitor's cached content to another (CVE-2026-119790). https://github.com/learnvianotes/lvn-web/pull/82
 
 ### Added
 
