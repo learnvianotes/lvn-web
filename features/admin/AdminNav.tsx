@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, PanelLeft, ScrollText, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
+import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, Library, PanelLeft, ScrollText, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -16,7 +16,7 @@ export type AdminGroupKey = 'platform' | 'people' | 'content' | 'ai'
 
 export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 
-export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'activity' | 'access' | 'users' | 'roles' | 'domains' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
+export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'activity' | 'access' | 'users' | 'roles' | 'domains' | 'verification' | 'studentId' | 'content' | 'moderation' | 'contests' | 'ai'
 
 /** Routes under /admin that are not settings sections. The code screen is one of them. */
 export const ADMIN_GATE_ROUTES = ['/admin/verify'] as const
@@ -55,6 +55,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin/domains', group: 'people', key: 'domains', icon: Building2, roles: ADMIN },
   { href: '/admin/verification', group: 'people', key: 'verification', icon: BadgeCheck, roles: REVIEW },
   { href: '/admin/student-id', group: 'people', key: 'studentId', icon: IdCard, roles: REVIEW },
+  { href: '/admin/content', group: 'content', key: 'content', icon: Library, roles: ADMIN },
   { href: '/admin/moderation', group: 'content', key: 'moderation', icon: ShieldCheck, roles: ADMIN },
   { href: '/admin/contests', group: 'content', key: 'contests', icon: Trophy, roles: ADMIN },
   { href: '/admin/ai', group: 'ai', key: 'ai', icon: Sparkles, roles: ADMIN },

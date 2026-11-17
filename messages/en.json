@@ -1997,7 +1997,9 @@
       "CLASSROOM_POST": "Done. You won't get emails about class announcements.",
       "DIGEST": "Done. You won't get the weekly email."
     },
-    "allSettings": "All notification settings"
+    "allSettings": "All notification settings",
+    "productEmails": "Product updates by email",
+    "productEmailsHint": "News about LearnViaNotes. Turn this off to stop those emails."
   },
   "verification": {
     "lead": "No college email? Ask a teacher who knows you to vouch for you, or send proof that you study (an ID card or a fee receipt) for our team to check.",
@@ -3598,7 +3600,8 @@
       "activity": "Activity",
       "moderation": "Moderation queue",
       "contests": "Weekly contests",
-      "ai": "AI providers"
+      "ai": "AI providers",
+      "content": "Content"
     }
   },
   "adminMfa": {
@@ -4018,5 +4021,77 @@
     "deny": "Don’t allow",
     "allow": "Allow",
     "change": "Analytics choice"
+  },
+  "adminContent": {
+    "title": "Content",
+    "lead": "Notes, posts, groups, classes and the rest, newest first.",
+    "privateHidden": "Private notes aren't shown.",
+    "loading": "Loading…",
+    "notAllowed": "Only platform admins can browse content.",
+    "filters": "Filters",
+    "type": "Type",
+    "anyType": "All types",
+    "user": "User",
+    "userHint": "Handle or id",
+    "from": "From",
+    "to": "To",
+    "datesHint": "Whole days, India Standard Time.",
+    "visibility": "Visibility",
+    "anyVisibility": "Any visibility",
+    "counts": "Counts in this range",
+    "table": "Content",
+    "columns": {
+      "type": "Type",
+      "text": "Title or excerpt",
+      "author": "Author",
+      "visibility": "Visibility",
+      "moderation": "Moderation",
+      "created": "Created",
+      "updated": "Updated",
+      "open": "Open",
+      "actions": "Actions"
+    },
+    "untitled": "Untitled",
+    "open": "Open",
+    "empty": "Nothing matches these filters.",
+    "emptyLead": "Try a wider range, or clear a filter.",
+    "next": "Next page",
+    "first": "First page",
+    "noActions": "No moderation actions",
+    "kind": {
+      "NOTE": "Note",
+      "COMMENT": "Comment",
+      "GROUP": "Group",
+      "GROUP_POST": "Group post",
+      "CLASSROOM": "Class",
+      "CLASSROOM_POST": "Class post",
+      "QUIZ": "Quiz",
+      "DOUBT": "Doubt",
+      "DOUBT_ANSWER": "Doubt answer",
+      "SHARE": "Share",
+      "UPLOAD": "Upload",
+      "RESOURCE": "Resource",
+      "HIGHLIGHT": "Highlight",
+      "CONTEST": "Contest"
+    },
+    "visibilityValue": {
+      "PUBLIC": "Public",
+      "SHARED": "Shared",
+      "UNLISTED": "Unlisted",
+      "PRIVATE": "Private",
+      "MEMBERS": "Members"
+    },
+    "moderation": {
+      "none": "None",
+      "OK": "Public",
+      "PENDING_REVIEW": "Held",
+      "HIDDEN": "Hidden",
+      "REMOVED": "Removed",
+      "PENDING": "Waiting",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published"
+    }
   }
 }

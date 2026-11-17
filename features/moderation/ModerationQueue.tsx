@@ -7,16 +7,12 @@ import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ModerateContentDocument, ModerationQueueDocument, MuteGroupMemberDocument, ViewerDocument, type ModerationActionType, type ModerationQueueQuery, type ModerationScope } from '@/graphql/generated/graphql'
-import { cn } from '@/lib/cn'
+import { ModerationActions, type ModerationChoice } from '@/features/moderation/ModerationActions'
+import { ModerationQueueDocument, MuteGroupMemberDocument, ViewerDocument, type ModerationQueueQuery, type ModerationScope } from '@/graphql/generated/graphql'
 import { safeLinkHref } from '@/lib/http-url'
 import { ago } from '@/features/notes/look'
 
 type Case = ModerationQueueQuery['moderationQueue']['edges'][number]['node']
-
-const NEEDS_REASON = new Set<ModerationActionType>(['HIDE', 'REMOVE', 'WARN', 'SUSPEND'])
-/** How long a suspension lasts, in days (ADR-0053: 1 to 365). */
-const SUSPEND_DAYS = [1, 3, 7, 14, 30, 90, 365] as const
 
 /**
  * A moderation queue (§15.1, ADR-0037, ADR-0051): open cases oldest first, what was reported and why, the author's
@@ -84,16 +80,14 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
   )
 }
 
-type Choice = { action: ModerationActionType; label: string; icon: typeof Check; tone: string }
-
 /** What a moderator can do with a case: notes and content can be put back, hidden or removed; accounts and groups less. */
-function choicesFor(c: Case): Choice[] {
+function choicesFor(c: Case): ModerationChoice[] {
   const keep = !!c.appeal && (c.content?.moderation === 'HIDDEN' || c.content?.moderation === 'REMOVED' || c.note?.moderation === 'HIDDEN' || c.note?.moderation === 'REMOVED')
-  const dismiss: Choice = { action: 'DISMISS', label: keep ? 'KEEP' : 'DISMISS', icon: Flag, tone: '' }
-  const warn: Choice = { action: 'WARN', label: 'WARN', icon: MessageSquareWarning, tone: '' }
-  const hide: Choice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
-  const remove: Choice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-red-600 dark:text-red-400' }
-  const approve: Choice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
+  const dismiss: ModerationChoice = { action: 'DISMISS', label: keep ? 'KEEP' : 'DISMISS', icon: Flag, tone: '' }
+  const warn: ModerationChoice = { action: 'WARN', label: 'WARN', icon: MessageSquareWarning, tone: '' }
+  const hide: ModerationChoice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
+  const remove: ModerationChoice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-red-600 dark:text-red-400' }
+  const approve: ModerationChoice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
   // A new resource is approved or rejected (ADR-0074); people's reports on one in the catalogue are dismissed, or it is removed.
   if (c.entityType === 'RESOURCE') return c.reports.some((x) => x.reporter) ? [dismiss, remove] : [approve, { ...remove, label: 'REJECT' }]
   // Accounts are warned or suspended; a suspension is lifted or kept (ADR-0053).
@@ -108,39 +102,24 @@ function choicesFor(c: Case): Choice[] {
 function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?: string; platform: boolean; onDone: () => void }) {
   const t = useTranslations('moderation.queue')
   const r = useTranslations('moderation.report.reasons')
-  const [moderate, deciding] = useMutation(ModerateContentDocument)
   const [mute, muting] = useMutation(MuteGroupMemberDocument)
-  const [reason, setReason] = useState('')
-  const [days, setDays] = useState<number>(7)
-  const [error, setError] = useState<string | null>(null)
+  const [muteError, setMuteError] = useState<string | null>(null)
   const [muted, setMuted] = useState(false)
   const format = useFormatter()
   const actions = choicesFor(c)
   const author = c.content?.author ?? c.note?.owner ?? null
   const state = c.content?.moderation ?? c.note?.moderation ?? null
 
-  const decide = async (action: ModerationActionType) => {
-    setError(null)
-    if (NEEDS_REASON.has(action) && !reason.trim()) return setError(t('reasonNeeded'))
-    try {
-      const res = await moderate({ variables: { input: { entityType: c.entityType, entityId: c.entityId, action, reason: reason.trim() || null, ...(action === 'SUSPEND' ? { suspendDays: days } : {}) } } })
-      const problem = res.data?.moderateContent.userErrors[0]?.message
-      if (problem) setError(problem)
-      else onDone()
-    } catch (e) {
-      setError(CombinedGraphQLErrors.is(e) ? (e.errors[0]?.message ?? t('failed')) : t('failed'))
-    }
-  }
   const muteAuthor = async () => {
     if (!groupId || !c.content) return
-    setError(null)
+    setMuteError(null)
     try {
       const res = await mute({ variables: { groupId, userId: c.content.author.id, until: new Date(Date.now() + 86_400_000).toISOString() } })
       const problem = res.data?.muteGroupMember.userErrors[0]?.message
-      if (problem) setError(problem)
+      if (problem) setMuteError(problem)
       else setMuted(true)
     } catch (e) {
-      setError(CombinedGraphQLErrors.is(e) ? (e.errors[0]?.message ?? t('failed')) : t('failed'))
+      setMuteError(CombinedGraphQLErrors.is(e) ? (e.errors[0]?.message ?? t('failed')) : t('failed'))
     }
   }
 
@@ -219,43 +198,19 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
           {c.appeal.message}
         </blockquote>
       ) : null}
-      <div className="flex flex-col gap-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-semibold text-muted">{t('reason')}</span>
-          <input className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3 text-sm focus-visible:border-accent focus-visible:outline-none" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPlaceholder')} />
-        </label>
-        {actions.some((a) => a.action === 'SUSPEND') ? (
-          <label className="flex items-center gap-2 text-xs font-semibold text-muted">
-            {t('suspendFor')}
-            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="h-9 rounded-lg border border-border bg-bg px-2 text-sm font-normal text-fg">
-              {SUSPEND_DAYS.map((d) => (
-                <option key={d} value={d}>
-                  {t('days', { count: d })}
-                </option>
-              ))}
-            </select>
-          </label>
+      <ModerationActions entityType={c.entityType} entityId={c.entityId} actions={actions} onDone={onDone}>
+        {groupId && c.content ? (
+          <Button size="sm" variant="ghost" className="gap-1.5" disabled={muted || muting.loading} onClick={() => void muteAuthor()}>
+            <VolumeX className="size-4" aria-hidden />
+            {muted ? t('muted') : t('muteDay')}
+          </Button>
         ) : null}
-        <div className="flex flex-wrap gap-2">
-          {actions.map(({ action, label, icon: Icon, tone }) => (
-            <Button key={action} size="sm" variant={action === 'APPROVE' ? 'primary' : 'secondary'} className={cn('h-11 gap-1.5', tone)} disabled={deciding.loading} onClick={() => void decide(action)}>
-              <Icon className="size-4" aria-hidden />
-              {t(`actions.${label}`)}
-            </Button>
-          ))}
-          {groupId && c.content ? (
-            <Button size="sm" variant="ghost" className="gap-1.5" disabled={muted || muting.loading} onClick={() => void muteAuthor()}>
-              <VolumeX className="size-4" aria-hidden />
-              {muted ? t('muted') : t('muteDay')}
-            </Button>
-          ) : null}
-        </div>
-        {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
-        ) : null}
-      </div>
+      </ModerationActions>
+      {muteError ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {muteError}
+        </p>
+      ) : null}
     </article>
   )
 }

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Admins enter a code emailed to them before using admin tools, and can read an activity log of what admins changed. Ship this with the API change in learnvianotes/lvn-backend#92. https://github.com/learnvianotes/lvn-web/pull/80
+- Platform admins can browse content that is not private, and anyone can turn product update emails off. https://github.com/learnvianotes/lvn-web/pull/81
 - A versioning policy, a `/version` endpoint that reports the build's commit, and the version in the page footer. https://github.com/learnvianotes/lvn-web/pull/68
 
 ### Fixed

@@ -104,12 +104,24 @@ export function NotificationSettings() {
           {t('digestLabel')}
         </label>
       </section>
+      {/* productEmails defaults to true on the server (lvn-backend). Turning it off leaves the product audience. */}
+      <section className="flex flex-col gap-2">
+        <h2 id="product-emails" className="font-bold">
+          {t('productEmails')}
+        </h2>
+        <label className="flex items-start gap-2 text-sm">
+          <input name="productEmails" type="checkbox" className="mt-0.5" checked={s.productEmails} aria-labelledby="product-emails" aria-describedby="product-emails-hint" onChange={(e) => void save({ productEmails: e.target.checked })} />
+          <span id="product-emails-hint" className="text-muted">
+            {t('productEmailsHint')}
+          </span>
+        </label>
+      </section>
       <p className="text-xs text-muted">{t('devices', { count: s.devices })}</p>
     </div>
   )
 }
 
-type SettingsInput = { categories?: { category: NotificationCategory; push?: boolean; email?: boolean }[]; quietStart?: string; quietEnd?: string; timeZone?: string; weeklyDigest?: boolean }
+type SettingsInput = { categories?: { category: NotificationCategory; push?: boolean; email?: boolean }[]; quietStart?: string; quietEnd?: string; timeZone?: string; weeklyDigest?: boolean; productEmails?: boolean }
 
 /** What the settings become once the API accepts the change. */
 function applied(s: NotificationSettingsFieldsFragment, input: SettingsInput): NotificationSettingsFieldsFragment {
@@ -120,6 +132,7 @@ function applied(s: NotificationSettingsFieldsFragment, input: SettingsInput): N
     ...(input.quietEnd !== undefined ? { quietEnd: input.quietEnd } : {}),
     ...(input.timeZone !== undefined ? { timeZone: input.timeZone } : {}),
     ...(input.weeklyDigest !== undefined ? { weeklyDigest: input.weeklyDigest } : {}),
+    ...(input.productEmails !== undefined ? { productEmails: input.productEmails } : {}),
     categories: s.categories.map((c) => {
       const d = changed.get(c.category)
       return d ? { ...c, ...(d.push !== undefined ? { push: d.push } : {}), ...(d.email !== undefined && c.email !== null ? { email: d.email } : {}) } : c

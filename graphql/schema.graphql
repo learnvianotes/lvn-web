@@ -282,6 +282,89 @@ type AdminAppVersionCount {
   users: Int!
 }
 
+type AdminContentAuthor {
+  email: String!
+  handle: String!
+  id: UUID!
+}
+
+type AdminContentConnection {
+  edges: [AdminContentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AdminContentCount {
+  count: Int!
+  type: AdminContentType!
+}
+
+type AdminContentCounts {
+  counts: [AdminContentCount!]!
+  from: DateTime
+  to: DateTime
+}
+
+type AdminContentEdge {
+  cursor: String!
+  node: AdminContentItem!
+}
+
+input AdminContentFilter {
+  from: DateTime
+  handle: String
+  to: DateTime
+  type: AdminContentType
+  userId: UUID
+  visibility: AdminContentVisibility
+}
+
+type AdminContentItem {
+  author: AdminContentAuthor!
+
+  """A uuid for most kinds. A share is noteId:userId, noteId:groupId or noteId:classroomId."""
+  id: String!
+  type: AdminContentType!
+
+  """Set when the item has a title. At most 200 characters."""
+  title: String
+
+  """The body, or the title when there is no body. At most 200 characters."""
+  excerpt: String
+  visibility: AdminContentVisibility!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  """OK, PENDING_REVIEW, HIDDEN, REMOVED, PENDING, APPROVED, REJECTED, DRAFT or PUBLISHED. Null when this kind has none."""
+  moderation: String
+  deepLink: String!
+}
+
+enum AdminContentType {
+  NOTE
+  COMMENT
+  GROUP
+  GROUP_POST
+  CLASSROOM
+  CLASSROOM_POST
+  QUIZ
+  DOUBT
+  DOUBT_ANSWER
+  SHARE
+  UPLOAD
+  RESOURCE
+  HIGHLIGHT
+  CONTEST
+}
+
+"""How widely the item can be seen. PRIVATE is only used for a private group; private notes are not returned."""
+enum AdminContentVisibility {
+  PUBLIC
+  SHARED
+  UNLISTED
+  PRIVATE
+  MEMBERS
+}
+
 """
 Notes, the catalogue, and places. Deleted notes, groups and classes are left out.
 """
@@ -4895,6 +4978,9 @@ type NotificationSettings {
   """Phones registered for push"""
   devices: Int!
 
+  """Product news. False unsubscribes this account from the audience."""
+  productEmails: Boolean!
+
   """The server can send push (it has FCM settings)"""
   pushAvailable: Boolean!
   quietEnd: String!
@@ -5251,6 +5337,12 @@ type Query {
   Platform admins. Every allowlist entry, or those whose email or note contains `search`.
   """
   adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!
+
+  """Platform admins. One page of content that is not private. Every call writes an audit row with the filter."""
+  adminContent(filter: AdminContentFilter, first: Int, after: String): AdminContentConnection!
+
+  """Platform admins. How many of each kind were created in the window. The same private items are left out."""
+  adminContentCounts(from: DateTime, to: DateTime): AdminContentCounts!
 
   """
   Platform admins. Notes, uploads, scans, doubts, places and sharing created in the window. At most 366 days.
@@ -7478,6 +7570,7 @@ type UpdateNoteDraftPayload {
 
 input UpdateNotificationSettingsInput {
   categories: [CategoryPreferenceInput!]
+  productEmails: Boolean
   quietEnd: String
   quietStart: String
   timeZone: String
