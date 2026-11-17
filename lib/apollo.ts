@@ -2,6 +2,7 @@
 
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client'
 import { apiProblem, reportClientError } from '@/lib/analytics'
+import { isAdminMfaRole } from '@/lib/auth/mfa'
 import { env } from '@/lib/env'
 import { useSession } from '@/state/session'
 import { refreshSession } from './auth/session'
@@ -16,6 +17,14 @@ function operationName(init?: RequestInit): string | undefined {
 }
 
 const isUnauthenticated = (body: { errors?: { extensions?: { code?: string } }[] }) => body.errors?.some((e) => e.extensions?.code === 'UNAUTHENTICATED') ?? false
+
+/** An admin tool refused to run until the emailed code is entered. Opt-in MFA for anyone else stays quiet. */
+function noticeAdminMfa(body: { errors?: { extensions?: { code?: string } }[] }): void {
+  const codes = new Set(body.errors?.map((error) => error.extensions?.code).filter((code): code is string => Boolean(code)))
+  if (codes.has('ADMIN_MFA_REQUIRED') || (codes.has('MFA_REQUIRED') && isAdminMfaRole(useSession.getState().role))) {
+    useSession.setState({ mfaPending: true, mfaVerified: false })
+  }
+}
 
 /**
  * Sends the access token, and when the API answers UNAUTHENTICATED to a request that carried one (it expired or the
@@ -39,6 +48,7 @@ const authFetch: typeof fetch = async (input, init) => {
   const body = await res.clone().json().catch(() => ({}))
   const problem = apiProblem(res.status, body, operation)
   if (problem) reportClientError({ type: 'api', message: problem })
+  noticeAdminMfa(body)
   if (!token || !isUnauthenticated(body)) return res
   return (await refreshSession()) ? send(useSession.getState().accessToken) : res
 }

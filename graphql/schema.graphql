@@ -1574,6 +1574,115 @@ input AskDoubtInput {
   title: String!
 }
 
+enum MfaFactorType {
+  """A 6-digit code emailed to the account address."""
+  EMAIL_OTP
+
+  """Reserved. startMfaChallenge refuses it until an authenticator app is built."""
+  TOTP
+
+  """Reserved. startMfaChallenge refuses it until a security key is built."""
+  WEBAUTHN
+}
+
+enum MfaFactorStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+}
+
+type MfaFactor {
+  createdAt: DateTime!
+  id: UUID!
+  lastUsedAt: DateTime
+  status: MfaFactorStatus!
+  type: MfaFactorType!
+}
+
+"""
+Whether this signed-in session still needs a second factor. `satisfied` is true when nothing is required, or the
+code was accepted less than 12 hours ago. Calling this does not itself require MFA.
+"""
+type MfaStatus {
+  allowedFactors: [MfaFactorType!]!
+  factors: [MfaFactor!]!
+  required: Boolean!
+  satisfied: Boolean!
+  verifiedAt: DateTime
+}
+
+type MfaChallengePayload {
+  challengeId: UUID
+  expiresAt: DateTime
+  factor: MfaFactorType
+  userErrors: [UserError!]!
+}
+
+"""A new access token after the code is accepted. The refresh token rotates with it."""
+type MfaVerifyPayload {
+  session: Session
+  userErrors: [UserError!]!
+}
+
+input AdminRecoverMfaInput {
+  """Why this recovery is being made. Required."""
+  reason: String!
+  userId: UUID!
+}
+
+input AdminActivityFilter {
+  """Exact action name, such as settings.updated or mfa.verified."""
+  action: String
+  actorId: UUID
+  from: DateTime
+  targetType: String
+  to: DateTime
+}
+
+"""One append-only audit row. details has secrets redacted. There is no mutation that changes or deletes it."""
+type AdminActivityEntry {
+  action: String!
+
+  """The actor's email at the time. Null when the account had already been removed."""
+  actorEmail: String
+  actorId: UUID
+  createdAt: DateTime!
+  details: JSON
+  id: UUID!
+  ip: String
+  targetId: UUID
+  targetType: String!
+  userAgent: String
+}
+
+type AdminActivityConnection {
+  entries: [AdminActivityEntry!]!
+
+  """Pass as cursor to read the next page. Null on the last page."""
+  nextCursor: String
+}
+
+type AdminActivityActionCount {
+  action: String!
+  count: Int!
+}
+
+type AdminActivityDayCount {
+  count: Int!
+
+  """UTC midnight of that day."""
+  day: DateTime!
+}
+
+"""Counts for charts. from is inclusive and to is exclusive. Omit both for the last 30 days. At most 366 days."""
+type AdminActivitySummary {
+  byAction: [AdminActivityActionCount!]!
+  byDay: [AdminActivityDayCount!]!
+  from: DateTime!
+  to: DateTime!
+  total: Int!
+}
+
 type AuthPayload {
   """
   True only from signUp, when this email already belongs to an account with no password (for example one created with
@@ -1582,6 +1691,16 @@ type AuthPayload {
   including a normal sign-up and "an account already exists, sign in instead".
   """
   emailLinkPending: Boolean!
+
+  """Factors this sign-in may use. Empty when mfaRequired is false. EMAIL_OTP is the one that sends a code today."""
+  mfaFactors: [MfaFactorType!]!
+
+  """
+  True when this session must finish a second factor before protected operations (an admin or staff role, or an
+  account that opted in). Sign-in still returns a session: use it for startMfaChallenge and verifyMfaChallenge.
+  False when nothing further is required, including a normal account.
+  """
+  mfaRequired: Boolean!
   session: Session
   userErrors: [UserError!]!
 }
@@ -2692,10 +2811,12 @@ enum EmailKind {
 
 """Fixed error vocabulary (§6.2)"""
 enum ErrorCode {
+  ADMIN_MFA_REQUIRED
   AGE_RESTRICTED
   CONFLICT
   FORBIDDEN
   INTERNAL
+  MFA_REQUIRED
   NOT_FOUND
   RATE_LIMITED
   UNAUTHENTICATED
@@ -3649,6 +3770,12 @@ type Mutation {
   adminDeleteUser(input: AdminDeleteUserInput!): OkPayload!
 
   """
+  Platform admins who have already passed MFA. Clears another account's unused codes and send limits, and lets that
+  account sign in without a code for 2 hours. You cannot recover yourself. Audited.
+  """
+  adminRecoverMfa(input: AdminRecoverMfaInput!): OkPayload!
+
+  """
   Platform admins. Blocks, suspends or restores an account. Block and suspend revoke every session. Audited.
   """
   adminSetAccountStanding(input: AdminSetAccountStandingInput!): AdminUserPayload!
@@ -4078,6 +4205,11 @@ type Mutation {
   """
   setLearningTimeZone(input: SetLearningTimeZoneInput!): OkPayload!
 
+  """
+  Signed in. Asks for a second factor on later sign-ins, or stops asking. No screen calls this yet. The next sign-in or refresh applies it.
+  """
+  setMfaOptIn(optIn: Boolean!): OkPayload!
+
   """Allow or stop copies of your note"""
   setNoteForking(input: SetNoteForkingInput!): NotePayload!
 
@@ -4127,6 +4259,12 @@ type Mutation {
   Signed in only, as every mutation below. A session already open ends first
   """
   startFocusSession(input: StartFocusSessionInput!): FocusSessionPayload!
+
+  """
+  Signed in. Sends a 6-digit code when factor is EMAIL_OTP. The code lasts 10 minutes, and five wrong attempts burn it.
+  Five sends an hour per account, plus a cap per network. TOTP and WEBAUTHN are reserved.
+  """
+  startMfaChallenge(factor: MfaFactorType!): MfaChallengePayload!
   stopStudyingNoteCards(input: StudyNoteInput!): OkPayload!
 
   """Adds a readable note's flashcards to the viewer's reviews"""
@@ -4231,6 +4369,11 @@ type Mutation {
   """
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
   verifyInstitutionalEmail(input: VerifyInstitutionalEmailInput!): OkPayload!
+
+  """
+  Signed in. Checks the code. On success the refresh session is marked verified and the new access token carries amr including otp.
+  """
+  verifyMfaChallenge(challengeId: UUID!, code: String!): MfaVerifyPayload!
   withdrawClassroomJoinRequest(input: JoinRequestIdInput!): ClassroomPayload!
 
   """Returns the person who was asked"""
@@ -5098,6 +5241,12 @@ type Query {
   """
   activityFeed(after: String, first: Int): ActivityConnection!
 
+  """Platform admins with a valid MFA. Audit rows, newest first. limit is 1 to 100, 50 when omitted."""
+  adminActivity(cursor: String, filter: AdminActivityFilter, limit: Int): AdminActivityConnection!
+
+  """Platform admins with a valid MFA. How many audit rows, per action and per UTC day."""
+  adminActivitySummary(from: DateTime, to: DateTime): AdminActivitySummary!
+
   """
   Platform admins. Every allowlist entry, or those whose email or note contains `search`.
   """
@@ -5302,6 +5451,9 @@ type Query {
   Signed in only: days before `before` (YYYY-MM-DD), `days` at a time (at most 60)
   """
   learningHistory(before: String, days: Int): LearningHistory!
+
+  """Signed in. The second-factor state of this session. Does not require MFA."""
+  mfaStatus: MfaStatus!
 
   """
   Open cases, oldest first: a group's (its moderators and mentor) or a class's (its staff), or every case (PLATFORM_ADMIN)

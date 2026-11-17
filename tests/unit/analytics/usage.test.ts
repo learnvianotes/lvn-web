@@ -55,6 +55,7 @@ describe('client errors', () => {
 
   it('ignores expected API refusals and the ingest call itself', () => {
     expect(apiProblem(200, { errors: [{ message: 'Sign in', extensions: { code: 'UNAUTHENTICATED' } }] }, 'Viewer')).toBeNull()
+    expect(apiProblem(200, { errors: [{ message: 'Enter the code emailed to you before using admin tools.', extensions: { code: 'ADMIN_MFA_REQUIRED' } }] }, 'AdminMetrics')).toBeNull()
     expect(apiProblem(200, { errors: [{ message: 'nope' }] }, 'IngestAnalytics')).toBeNull()
     expect(apiProblem(500, {}, 'Viewer')).toBe('API request failed (500)')
     expect(apiProblem(200, { errors: [{ message: 'database down for a@b.com' }] }, 'Viewer')).toBe('database down for [email]')

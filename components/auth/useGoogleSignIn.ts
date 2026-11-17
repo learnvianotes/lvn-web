@@ -35,7 +35,7 @@ export function useGoogleSignIn(next?: string | null) {
     // The API's messages are written for people; Firebase's and the network's are not.
     const blocked = payload?.userErrors.find((problem) => problem.code === 'FORBIDDEN')
     if (!payload?.session) return setError(blocked?.message ?? payload?.userErrors[0]?.message ?? t('failed'))
-    await finish(payload.session, destination)
+    await finish(payload.session, destination, payload.mfaRequired)
   }
 
   useEffect(() => {

@@ -1,19 +1,25 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, PanelLeft, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
+import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, PanelLeft, ScrollText, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ViewerDocument } from '@/graphql/generated/graphql'
+import { AdminMfaGate } from '@/features/admin/AdminMfa'
+import { MfaStatusDocument, ViewerDocument } from '@/graphql/generated/graphql'
+import { ADMIN_VERIFY_PATH, isAdminMfaRole, isMfaRequiredError, isUnknownMfaField, noteSessionMfa } from '@/lib/auth/mfa'
 import { cn } from '@/lib/cn'
+import { useSession } from '@/state/session'
 
 export type AdminGroupKey = 'platform' | 'people' | 'content' | 'ai'
 
 export type StaffRole = 'PLATFORM_ADMIN' | 'MANAGER' | 'TEACHER'
 
-export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'access' | 'users' | 'roles' | 'domains' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
+export type AdminSectionKey = 'overview' | 'settings' | 'plans' | 'errors' | 'usage' | 'activity' | 'access' | 'users' | 'roles' | 'domains' | 'verification' | 'studentId' | 'moderation' | 'contests' | 'ai'
+
+/** Routes under /admin that are not settings sections. The code screen is one of them. */
+export const ADMIN_GATE_ROUTES = ['/admin/verify'] as const
 
 export type AdminSection = {
   href: string
@@ -32,8 +38,9 @@ const REVIEW: readonly StaffRole[] = ['PLATFORM_ADMIN']
 type ReviewOpts = { verified?: boolean | null }
 
 /**
- * Every page under app/(site)/(app)/admin, in sidebar order. A unit test fails when a page is added there and left
- * out of this list, so the sidebar stays the whole admin area.
+ * Every settings page under app/(site)/(app)/admin, in sidebar order. A unit test fails when a page is added there
+ * and left out of this list, so the sidebar stays the whole admin area. ADMIN_GATE_ROUTES are the exception: the
+ * email-code screen is a gate, not a section.
  */
 export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin', group: 'platform', key: 'overview', icon: LayoutDashboard, roles: ADMIN },
@@ -41,6 +48,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin/plans', group: 'platform', key: 'plans', icon: Wallet, roles: ADMIN },
   { href: '/admin/errors', group: 'platform', key: 'errors', icon: Bug, roles: ADMIN },
   { href: '/admin/usage', group: 'platform', key: 'usage', icon: Activity, roles: ADMIN },
+  { href: '/admin/activity', group: 'platform', key: 'activity', icon: ScrollText, roles: ADMIN },
   { href: '/admin/access', group: 'people', key: 'access', icon: KeyRound, roles: ADMIN },
   { href: '/admin/users', group: 'people', key: 'users', icon: Users, roles: ADMIN },
   { href: '/admin/roles', group: 'people', key: 'roles', icon: UserCog, roles: ADMIN },
@@ -200,12 +208,36 @@ function SectionList({ pathname, idPrefix, onNavigate, role, verified }: { pathn
  * looks as it did before. Children stay in one place so the page does not remount when the viewer's role arrives.
  */
 export function AdminShell({ children }: { children: ReactNode }) {
-  const viewer = useQuery(ViewerDocument).data?.viewer
-  const admin = canSeeAdminNav(viewer?.globalRole, { verified: viewer?.verified })
+  const t = useTranslations('adminMfa')
+  const pathname = usePathname()
+  const viewerQuery = useQuery(ViewerDocument)
+  const viewer = viewerQuery.data?.viewer
+  const role = viewer?.globalRole
+  const mfaRole = isAdminMfaRole(role)
+  const pending = useSession((state) => state.mfaPending)
+  const verifiedLocally = useSession((state) => state.mfaVerified)
+  const mfa = useQuery(MfaStatusDocument, { skip: !mfaRole })
+  const admin = canSeeAdminNav(role, { verified: viewer?.verified })
+  const status = mfa.data?.mfaStatus
+  const needsCode = mfaRole && !verifiedLocally && (pending || isMfaRequiredError(mfa.error) || Boolean(status && status.required && !status.satisfied))
+  const unknown = isUnknownMfaField(mfa.error)
+  const waitingOnVerify = pathname === ADMIN_VERIFY_PATH && (viewerQuery.loading && !viewerQuery.data || (mfaRole && mfa.loading && !status && !mfa.error))
+  const gate = (needsCode && !unknown) || waitingOnVerify
+
+  useEffect(() => {
+    if (role && useSession.getState().role !== role) useSession.setState({ role })
+  }, [role])
+
+  useEffect(() => {
+    if (status && (!status.required || status.satisfied)) noteSessionMfa(role, false)
+  }, [status, role])
+
   return (
-    <div className={admin ? 'flex flex-col gap-4 lg:grid lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-8' : undefined}>
-      {admin ? <AdminNav role={viewer?.globalRole} verified={viewer?.verified} /> : null}
-      <div className={admin ? 'min-w-0' : undefined}>{children}</div>
+    <div className={admin && !gate ? 'flex flex-col gap-4 lg:grid lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-8' : undefined}>
+      {admin && !gate ? <AdminNav role={role} verified={viewer?.verified} /> : null}
+      <div className={admin && !gate ? 'min-w-0' : undefined}>
+        {gate ? (needsCode && !unknown ? <AdminMfaGate /> : <p role="status" className="text-sm text-muted">{t('checking')}</p>) : children}
+      </div>
     </div>
   )
 }

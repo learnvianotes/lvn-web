@@ -69,6 +69,8 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>, vie
     if (op === 'TermsStatus' && !handlers[op]) return route.fulfill({ json: { data: { termsVersion: '2026-10-08', viewer: { __typename: 'User', id: USER, termsAccepted: true } } } })
     // Public list of actions closed until the sign-in email is confirmed. The backend default, unless a test names some.
     if (op === 'UnverifiedGatedActions' && !handlers[op]) return route.fulfill({ json: { data: { unverifiedGatedActions: ['note.publish', 'note.share', 'contest.enter', 'payout.request', 'ai.bulk', 'resource.submit'] } } })
+    // Admin pages ask whether this session still needs an emailed code (lvn-backend PR #92). Satisfied unless a test says otherwise.
+    if (op === 'MfaStatus' && !handlers[op]) return route.fulfill({ json: { data: { mfaStatus: { __typename: 'MfaStatus', required: false, satisfied: true, verifiedAt: null, factors: [], allowedFactors: [] } } } })
     // Setting public_notes_require_verification. Off unless a test turns it on.
     if (op === 'PublicNotesRequireVerification' && !handlers[op]) return route.fulfill({ json: { data: { publicNotesRequireVerification: false } } })
     const handler = handlers[op]
