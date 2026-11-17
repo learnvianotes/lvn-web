@@ -37,7 +37,7 @@ export function OAuthCallback() {
         const payload = data?.oauthExchange
         const ageHold = ageHoldFromProblems(payload?.userErrors)
         if (ageHold) return setHold(ageHold)
-        if (payload?.session) return finish(payload.session, attempt.next)
+        if (payload?.session) return finish(payload.session, attempt.next, payload.mfaRequired)
         setFailed(payload?.userErrors[0]?.message ?? t('failed'))
       })
       .catch(() => setFailed(t('failed')))

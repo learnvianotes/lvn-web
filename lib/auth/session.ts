@@ -1,6 +1,7 @@
 'use client'
 
 import { SIGNED_IN_HINT_KEY } from '@/lib/auth/hint'
+import { noteSessionMfa } from '@/lib/auth/mfa'
 import { env } from '@/lib/env'
 import { useSession } from '@/state/session'
 
@@ -11,7 +12,23 @@ export const SESSION_CHECK_MS = 8_000
 let timer: ReturnType<typeof setTimeout> | undefined
 let inFlight: Promise<boolean> | null = null
 
+const REFRESH_MFA = 'mutation { refreshSession(input: {}) { mfaRequired session { accessToken accessTokenExpiresAt user { globalRole } } } }'
 const REFRESH = 'mutation { refreshSession(input: {}) { session { accessToken accessTokenExpiresAt } } }'
+
+type RefreshBody = {
+  data?: {
+    refreshSession?: {
+      mfaRequired?: boolean | null
+      session?: { accessToken: string; accessTokenExpiresAt: string; user?: { globalRole?: string | null } | null } | null
+    } | null
+  }
+  errors?: { message?: string }[]
+}
+
+/** The API this web build is talking to does not have the MFA fields yet. */
+function missingMfaField(body: RefreshBody): boolean {
+  return body.errors?.some((error) => /Cannot query field "(mfaRequired|mfaFactors)"/.test(error.message ?? '')) ?? false
+}
 
 /** Runs `fn` while holding a lock shared by every tab of this site (Web Locks API, where available). */
 const acrossTabs = <T>(fn: () => Promise<T>): Promise<T> =>
@@ -31,20 +48,30 @@ export function refreshSession(): Promise<boolean> {
     // TimeoutError, not a bare abort: Apollo cancels queries the same way, and those are not network failures.
     const attemptTimer = setTimeout(() => attempt.abort(new DOMException('session-check timeout', 'TimeoutError')), SESSION_CHECK_MS)
     try {
-      const res = await acrossTabs(() => fetch(env.NEXT_PUBLIC_API_URL, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ query: REFRESH }),
-        signal: attempt.signal,
-      }))
-      const body = (await res.json()) as { data?: { refreshSession?: { session?: { accessToken: string; accessTokenExpiresAt: string } } } }
-      const s = body.data?.refreshSession?.session
+      const post = (query: string) =>
+        acrossTabs(() => fetch(env.NEXT_PUBLIC_API_URL, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ query }),
+          signal: attempt.signal,
+        }))
+      let res = await post(REFRESH_MFA)
+      let body = (await res.json()) as RefreshBody
+      let mfaKnown = true
+      if (missingMfaField(body)) {
+        mfaKnown = false
+        res = await post(REFRESH)
+        body = (await res.json()) as RefreshBody
+      }
+      const payload = body.data?.refreshSession
+      const s = payload?.session
       if (!s) {
         if (useSession.getState().accessToken === tokenAtStart) signedOut()
         return false
       }
       signedIn(s.accessToken, s.accessTokenExpiresAt)
+      noteSessionMfa(s.user?.globalRole, mfaKnown && payload?.mfaRequired === true)
       return true
     } catch {
       // Offline or the API is down. A person already signed in keeps that session; the first check says so instead of a blank page.

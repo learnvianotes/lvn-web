@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '@/messages/en.json'
-import { ADMIN_SECTIONS, AdminNav, activeAdminSection, canSeeAdminNav, sectionsForRole } from '@/features/admin/AdminNav'
+import { ADMIN_GATE_ROUTES, ADMIN_SECTIONS, AdminNav, activeAdminSection, canSeeAdminNav, sectionsForRole } from '@/features/admin/AdminNav'
 
 const nav = vi.hoisted(() => ({ pathname: '/admin/ai' }))
 
@@ -39,6 +39,7 @@ const SECTIONS: [group: string, label: string, href: string][] = [
   ['Platform', 'Plans & pricing', '/admin/plans'],
   ['Platform', 'Errors', '/admin/errors'],
   ['Platform', 'Usage', '/admin/usage'],
+  ['Platform', 'Activity', '/admin/activity'],
   ['People', 'Beta access', '/admin/access'],
   ['People', 'Users', '/admin/users'],
   ['People', 'Roles', '/admin/roles'],
@@ -97,7 +98,9 @@ describe('admin settings sidebar', () => {
   }
 
   it('lists every admin page, grouped, with its address', async () => {
-    expect(ADMIN_SECTIONS.map((section) => section.href).sort()).toEqual(adminPageRoutes().sort())
+    const routes = adminPageRoutes()
+    expect(ADMIN_SECTIONS.map((section) => section.href).sort()).toEqual(routes.filter((href) => !(ADMIN_GATE_ROUTES as readonly string[]).includes(href)).sort())
+    expect(routes).toEqual(expect.arrayContaining([...ADMIN_GATE_ROUTES]))
     await mount()
     const aside = container!.querySelector('aside')!
     const links = [...aside.querySelectorAll('a')].map((a) => ({
