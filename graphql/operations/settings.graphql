@@ -5,6 +5,7 @@ fragment NotificationSettingsFields on NotificationSettings {
   quietEnd
   timeZone
   weeklyDigest
+  productEmails
   pushAvailable
   devices
   categories {

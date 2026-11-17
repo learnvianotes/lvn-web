@@ -45,6 +45,7 @@ const SECTIONS: [group: string, label: string, href: string][] = [
   ['People', 'Institution domains', '/admin/domains'],
   ['People', 'Proof of study to review', '/admin/verification'],
   ['People', 'College ID cards', '/admin/student-id'],
+  ['Content', 'Content', '/admin/content'],
   ['Content', 'Moderation queue', '/admin/moderation'],
   ['Content', 'Weekly contests', '/admin/contests'],
   ['AI', 'AI providers', '/admin/ai'],
