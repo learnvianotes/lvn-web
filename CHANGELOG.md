@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A new look across the site: warm paper, ink blue and a highlighter yellow, IBM Plex Sans, a flat LVN logo and icons, and a landing page that shows the product instead of clip-art.
+- Sign in with a passkey or a 6-digit code sent to your email; a password is still one tap away. The assistant is called Nova.
+
+### Changed
+
+- A PDF you just uploaded opens by itself once its virus check finishes, instead of saying it is not there.
+
+### Removed
+
+- GitHub and LinkedIn sign-in.
+
 ### Security
 
 - Every library is on its latest compatible release, and the site knows about the newest messages the server can send (an admin sign-in code, age limits, protections for younger users). Library updates now arrive as one weekly pull request instead of ten. [#84](https://github.com/learnvianotes/lvn-web/pull/84)

@@ -3077,6 +3077,21 @@ enum FilePurpose {
   VOICE_NOTE
 }
 
+input FinishPasskeyRegistrationInput {
+  """Defaults to "Passkey". At most 60 characters."""
+  name: String
+
+  """RegistrationResponseJSON from the browser, as a JSON string"""
+  responseJson: String!
+}
+
+input FinishPasskeySignInInput {
+  attemptId: String!
+
+  """AuthenticationResponseJSON from the browser, as a JSON string"""
+  responseJson: String!
+}
+
 type FocusSession {
   breakMinutes: Int!
   endedAt: DateTime
@@ -4193,6 +4208,10 @@ type Mutation {
   Ends a pause early (or drops one not started); its unused days come back
   """
   endRhythmPause(input: RhythmPauseIdInput!): OkPayload!
+
+  """Signed in. Saves the passkey the browser made."""
+  finishPasskeyRegistration(input: FinishPasskeyRegistrationInput!): PasskeyPayload!
+  finishPasskeySignIn(input: FinishPasskeySignInInput!): AuthPayload!
   followUser(input: PersonInput!): PersonPayload!
 
   """
@@ -4303,12 +4322,14 @@ type Mutation {
   removeFollower(input: PersonInput!): PersonPayload!
   removeGroupMember(input: GroupMemberInput!): GroupPayload!
   removePageImage(input: PageImageIdInput!): OkPayload!
+  removePasskey(id: UUID!): OkPayload!
   removePdfHighlight(input: PdfHighlightIdInput!): OkPayload!
   removeResourceRecommendation(input: ResourceRecommendationIdInput!): OkPayload!
 
   """Ends a buddy link, or takes back an invite"""
   removeRhythmBuddy(input: RhythmBuddyIdInput!): OkPayload!
   removeWeeklyTask(input: WeeklyTaskIdInput!): OkPayload!
+  renamePasskey(input: RenamePasskeyInput!): PasskeyPayload!
   renameTag(input: RenameTagInput!): TagPayload!
 
   """The asker or the mentor"""
@@ -4342,6 +4363,11 @@ type Mutation {
   Always ok, whether or not an account exists. No mail is sent when no live account has that address.
   """
   requestPasswordReset(input: RequestPasswordResetInput!): OkPayload!
+
+  """
+  Emails a 6-digit sign-in code when an account has this address. Always ok, so it never tells who has an account.
+  """
+  requestSignInCode(input: RequestSignInCodeInput!): OkPayload!
   requestTeacherVerification(input: RequestTeacherVerificationInput!): VerificationRequestPayload!
 
   """
@@ -4528,6 +4554,11 @@ type Mutation {
   """Share your note with a group you are in; a PRIVATE note becomes SHARED"""
   shareNoteToGroup(input: NoteGroupInput!): NotePayload!
   signIn(input: SignInInput!): AuthPayload!
+
+  """
+  Signs in with the emailed code. Five wrong tries end the code; ask for a new one.
+  """
+  signInWithCode(input: SignInWithCodeInput!): AuthPayload!
   signInWithGoogle(input: SignInWithGoogleInput!): AuthPayload!
 
   """Ends this device's session (its whole refresh-token family)"""
@@ -4547,6 +4578,14 @@ type Mutation {
   Five sends an hour per account, plus a cap per network. TOTP and WEBAUTHN are reserved.
   """
   startMfaChallenge(factor: MfaFactorType!): MfaChallengePayload!
+
+  """Signed in. Starts adding a passkey for this device."""
+  startPasskeyRegistration: PasskeyRegistrationStart!
+
+  """
+  Starts a passkey sign-in. No email: the browser offers the passkeys it has for this site.
+  """
+  startPasskeySignIn: PasskeySignInStart!
   stopStudyingNoteCards(input: StudyNoteInput!): OkPayload!
 
   """Adds a readable note's flashcards to the viewer's reviews"""
@@ -5243,6 +5282,41 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type Passkey {
+  """
+  Synced to the person's cloud account (iCloud Keychain, Google Password Manager), so it survives a lost phone.
+  """
+  backedUp: Boolean!
+  createdAt: DateTime!
+  id: UUID!
+  lastUsedAt: DateTime
+
+  """
+  What the person calls the device, e.g. "Pixel 8"
+  """
+  name: String!
+}
+
+type PasskeyPayload {
+  passkey: Passkey
+  userErrors: [UserError!]!
+}
+
+type PasskeyRegistrationStart {
+  """PublicKeyCredentialCreationOptionsJSON, as a JSON string"""
+  optionsJson: String!
+}
+
+"""
+Options for navigator.credentials.get, and the id that names this attempt. Five minutes, one use.
+"""
+type PasskeySignInStart {
+  attemptId: String!
+
+  """PublicKeyCredentialRequestOptionsJSON, as a JSON string"""
+  optionsJson: String!
+}
+
 input PauseRhythmInput {
   """YYYY-MM-DD, today or later"""
   from: String!
@@ -5826,6 +5900,9 @@ type Query {
   """The viewer's own notes, most recently edited first"""
   myNotes(after: String, filter: NoteFilter, first: Int): NoteConnection!
 
+  """Signed in. This account's passkeys, oldest first."""
+  myPasskeys: [Passkey!]!
+
   """
   The signed-in person's plan and how much of each limit they have used. An account with no plan is on FREE.
   """
@@ -6281,6 +6358,11 @@ type RemovedGroup {
   removedAt: DateTime!
 }
 
+input RenamePasskeyInput {
+  id: UUID!
+  name: String!
+}
+
 input RenameTagInput {
   id: UUID!
   name: String!
@@ -6388,6 +6470,10 @@ input RequestDocumentVerificationInput {
 }
 
 input RequestPasswordResetInput {
+  email: String!
+}
+
+input RequestSignInCodeInput {
   email: String!
 }
 
@@ -7198,14 +7284,33 @@ enum SignInMethod {
 Which sign-in methods this deployment offers. Read this before drawing the buttons.
 """
 type SignInOptions {
+  """
+  A 6-digit code emailed to the account (requestSignInCode, signInWithCode).
+  """
+  emailCode: Boolean!
   emailPassword: Boolean!
-  github: Boolean!
+
+  """Retired (ADR-0115). Always false."""
+  github: Boolean! @deprecated(reason: "GitHub sign-in is retired. Always false.")
 
   """
   False when FIREBASE_PROJECT_ID is unset, or a platform admin has turned Google sign-in off
   """
   google: Boolean!
-  linkedin: Boolean!
+
+  """Retired (ADR-0115). Always false."""
+  linkedin: Boolean! @deprecated(reason: "LinkedIn sign-in is retired. Always false.")
+
+  """
+  Passkeys (startPasskeySignIn, finishPasskeySignIn), where the device supports them.
+  """
+  passkey: Boolean!
+}
+
+input SignInWithCodeInput {
+  """The 6 digits from the email. Spaces are ignored."""
+  code: String!
+  email: String!
 }
 
 """

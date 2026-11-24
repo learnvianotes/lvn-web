@@ -1,0 +1,81 @@
+# Signing in without a password (lvn-backend ADR-0115): a code emailed to the account, or a passkey.
+
+mutation RequestSignInCode($input: RequestSignInCodeInput!) {
+  requestSignInCode(input: $input) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation SignInWithCode($input: SignInWithCodeInput!) {
+  signInWithCode(input: $input) {
+    session {
+      ...SessionFields
+    }
+    mfaRequired
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation StartPasskeySignIn {
+  startPasskeySignIn {
+    attemptId
+    optionsJson
+  }
+}
+
+mutation FinishPasskeySignIn($input: FinishPasskeySignInInput!) {
+  finishPasskeySignIn(input: $input) {
+    session {
+      ...SessionFields
+    }
+    mfaRequired
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+fragment PasskeyFields on Passkey {
+  id
+  name
+  createdAt
+  lastUsedAt
+  backedUp
+}
+
+query MyPasskeys {
+  myPasskeys {
+    ...PasskeyFields
+  }
+}
+
+mutation StartPasskeyRegistration {
+  startPasskeyRegistration {
+    optionsJson
+  }
+}
+
+mutation FinishPasskeyRegistration($input: FinishPasskeyRegistrationInput!) {
+  finishPasskeyRegistration(input: $input) {
+    passkey {
+      ...PasskeyFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation RemovePasskey($id: UUID!) {
+  removePasskey(id: $id) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}

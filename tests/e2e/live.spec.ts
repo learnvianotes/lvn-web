@@ -65,7 +65,7 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('heading', { name: 'Live Test' })).toBeVisible()
 })
@@ -899,9 +899,10 @@ test('a teacher makes a class quiz from a note with the real model and publishes
   await api('mutation ($input: ReviewClassroomJoinRequestInput!) { reviewClassroomJoinRequest(input: $input) { classroom { id } } }', { input: { requestId: asking.classroom.joinRequests[0]!.id, decision: 'APPROVED' } }, teacher.accessToken)
 
   await page.goto('/sign-in')
+  await page.getByRole('button', { name: 'Use a password instead' }).click()
   await page.getByLabel('Email').fill(`live-quiz-teacher-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await page.waitForURL((u) => !u.pathname.startsWith('/sign-in'))
   await page.goto(`/classes/${classroomId}`)
   await page.getByRole('tab', { name: 'Quizzes' }).click()
@@ -945,9 +946,10 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
   const name = `Ollama through its OpenAI API ${stamp}`
   try {
     await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
     await page.getByLabel('Email').fill(email)
     await page.getByLabel('Password').fill(password)
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
     await expect(page).toHaveURL(/\/home$/)
     await page.goto('/admin/ai')
     await expect(page.getByRole('heading', { name: 'AI providers' })).toBeVisible()
@@ -1443,7 +1445,7 @@ test('a group’s admin chooses its picture from this computer; it goes to stora
   await page.goto(`/sign-in?next=${encodeURIComponent(`/groups/${groupId}`)}`)
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
   await page.getByRole('tab', { name: 'Settings' }).click()
   // A real 1×1 PNG: storage checks that the bytes are the picture they claim to be.

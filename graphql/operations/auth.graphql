@@ -64,8 +64,8 @@ query SignInOptions {
   signInOptions {
     emailPassword
     google
-    github
-    linkedin
+    emailCode
+    passkey
   }
   termsVersion
 }

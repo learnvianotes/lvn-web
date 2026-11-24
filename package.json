@@ -41,6 +41,7 @@
     "@floating-ui/dom": "1.8.0",
     "@hookform/resolvers": "^7.0.9",
     "@sentry/nextjs": "11.17.0",
+    "@simplewebauthn/browser": "^13.3.0",
     "@tabler/icons-webfont": "^3.52.0",
     "@tiptap/core": "3.35.0",
     "@tiptap/extension-bubble-menu": "3.35.0",

@@ -121,11 +121,11 @@
   "auth": {
     "welcome": {
       "headline": "Turn your notes into knowledge that sticks.",
-      "lead": "Learn, revise and share with your class — at your own pace.",
+      "lead": "Nova reads only what you give it and shows the page every answer came from.",
       "features": {
-        "notes": "All your notes in one place",
-        "rhythm": "A weekly Rhythm, not a streak to lose",
-        "together": "Learn together with your class"
+        "notes": "Notes, PDFs and voice notes in one place",
+        "rhythm": "A weekly rhythm, not a streak to lose",
+        "together": "Study with your class, share what helps"
       },
       "sheetTitle": "Start learning in seconds",
       "sheetLead": "One tap with Google, or use your email.",
@@ -136,17 +136,35 @@
       "signedInTitle": "You are signed in",
       "signedInLead": "Pick up where you left off.",
       "account": "Go to your account",
-      "home": "Open your home"
+      "home": "Open your home",
+      "headlineLead": "Your notes, your PDFs,",
+      "headlineMark": "answers from both"
     },
     "signIn": {
       "title": "Sign in",
-      "lead": "Welcome back. Pick up where you left off.",
+      "lead": "Sign in to your notes, PDFs and Nova.",
       "email": "Email",
       "password": "Password",
       "submit": "Sign in",
       "forgot": "Forgot your password?",
       "noAccount": "New to LearnViaNotes?",
-      "signUp": "Create an account"
+      "signUp": "Create an account",
+      "emailCode": "Email me a code",
+      "usePassword": "Use a password instead",
+      "useCode": "Email me a code instead",
+      "codeTitle": "Check your email",
+      "codeLead": "We sent a 6-digit code to {email}. It works once and expires in 10 minutes.",
+      "code": "6-digit code",
+      "codeSubmit": "Sign in",
+      "resend": "Send a new code",
+      "resendIn": "Send a new code in {seconds}s",
+      "resent": "A new code is on its way.",
+      "otherEmail": "Use a different email",
+      "passkey": "Sign in with a passkey",
+      "passkeyBusy": "Waiting for your device…",
+      "passkeyHint": "Uses your phone or laptop screen lock. No password to remember.",
+      "passkeyCancelled": "The passkey was not used. Try again, or sign in with your email.",
+      "secure": "Sign-in runs over an encrypted connection. Your passkey never leaves your device, and codes are kept only as a one-way hash."
     },
     "signUp": {
       "title": "Create your account",
@@ -180,8 +198,6 @@
       "or": "or",
       "google": "Continue with Google",
       "googleBusy": "Signing in…",
-      "github": "Continue with GitHub",
-      "linkedin": "Continue with LinkedIn",
       "failed": "That sign-in did not work. Try again.",
       "redirectLost": "Google sign-in did not finish. Try again."
     },
