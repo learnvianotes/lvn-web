@@ -24,7 +24,10 @@ export function Terms() {
           for someone under {ACCOUNTS_FROM_AGE}. If we learn that an account belongs to someone under {ACCOUNTS_FROM_AGE},
           we remove it.
         </li>
-        <li>One person, one account. Keep your password safe and tell us if someone else gets into your account.</li>
+        <li>
+          One person, one account. Keep your password, passkeys and email safe, and tell us if someone else gets into your
+          account.
+        </li>
       </ul>
 
       <h2>2. Your notes</h2>
@@ -43,7 +46,8 @@ export function Terms() {
         <li>bully, harass, threaten or shame anyone;</li>
         <li>attack people for who they are (hate), or share sexual content;</li>
         <li>encourage self-harm — if you are struggling, please talk to someone you trust or a local helpline;</li>
-        <li>post spam or advertising, or try to get around limits, security or moderation;</li>
+        <li>post spam or advertising, or try to get around limits, security or moderation — scripts or tools that send
+          requests far faster than a person put the account on an automatic one-hour pause;</li>
         <li>share other people’s work without permission, or their personal information.</li>
       </ul>
 

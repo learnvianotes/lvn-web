@@ -185,7 +185,7 @@ describe('terms version card (lvn-backend ADR-0103)', () => {
   it('names web versions the API does not allow yet, and says when nothing can be chosen', async () => {
     api.status = status({ current: '2026-11-03', publishedVersions: ['2026-11-03'] })
     let view = await mount()
-    expect(view.textContent).toContain('Published on the web but not allowed by the API yet: 2026-10-08, 2026-11-12. Add them to “Published terms versions” below')
+    expect(view.textContent).toContain('Published on the web but not allowed by the API yet: 2026-10-08, 2026-11-12, 2026-11-25. Add them to “Published terms versions” below')
     expect([...select().options].map((o) => o.value)).toEqual(['2026-11-03'])
     act(() => root!.unmount())
     container!.remove()
