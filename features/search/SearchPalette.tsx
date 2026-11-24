@@ -1,6 +1,6 @@
 'use client'
 
-import { BookBookmark, CornerDownLeft, FileText, GraduationCap, Library, Search, Sparkles, UserRound, Users } from 'lucide-react'
+import { BookBookmark, CornerDownLeft, FileText, GraduationCap, Library, Search, TextQuote, UserRound, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
@@ -194,7 +194,7 @@ export function SearchPalette() {
               }}
               className="flex items-center gap-2 border-t border-border px-5 py-3 text-left text-sm font-medium text-accent hover:bg-surface-2"
             >
-              <Sparkles className="size-4 shrink-0" aria-hidden />
+              <TextQuote className="size-4 shrink-0" aria-hidden />
               {t('askAi', { query: query.trim() })}
             </button>
           ) : null}

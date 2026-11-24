@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, Globe, LoaderCircle, MessageCircleQuestionMark, NotebookPen, Sparkles, Trash, Users, type LucideIcon } from 'lucide-react'
+import { BookOpen, Globe, LoaderCircle, MessageCircleQuestionMark, NotebookPen, TextQuote, Trash, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
@@ -80,7 +80,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
     return (
       <div className="flex flex-col gap-2">
         <Button variant="secondary" size="sm" className="w-fit gap-1.5" disabled={off || busy} onClick={() => void submit()}>
-          <Sparkles className="size-4 text-accent" aria-hidden />
+          <TextQuote className="size-4 text-accent" aria-hidden />
           {t('aboutDoubt')}
         </Button>
         {off ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
@@ -235,7 +235,7 @@ export function AskPage({ question }: { question?: string } = {}) {
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold">
-          <Sparkles className="size-6 text-accent" aria-hidden />
+          <TextQuote className="size-6 text-accent" aria-hidden />
           {t('title')}
         </h1>
         <p className="text-sm text-muted">{t('lead')}</p>

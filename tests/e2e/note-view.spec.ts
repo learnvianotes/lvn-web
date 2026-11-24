@@ -4,7 +4,7 @@ import { CARD_B, NOTE_ID, cards, meta, mockApi, p, page1, type Handler } from '.
 /**
  * The note view as board A draws it (lvn-backend ADR-0076), checked for dead controls: the breadcrumb leads to the
  * topic's notes; the tabs offered each have something or a way to make it (AI, or a card added to the note); Fork and
- * Share do what they say; the card rail moves between sections; and Ask AI is docked beside the note from 1280 px, each
+ * Share do what they say; the card rail moves between sections; and Ask Nova is docked beside the note from 1280 px, each
  * suggestion one AI task.
  */
 const TOPIC = { __typename: 'Topic', id: '01920000-0000-7000-8000-0000000070a1', title: 'Searching', subject: { __typename: 'Subject', id: '01920000-0000-7000-8000-00000000500a', title: 'Algorithms' } }
@@ -60,7 +60,7 @@ test('the breadcrumb leads to the topic’s notes; the owner’s tabs offer a wa
   await tabs.getByRole('tab', { name: 'Flashcards' }).click()
   await expect(page).toHaveURL(/\?tab=flashcards$/)
   await expect(page.getByText('No flashcards in this note yet.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Make flashcards with AI' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Make flashcards with Nova' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Add a flashcard' }).click()
   await expect(tabs.getByRole('tab', { name: 'Content' })).toHaveAttribute('aria-selected', 'true')
   await expect.poll(() => calls.filter((c) => c.op === 'UpdateNoteDraft').flatMap((c) => ((c.variables.input as { ops: { type?: string }[] }).ops ?? []).map((o) => o.type)), { timeout: 10_000 }).toContain('flashcard')
@@ -86,13 +86,13 @@ test('with AI on, Summarise makes a summary that shows in the tab; each docked s
   await mockApi(page, owner({ RunAiTask: (v) => (tasks.push((v.input as { task: string }).task), { runAiTask: { __typename: 'RunAiTaskPayload', artifact: artifact((v.input as { task: string }).task), ...ok } }) }, true))
   await page.goto(`/notes/${NOTE_ID}`)
   const tabs = page.getByRole('tablist', { name: 'Note sections' })
-  await expect(tabs.getByRole('tab')).toHaveText(['Content', 'AI Summary', 'Flashcards', 'Quiz'])
-  await tabs.getByRole('tab', { name: 'AI Summary' }).click()
-  await page.getByRole('button', { name: 'Summarise with AI' }).click()
-  await expect(page.getByRole('region', { name: 'Made for you with AI' }).locator('strong')).toHaveText('halves')
+  await expect(tabs.getByRole('tab')).toHaveText(['Content', 'Summary', 'Flashcards', 'Quiz'])
+  await tabs.getByRole('tab', { name: 'Summary' }).click()
+  await page.getByRole('button', { name: 'Summarise with Nova' }).click()
+  await expect(page.getByRole('region', { name: 'Made for you with Nova' }).locator('strong')).toHaveText('halves')
   expect(tasks).toEqual(['SUMMARIZE'])
 
-  const dock = page.getByRole('complementary', { name: 'Ask AI about this note' })
+  const dock = page.getByRole('complementary', { name: 'Ask Nova about this note' })
   if (info.project.name === 'phone') return void (await expect(dock).toHaveCount(0))
   const chips: [string, string][] = [
     ['Explain this in simple words', 'EXPLAIN_SIMPLY'],
@@ -109,19 +109,19 @@ test('with AI on, Summarise makes a summary that shows in the tab; each docked s
     await expect.poll(() => tasks.at(-1)).toBe(task)
   }
   await expect(dock.getByLabel('Ask about this note', { exact: true })).toBeVisible()
-  // The AI tasks sheet has every task; while it is open the dock steps aside.
-  await page.getByRole('button', { name: 'AI tasks' }).click()
+  // The Nova tasks sheet has every task; while it is open the dock steps aside.
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
   await expect(dock).toHaveCount(0)
 })
 
-test('below 1280 px there is no dock; the AI tasks sheet is the way', async ({ page }, info) => {
+test('below 1280 px there is no dock; the Nova tasks sheet is the way', async ({ page }, info) => {
   test.skip(info.project.name === 'phone', 'a phone never has the dock (previous test)')
   await page.setViewportSize({ width: 1279, height: 900 })
   await mockApi(page, owner({}, true))
   await page.goto(`/notes/${NOTE_ID}`)
   await expect(page.getByRole('tablist', { name: 'Note sections' })).toBeVisible()
-  await expect(page.getByRole('complementary', { name: 'Ask AI about this note' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'AI tasks' })).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'Ask Nova about this note' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Nova tasks' })).toBeVisible()
 })
 
 test('a reader forks the note, copies its link, moves between its sections and opens its discussion', async ({ page, context }, info) => {

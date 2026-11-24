@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, Ellipsis, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash, Inbox, Users } from 'lucide-react'
+import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, Ellipsis, NotebookPen, Plus, RotateCcw, Search, TextQuote, Trash, Inbox, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -52,7 +52,7 @@ const filterOf = (v: View): NoteFilter => (v.kind === 'folder' ? { folderId: v.i
 
 type SharedNote = SharedWithMeQuery['sharedWithMe']['edges'][number]['node']
 
-const TEMPLATE_ICONS: Record<TemplateKey, typeof NotebookPen> = { lecture: NotebookPen, revision: ListChecks, flashcards: Layers, quiz: Sparkles }
+const TEMPLATE_ICONS: Record<TemplateKey, typeof NotebookPen> = { lecture: NotebookPen, revision: ListChecks, flashcards: Layers, quiz: TextQuote }
 
 /** The viewer's notes (lvn-backend §4.1, §4.5): a welcome, templates to start from, notes as cards, folders, tags and the trash. */
 export function NotesHome() {
@@ -290,7 +290,7 @@ export function NotesHome() {
         {/* Phones: the views and folders as one row to scroll, instead of the sidebar. */}
         <nav aria-label={t('views.label')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden">
           <Link href="/ask" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent">
-            <Sparkles className="size-4" aria-hidden />
+            <TextQuote className="size-4" aria-hidden />
             {t('askAi')}
           </Link>
           {[

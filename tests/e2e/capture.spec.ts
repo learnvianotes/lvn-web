@@ -82,7 +82,7 @@ test('photos and PDFs become one note: pictures made smaller, a large PDF turned
   await expect(dialog.getByText('2 of 10')).toBeVisible()
 
   await dialog.getByRole('button', { name: 'Make notes from 2' }).click()
-  await expect(page.getByRole('dialog', { name: 'AI tasks' })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('dialog', { name: 'Nova tasks' })).toBeVisible({ timeout: 15_000 })
   await expect(page).toHaveURL(new RegExp(`/notes/${NOTE_ID}$`))
 
   expect(calls.find((c) => c.op === 'CreateNote')?.variables).toEqual({ input: { title: expect.stringMatching(/^Quick note, /) } })

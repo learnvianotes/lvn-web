@@ -1,4 +1,4 @@
-import { BookBookmark, Clock, GitFork, NotebookPen, Sparkles } from 'lucide-react'
+import { BookBookmark, Clock, GitFork, NotebookPen, TextQuote } from 'lucide-react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { NightSky } from '@/components/brand/NightSky'
@@ -96,7 +96,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
             <p className="flex items-center gap-1.5 text-sm font-medium text-inverse-muted">
-              <Sparkles className="size-4" aria-hidden />
+              <TextQuote className="size-4" aria-hidden />
               {t('ctaKicker')}
             </p>
             <p className="text-xl font-semibold">{t('ctaTitle')}</p>

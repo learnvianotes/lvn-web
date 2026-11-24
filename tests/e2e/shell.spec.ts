@@ -24,7 +24,7 @@ const ENTRIES: [name: string, href: string][] = [
   ['Rhythm', '/rhythm'],
   ['Resources', '/resources'],
   ['Community', '/community'],
-  ['AI Assistant', '/ask'],
+  ['Nova', '/ask'],
   ['Bookmarks', '/saved'],
   ['Guide', '/guide'],
 ]
@@ -131,7 +131,7 @@ test('the search field opens the palette, and the avatar opens the account', asy
   await mockApi(page, {})
   await page.goto('/home')
   await expect(page.getByRole('link', { name: 'Your account', exact: true })).toHaveText('A')
-  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
+  await page.getByRole('button', { name: 'Search or ask Nova' }).click()
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await expect(palette).toBeVisible()
   await page.keyboard.press('Escape')
@@ -140,13 +140,13 @@ test('the search field opens the palette, and the avatar opens the account', asy
   await expect(page).toHaveURL(/\/profile$/)
 })
 
-test('“or ask AI”: the search field takes the words to Ask AI as a question, ready to send', async ({ page }) => {
+test('“or ask AI”: the search field takes the words to Ask Nova as a question, ready to send', async ({ page }) => {
   const aiState = { aiStatus: { __typename: 'AiStatus', available: true, reason: null }, myAiAllowance: { __typename: 'AiAllowance', usedToday: 0, limitToday: 200_000, resetsAt: new Date(Date.now() + 3_600_000).toISOString() } }
   const calls = await mockApi(page, { AiState: () => aiState, MyAiAnswers: () => ({ myAiAnswers: [] }) })
   await page.goto('/home')
-  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
+  await page.getByRole('button', { name: 'Search or ask Nova' }).click()
   await page.getByRole('combobox').fill('why is a heap a tree')
-  await page.getByRole('button', { name: 'Ask AI: “why is a heap a tree”' }).click()
+  await page.getByRole('button', { name: 'Ask Nova: “why is a heap a tree”' }).click()
   await expect(page).toHaveURL(/\/ask\?q=why%20is%20a%20heap%20a%20tree$/)
   await expect(page.getByLabel('Your question', { exact: true })).toHaveValue('why is a heap a tree')
   // Nothing is asked until the person sends it: AI has a daily allowance.
@@ -156,12 +156,12 @@ test('“or ask AI”: the search field takes the words to Ask AI as a question,
 test('the landing’s links all lead to pages that exist, and its sections are there', async ({ page }, info) => {
   await page.goto('/')
   const main = page.getByRole('main')
-  await expect(main.getByRole('heading', { level: 1, name: 'Your Learning Community for a Brighter Tomorrow' })).toBeVisible()
+  await expect(main.getByRole('heading', { level: 1, name: 'Learn from your own notes and PDFs' })).toBeVisible()
   const tiles = page.getByRole('region', { name: 'What you can do' }).getByRole('link')
   await expect(tiles).toHaveCount(6)
   const hrefs = [
     ...(await tiles.evaluateAll((as) => as.map((a) => a.getAttribute('href')!))),
-    await main.getByRole('link', { name: 'Get Started Free' }).getAttribute('href'),
+    await main.getByRole('link', { name: 'Create a free account' }).getAttribute('href'),
     await main.getByRole('link', { name: 'Sign in' }).getAttribute('href'),
     await main.getByRole('link', { name: 'Browse subjects' }).getAttribute('href'),
   ]

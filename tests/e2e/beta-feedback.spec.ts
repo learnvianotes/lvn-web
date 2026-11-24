@@ -172,7 +172,7 @@ test.describe('beta feedback', () => {
     for (const [path, heading, file] of pages) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
-      await expect(page.getByRole('button', { name: 'AI tasks' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Nova tasks' })).toBeVisible()
       await expect(page.getByRole('region', { name: 'Your results' })).toBeVisible()
       for (const width of WIDTHS) await shot(page, file, width)
     }

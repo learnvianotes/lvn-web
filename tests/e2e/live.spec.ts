@@ -38,8 +38,8 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 
   await page.goto('/')
   const main = page.getByRole('main')
-  await expect(main.getByRole('heading', { name: 'Your Learning Community for a Brighter Tomorrow' })).toBeVisible()
-  await main.getByRole('link', { name: 'Get Started Free' }).click()
+  await expect(main.getByRole('heading', { name: 'Learn from your own notes and PDFs' })).toBeVisible()
+  await main.getByRole('link', { name: 'Create a free account' }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
   await page.getByLabel('Your name').fill('Live Test')
@@ -684,7 +684,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await expect(page.getByRole('link', { name: /Spanning trees(?! visualiser)/ })).toHaveCount(0)
 
   await page.goto('/notes')
-  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
+  await page.getByRole('button', { name: 'Search or ask Nova' }).click()
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await palette.getByRole('combobox').fill(group)
   await palette.getByRole('option', { name: new RegExp(`${group} · Group`) }).click()
@@ -718,8 +718,8 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.keyboard.type('A min-heap keeps the smallest item at the root. Insert adds at the end and sifts it up; extract-min moves the last item to the root and sifts it down. Both take O(log n).')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('button', { name: /^Summarise/ }).click()
   const summary = panel.getByRole('article', { name: 'Summarise' })
   await expect(summary).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
@@ -736,7 +736,7 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await flashcards.getByRole('button', { name: `Add ${keeping} card${keeping === 1 ? '' : 's'} to this note` }).click()
   // The panel closes and the note loads again with the cards in its draft.
   await expect(page.getByText('Added to this note.')).toBeVisible({ timeout: 20_000 })
-  // The note's own cards (the docked Ask AI lists the result's cards too, from 1280 px).
+  // The note's own cards (the docked Ask Nova lists the result's cards too, from 1280 px).
   await expect(page.getByRole('textbox', { name: 'Note content' }).getByLabel('Front')).toHaveCount(keeping)
 })
 
@@ -764,8 +764,8 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.keyboard.type('Plants turn light into chemical energy in the chloroplast. Chlorophyll absorbs red and blue light and reflects green.')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('textbox', { name: 'Ask about this note' }).fill('Which colours of light does chlorophyll absorb?')
   await panel.getByRole('button', { name: 'Ask', exact: true }).click()
   const card = panel.getByRole('article', { name: 'Which colours of light does chlorophyll absorb?' })
@@ -832,8 +832,8 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.keyboard.type('bio lec 4 - mitochondria = powerhouse, ATP made by resp. glycolysis in cytoplasm, krebs in matrix, ETC inner membrane')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('button', { name: /^Tidy into notes/ }).click()
   const result = panel.getByRole('article', { name: 'Tidy into notes' })
   await expect(result).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
@@ -865,8 +865,8 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.keyboard.type('Respiration releases the en- ergy stored in glucose. Cells use tbis energy to grow and repair themselves.')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('button', { name: /^Clean up the text/ }).click()
   const result = panel.getByRole('article', { name: 'Clean up the text' })
   await expect(result).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
@@ -968,7 +968,7 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
     await expect(card.getByRole('status')).toContainText('embeddinggemma gave 768 numbers', { timeout: 180_000 })
     await expect(card.getByRole('status')).toContainText(/models? listed: .*gemma4/)
 
-    await page.getByLabel(/Chats, tasks and Ask AI/).selectOption({ label: `${name} · gemma4` })
+    await page.getByLabel(/Chats, tasks and Ask Nova/).selectOption({ label: `${name} · gemma4` })
     await expect(card.getByText('Answers chats')).toBeVisible()
 
     // A task now goes through the connection: the usage row says who answered.
@@ -1322,7 +1322,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await expect(page).toHaveURL(/\/profile$/)
   const entries: [string, RegExp][] = [
     ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
-    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/subjects$/],
+    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['Nova', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/subjects$/],
   ]
   for (const [name, url] of entries) {
     if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()

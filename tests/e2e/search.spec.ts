@@ -41,7 +41,7 @@ test('Ctrl+K searches as you type, and Enter opens the note', async ({ page }) =
 test('the palette offers groups and classes, and a topic opens its notes', async ({ page }) => {
   const calls = await mockApi(page, { ...empty, Search: (v) => (v.filters ? results({ topics: [] }) : results({ notes: [], groups: [group, workspace], classrooms: [classroom] })) })
   await page.goto('/notes')
-  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
+  await page.getByRole('button', { name: 'Search or ask Nova' }).click()
   const palette = page.getByRole('dialog', { name: PALETTE })
   await palette.getByRole('combobox').fill('graph')
   await expect(palette.getByRole('option', { name: /Graph theory circle · Group/ })).toBeVisible()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, Library, PanelLeft, ScrollText, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
+import { Activity, BadgeCheck, Bug, Building2, IdCard, KeyRound, LayoutDashboard, Library, PanelLeft, ScrollText, ShieldCheck, SlidersHorizontal, TextQuote, Trophy, UserCog, Users, Wallet, X, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -58,7 +58,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: '/admin/content', group: 'content', key: 'content', icon: Library, roles: ADMIN },
   { href: '/admin/moderation', group: 'content', key: 'moderation', icon: ShieldCheck, roles: ADMIN },
   { href: '/admin/contests', group: 'content', key: 'contests', icon: Trophy, roles: ADMIN },
-  { href: '/admin/ai', group: 'ai', key: 'ai', icon: Sparkles, roles: ADMIN },
+  { href: '/admin/ai', group: 'ai', key: 'ai', icon: TextQuote, roles: ADMIN },
 ]
 
 /**

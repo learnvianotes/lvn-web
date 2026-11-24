@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { GraduationCap, Layers, ListChecks, Plus, ScrollText, Sparkles } from 'lucide-react'
+import { GraduationCap, Layers, ListChecks, Plus, ScrollText, TextQuote } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -47,7 +47,7 @@ function Results({ noteId, study, tab, canEdit, onAddedToNote }: { noteId: strin
   )
 }
 
-function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: string; icon: typeof Sparkles }) {
+function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: string; icon: typeof TextQuote }) {
   if (!ai.available) return null
   return (
     <Button size="sm" className="gap-1.5" disabled={ai.spent || ai.running} onClick={() => void ai.run(task)}>

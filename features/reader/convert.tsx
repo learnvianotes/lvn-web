@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { CircleCheck, LoaderCircle, TriangleAlert, WandSparkles, X } from 'lucide-react'
+import { CircleCheck, LoaderCircle, TriangleAlert, FilePenLine, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -51,7 +51,7 @@ export function ConvertDialog({ open, onClose, noteId, fileId, fileName }: { ope
             {t('cancel')}
           </Button>
           <Button className="gap-1.5" disabled={converting.loading} onClick={() => void start()}>
-            <WandSparkles className="size-4" aria-hidden />
+            <FilePenLine className="size-4" aria-hidden />
             {converting.loading ? t('starting') : t('start')}
           </Button>
         </div>

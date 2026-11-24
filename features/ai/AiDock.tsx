@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles } from 'lucide-react'
+import { TextQuote } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import type { AiTask } from '@/graphql/generated/graphql'
@@ -37,7 +37,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
     <aside aria-labelledby={`dock-${noteId}`} className="sticky top-20 flex max-h-[calc(100dvh-6rem)] flex-col gap-4 overflow-y-auto rounded-3xl border border-border bg-surface p-4">
       <header className="flex flex-col gap-1">
         <h2 id={`dock-${noteId}`} className="flex items-center gap-2 text-base font-semibold">
-          <Sparkles className="size-4 text-accent" aria-hidden />
+          <TextQuote className="size-4 text-accent" aria-hidden />
           {t('title')}
         </h2>
         <p className="text-xs text-muted">{t('lead')}</p>

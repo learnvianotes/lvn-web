@@ -25,7 +25,7 @@ import {
   ScrollText,
   SearchCheck,
   SpellCheck,
-  Sparkles,
+  TextQuote,
   Trash,
   type LucideIcon,
 } from 'lucide-react'
@@ -313,7 +313,7 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
   return (
     <article aria-label={label} data-ai-status={a.status} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <header className="flex items-center gap-2">
-        <Sparkles className="size-4 shrink-0 text-accent" aria-hidden />
+        <TextQuote className="size-4 shrink-0 text-accent" aria-hidden />
         <h4 className="min-w-0 flex-1 truncate text-sm font-semibold">{label}</h4>
         {a.keptAt ? (
           <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs text-accent">
@@ -552,7 +552,7 @@ export function AiButton({ onClick, className }: { onClick: () => void; classNam
   const t = useTranslations('ai')
   return (
     <Button variant="secondary" size="sm" className={cn('gap-1.5', className)} aria-label={t('title')} onClick={onClick}>
-      <Sparkles className="size-4 text-accent" aria-hidden />
+      <TextQuote className="size-4 text-accent" aria-hidden />
       <span className="hidden sm:inline">{t('button')}</span>
     </Button>
   )
@@ -567,7 +567,7 @@ export function AiAccountSection({ className }: { className?: string }) {
   return (
     <section className={className} aria-labelledby="ai-allowance">
       <h2 id="ai-allowance" className="flex items-center gap-2 text-lg font-semibold">
-        <Sparkles className="size-4 text-accent" aria-hidden />
+        <TextQuote className="size-4 text-accent" aria-hidden />
         {t('account.title')}
       </h2>
       <p className="text-sm text-muted">{t('account.lead')}</p>

@@ -22,7 +22,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
-  Sparkles,
+  TextQuote,
   Trophy,
   Upload,
   Users,
@@ -73,7 +73,7 @@ const ENTRIES: Entry[] = [
   { href: '/rhythm', key: 'rhythm', icon: Activity },
   { href: '/resources', key: 'resources', icon: Library },
   { href: '/community', key: 'community', icon: MessagesSquare },
-  { href: '/ask', key: 'ask', icon: Sparkles },
+  { href: '/ask', key: 'ask', icon: TextQuote },
   { href: '/saved', key: 'saved', icon: Bookmark },
   { href: '/guide', key: 'guide', icon: CircleHelp, match: /^\/guide(\/|$)/ },
 ]

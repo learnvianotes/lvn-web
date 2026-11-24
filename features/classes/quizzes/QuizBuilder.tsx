@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { LoaderCircle, Plus, Sparkles, Trash } from 'lucide-react'
+import { LoaderCircle, Plus, TextQuote, Trash } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -149,7 +149,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
               </select>
             </label>
             <Button variant="secondary" className="gap-1.5" disabled={!noteId || making} onClick={() => void make()}>
-              {making ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4 text-accent" aria-hidden />}
+              {making ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <TextQuote className="size-4 text-accent" aria-hidden />}
               {making ? t('making') : t('make')}
             </Button>
           </div>
