@@ -384,7 +384,23 @@
     "resources": "Your resources",
     "savedResources": "Bookmarks: your saved notes and resources",
     "plan": "Your plan",
-    "adminContests": "Write weekly contests"
+    "adminContests": "Write weekly contests",
+    "passkeys": {
+      "title": "Sign-in and security",
+      "lead": "Add a passkey to sign in with this device’s screen lock instead of a password. Only its public key is kept on our side.",
+      "add": "Add a passkey",
+      "adding": "Waiting for your device…",
+      "added": "Passkey added. Next time, choose “Sign in with a passkey”.",
+      "cancelled": "No passkey was made. Try again when you are ready.",
+      "failed": "That did not work. Try again.",
+      "unsupported": "This browser cannot make passkeys. You can still sign in with Google, a code sent to your email, or your password.",
+      "none": "No passkeys yet.",
+      "made": "Added {date}",
+      "used": "used {date}",
+      "synced": "synced",
+      "remove": "Remove {name}"
+    },
+    "accountLinks": "Your account"
   },
   "notes": {
     "pageTitle": "Note",
