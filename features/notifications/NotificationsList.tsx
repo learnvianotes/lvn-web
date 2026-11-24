@@ -102,7 +102,7 @@ export function NotificationsList() {
             const Icon = ICONS[n.category] ?? Bell
             return (
               <li key={n.id}>
-                <button type="button" onClick={() => open(n)} className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-surface-2 ${n.readAt ? '' : 'bg-accent-soft/40'}`}>
+                <button type="button" onClick={() => open(n)} className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2 ${n.readAt ? '' : 'bg-accent-soft/40'}`}>
                   <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
                     <Icon className="size-4" aria-hidden />
                   </span>

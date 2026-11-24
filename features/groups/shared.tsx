@@ -35,7 +35,7 @@ export function GroupCardView({ group }: { group: GroupCardFragment }) {
   const t = useTranslations('groups')
   const Icon = group.privacy === 'PRIVATE' ? Lock : Globe
   return (
-    <Link href={`/groups/${group.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/50 hover:shadow-md">
+    <Link href={`/groups/${group.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/50 hover:shadow-md">
       <span className="flex items-center gap-2 font-semibold">
         <Icon className="size-4 shrink-0 text-accent" aria-label={t(`privacy.${group.privacy}`)} />
         <span className="truncate">{group.name}</span>

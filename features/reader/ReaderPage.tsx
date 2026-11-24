@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { StudyLoader } from '@/components/ui/study-loader'
 import { Button } from '@/components/ui/button'
 import { LoadFailed } from '@/components/ui/query-state'
 import {
@@ -330,10 +331,8 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
   if (fileFailed) return <LoadFailed className="mx-auto my-16 max-w-md" onRetry={file.refetch} />
   if (waitingForScan) {
     return (
-      <div role="status" className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
-        <span className="size-6 animate-spin rounded-full border-2 border-border border-t-accent" aria-hidden />
-        <p className="text-base font-medium">{t('scanning')}</p>
-        <p className="text-sm text-muted">{t('scanningLead')}</p>
+      <div className="mx-auto flex max-w-md flex-col items-center gap-2 py-16">
+        <StudyLoader kind="scan" label={t('scanning')} detail={t('scanningLead')} />
       </div>
     )
   }
@@ -449,9 +448,15 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               />
             ) : null}
             {pdfState !== 'ready' ? (
-              <div role="status" className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">
-                {pdfState === 'loading' ? t('loading') : pdfState === 'password' ? t('passwordNeeded') : t('failed')}
-              </div>
+              pdfState === 'loading' ? (
+                <div className="absolute inset-0 grid place-items-center p-6">
+                  <StudyLoader kind="pdf" label={t('loading')} />
+                </div>
+              ) : (
+                <div role="status" className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">
+                  {pdfState === 'password' ? t('passwordNeeded') : t('failed')}
+                </div>
+              )
             ) : null}
           </section>
 

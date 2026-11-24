@@ -270,7 +270,7 @@ export function NotesHome() {
                   <NewKinds onDark teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading} onNew={(kind) => void newNote(undefined, kind)} className="w-full" />
                 </div>
                 {latest ? (
-                  <Link href={`/notes/${latest.id}`} className="mt-2 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-white/10 py-1.5 pl-3 pr-2 text-sm font-medium ring-1 ring-white/20 transition hover:bg-white/20">
+                  <Link href={`/notes/${latest.id}`} className="mt-2 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-white/10 py-1.5 pl-3 pr-2 text-sm font-medium ring-1 ring-white/20 transition-colors hover:bg-white/20">
                     <span className="truncate">
                       {t('continue')} <strong className="font-semibold">{latest.title || t('untitled')}</strong>
                     </span>
@@ -329,7 +329,7 @@ export function NotesHome() {
                     type="button"
                     disabled={creating.loading}
                     onClick={() => void newNote(key)}
-                    className="group flex animate-rise flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.98]"
+                    className="group flex animate-rise flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-4 text-left transition-colors hover:border-accent/40 hover:border-fg/20 active:scale-[0.98]"
                     style={{ animationDelay: `${60 * i}ms` }}
                   >
                     <span className="grid size-9 place-items-center rounded-xl bg-accent-soft text-accent transition group-hover:bg-accent group-hover:text-accent-fg">
@@ -494,7 +494,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
     )
   }
   return (
-    <Link href={`/notes/${n.id}`} className={cn(tile, 'hover:-translate-y-0.5 hover:border-fg/20 active:scale-[0.99]')}>
+    <Link href={`/notes/${n.id}`} className={cn(tile, ' hover:border-fg/20 active:scale-[0.99]')}>
       {body}
     </Link>
   )

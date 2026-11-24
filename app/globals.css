@@ -271,6 +271,21 @@ select:not([aria-invalid='true']):focus-visible {
   word-break: normal !important;
 }
 
+/* An indeterminate wait (StudyLoader): the highlighter slides across its track. Off with reduced motion, where it rests. */
+@media (prefers-reduced-motion: no-preference) {
+  .lvn-sweep { animation: lvn-sweep 1.2s var(--ease) infinite; }
+}
+@keyframes lvn-sweep { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+
+/* Page changes (ADR-0114): the old page fades, the new one fades in and rises 8px. One curve, short, nothing on loop. */
+::view-transition-old(.lvn-page) { animation: lvn-page-out var(--dur-fast) var(--ease) both; }
+::view-transition-new(.lvn-page) { animation: lvn-page-in var(--dur-slow) var(--ease) both; }
+@keyframes lvn-page-out { to { opacity: 0; } }
+@keyframes lvn-page-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

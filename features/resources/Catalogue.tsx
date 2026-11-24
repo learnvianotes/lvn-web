@@ -112,7 +112,7 @@ export function ResourceCard({ resource: r, note }: { resource: ResourceFieldsFr
   const t = useTranslations('resources')
   const Icon = TYPE_ICON[r.type]
   return (
-    <article aria-label={r.title} className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:border-accent">
+    <article aria-label={r.title} className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-colors hover:border-accent">
       <Link href={`/resources/${r.id}`} className="flex flex-1 flex-col">
         <div className="flex h-32 items-center justify-center bg-accent-soft">
           {r.coverUrl ? (

@@ -13,7 +13,7 @@ export function SubjectGrid({ subjects, headingLevel = 'h2' }: { subjects: Subje
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {subjects.map((s) => (
         <li key={s.id}>
-          <Link href={`/subjects/${s.slug}`} className="group flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10">
+          <Link href={`/subjects/${s.slug}`} className="group flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40 hover:border-fg/20">
             <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
               <BookOpen className="size-5" />
             </span>

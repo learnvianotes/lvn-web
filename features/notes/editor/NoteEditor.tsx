@@ -300,7 +300,7 @@ function IconButton({ icon: Icon, label, onClick, pressed, disabled, className }
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-fg transition hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent', className)}
+      className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-fg transition-colors hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent', className)}
     >
       <Icon className="size-[18px]" aria-hidden />
     </button>
@@ -433,10 +433,10 @@ function CardHandle({ editor }: { editor: Editor }) {
 
   return (
     <div ref={box} contentEditable={false} className="absolute left-1.5 z-10 flex flex-col items-center gap-0.5 transition-[top] duration-150 sm:left-3" style={{ top: (at?.top ?? 24) + 2, opacity: at ? 1 : 0 }}>
-      <button type="button" aria-label={t('addCardBelow')} title={t('addCardBelow')} aria-expanded={menu === 'add'} className="grid size-7 place-items-center rounded-lg text-muted transition hover:bg-accent-soft hover:text-accent" onClick={() => setMenu((m) => (m === 'add' ? null : 'add'))}>
+      <button type="button" aria-label={t('addCardBelow')} title={t('addCardBelow')} aria-expanded={menu === 'add'} className="grid size-7 place-items-center rounded-lg text-muted transition-colors hover:bg-accent-soft hover:text-accent" onClick={() => setMenu((m) => (m === 'add' ? null : 'add'))}>
         <Plus className="size-4" aria-hidden />
       </button>
-      <button type="button" aria-label={t('cardMenu')} title={t('cardMenu')} aria-expanded={menu === 'card'} className="grid size-7 cursor-grab place-items-center rounded-lg text-muted transition hover:bg-surface-2 hover:text-fg" onClick={() => setMenu((m) => (m === 'card' ? null : 'card'))}>
+      <button type="button" aria-label={t('cardMenu')} title={t('cardMenu')} aria-expanded={menu === 'card'} className="grid size-7 cursor-grab place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg" onClick={() => setMenu((m) => (m === 'card' ? null : 'card'))}>
         <GripVertical className="size-4" aria-hidden />
       </button>
       {menu ? (
@@ -520,7 +520,7 @@ function AddCardMenu({ editor, noteId }: { editor: Editor | null; noteId: string
   }
   return (
     <div className="relative">
-      <button type="button" aria-expanded={open} className="inline-flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm font-medium text-muted transition hover:border-accent hover:bg-accent-soft hover:text-accent" onClick={() => setOpen((o) => !o)}>
+      <button type="button" aria-expanded={open} className="inline-flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent" onClick={() => setOpen((o) => !o)}>
         <Plus className="size-4" aria-hidden />
         {t('addCard')}
       </button>
@@ -588,7 +588,7 @@ function Outline({ editor, onPick }: { editor: Editor | null; onPick?: () => voi
           <button
             key={h.pos}
             type="button"
-            className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-fg"
+            className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg"
             style={{ paddingLeft: `${0.5 + (h.level - 1) * 0.75}rem` }}
             onClick={() => {
               editor?.chain().focus().setTextSelection(h.pos + 1).run()

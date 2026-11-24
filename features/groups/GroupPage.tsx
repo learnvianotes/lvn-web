@@ -222,7 +222,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
             aria-label={t('newPost')}
             title={t('newPost')}
             onClick={() => setWriting(true)}
-            className="fixed bottom-6 right-6 z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-fg shadow-lg shadow-accent/30 transition hover:opacity-90"
+            className="fixed bottom-6 right-6 z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-fg shadow-lg shadow-accent/30 transition-colors hover:opacity-90"
           >
             <Plus className="size-6" aria-hidden />
           </button>

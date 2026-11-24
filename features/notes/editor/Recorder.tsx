@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { captionsFromEvent, speechRecognitionCtor, type SpeechRec } from './captions'
 import { trackFeature } from '@/lib/analytics'
+import { StudyLoader } from '@/components/ui/study-loader'
 
 /**
  * A voice note recorded in the browser (lvn-backend ADR-0062): MediaRecorder, Opus in WebM (MP4 where WebM is not
@@ -220,7 +221,7 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
               ) : null}
             </div>
             <AiResultPanel empty={!transcript && !notes && !aiError && !aiBusy} className="w-full text-left">
-              {aiBusy ? <p className="text-sm text-muted">{t('working')}</p> : null}
+              {aiBusy ? <StudyLoader kind="record" label={t('working')} compact /> : null}
               {aiError ? <p role="alert" className="text-sm text-bad">{aiError}</p> : null}
               {transcript ? <p className="whitespace-pre-wrap text-sm">{transcript}</p> : null}
               {notes ? <p className="whitespace-pre-wrap text-sm">{notes}</p> : null}

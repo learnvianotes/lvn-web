@@ -4126,5 +4126,14 @@
       "DRAFT": "Draft",
       "PUBLISHED": "Published"
     }
+  },
+  "wait": {
+    "upload": "Uploading your file",
+    "record": "Saving your recording",
+    "pdf": "Opening your PDF",
+    "scan": "Checking your PDF for viruses",
+    "search": "Searching your notes",
+    "nova": "Nova is reading your notes",
+    "general": "One moment"
   }
 }

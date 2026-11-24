@@ -29,7 +29,7 @@ export function ToolButton({ icon: Icon, label, onClick, pressed, disabled, clas
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-sm text-fg transition hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent',
+        'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-sm text-fg transition-colors hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent',
         showLabel ? 'px-2.5' : 'w-9',
         className,
       )}
@@ -158,7 +158,7 @@ export function HighlightsList({ highlights, onOpen }: { highlights: HighlightFi
           {highlights
             .filter((h) => h.page === page)
             .map((h) => (
-              <button key={h.id} type="button" onClick={() => onOpen(h)} className="flex gap-2.5 rounded-xl border border-border bg-surface p-2.5 text-left text-sm transition hover:border-accent/50 hover:shadow-sm">
+              <button key={h.id} type="button" onClick={() => onOpen(h)} className="flex gap-2.5 rounded-xl border border-border bg-surface p-2.5 text-left text-sm transition-colors hover:border-accent/50 hover:shadow-sm">
                 <span className={cn('mt-1 size-3 shrink-0 rounded-full', SWATCH[h.color])} aria-hidden />
                 <span className="flex min-w-0 flex-col gap-1">
                   <span className="line-clamp-3">{h.kind === 'AREA' ? <em className="text-muted">{t('area')}</em> : `“${h.quote ?? ''}”`}</span>
@@ -180,7 +180,7 @@ export function OutlineList({ items, onPick, depth = 0 }: { items: OutlineItem[]
     <ul className="flex flex-col">
       {items.map((item, i) => (
         <li key={`${depth}-${i}`}>
-          <button type="button" className="w-full truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-fg" style={{ paddingLeft: `${0.5 + depth * 0.85}rem` }} onClick={() => onPick(item.dest)}>
+          <button type="button" className="w-full truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg" style={{ paddingLeft: `${0.5 + depth * 0.85}rem` }} onClick={() => onPick(item.dest)}>
             {item.title || t('untitled')}
           </button>
           {item.items.length ? <OutlineList items={item.items} onPick={onPick} depth={depth + 1} /> : null}

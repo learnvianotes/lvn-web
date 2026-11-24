@@ -11,6 +11,7 @@ import type { NoteKind, NoteSource, SearchScope } from '@/graphql/generated/grap
 import { cn } from '@/lib/cn'
 import { Snippet } from './Snippet'
 import { useSearch } from './useSearch'
+import { StudyLoader } from '@/components/ui/study-loader'
 
 const VISIBILITY_ICON = { PRIVATE: Lock, SHARED: Users, UNLISTED: Link2, PUBLIC: Globe } as const
 const KINDS: NoteKind[] = ['NOTE', 'BLOG', 'POST', 'PROJECT']
@@ -277,6 +278,7 @@ export function SearchPage() {
             <h2 id="notes-heading" className="text-sm font-semibold text-muted">
               {settled.length < 2 && filtering ? t('newest') : t('notes')}
             </h2>
+            {loading && !notes.length && settled ? <StudyLoader kind="search" compact className="py-4" /> : null}
             {searched && !notes.length ? <p className="text-sm text-muted">{settled ? t('nothing', { query: settled }) : t('nothingFiltered')}</p> : null}
             {!settled && !filtering ? <p className="text-sm text-muted">{t('hint')}</p> : null}
             <ul className="flex flex-col gap-3">
@@ -284,7 +286,7 @@ export function SearchPage() {
                 const Icon = VISIBILITY_ICON[note.visibility]
                 return (
                   <li key={note.id}>
-                    <Link href={`/notes/${note.id}`} className="group flex flex-col gap-1.5 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10">
+                    <Link href={`/notes/${note.id}`} className="group flex flex-col gap-1.5 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40 hover:border-fg/20">
                       <span className="flex items-center gap-2 font-semibold">
                         <FileText className="size-4 text-accent" aria-hidden />
                         {note.title || t('untitled')}

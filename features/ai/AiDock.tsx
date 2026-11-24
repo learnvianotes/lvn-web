@@ -56,7 +56,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
                   type="button"
                   disabled={ai.spent || ai.running}
                   onClick={() => void ai.run(task)}
-                  className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-left text-sm font-medium transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+                  className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-left text-sm font-medium transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
                 >
                   {t(`chips.${task}`)}
                 </button>

@@ -11,7 +11,7 @@ export const cleanCode = (code: string) => code.replace(/[\s-]+/g, '').toUpperCa
 export function ClassCardView({ classroom }: { classroom: ClassroomCardFragment }) {
   const t = useTranslations('classes')
   return (
-    <Link href={`/classes/${classroom.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/50 hover:shadow-md">
+    <Link href={`/classes/${classroom.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/50 hover:shadow-md">
       <span className="flex items-center gap-2 font-semibold">
         <GraduationCap className="size-4 shrink-0 text-accent" aria-hidden />
         <span className="truncate">{classroom.name}</span>

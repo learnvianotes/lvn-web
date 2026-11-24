@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { BookOpen, Globe, LoaderCircle, MessageCircleQuestionMark, NotebookPen, TextQuote, Trash, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { StudyLoader } from '@/components/ui/study-loader'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { LimitNotice } from '@/components/ui/limit-notice'
@@ -153,10 +154,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
       {pending ? (
         <>
           <Follow id={a.id} />
-          <p role="status" className="flex items-center gap-2 text-sm text-muted">
-            <LoaderCircle className="size-4 animate-spin" aria-hidden />
-            {t(a.status === 'QUEUED' ? 'queued' : 'writing')}
-          </p>
+          <StudyLoader kind="nova" label={t(a.status === 'QUEUED' ? 'queued' : 'writing')} compact />
         </>
       ) : null}
       {a.text ? (
@@ -185,7 +183,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
           <ol className="flex flex-col gap-2">
             {a.sources.map((s) => (
               <li key={s.n} id={anchor(s.n)} className="scroll-mt-24">
-                <Link href={`/notes/${s.noteId}`} className="flex gap-3 rounded-xl border border-border bg-bg p-3 text-sm transition hover:border-accent">
+                <Link href={`/notes/${s.noteId}`} className="flex gap-3 rounded-xl border border-border bg-bg p-3 text-sm transition-colors hover:border-accent">
                   <span className="grid size-6 shrink-0 place-items-center rounded-md bg-accent-soft text-xs font-semibold text-accent">{s.n}</span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 font-semibold">

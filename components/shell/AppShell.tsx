@@ -48,6 +48,7 @@ import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 import { TOUR_MENU_EVENT } from '@/lib/walkthrough'
+import { ViewTransition } from 'react'
 
 type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp; staff?: boolean }
 
@@ -150,7 +151,8 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
               : 'min-h-[70dvh]'
           }
         >
-          {children}
+          {/* One short fade and rise between pages (ADR-0114); the browser skips it where unsupported or reduced motion is on. */}
+          <ViewTransition default="lvn-page">{children}</ViewTransition>
           {admin ? footer : null}
         </main>
         {admin ? null : footer}

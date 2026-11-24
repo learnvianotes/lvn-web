@@ -159,7 +159,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
             setDragging(false)
             if (!full && !busy) void add(Array.from(e.dataTransfer.files))
           }}
-          className={cn('flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50', dragging && 'border-accent bg-accent-soft')}
+          className={cn('flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50', dragging && 'border-accent bg-accent-soft')}
         >
           <ImagePlus className="size-7 text-accent" aria-hidden />
           <span className="font-semibold">{full ? t('full') : t('choose')}</span>

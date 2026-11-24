@@ -75,7 +75,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
       return (
         <figure className="flex flex-col gap-2">
           {reader ? (
-            <Link href={reader} className="flex items-center gap-3 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-fg shadow-md shadow-accent/20 transition hover:bg-accent/90">
+            <Link href={reader} className="flex items-center gap-3 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-fg shadow-md shadow-accent/20 transition-colors hover:bg-accent/90">
               <BookOpenText className="size-5 shrink-0" aria-hidden />
               <span className="flex min-w-0 flex-col">
                 <span>{t('read')}</span>
@@ -109,7 +109,7 @@ function FileLink({ url, name, detail, open }: { url: string; name: string; deta
       </span>
     </>
   )
-  const className = 'lvn-chip group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition hover:border-accent/50 hover:shadow-md'
+  const className = 'lvn-chip group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-accent/50 hover:shadow-md'
   if (!href) return <div className={className}>{body}</div>
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={className}>

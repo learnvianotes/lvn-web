@@ -197,7 +197,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
                 type="button"
                 disabled={off || spent || running.loading}
                 onClick={() => void run(task)}
-                className="flex flex-col items-start gap-1 rounded-xl border border-border bg-surface p-3 text-left transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+                className="flex flex-col items-start gap-1 rounded-xl border border-border bg-surface p-3 text-left transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
               >
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <Icon className="size-4 text-accent" aria-hidden />
@@ -213,7 +213,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
               type="button"
               disabled={off || spent || running.loading}
               onClick={() => void run('TRANSCRIBE', 'ENGLISH', [r.id])}
-              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3 text-left transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3 text-left transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
             >
               <Mic className="size-4 shrink-0 text-accent" aria-hidden />
               <span className="flex flex-col">

@@ -39,7 +39,7 @@ export function ProfileTabs({ teacher, notes, skills }: { teacher: boolean; note
           <ul className="grid gap-3 sm:grid-cols-2">
             {shown.map((n) => (
               <li key={n.id}>
-                <Link href={publicNotePath(n)} className="flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/50 hover:shadow-md">
+                <Link href={publicNotePath(n)} className="flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/50 hover:shadow-md">
                   <FileText className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
                   <span className="flex min-w-0 flex-col">
                     <span className="font-semibold">{n.title || t('untitled')}</span>
