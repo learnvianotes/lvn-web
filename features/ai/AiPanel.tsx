@@ -7,10 +7,10 @@ import {
   BookOpenCheck,
   Brain,
   Check,
-  CircleHelp,
+  CircleQuestionMark,
   CodeXml,
   Copy,
-  FilePlus2,
+  FilePlusCorner,
   Languages,
   Layers,
   Lightbulb,
@@ -21,18 +21,20 @@ import {
   Plus,
   RotateCcw,
   Mic,
-  Wand2,
+  WandSparkles,
   ScrollText,
   SearchCheck,
   SpellCheck,
-  Sparkles,
-  Trash2,
+  TextQuote,
+  Trash,
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { limitMessageFromUserErrors, refusalMessage } from '@/lib/limit-error'
 import { Dialog } from '@/components/ui/dialog'
 import {
   AiArtifactDocument,
@@ -49,9 +51,12 @@ import {
 } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
 import { cn } from '@/lib/cn'
+import { AiResultPanel } from './AiAction'
 import { CardView } from '@/features/notes/render/CardView'
+import { PracticeQuizProvider } from '@/features/notes/render/interactive'
 import { Markdown } from '@/features/notes/render/Markdown'
 import { AnswerList, AskForm } from './AskAi'
+import { trackFeature } from '@/lib/analytics'
 
 /**
  * AI tasks on a note (lvn-backend ADR-0059): one menu for every task, results beside the note that only their maker
@@ -65,7 +70,7 @@ const TASKS: { task: AiTask; icon: LucideIcon }[] = [
   { task: 'SUMMARIZE', icon: ScrollText },
   { task: 'KEY_CONCEPTS', icon: Lightbulb },
   { task: 'EXPLAIN_SIMPLY', icon: Brain },
-  { task: 'PRACTICE_QUESTIONS', icon: CircleHelp },
+  { task: 'PRACTICE_QUESTIONS', icon: CircleQuestionMark },
   { task: 'FIND_MISTAKES', icon: SearchCheck },
   { task: 'EXPLAIN_CODE', icon: CodeXml },
   { task: 'FLASHCARDS', icon: Layers },
@@ -73,7 +78,7 @@ const TASKS: { task: AiTask; icon: LucideIcon }[] = [
   { task: 'REVISION_SHEET', icon: BookOpenCheck },
   { task: 'CREATE_NOTES', icon: NotebookPen },
   { task: 'OUTLINE_TO_NOTE', icon: ListTree },
-  { task: 'QUICK_NOTE', icon: Wand2 },
+  { task: 'QUICK_NOTE', icon: WandSparkles },
   { task: 'CLEAN_UP', icon: SpellCheck },
 ]
 /** Work on the person's own words: only for people who may edit the note. */
@@ -122,11 +127,14 @@ export function useRunAiTask(noteId: string, enabled = true) {
   const state = useQuery(AiStateDocument, { skip: !enabled, fetchPolicy: 'cache-and-network' })
   const [runTask, running] = useMutation(RunAiTaskDocument)
   const [error, setError] = useState<string | null>(null)
+  const [limit, setLimit] = useState(false)
   const status = state.data?.aiStatus
   const allowance = state.data?.myAiAllowance
   const spent = allowance?.limitToday != null && allowance.usedToday >= allowance.limitToday
   const run = async (task: AiTask, lang: AiLanguage = 'ENGLISH', cardIds?: string[]) => {
+    trackFeature('ai_assist')
     setError(null)
+    setLimit(false)
     const { result, error } = await attempt(() =>
       runTask({
         variables: { input: { noteId, task, language: lang, ...(cardIds ? { cardIds } : {}) } },
@@ -141,13 +149,15 @@ export function useRunAiTask(noteId: string, enabled = true) {
       }),
     )
     const payload = result?.data?.runAiTask
-    setError(problemOf(error, payload, t('runFailed')))
+    const hit = limitMessageFromUserErrors(payload?.userErrors) ?? refusalMessage(error)
+    setLimit(!!hit)
+    setError(hit ?? problemOf(error, payload, t('runFailed')))
     // The allowance changed, or AI turned out to be off: ask again.
     if (payload?.userErrors.length) void state.refetch()
   }
   /** Unknown (not answered yet, or failed) counts as off: no control is offered that cannot work. */
   const available = !!status?.available
-  return { status, allowance, spent, off: status ? !status.available : false, available, run, running: running.loading, error }
+  return { status, allowance, spent, off: status ? !status.available : false, available, run, running: running.loading, error, limit }
 }
 
 export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAddedToNote, onTextMended }: AiPanelProps) {
@@ -156,7 +166,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
   const list = useQuery(NoteAiArtifactsDocument, { variables: { noteId }, skip: !open, fetchPolicy: 'cache-and-network' })
   const ai = useRunAiTask(noteId, open)
   const [language, setLanguage] = useState<AiLanguage>('HINDI')
-  const { status, allowance, spent, off, run, error } = ai
+  const { status, allowance, spent, off, run, error, limit } = ai
   const running = { loading: ai.running }
   const artifacts = list.data?.note?.aiArtifacts ?? []
   const tasks = TASKS.filter(({ task }) => (DERIVATIVE.has(task) ? canFork : task === 'EXPLAIN_CODE' ? hasCode !== false : EDITORS_ONLY.has(task) ? canEdit : true))
@@ -168,7 +178,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
       <div className="flex flex-col gap-5">
         <p className="text-sm text-muted">{t('lead')}</p>
         {status && !status.available ? (
-          <p role="alert" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+          <p role="alert" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">
             {t(`unavailable.${status.reason ?? 'NOT_CONFIGURED'}`)}
           </p>
         ) : null}
@@ -187,7 +197,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
                 type="button"
                 disabled={off || spent || running.loading}
                 onClick={() => void run(task)}
-                className="flex flex-col items-start gap-1 rounded-xl border border-border bg-surface p-3 text-left transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+                className="flex flex-col items-start gap-1 rounded-xl border border-border bg-surface p-3 text-left transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
               >
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <Icon className="size-4 text-accent" aria-hidden />
@@ -203,7 +213,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
               type="button"
               disabled={off || spent || running.loading}
               onClick={() => void run('TRANSCRIBE', 'ENGLISH', [r.id])}
-              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3 text-left transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3 text-left transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
             >
               <Mic className="size-4 shrink-0 text-accent" aria-hidden />
               <span className="flex flex-col">
@@ -229,20 +239,20 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
             </Button>
           </div>
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
+            limit ? <LimitNotice>{error}</LimitNotice> : (
+              <p role="alert" className="text-sm text-bad">
+                {error}
+              </p>
+            )
           ) : null}
         </section>
 
-        <section aria-label={t('results')} className="flex flex-col gap-3">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('results')}</h3>
+        <AiResultPanel empty={!!list.data && !artifacts.length}>
           {list.loading && !list.data ? <p className="text-sm text-muted">{t('loading')}</p> : null}
-          {list.data && !artifacts.length ? <p className="text-sm text-muted">{t('noResults')}</p> : null}
           {artifacts.map((a) => (
             <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void run(a.task, a.language)} onAddedToNote={onAddedToNote} onTextMended={onTextMended} />
           ))}
-        </section>
+        </AiResultPanel>
       </div>
     </Dialog>
   )
@@ -260,7 +270,7 @@ export function Allowance({ used, limit, resetsAt }: { used: number; limit: numb
         {share < 1 ? <span>{t('allowanceResets', { time })}</span> : null}
       </div>
       <div role="meter" aria-label={t('allowanceLabel')} aria-valuemin={0} aria-valuemax={limit} aria-valuenow={Math.min(used, limit)} className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-        <div className={cn('h-full rounded-full', share >= 1 ? 'bg-red-500' : share >= 0.8 ? 'bg-amber-500' : 'bg-accent')} style={{ width: `${share * 100}%` }} />
+        <div className={cn('h-full rounded-full', share >= 1 ? 'bg-bad' : share >= 0.8 ? 'bg-warn' : 'bg-accent')} style={{ width: `${share * 100}%` }} />
       </div>
     </div>
   )
@@ -303,10 +313,10 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
   return (
     <article aria-label={label} data-ai-status={a.status} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <header className="flex items-center gap-2">
-        <Sparkles className="size-4 shrink-0 text-accent" aria-hidden />
+        <TextQuote className="size-4 shrink-0 text-accent" aria-hidden />
         <h4 className="min-w-0 flex-1 truncate text-sm font-semibold">{label}</h4>
         {a.keptAt ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent">
+          <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs text-accent">
             <Check className="size-3" aria-hidden />
             {t('kept')}
           </span>
@@ -318,7 +328,7 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
         ) : null}
         {pending ? null : (
           <Button variant="ghost" size="icon" aria-label={t('delete')} title={t('delete')} disabled={removing.loading} onClick={() => void drop()}>
-            <Trash2 className="size-4" aria-hidden />
+            <Trash className="size-4" aria-hidden />
           </Button>
         )}
       </header>
@@ -331,7 +341,7 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
       ) : null}
       {a.status === 'FAILED' ? (
         <div className="flex flex-wrap items-center gap-2">
-          <p role="alert" className="flex-1 text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="flex-1 text-sm text-bad">
             {a.error ?? t('runFailed')}
           </p>
           <Button size="sm" variant="secondary" className="gap-1.5" onClick={onRetry}>
@@ -395,7 +405,9 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
           <li key={i} className={cn('flex gap-3 rounded-xl border p-3 transition', chosen.has(i) ? 'border-accent/40 bg-bg' : 'border-border bg-surface-2 opacity-60')}>
             <input type="checkbox" checked={chosen.has(i)} onChange={() => toggle(i)} aria-label={t('pick', { n: i + 1 })} className="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
             <div className="min-w-0 flex-1 text-sm">
-              <CardView id={`${a.id}-${i}`} type={c.type as CardType} content={c.content} />
+              <PracticeQuizProvider>
+                <CardView id={`${a.id}-${i}`} type={c.type as CardType} content={c.content} />
+              </PracticeQuizProvider>
             </div>
           </li>
         ))}
@@ -408,7 +420,7 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
           </Button>
         ) : null}
         <Button size="sm" variant={intoThisNote ? 'secondary' : 'primary'} className="gap-1.5" disabled={!chosen.size || keeping.loading} onClick={() => void save('NEW_NOTE')}>
-          <FilePlus2 className="size-4" aria-hidden />
+          <FilePlusCorner className="size-4" aria-hidden />
           {t('saveAsNote', { n: chosen.size })}
         </Button>
       </div>
@@ -427,7 +439,7 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -500,7 +512,7 @@ function ApplyChanges({ artifact: a, onChanged }: { artifact: Artifact; onChange
               <input type="checkbox" checked={chosen.has(c.cardId)} onChange={() => toggle(c.cardId)} aria-label={t('pick', { n: i + 1 })} className="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
             )}
             <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-              <p className="whitespace-pre-wrap break-words text-muted line-through decoration-red-500/60">
+              <p className="whitespace-pre-wrap break-words text-muted line-through decoration-bad/60">
                 <span className="sr-only">{t('before')}: </span>
                 {c.before}
               </p>
@@ -527,7 +539,7 @@ function ApplyChanges({ artifact: a, onChanged }: { artifact: Artifact; onChange
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -540,7 +552,7 @@ export function AiButton({ onClick, className }: { onClick: () => void; classNam
   const t = useTranslations('ai')
   return (
     <Button variant="secondary" size="sm" className={cn('gap-1.5', className)} aria-label={t('title')} onClick={onClick}>
-      <Sparkles className="size-4 text-accent" aria-hidden />
+      <TextQuote className="size-4 text-accent" aria-hidden />
       <span className="hidden sm:inline">{t('button')}</span>
     </Button>
   )
@@ -555,7 +567,7 @@ export function AiAccountSection({ className }: { className?: string }) {
   return (
     <section className={className} aria-labelledby="ai-allowance">
       <h2 id="ai-allowance" className="flex items-center gap-2 text-lg font-semibold">
-        <Sparkles className="size-4 text-accent" aria-hidden />
+        <TextQuote className="size-4 text-accent" aria-hidden />
         {t('account.title')}
       </h2>
       <p className="text-sm text-muted">{t('account.lead')}</p>

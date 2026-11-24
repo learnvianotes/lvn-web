@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { AlertTriangle, CheckCircle2, Download, FileArchive, Loader2, Upload } from 'lucide-react'
+import { TriangleAlert, CircleCheck, Download, FileArchive, LoaderCircle, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
@@ -16,7 +16,9 @@ import {
   RequestDataExportDocument,
   type NoteImportFieldsFragment,
 } from '@/graphql/generated/graphql'
+import { trackUsage } from '@/lib/analytics'
 import { formatBytes, putToStorage, UploadError } from '@/features/notes/media'
+import { safeLinkHref } from '@/lib/http-url'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 
 const IMPORT_TYPES: Record<string, string> = { zip: 'application/zip', md: 'text/markdown', markdown: 'text/markdown', txt: 'text/plain' }
@@ -31,7 +33,7 @@ export function YourData() {
   const uploadsOn = useUploadsEnabled()
   return (
     <section id="your-data" aria-labelledby="your-data-heading" className="flex scroll-mt-20 flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="your-data-heading" className="text-lg font-bold">
+      <h2 id="your-data-heading" className="text-lg font-semibold">
         {t('title')}
       </h2>
       <ExportPart />
@@ -54,6 +56,7 @@ function ExportPart() {
   useQuery(MyDataExportsDocument, { skip: !preparing, pollInterval: 4_000, fetchPolicy: 'network-only' })
   const [request, requesting] = useMutation(RequestDataExportDocument, { refetchQueries: [MyDataExportsDocument] })
   const [error, setError] = useState<string | null>(null)
+  const downloadHref = latest?.status === 'READY' ? safeLinkHref(latest.downloadUrl) : null
 
   return (
     <div className="flex flex-col gap-3">
@@ -61,11 +64,11 @@ function ExportPart() {
         <h3 className="font-semibold">{t('heading')}</h3>
         <p className="text-sm text-muted">{t('lead')}</p>
       </div>
-      {latest?.status === 'READY' && latest.downloadUrl ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
-          <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
+      {downloadHref && latest?.status === 'READY' ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-good/30 bg-good/10 p-3 text-sm">
+          <CircleCheck className="size-5 text-good" aria-hidden />
           <span className="flex-1">{t('ready', { size: formatBytes(latest.sizeBytes ?? 0), date: new Date(latest.expiresAt!).toLocaleDateString() })}</span>
-          <a href={latest.downloadUrl} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
+          <a href={downloadHref} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-[10px] bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
             <Download className="size-4" aria-hidden />
             {t('download')}
           </a>
@@ -73,13 +76,13 @@ function ExportPart() {
       ) : null}
       {preparing ? (
         <p role="status" className="flex items-center gap-2 text-sm text-muted">
-          <Loader2 className="size-4 animate-spin" aria-hidden />
+          <LoaderCircle className="size-4 animate-spin" aria-hidden />
           {t('preparing')}
         </p>
       ) : null}
-      {latest?.status === 'FAILED' ? <p className="text-sm text-red-600 dark:text-red-400">{t('failed')}</p> : null}
+      {latest?.status === 'FAILED' ? <p className="text-sm text-bad">{t('failed')}</p> : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -161,8 +164,8 @@ function ImportPart() {
       {uploading !== null ? <Progress label={t('uploading')} value={uploading * 100} /> : null}
       {running ? <Progress label={t('importing', { file: latest!.fileName })} value={latest!.progress} /> : null}
       {latest?.status === 'NEEDS_CONFIRMATION' ? (
-        <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
-          <AlertTriangle className="size-5" aria-hidden />
+        <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
+          <TriangleAlert className="size-5" aria-hidden />
           <span className="flex-1">{t('duplicate', { file: latest.fileName })}</span>
           <Button size="sm" disabled={confirming.loading} onClick={() => void confirm({ variables: { id: latest.id } })}>
             {t('importAgain')}
@@ -171,7 +174,7 @@ function ImportPart() {
       ) : null}
       {latest?.status === 'DONE' || latest?.status === 'FAILED' ? <Report imp={latest} /> : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -184,7 +187,7 @@ function Progress({ label, value }: { label: string; value: number }) {
     <div role="status" className="flex flex-col gap-1.5">
       <span className="text-sm text-muted">{label}</span>
       <div className="h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-        <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(value)}%` }} />
+        <div className="h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(value)}%` }} />
       </div>
     </div>
   )
@@ -195,7 +198,7 @@ function Report({ imp }: { imp: NoteImportFieldsFragment }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-bg p-3 text-sm">
       {imp.status === 'FAILED' ? (
-        <p className="font-medium text-red-600 dark:text-red-400">{imp.error ?? t('failed')}</p>
+        <p className="font-medium text-bad">{imp.error ?? t('failed')}</p>
       ) : (
         <p className="font-medium">{t('done', { n: imp.created, file: imp.fileName })}</p>
       )}
@@ -203,7 +206,7 @@ function Report({ imp }: { imp: NoteImportFieldsFragment }) {
         <ul className="flex flex-wrap gap-2">
           {imp.notes.slice(0, 12).map((n) => (
             <li key={n.id}>
-              <Link href={`/notes/${n.id}`} className="rounded-full bg-accent-soft px-2.5 py-1 text-accent hover:underline">
+              <Link href={`/notes/${n.id}`} className="rounded-[10px] bg-accent-soft px-2.5 py-1 text-accent hover:underline">
                 {n.title || t('untitled')}
               </Link>
             </li>

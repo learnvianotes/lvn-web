@@ -21,6 +21,8 @@ import {
   type FocusSessionFieldsFragment,
 } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
+import { trackFeature } from '@/lib/analytics'
+import { meetHref } from './meet'
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
@@ -58,20 +60,21 @@ export function FocusMode() {
     return () => clearInterval(timer)
   }, [session])
   const phase = session ? phaseOf(session, now) : null
+  const sessionMeet = meetHref(session?.meetUrl)
 
   return (
     <section aria-labelledby="focus-mode" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="focus-mode" className="text-lg font-bold">
+      <h2 id="focus-mode" className="text-lg font-semibold">
         {t('title')}
       </h2>
       {session && phase ? (
         <div className="flex flex-col gap-3">
-          <p role="timer" aria-live="off" className="text-4xl font-extrabold tabular-nums">
+          <p role="timer" aria-live="off" className="text-4xl font-semibold tabular-nums">
             {clock(phase.left)}
           </p>
           <p className="text-sm text-muted">{phase.phase === 'FOCUS' ? t('focusing', { minutes: session.plannedMinutes }) : phase.phase === 'BREAK' ? t('resting') : t('done')}</p>
-          {session.meetUrl ? (
-            <a href={session.meetUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-accent hover:underline">
+          {sessionMeet ? (
+            <a href={sessionMeet} target="_blank" rel="noreferrer" className="text-sm font-medium text-accent hover:underline">
               {t('openMeet')}
             </a>
           ) : null}
@@ -93,7 +96,13 @@ export function FocusMode() {
             e.preventDefault()
             setProblem(null)
             setCounted(null)
-            const res = await start({ variables: { input: { minutes, breakMinutes, topicKey: topic?.key ?? null, meetUrl: meetUrl.trim() || null } } })
+            const trimmedMeet = meetUrl.trim()
+            if (trimmedMeet && !meetHref(trimmedMeet)) {
+              setProblem(t('meetInvalid'))
+              return
+            }
+            trackFeature('focus')
+            const res = await start({ variables: { input: { minutes, breakMinutes, topicKey: topic?.key ?? null, meetUrl: trimmedMeet || null } } })
             const message = res.data?.startFocusSession.userErrors[0]?.message
             if (message) setProblem(message)
           }}
@@ -198,7 +207,7 @@ export function Buddies() {
   if (!list) return error && !data ? <LoadFailed message={t('loadFailed')} onRetry={refetch} /> : null
   return (
     <section aria-labelledby="rhythm-buddies" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="rhythm-buddies" className="text-lg font-bold">
+      <h2 id="rhythm-buddies" className="text-lg font-semibold">
         {t('title')}
       </h2>
       <p className="text-sm text-muted">{t('lead')}</p>
@@ -217,12 +226,14 @@ export function Buddies() {
       ))}
       {!list.buddies.length ? <p className="text-sm text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-2">
-        {list.buddies.map((b) => (
+        {list.buddies.map((b) => {
+          const join = meetHref(b.meetUrl)
+          return (
           <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
             <span className="flex flex-col">
               <span className="font-medium">
                 {b.user.displayName}
-                {b.studyingNow ? <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-fg">{t('studyingNow')}</span> : null}
+                {b.studyingNow ? <span className="ml-2 rounded-[10px] bg-accent px-2 py-0.5 text-xs font-semibold text-accent-fg">{t('studyingNow')}</span> : null}
               </span>
               <span className="text-muted">
                 {b.studyingNow && b.topicTitle ? `${t('onTopic', { title: b.topicTitle })} · ` : ''}
@@ -231,8 +242,8 @@ export function Buddies() {
               <span className="text-muted">{t('together', { counted: b.together.countedDays, target: b.together.target })}</span>
             </span>
             <span className="flex items-center gap-2">
-              {b.studyingNow && b.meetUrl ? (
-                <a href={b.meetUrl} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
+              {b.studyingNow && join ? (
+                <a href={join} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
                   {t('join')}
                 </a>
               ) : null}
@@ -241,7 +252,8 @@ export function Buddies() {
               </button>
             </span>
           </li>
-        ))}
+          )
+        })}
       </ul>
       {list.sent.map((s) => (
         <p key={s.id} className="flex items-center justify-between text-sm text-muted">

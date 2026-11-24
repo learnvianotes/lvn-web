@@ -170,7 +170,7 @@ function Actions({ id, handle }: { id: string; handle: string }) {
       </div>
       {r.restricted ? <span className="text-xs text-muted">{t('restrictedNote')}</span> : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -226,7 +226,7 @@ function MoreMenu({ open, onToggle, label, children }: { open: boolean; onToggle
 
 function MenuItem({ onClick, danger, children }: { onClick: () => void; danger?: boolean; children: React.ReactNode }) {
   return (
-    <button role="menuitem" type="button" onClick={onClick} className={`px-4 py-2 text-left text-sm hover:bg-surface-2 ${danger ? 'text-red-600 dark:text-red-400' : ''}`}>
+    <button role="menuitem" type="button" onClick={onClick} className={`px-4 py-2 text-left text-sm hover:bg-surface-2 ${danger ? 'text-bad' : ''}`}>
       {children}
     </button>
   )

@@ -7,7 +7,9 @@
 #     --build-arg NEXT_PUBLIC_API_URL=https://beta.learnvianotes.in/graphql .
 # deploy.yml builds it per environment and pushes it to GHCR (lvn-backend ADR-0096).
 
-ARG NODE_IMAGE=node:22-bookworm-slim
+# 22.23.4 is the Node.js 22 security release (CVE-2026-111497 Brotli RCE, CVE-2026-105482, CVE-2026-106069).
+# A floating 22 tag can still resolve to an older cached build.
+ARG NODE_IMAGE=node:22.23.4-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
@@ -32,6 +34,8 @@ ARG NEXT_PUBLIC_GITHUB_CLIENT_ID=
 ARG NEXT_PUBLIC_GITHUB_AUTHORIZE_URL=https://github.com/login/oauth/authorize
 ARG NEXT_PUBLIC_LINKEDIN_CLIENT_ID=
 ARG NEXT_PUBLIC_LINKEDIN_AUTHORIZE_URL=https://www.linkedin.com/oauth/v2/authorization
+# /version's commit. Omitted builds say "unknown"; deploy.yml passes the git SHA.
+ARG NEXT_PUBLIC_GIT_SHA=unknown
 RUN pnpm build
 
 FROM ${NODE_IMAGE}

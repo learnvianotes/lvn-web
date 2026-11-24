@@ -18,17 +18,34 @@ its variables empty: beta then offers email sign-in only.
    and `LVN_FIREBASE_PROJECT_ID` in lvn-backend (§4).
 3. Authentication → Sign-in method: enable Google only (the launch shows email and Google; email accounts are the
    API's own).
-4. Authentication → Settings → Authorized domains: add `beta.learnvianotes.in`.
+4. Authentication → Settings → Authorized domains: add `beta.learnvianotes.in` (and `localhost` for local sign-in).
+5. Google Cloud Console → APIs & Services → Credentials → the OAuth **web** client Firebase created for this
+   project (do not copy its client id into the repo). On that client:
+   - Authorized JavaScript origins: `https://beta.learnvianotes.in` and `http://localhost:3000`.
+   - Authorized redirect URIs: keep `https://<project-id>.firebaseapp.com/__/auth/handler` and add
+     `https://beta.learnvianotes.in/__/auth/handler`.
+   The site serves Firebase's helper at `/__/auth` on its own host (`NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` stays
+   `<project-id>.firebaseapp.com`, the proxy's upstream). Without that redirect URI, Google refuses the sign-in
+   with `redirect_uri_mismatch`. Without the JavaScript origin, a Google Identity Services popup fails with
+   `origin_mismatch`.
+6. If the OAuth consent screen is in Testing, only listed test users can finish. Publish it, or add each Google
+   account as a test user.
+7. lvn-backend's `LVN_FIREBASE_PROJECT_ID` for beta is this same project. A mismatch makes every Google token fail
+   verification (`Google sign-in could not be verified`).
 
 The project can stay on the free Spark plan: only Authentication is used (ADR-0007).
 
 ## 2. Production's Firebase project
 
-`config/firebase-projects.json` names `learnvianotes-2e2d7`, the old site's project, so returning Google users keep
-their accounts (ADR-0007). Confirm this before launch (see [launch.md](../launch.md)).
+`config/firebase-projects.json` names `learnvianotes-in`. Production now uses this new project (owner's decision,
+2026-11-03), not the old site's, so Google accounts from the old site's project are not carried over automatically
+(see [launch.md](../launch.md)).
 
 - Add `www.learnvianotes.in` to its Authorized domains, if it isn't there already.
+- On its OAuth web client, add JavaScript origin `https://www.learnvianotes.in` and redirect URI
+  `https://www.learnvianotes.in/__/auth/handler`, and keep the existing `firebaseapp.com` handler (same as §1).
 - Its web config goes into the `production` environment's variables, as in §1.
+  `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` stays `<project-id>.firebaseapp.com` (`learnvianotes-in.firebaseapp.com`).
 - A production build accepts no other project, and no other build accepts this one.
 
 ## 3. Google Analytics (optional, ADR-0092)
@@ -74,8 +91,8 @@ secret `LVN_BACKEND_READ_TOKEN` (read access to `learnvianotes/lvn-backend`) is 
 
 ## 5. The grievance mailbox
 
-`learnvianotes.in` has no MX record today, so mail to it bounces. The Grievance page needs a working address, e.g.
-`grievance@learnvianotes.in`; it goes into `config/legal.ts` → `LEGAL.email`.
+`learnvianotes.in` has no MX record today, so mail to it bounces. The Grievance page needs a working address,
+`support@learnvianotes.in` (`lib/site.ts`; `config/legal.ts` → `LEGAL.email` uses that constant).
 
 DNS is at GoDaddy. In either option:
 
@@ -85,7 +102,7 @@ DNS is at GoDaddy. In either option:
 
 | Option | DNS records to add | Replies come from |
 | --- | --- | --- |
-| Zoho Mail free plan | the verification TXT, MX `mx.zoho.in` / `mx2.zoho.in` / `mx3.zoho.in`, SPF TXT, DKIM TXT (exact values on Zoho's setup page) | `grievance@learnvianotes.in` |
+| Zoho Mail free plan | the verification TXT, MX `mx.zoho.in` / `mx2.zoho.in` / `mx3.zoho.in`, SPF TXT, DKIM TXT (exact values on Zoho's setup page) | `support@learnvianotes.in` |
 | Forwarding to Gmail (a forwarding service such as ImprovMX) | the service's MX records and SPF TXT | your Gmail, unless you set up “Send mail as” with SMTP |
 
 *(Unverified)* Zoho's free-plan limits, and whether forwarding services include SMTP on their free tier. The API's own

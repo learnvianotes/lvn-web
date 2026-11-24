@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { GatedNotice } from '@/components/auth/GatedNotice'
+import { useUnverifiedGates } from '@/components/auth/useUnverifiedGates'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { putToStorage, UploadError } from '@/features/notes/media'
@@ -40,6 +42,7 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
   const fileInput = useRef<HTMLInputElement>(null)
   // A cover from this device is an upload (lvn-backend ADR-0097); a cover found at the link or ISBN is not.
   const uploadsOn = useUploadsEnabled()
+  const submitHeld = useUnverifiedGates().gated('resource.submit') && !resource
   const [url, setUrl] = useState(resource?.url ?? '')
   const [isbn, setIsbn] = useState(resource?.isbn ?? '')
   const [type, setType] = useState<ResourceType | ''>(resource?.type ?? '')
@@ -138,7 +141,7 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
       }}
     >
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{resource ? t('editTitle') : t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{resource ? t('editTitle') : t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
 
@@ -258,7 +261,8 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
 
       {error ? <Alert tone="error">{error}</Alert> : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={!ready}>
+        {!resource ? <GatedNotice feature="resource.submit" /> : null}
+        <Button type="submit" disabled={!ready || submitHeld}>
           {resource ? (resource.status === 'REJECTED' ? t('saveAgain') : t('save')) : t('send')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => router.back()}>
@@ -287,7 +291,7 @@ function TopicPicker({ picked, onChange }: { picked: Topic[]; onChange: (topics:
       {picked.length ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((p) => (
-            <li key={p.id} className="flex items-center gap-1 rounded-full bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
+            <li key={p.id} className="flex items-center gap-1 rounded-[10px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
               {p.title}
               <button type="button" aria-label={t('removeTopic', { title: p.title })} className="rounded-full px-2 hover:bg-accent/10" onClick={() => onChange(picked.filter((x) => x.id !== p.id))}>
                 ×

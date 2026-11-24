@@ -7,5 +7,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ModerationPage() {
-  return <ModerationQueue />
+  return (
+    <div className="mx-auto w-full max-w-5xl">
+      <ModerationQueue />
+    </div>
+  )
 }

@@ -3,7 +3,10 @@
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { useFormatter, useTranslations } from 'next-intl'
-import { useId, useState } from 'react'
+import { useState } from 'react'
+import { modelsForUse, pickerModels, presetsAsModels, routeModelUse, type ListedModel } from '@/features/ai/admin/catalog'
+import { ModelSelect } from '@/features/ai/admin/ModelSelect'
+import type { AiModelUse } from '@/graphql/generated/graphql'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -27,20 +30,25 @@ type Connection = Settings['connections'][number]
 type Preset = Settings['presets'][number]
 type Test = { ok: boolean; message: string; latencyMs: number; models: string[] }
 
-const SELECT = 'h-11 w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg'
+const SELECT = 'h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-fg'
 /** Prices travel as millionths of a dollar per million tokens; people read and write dollars per million tokens. */
 const toDollars = (micro: number) => (micro ? String(micro / 1_000_000) : '')
 const toMicro = (dollars: string) => (dollars.trim() ? Math.round(Number(dollars) * 1_000_000) : 0)
-/** The provider's own hints first, then every model the account lists, each once. */
-const merged = (...lists: (readonly string[] | undefined)[]) => [...new Set(lists.flatMap((l) => l ?? []))]
 
 /**
- * Every model a saved connection's account lists (lvn-backend Query.aiConnectionModels): asked once per connection and
- * kept for the visit; nothing is asked for a connection not saved yet.
+ * Models a saved connection's account lists (lvn-backend Query.aiConnectionModels): all of them, and one picker per use.
+ * Asked once per connection and kept for the visit; nothing is asked for a connection not saved yet.
  */
-function useAccountModels(connectionId: string | null | undefined) {
+function useAccountCatalog(connectionId: string | null | undefined) {
   const { data, loading } = useQuery(AiConnectionModelsDocument, { variables: { input: { id: connectionId ?? '' } }, skip: !connectionId, fetchPolicy: 'cache-first' })
-  return { models: data?.aiConnectionModels ?? [], loading: !!connectionId && loading }
+  return { catalog: data?.aiConnectionModels ?? null, loading: !!connectionId && !data && loading }
+}
+
+/** Account picker when the catalog has arrived; preset names until then. Null while the catalog is loading. */
+function modelsFor(catalog: { pickers: { use: AiModelUse; models: ListedModel[] }[] } | null, loading: boolean, use: AiModelUse, presets: readonly string[]): ListedModel[] | null {
+  if (catalog) return modelsForUse(catalog.pickers, use)
+  if (loading) return null
+  return presetsAsModels(presets, use)
 }
 
 /**
@@ -134,7 +142,7 @@ export function AiProviders() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
 
@@ -157,7 +165,7 @@ export function AiProviders() {
 
       <section aria-labelledby="ai-now" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
         <h2 id="ai-now" className="text-lg font-semibold">{t('whoAnswers')}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
           <Field label={t('chats')} hint={t('chatsHint')}>
             <select className={SELECT} value={s.chatConnectionId ?? ''} disabled={settingDefaults.loading} onChange={(e) => void choose({ chatConnectionId: e.target.value || null, embedConnectionId: s.embedConnectionId ?? null })}>
               <option value="">{nameOf(null, 'chat')}</option>
@@ -213,21 +221,21 @@ export function AiProviders() {
                           <summary className="cursor-pointer opacity-80">{t('modelsListed', { count: result.models.length })}</summary>
                           <ul aria-label={t('modelsListLabel', { name: c.label })} className="mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-surface px-3 py-2 font-mono text-fg">
                             {result.models.map((m) => (
-                              <li key={m}>{m}</li>
+                              <li key={m} className="break-all">{m}</li>
                             ))}
                           </ul>
                         </details>
                       ) : null}
                     </Alert>
                   ) : null}
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="secondary" disabled={result === 'running'} onClick={() => void test(c.id)}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <Button size="sm" variant="secondary" className="h-11 w-full sm:w-auto" disabled={result === 'running'} onClick={() => void test(c.id)}>
                       {result === 'running' ? t('testing') : t('test')}
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setEditing({ kind: c.kind, connection: c })} aria-label={t('editNamed', { name: c.label })}>
+                    <Button size="sm" variant="secondary" className="h-11 w-full sm:w-auto" onClick={() => setEditing({ kind: c.kind, connection: c })} aria-label={t('editNamed', { name: c.label })}>
                       {t('edit')}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void remove(c)} aria-label={t('deleteNamed', { name: c.label })}>
+                    <Button size="sm" variant="ghost" className="h-11 w-full sm:w-auto" onClick={() => void remove(c)} aria-label={t('deleteNamed', { name: c.label })}>
                       {t('delete')}
                     </Button>
                   </div>
@@ -240,7 +248,7 @@ export function AiProviders() {
           <p className="text-sm font-medium">{t('add')}</p>
           <div className="flex flex-wrap gap-2">
             {s.presets.map((p) => (
-              <Button key={p.kind} size="sm" variant="secondary" className="h-auto min-h-9 whitespace-normal py-1.5 text-left" onClick={() => setEditing({ kind: p.kind, connection: null })}>
+              <Button key={p.kind} size="sm" variant="secondary" className="h-auto min-h-11 max-w-full whitespace-normal py-2 text-left" onClick={() => setEditing({ kind: p.kind, connection: null })}>
                 {p.name}
               </Button>
             ))}
@@ -248,14 +256,13 @@ export function AiProviders() {
         </div>
       </section>
 
-      <Routes settings={s} onSaved={show} onFailed={failure} tested={tests} />
+      <Routes settings={s} onSaved={show} onFailed={failure} />
 
       {editing ? (
         <ConnectionDialog
           preset={presetOf(editing.kind)}
           connection={editing.connection}
           keysCanBeSaved={s.keysCanBeSaved}
-          models={(editing.connection && tests[editing.connection.id] !== 'running' ? (tests[editing.connection.id] as Test | undefined)?.models : undefined) ?? []}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null)
@@ -268,25 +275,24 @@ export function AiProviders() {
 }
 
 function Badge({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
-  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
+  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
 }
 
 function Row({ term, value }: { term: string; value: string }) {
   return (
     <div className="flex min-w-0 gap-2">
       <dt className="shrink-0 text-muted">{term}</dt>
-      <dd className="truncate">{value}</dd>
+      <dd className="min-w-0 break-all">{value}</dd>
     </div>
   )
 }
 
 /** Adding or changing one connection; the key field is write-only. */
-function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models: tested, onClose, onSaved }: { preset: Preset; connection: Connection | null; keysCanBeSaved: boolean; models: string[]; onClose: () => void; onSaved: () => void }) {
+function ConnectionDialog({ preset, connection: c, keysCanBeSaved, onClose, onSaved }: { preset: Preset; connection: Connection | null; keysCanBeSaved: boolean; onClose: () => void; onSaved: () => void }) {
   const t = useTranslations('aiAdmin')
-  const chatListId = useId()
-  const embedListId = useId()
-  const account = useAccountModels(c?.id)
-  const models = merged(account.models, tested)
+  const account = useAccountCatalog(c?.id)
+  const chatModels = modelsFor(account.catalog, account.loading, 'CHAT', preset.chatModels)
+  const embedModels = modelsFor(account.catalog, account.loading, 'EMBEDDING', preset.embedModels)
   const [save, saving] = useMutation(SaveAiConnectionDocument)
   const [form, setForm] = useState({
     label: c?.label ?? preset.name.split(' (')[0]!,
@@ -334,15 +340,12 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models: teste
       setErrors({ form: CombinedGraphQLErrors.is(err) ? (err.errors[0]?.message ?? t('failed')) : t('failed') })
     }
   }
-  // Both fields offer every model the account lists; each field's own hints come first.
-  const chatSuggestions = merged(preset.chatModels, models, preset.embedModels)
-  const embedSuggestions = merged(preset.embedModels, models, preset.chatModels)
-  const listNote = !c ? t('modelsAfterSave') : account.loading ? t('modelsLoading') : models.length ? t('modelsOffered', { count: models.length }) : t('modelsNone')
+  const listNote = !c ? t('modelsAfterSave') : account.loading ? t('modelsLoading') : null
   return (
-    <Dialog open onClose={onClose} title={c ? t('editTitle', { name: c.label }) : t('addTitle', { name: preset.name })} wide>
+    <Dialog open onClose={onClose} title={c ? t('editTitle', { name: c.label }) : t('addTitle', { name: preset.name })} wide sheet>
       <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
         {errors.form ? <Alert tone="error">{errors.form}</Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
           <Field label={t('name')} error={errors.label}>
             <Input value={form.label} maxLength={60} onChange={(e) => set({ label: e.target.value })} required />
           </Field>
@@ -359,24 +362,53 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models: teste
             {t('clearKey')}
           </label>
         ) : null}
-        <ModelList id={chatListId} models={chatSuggestions} />
-        <ModelList id={embedListId} models={embedSuggestions} />
-        <p className="text-sm text-muted" role="status">{listNote}</p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('chatModel')} error={errors.chatModel} hint={t('chatModelHint')}>
-            <Input value={form.chatModel} list={chatListId} autoComplete="off" onChange={(e) => set({ chatModel: e.target.value })} />
-          </Field>
+        {listNote ? <p className="text-sm text-muted" role="status">{listNote}</p> : null}
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
+          <ModelControl
+            label={t('chatModel')}
+            error={errors.chatModel}
+            hint={modelHint(t, chatModels, Boolean(account.catalog), t('chatModelHint'))}
+            models={chatModels}
+            value={form.chatModel}
+            onChange={(chatModel) => set({ chatModel })}
+            searchLabel={t('searchModels', { use: t('uses.CHAT') })}
+            typed
+          />
           {preset.canEmbed ? (
-            <Field label={t('embedModel')} error={errors.embedModel} hint={t('embedModelHint')}>
-              <Input value={form.embedModel} list={embedListId} autoComplete="off" onChange={(e) => set({ embedModel: e.target.value })} />
-            </Field>
+            pickerModels(embedModels) || !account.catalog ? (
+              <ModelControl
+                label={t('embedModel')}
+                error={errors.embedModel}
+                hint={modelHint(t, embedModels, Boolean(account.catalog), t('embedModelHint'))}
+                models={embedModels}
+                value={form.embedModel}
+                onChange={(embedModel) => set({ embedModel })}
+                searchLabel={t('searchModels', { use: t('uses.EMBEDDING') })}
+                allowEmpty
+                typed
+              />
+            ) : (
+              <p className="self-end text-sm text-muted">{t('noEmbeddingModels')}</p>
+            )
           ) : (
             <p className="self-end text-sm text-muted">{t('noEmbeddings', { name: preset.name })}</p>
           )}
         </div>
+        {account.catalog && account.catalog.all.length ? (
+          <details>
+            <summary className="cursor-pointer text-sm text-muted">{t('allModels', { count: account.catalog.all.length })}</summary>
+            <ul aria-label={t('allModelsList', { name: c?.label ?? preset.name })} className="mt-2 max-h-60 overflow-y-auto rounded-lg border border-border bg-surface px-3 py-2 font-mono text-xs">
+              {[...account.catalog.all].sort((a, b) => a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id)).map((model) => (
+                <li key={model.id} className="break-all">
+                  {model.id} · {t(`kinds.${model.kind}`)} · {model.supports.map((use) => t(`uses.${use}`)).join(', ')}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">{t('prices')}</legend>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 sm:[&>*]:min-w-0 lg:grid-cols-3">
             <Field label={t('priceInput')} error={errors.input ?? errors.inputMicroUsdPerMTok}>
               <Input inputMode="decimal" value={form.input} placeholder="0" onChange={(e) => set({ input: e.target.value })} />
             </Field>
@@ -402,11 +434,11 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models: teste
           {t('enabled')}
         </label>
         {/* Kept in sight on a phone, where the form is longer than the screen. */}
-        <div className="sticky -bottom-4 -mx-5 -mb-4 flex justify-end gap-2 border-t border-border bg-bg px-5 py-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <div className="sticky -bottom-4 -mx-4 -mb-4 flex flex-col-reverse gap-2 border-t border-border bg-bg px-4 py-3 sm:-mx-5 sm:flex-row sm:justify-end sm:px-5">
+          <Button type="button" variant="ghost" className="h-11 w-full sm:w-auto" onClick={onClose}>
             {t('cancel')}
           </Button>
-          <Button type="submit" disabled={saving.loading}>
+          <Button type="submit" className="h-11 w-full sm:w-auto" disabled={saving.loading}>
             {saving.loading ? t('saving') : t('save')}
           </Button>
         </div>
@@ -415,33 +447,49 @@ function ConnectionDialog({ preset, connection: c, keysCanBeSaved, models: teste
   )
 }
 
-/** Suggestions for a model field: any name may still be typed. */
-function ModelList({ id, models }: { id: string; models: string[] }) {
+/** A picker bound to one use, or a text field when that picker is empty (a provider that lists nothing). */
+function ModelControl({ label, hint, error, models, value, onChange, searchLabel, allowEmpty, typed, required }: { label: string; hint?: string; error?: string; models: ListedModel[] | null; value: string; onChange: (value: string) => void; searchLabel: string; allowEmpty?: boolean; typed?: boolean; required?: boolean }) {
+  const offered = pickerModels(models)
+  if (models === null) {
+    return (
+      <Field label={label} hint={hint} error={error}>
+        <Input value={value} disabled onChange={() => undefined} />
+      </Field>
+    )
+  }
+  if (offered) return <ModelSelect label={label} hint={hint} error={error} models={offered} value={value} onChange={onChange} searchLabel={searchLabel} allowEmpty={allowEmpty} required={required} />
+  if (!typed) return null
   return (
-    <datalist id={id}>
-      {models.map((m) => (
-        <option key={m} value={m} />
-      ))}
-    </datalist>
+    <Field label={label} hint={hint} error={error}>
+      <Input value={value} required={required} autoComplete="off" onChange={(e) => onChange(e.target.value)} />
+    </Field>
   )
 }
 
+function modelHint(t: ReturnType<typeof useTranslations<'aiAdmin'>>, models: ListedModel[] | null, fromAccount: boolean, fallback: string): string {
+  if (models === null) return t('modelsLoading')
+  if (fromAccount && models.length === 0) return t('typeModel')
+  if (fromAccount) return t('modelsForUse', { count: models.length })
+  return fallback
+}
+
 /** Tasks sent to another connection or model than the default: transcription to Gemini, say. */
-function Routes({ settings: s, onSaved, onFailed, tested }: { settings: Settings; onSaved: (next: Settings | null | undefined, problem?: string) => void; onFailed: (e: unknown) => null; tested: Record<string, Test | 'running'> }) {
+function Routes({ settings: s, onSaved, onFailed }: { settings: Settings; onSaved: (next: Settings | null | undefined, problem?: string) => void; onFailed: (e: unknown) => null }) {
   const t = useTranslations('aiAdmin')
-  const modelListId = useId()
   const [saveRoute, saving] = useMutation(SaveAiTaskRouteDocument)
   const [deleteRoute] = useMutation(DeleteAiTaskRouteDocument)
   const [form, setForm] = useState({ task: '', connectionId: '', model: '', input: '', output: '' })
   const labelOf = (id: string | null | undefined) => (id ? (s.connections.find((c) => c.id === id)?.label ?? '—') : t('theDefault'))
   // The models of the connection the task goes to: the chosen one, else the default for chats or for embeddings.
   const via = s.connections.find((c) => c.id === (form.connectionId || (form.task === 'EMBED' ? s.embedConnectionId : s.chatConnectionId)))
-  const account = useAccountModels(via?.id)
-  const viaTest = via ? tested[via.id] : undefined
+  const account = useAccountCatalog(via?.id)
   const viaPreset = via ? s.presets.find((p) => p.kind === via.kind) : undefined
-  const routeModels = merged(form.task === 'EMBED' ? viaPreset?.embedModels : viaPreset?.chatModels, account.models, viaTest && viaTest !== 'running' ? viaTest.models : [])
+  const use = routeModelUse(form.task)
+  const presetIds = use === 'EMBEDDING' ? viaPreset?.embedModels : use === 'CHAT' ? viaPreset?.chatModels : []
+  const routeModels = modelsFor(account.catalog, account.loading, use, presetIds ?? [])
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!form.model.trim()) return
     const res = await saveRoute({ variables: { input: { task: form.task, connectionId: form.connectionId || null, model: form.model, inputMicroUsdPerMTok: toMicro(form.input), outputMicroUsdPerMTok: toMicro(form.output) } } }).catch(onFailed)
     if (!res) return
     const problem = res.data?.saveAiTaskRoute.userErrors[0]?.message
@@ -455,14 +503,14 @@ function Routes({ settings: s, onSaved, onFailed, tested }: { settings: Settings
       {s.routes.length ? (
         <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
           {s.routes.map((r) => (
-            <li key={r.task} className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
+            <li key={r.task} className="flex flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center">
               <span className="font-mono text-xs">{r.task}</span>
-              <span aria-hidden>→</span>
-              <span>{labelOf(r.connectionId)} · {r.model}</span>
+              <span aria-hidden className="hidden sm:inline">→</span>
+              <span className="min-w-0 break-all">{labelOf(r.connectionId)} · {r.model}</span>
               <Button
                 size="sm"
                 variant="ghost"
-                className="ml-auto"
+                className="h-11 w-full sm:ml-auto sm:w-auto"
                 aria-label={t('removeRoute', { task: r.task })}
                 onClick={async () => {
                   const res = await deleteRoute({ variables: { input: { task: r.task } } }).catch(onFailed)
@@ -475,7 +523,7 @@ function Routes({ settings: s, onSaved, onFailed, tested }: { settings: Settings
           ))}
         </ul>
       ) : null}
-      <form onSubmit={(e) => void add(e)} className="grid gap-3 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2">
+      <form onSubmit={(e) => void add(e)} className="grid gap-3 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2 sm:[&>*]:min-w-0">
         <Field label={t('task')}>
           <select className={SELECT} value={form.task} required onChange={(e) => setForm((f) => ({ ...f, task: e.target.value }))}>
             <option value="" disabled>
@@ -494,10 +542,18 @@ function Routes({ settings: s, onSaved, onFailed, tested }: { settings: Settings
             ))}
           </select>
         </Field>
-        <Field label={t('model')} hint={via ? (account.loading ? t('modelsLoading') : routeModels.length ? t('modelsOffered', { count: routeModels.length }) : undefined) : undefined}>
-          <Input value={form.model} required list={modelListId} autoComplete="off" onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} />
-        </Field>
-        <ModelList id={modelListId} models={routeModels} />
+        <div className="sm:col-span-2">
+          <ModelControl
+            label={t('model')}
+            hint={via ? modelHint(t, routeModels, Boolean(account.catalog), '') : undefined}
+            models={routeModels}
+            value={form.model}
+            onChange={(model) => setForm((f) => ({ ...f, model }))}
+            searchLabel={t('searchModels', { use: t(`uses.${use}`) })}
+            typed
+            required
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t('priceInput')}>
             <Input inputMode="decimal" value={form.input} placeholder="0" onChange={(e) => setForm((f) => ({ ...f, input: e.target.value }))} />

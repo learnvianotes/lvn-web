@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ACCOUNTS_FROM_AGE, RETENTION } from '@/config/legal'
+import { ACCOUNTS_FROM_AGE, FULL_ACCOUNT_FROM_AGE, RETENTION } from '@/config/legal'
 import { ContactList, Fact } from './Fact'
 import { LEGAL_DOCUMENTS } from './documents'
 
@@ -19,7 +19,11 @@ export function Privacy() {
       <h2>The short version</h2>
       <ul>
         <li>You can read public notes and subjects without an account.</li>
-        <li>Accounts are for adults ({ACCOUNTS_FROM_AGE} or older).</li>
+        <li>
+          Accounts are for people aged {ACCOUNTS_FROM_AGE} or older. LearnViaNotes is not directed at children under{' '}
+          {ACCOUNTS_FROM_AGE}. From {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE}, some features stay limited, and a
+          parent or guardian must give verifiable consent, in line with India’s Digital Personal Data Protection Act, 2023.
+        </li>
         <li>With an account, we keep your details, your notes and your study activity so LearnViaNotes works for you on every device.</li>
         <li>Google Analytics runs only if you allow it, and you can change your mind at any time.</li>
         <li>You can download all your data or delete your account from your profile page.</li>
@@ -28,8 +32,10 @@ export function Privacy() {
       <h2>1. What we collect</h2>
       <ul>
         <li>
-          <strong>Account:</strong> your name, email address, handle and date of birth; your password, stored only as a
-          secure hash, or the Google account you sign in with.
+          <strong>Account:</strong> your name, email address, handle and age (or date of birth, if you gave one); how you
+          sign in: a password, stored only as a secure hash; the Google account you sign in with; a passkey’s public key
+          (the private key never leaves your device); or a one-time code we email you, kept only as a one-way hash for ten
+          minutes.
         </li>
         <li>
           <strong>What you agreed to:</strong> when you registered and which versions of the Terms, this policy and the
@@ -48,11 +54,16 @@ export function Privacy() {
           sessions and exam plans — so the app can plan your week and suggest what to study next.
         </li>
         <li>
-          <strong>AI features:</strong> the text you ask an AI feature to work on, and its answers.
+          <strong>Nova (AI features):</strong> the text you ask Nova to work on, and its answers. Nova answers from the notes
+          and files you give it.
         </li>
         <li>
           <strong>Technical data:</strong> your sign-in sessions (device and browser), your IP address in security logs, and
           error reports — sent without your name, email, cookies or the query part of addresses.
+        </li>
+        <li>
+          <strong>Security signals:</strong> counts of failed sign-ins and of requests our limits refused, so we can stop
+          misuse. These counts are short-lived (see “How long we keep it”).
         </li>
         <li>
           <strong>Google Analytics</strong>, only if you choose “Allow” when we ask: the pages you view (their address
@@ -64,7 +75,7 @@ export function Privacy() {
       <h2>2. Why we use it</h2>
       <ul>
         <li>To run your account and show your notes to you and to the people you choose.</li>
-        <li>To keep the community safe: moderation, preventing abuse, and keeping accounts to adults.</li>
+        <li>To keep the community safe: moderation, preventing abuse, and keeping accounts to people aged {ACCOUNTS_FROM_AGE} or older.</li>
         <li>To plan your studying and recommend what to learn next, from your own learning activity.</li>
         <li>To fix problems and keep the service secure.</li>
         <li>To send you the emails you need (confirming your address, security notices) and the ones you asked for.</li>
@@ -74,10 +85,13 @@ export function Privacy() {
 
       <h2>3. Who can have an account</h2>
       <p>
-        Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. We ask your date of birth when you create an
-        account and keep it with your account; it is never shown to anyone. If the date you give is under {ACCOUNTS_FROM_AGE},
-        we don’t create the account and don’t keep the date; if a sign-in with Google had already created it, we delete it
-        straight away. If we learn that an account belongs to someone under {ACCOUNTS_FROM_AGE}, we delete it.
+        LearnViaNotes is not directed at children under {ACCOUNTS_FROM_AGE}. Accounts are for people who are{' '}
+        {ACCOUNTS_FROM_AGE} or older. We ask your age when you create an account and keep it with your account; it is
+        never shown to anyone. From {ACCOUNTS_FROM_AGE} until {FULL_ACCOUNT_FROM_AGE} the account is restricted and some
+        features stay off, and you need verifiable consent from a parent or guardian, in line with India’s Digital
+        Personal Data Protection Act, 2023. If the age you give is under {ACCOUNTS_FROM_AGE}, we don’t create the account
+        and don’t keep the age; if a sign-in with Google had already created it, we delete it straight away. If we learn
+        that an account belongs to someone under {ACCOUNTS_FROM_AGE}, we remove it.
       </p>
 
       <h2>4. Who else sees it</h2>
@@ -86,12 +100,20 @@ export function Privacy() {
         <li>
           Service providers that run parts of LearnViaNotes for us, under contract and only for that:
           <ul>
-            <li>Amazon Web Services — hosting, storage and email delivery, in India;</li>
-            <li>Google — Google sign-in, push notifications to the phone app, and Google Analytics if you allow it;</li>
-            <li>our error-reporting service, which receives error reports as described above.</li>
+            <li>Amazon Web Services (Lightsail) — the servers the website and the API run on;</li>
+            <li>Cloudflare — R2, where files and backups are stored;</li>
+            <li>
+              Google — Firebase Authentication for Google sign-in, Firebase Cloud Messaging for push notifications to the
+              phone app, and Google Analytics if you allow it;
+            </li>
+            <li>Resend — the emails we send you;</li>
+            <li>Sentry — error reports, sent without your name, email, cookies or the query part of addresses.</li>
           </ul>
         </li>
-        <li>AI providers receive only the text needed for the task you asked for — never your name or account details.</li>
+        <li>
+          AI features send only the text needed for the task you asked for — never your name or account details — to
+          OpenAI (embeddings and chat) and Anthropic (chat). An administrator may instead use a model we run ourselves.
+        </li>
         <li>Authorities, when the law requires it.</li>
       </ul>
 
@@ -100,13 +122,18 @@ export function Privacy() {
         <li>Your account, notes and files: until you delete them. Deleted notes stay in the trash for {RETENTION.trashDays} days.</li>
         <li>
           When you delete your account, it goes {RETENTION.deletionGraceDays} days after you ask (you can change your mind
-          until then). What you made public stays, shown as by “Deleted user”; everything else is deleted. Copies in our
-          backups are overwritten within {RETENTION.backupDays} days.
+          until then). <Link href="/delete-account">How to delete your account</Link> says the steps. What you made
+          public stays, shown as by “Deleted user”; everything else is deleted. Copies in our backups are overwritten
+          within {RETENTION.backupDays} days.
         </li>
         <li>Learning activity events: {RETENTION.learningEventsMonths} months, then only as totals.</li>
         <li>Data exports you download: {RETENTION.exportDays} days.</li>
         <li>Server logs: {RETENTION.logsDays} days. Security and moderation records: up to {RETENTION.auditYears} years.</li>
         <li>Google Analytics data: {RETENTION.analyticsMonths} months.</li>
+        <li>
+          Sign-in codes: ten minutes, or until used. Counts of refused requests: one hour. Counts of wrong passwords: one
+          day. A passkey: until you remove it or delete your account.
+        </li>
         <li>We may keep a record longer when the law requires it, for example to deal with a legal claim.</li>
       </ul>
 
@@ -114,11 +141,14 @@ export function Privacy() {
       <ul>
         <li>
           <strong>See and take your data:</strong> your profile page → Your data → Download your data gives you an archive
-          of everything we hold about you: your account with your date of birth and the terms you accepted, your notes and
+          of everything we hold about you: your account with your age (or date of birth, if you gave one) and the terms you accepted, your notes and
           files, your posts and comments, your study progress and every learning activity event.
         </li>
         <li><strong>Correct it:</strong> edit your details on your profile page, or email us.</li>
-        <li><strong>Delete it:</strong> your profile page → Delete account, or email us.</li>
+        <li>
+          <strong>Delete it:</strong> <Link href="/delete-account">How to delete your account</Link> — on Your account,
+          the section Delete your account — or email us.
+        </li>
         <li>
           <strong>Withdraw consent:</strong> turn Google Analytics off at any time from “Analytics choice” at the foot of
           every page; withdrawing is as easy as giving it. Deleting your account withdraws everything else.
@@ -142,7 +172,11 @@ export function Privacy() {
 
       <h2>8. Security</h2>
       <p>
-        Data is encrypted in transit and at rest. Access inside our team is limited to people who need it. No system is
+        Data is encrypted in transit and at rest. Passwords and sign-in codes are stored only as one-way hashes, and for a
+        passkey we keep only its public key. Access inside our team is limited to people who need it. To stop misuse,
+        an account that sends far more requests than a person could is paused automatically for an hour and the pause is
+        recorded for a moderator; after many wrong passwords, password sign-in for that email pauses for a day while a
+        code or passkey still works. If you think a pause was a mistake, write to us and a person will look at it. No system is
         perfectly secure; if a breach affects your personal data we will tell you and the authorities as the law requires.
       </p>
 

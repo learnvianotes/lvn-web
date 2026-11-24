@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test'
 import { cards, meta, mockApi, mockLive, NOTE_ID, page1, USER } from './support/notes-api'
 
 /**
- * Ask AI (lvn-backend ADR-0060) against a mocked API: the Ask AI page and its scopes, an answer that grows while the
- * model writes (the live channel says when), its citations and sources, Ask AI on one note and on a workspace doubt,
+ * Ask Nova (lvn-backend ADR-0060) against a mocked API: the Ask Nova page and its scopes, an answer that grows while the
+ * model writes (the live channel says when), its citations and sources, Ask Nova on one note and on a workspace doubt,
  * and the refusals. The real model answers in lvn-backend's tests and tests/e2e/live.spec.ts.
  */
 
@@ -34,7 +34,7 @@ const aiState = (available = true, reason: string | null = null) => ({
 })
 const asked = (a: unknown) => ({ askAi: { __typename: 'AskAiPayload', answer: a, userErrors: [] } })
 
-test('asks public notes from the Ask AI page; the answer grows as the live channel says, then cites its sources', async ({ page }) => {
+test('asks public notes from the Ask Nova page; the answer grows as the live channel says, then cites its sources', async ({ page }) => {
   const live = await mockLive(page)
   let stage: 'none' | 'writing' | 'done' = 'none'
   const current = () =>
@@ -48,7 +48,7 @@ test('asks public notes from the Ask AI page; the answer grows as the live chann
     AiAnswer: () => ({ aiAnswer: current() }),
   })
   await page.goto('/ask')
-  await expect(page.getByRole('heading', { level: 1, name: 'Ask AI' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Ask Nova' })).toBeVisible()
   await expect(page.getByText('No questions yet.')).toBeVisible()
   await page.getByRole('radio', { name: 'Public notes' }).click()
   await expect(page.getByText('Notes anyone can read on LearnViaNotes.')).toBeVisible()
@@ -87,8 +87,8 @@ test('asks about one note from its AI panel: the draft is the source', async ({ 
     },
   })
   await page.goto(`/notes/${NOTE_ID}`)
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('textbox', { name: 'Ask about this note' }).fill('How does binary search work?')
   await panel.getByRole('textbox', { name: 'Ask about this note' }).press('Enter')
   const card = panel.getByRole('article', { name: 'How does binary search work?' })
@@ -115,8 +115,8 @@ test('asks AI about a workspace doubt, over the workspace’s notes', async ({ p
     },
   })
   await page.goto(`/groups/${GROUP}/doubts/${DOUBT}`)
-  const section = page.getByRole('region', { name: 'Ask AI' })
-  await section.getByRole('button', { name: 'Ask AI about this doubt' }).click()
+  const section = page.getByRole('region', { name: 'Ask Nova' })
+  await section.getByRole('button', { name: 'Ask Nova about this doubt' }).click()
   await expect(section.getByText('It swaps with the smaller child', { exact: false })).toBeVisible()
   await expect(section.getByRole('link', { name: /Team notes/ })).toBeVisible()
   expect(calls.find((c) => c.op === 'AskAiAboutDoubt')?.variables).toEqual({ doubtId: DOUBT })
@@ -132,7 +132,7 @@ test('says why AI cannot answer: off, or the day’s allowance used up; a failed
     DeleteAiAnswer: () => ((answers = []), { deleteAiAnswer: { __typename: 'OkPayload', ok: true, userErrors: [] } }),
   })
   await page.goto('/ask')
-  await expect(page.getByText('The AI model isn\'t answering right now. Try again in a minute.')).toBeVisible()
+  await expect(page.getByText('Nova isn\'t answering right now. Try again in a minute.')).toBeVisible()
   await expect(page.getByLabel('Your question', { exact: true })).toBeDisabled()
   const failed = page.getByRole('article', { name: 'How do I find shortest paths?' })
   await expect(failed.getByRole('alert')).toHaveText('AI is not answering right now. Try again in a minute.')
@@ -148,7 +148,7 @@ test('says why AI cannot answer: off, or the day’s allowance used up; a failed
   expect(calls.find((c) => c.op === 'DeleteAiAnswer')?.variables).toEqual({ id: ANSWER })
 })
 
-test('the sidebar takes a signed-in learner to the AI Assistant; phones find it in the menu and with their notes', async ({ page }, info) => {
+test('the sidebar takes a signed-in learner to the Nova; phones find it in the menu and with their notes', async ({ page }, info) => {
   await mockApi(page, {
     AiState: () => aiState(),
     MyAiAnswers: () => ({ myAiAnswers: [] }),
@@ -156,15 +156,15 @@ test('the sidebar takes a signed-in learner to the AI Assistant; phones find it 
     MyNotes: () => ({ myNotes: { edges: [], pageInfo: { __typename: 'PageInfo', hasNextPage: false, endCursor: null } } }),
   })
   await page.goto('/ask')
-  const sidebar = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'AI Assistant' })
+  const sidebar = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Nova' })
   if (info.project.name !== 'phone') return void (await expect(sidebar).toHaveAttribute('href', '/ask'))
-  // A phone has the sidebar as a menu (lvn-backend ADR-0076), and Ask AI leads the views row of the notes.
+  // A phone has the sidebar as a menu (lvn-backend ADR-0076), and Ask Nova leads the views row of the notes.
   await expect(sidebar).toBeHidden()
   await page.getByRole('button', { name: 'Menu' }).click()
-  await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'AI Assistant' })).toHaveAttribute('href', '/ask')
+  await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Nova' })).toHaveAttribute('href', '/ask')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog', { name: 'Menu' })).toHaveCount(0)
   await page.goto('/notes')
-  await page.getByRole('link', { name: 'Ask AI' }).click()
+  await page.getByRole('link', { name: 'Ask Nova' }).click()
   await expect(page).toHaveURL(/\/ask$/)
 })

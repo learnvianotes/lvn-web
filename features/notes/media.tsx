@@ -5,6 +5,11 @@ import { useApolloClient } from '@apollo/client/react'
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CompleteNoteUploadDocument, CreateNoteUploadDocument, type CardFieldsFragment, type MediaFieldsFragment } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
+import { reportClientError, trackUsage } from '@/lib/analytics'
+import { env } from '@/lib/env'
+import { safeLinkHref } from '@/lib/http-url'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
+import { STORAGE_PUT_REFUSED, storagePutRequest } from '@/lib/upload-target'
 
 /**
  * Pictures, video, audio and files on notes (lvn-backend §8.1): uploads go straight to storage with a pre-signed PUT,
@@ -66,35 +71,75 @@ const SIZES = [
 
 /** A `srcset` of the sizes made so far, or undefined before there are any. */
 export function srcSetOf(file: MediaInfo): string | undefined {
-  const parts = SIZES.flatMap(([key, width]) => (file[key] ? [`${file[key]} ${file.width ? Math.min(width, file.width) : width}w`] : []))
+  const parts = SIZES.flatMap(([key, width]) => {
+    const href = safeLinkHref(file[key])
+    return href ? [`${href} ${file.width ? Math.min(width, file.width) : width}w`] : []
+  })
   return parts.length ? parts.join(', ') : undefined
 }
 
-export class UploadError extends Error {}
+/** A sentence a person can act on when the storage PUT fails. */
+export function uploadFailureMessage(kind: 'network' | 'status', status?: number): string {
+  if (kind === 'network') return 'The file could not be uploaded. Storage did not accept the connection. Check your network and try again.'
+  return `The file could not be uploaded. Storage refused it (${status ?? 'error'}). Try again.`
+}
+
+export class UploadError extends Error {
+  readonly limit: boolean
+  constructor(message: string, limit = false) {
+    super(message)
+    this.limit = limit
+  }
+}
+
+async function mutateUpload<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run()
+  } catch (error) {
+    const message = refusalMessage(error)
+    if (message) throw new UploadError(message, true)
+    throw error
+  }
+}
 
 /** PUTs a file to a pre-signed URL with exactly the headers the API asked for; progress is 0–1. */
 export function putToStorage(intent: { uploadUrl: string; uploadHeaders: { name: string; value: string }[] }, file: Blob, onProgress: (p: number) => void): Promise<void> {
+  const target = storagePutRequest(intent, { appEnv: env.NEXT_PUBLIC_APP_ENV, storageOrigins: env.NEXT_PUBLIC_STORAGE_ORIGINS })
+  if (!target) return Promise.reject(new UploadError(STORAGE_PUT_REFUSED))
   return new Promise<void>((resolve, reject) => {
     // XMLHttpRequest, not fetch: it reports upload progress.
     const xhr = new XMLHttpRequest()
-    xhr.open('PUT', intent.uploadUrl)
-    // Browsers set Content-Length themselves and refuse to have it set.
-    for (const h of intent.uploadHeaders) if (h.name.toLowerCase() !== 'content-length') xhr.setRequestHeader(h.name, h.value)
+    xhr.open('PUT', target.url)
+    for (const h of target.headers) xhr.setRequestHeader(h.name, h.value)
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total)
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new UploadError(`storage answered ${xhr.status}`)))
-    xhr.onerror = () => reject(new UploadError('network'))
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve()
+      else {
+        const message = uploadFailureMessage('status', xhr.status)
+        reportClientError({ type: 'upload', message })
+        reject(new UploadError(message))
+      }
+    }
+    xhr.onerror = () => {
+      const message = uploadFailureMessage('network')
+      reportClientError({ type: 'upload', message })
+      reject(new UploadError(message))
+    }
     xhr.send(file)
   })
 }
 
 /** Uploads a file to a note and returns its id once the API has checked it. Progress is 0–1. */
 export async function uploadToNote(client: ApolloClient, noteId: string, file: File, onProgress: (p: number) => void): Promise<string> {
-  const res = await client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: file.name || 'file', mimeType: mimeOf(file), sizeBytes: file.size, purpose: 'ATTACHMENT', parentId: noteId } } })
+  const res = await mutateUpload(() => client.mutate({ mutation: CreateNoteUploadDocument, variables: { input: { fileName: file.name || 'file', mimeType: mimeOf(file), sizeBytes: file.size, purpose: 'ATTACHMENT', parentId: noteId } } }))
+  const problem = res.data?.createUploadIntent.userErrors[0]
   const intent = res.data?.createUploadIntent.intent
-  if (!intent) throw new UploadError(res.data?.createUploadIntent.userErrors[0]?.message ?? 'upload refused')
+  if (!intent) throw new UploadError(problem?.message ?? 'upload refused', isLimitCode(problem?.code))
   await putToStorage(intent, file, onProgress)
-  const done = await client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } })
-  if (!done.data?.completeUpload.ok) throw new UploadError(done.data?.completeUpload.userErrors[0]?.message ?? 'upload not accepted')
+  const done = await mutateUpload(() => client.mutate({ mutation: CompleteNoteUploadDocument, variables: { fileId: intent.fileId } }))
+  const doneProblem = done.data?.completeUpload.userErrors[0]
+  if (!done.data?.completeUpload.ok) throw new UploadError(doneProblem?.message ?? 'upload not accepted', isLimitCode(doneProblem?.code))
+  trackUsage('note_upload', { kind: mimeOf(file).replace(/[^a-z0-9]+/gi, '_') })
   return intent.fileId
 }
 

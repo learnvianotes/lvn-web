@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { FileText, Globe, Lock, Pin, PinOff, Plus, Trash2, Users } from 'lucide-react'
+import { FileText, Globe, Lock, Pin, PinOff, Plus, Trash, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -142,9 +142,9 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
         <span aria-hidden>·</span>
         <Users className="size-4" aria-hidden />
         {t('members', { count: group.memberCount })}
-        {group.viewerRole ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
+        {group.viewerRole ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
       </div>
-      <h1 className="text-2xl font-extrabold tracking-tight">{group.name}</h1>
+      <h1 className="text-2xl font-semibold">{group.name}</h1>
       {group.description ? <p className="whitespace-pre-line text-muted">{group.description}</p> : null}
       {group.moderationWarning ? <ModerationBanner entityType="GROUP" entityId={group.id} moderation={{ state: 'OK', reason: group.moderationWarning, canAppeal: false }} /> : null}
       {group.type === 'PROJECT' ? <WorkspaceHeader group={group} onChanged={onChanged} /> : null}
@@ -187,7 +187,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -222,7 +222,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
             aria-label={t('newPost')}
             title={t('newPost')}
             onClick={() => setWriting(true)}
-            className="fixed bottom-6 right-6 z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-fg shadow-lg shadow-accent/30 transition hover:opacity-90"
+            className="fixed bottom-6 right-6 z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-fg shadow-lg shadow-accent/30 transition-colors hover:opacity-90"
           >
             <Plus className="size-6" aria-hidden />
           </button>
@@ -255,7 +255,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
                 className="resize-y rounded-xl border border-border bg-surface p-3 text-sm focus:border-accent focus:outline-none"
               />
               {postError ? (
-                <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+                <p role="alert" className="text-sm text-bad">
                   {postError}
                 </p>
               ) : null}
@@ -267,7 +267,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
         </>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -309,7 +309,7 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
           {ago(post.createdAt)}
           {post.editedAt ? ` · ${t('edited')}` : ''}
         </span>
-        {post.pinned ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('pinned')}</span> : null}
+        {post.pinned ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('pinned')}</span> : null}
         <span className="ml-auto flex gap-1">
           {post.viewerCan.pin ? (
             <button type="button" onClick={onPin} aria-label={post.pinned ? t('unpin') : t('pin')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-fg">
@@ -317,8 +317,8 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
             </button>
           ) : null}
           {post.viewerCan.delete ? (
-            <button type="button" onClick={onDelete} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
-              <Trash2 className="size-4" aria-hidden />
+            <button type="button" onClick={onDelete} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-bad">
+              <Trash className="size-4" aria-hidden />
             </button>
           ) : null}
           <ReportButton look="icon" entityType="GROUP_POST" entityId={post.id} authorId={post.author.id} />
@@ -372,7 +372,7 @@ function SharedNotes({ group }: { group: GroupDetailFragment }) {
       </form>
       <p className="text-xs text-muted">{t('shareHint')}</p>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -418,7 +418,7 @@ function Members({ group }: { group: GroupDetailFragment }) {
   return (
     <div className="flex flex-col gap-3">
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -549,7 +549,7 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
       </h3>
       {group.pictureUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- a short-lived read URL from storage
-        <img src={group.pictureUrl} alt="" className="h-28 w-56 rounded-xl border border-border object-cover" />
+        <img src={group.pictureUrl} alt={t('pictureOf', { name: group.name })} className="h-28 w-56 rounded-xl border border-border object-cover" />
       ) : (
         <p className="text-sm text-muted">{t('noPicture')}</p>
       )}
@@ -578,7 +578,7 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
       </div>
       {uploadsOn ? <p className="text-xs text-muted">{t('pictureHint')}</p> : null}
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}
@@ -633,7 +633,7 @@ function Settings({ group, onSaved }: { group: GroupDetailFragment; onSaved: () 
         </label>
       ) : null}
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

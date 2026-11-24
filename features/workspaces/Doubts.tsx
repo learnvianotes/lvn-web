@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { CircleHelp, MessageSquare } from 'lucide-react'
+import { CircleQuestionMark, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -16,7 +16,7 @@ const FILTERS: (DoubtStatus | null)[] = [null, 'OPEN', 'ANSWERED', 'RESOLVED']
 
 export function StatusChip({ status }: { status: DoubtStatus }) {
   const t = useTranslations('workspaces')
-  const tone = status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100' : status === 'ANSWERED' ? 'bg-accent-soft text-accent' : 'bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100'
+  const tone = status === 'RESOLVED' ? 'bg-good/10 text-good' : status === 'ANSWERED' ? 'bg-accent-soft text-accent' : 'bg-warn/10 text-warn'
   return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{t(`status.${status}`)}</span>
 }
 
@@ -56,7 +56,7 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
         </div>
         {group.viewerCan.askDoubt && !open ? (
           <Button size="sm" className="ml-auto gap-1.5" onClick={() => setOpen(true)}>
-            <CircleHelp className="size-4" aria-hidden />
+            <CircleQuestionMark className="size-4" aria-hidden />
             {t('ask')}
           </Button>
         ) : null}
@@ -82,7 +82,7 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
             <input value={repoRef} maxLength={300} onChange={(e) => setRepoRef(e.target.value)} placeholder="src/heap.ts:42" className="h-10 rounded-xl border border-border bg-bg px-3 font-mono text-sm" />
           </label>
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {error}
             </p>
           ) : null}
@@ -104,7 +104,7 @@ export function Doubts({ group }: { group: GroupDetailFragment }) {
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{d.title}</span>
                   <StatusChip status={d.status} />
-                  {d.moderation !== 'OK' ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">{m(`state.${d.moderation}`)}</span> : null}
+                  {d.moderation !== 'OK' ? <span className="rounded-full bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn">{m(`state.${d.moderation}`)}</span> : null}
                 </span>
                 <span className="flex flex-wrap items-center gap-2 text-xs text-muted">
                   {d.author.displayName} · {ago(d.createdAt)}

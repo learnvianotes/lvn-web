@@ -1,42 +1,147 @@
 @import 'tailwindcss';
 
-/* Theme: data-theme on <html> is set before first paint (app/layout.tsx) and by state/theme.ts. */
+/* Theme: data-theme, data-accent, and data-mode are set before first paint (lib/theme.ts).
+   Ink is the default accent (ADR-0114, unslop direction; supersedes ADR-0094). Other accents override brand
+   only; the warm-paper ramp and the highlighter (spark) stay shared. Values: docs/ui-revamp/tokens.json. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* Brand palette from the LearnViaNotes UI reference (lvn-backend docs/design/ui-reference.md): the brand blue, and no
-     purple, lavender, indigo or violet anywhere (lvn-backend ADR-0094). */
-  --bg: #f6f8fb;
+  --bg: #f8f7f4;
   --surface: #ffffff;
-  --surface-2: #f1f4f8;
-  --fg: #111827;
-  --muted: #5b6475;
-  --border: #e3e8ef;
-  --accent: #2563eb;
+  --surface-2: #f0eee9;
+  --fg: #1c1b18;
+  --muted: #66625b;
+  --border: #e4e1da;
+  --accent: #2847a8;
+  --accent-hover: #1f3888;
   --accent-fg: #ffffff;
-  --accent-soft: #eff6ff;
-  --good: #166534;
-  --warn: #92400e;
-  --bad: #991b1b;
-  --def: #0f766e;
+  --accent-soft: #e9edf8;
+  --good: #0f6b45;
+  --warn: #8a4b08;
+  --bad: #9f1d1d;
+  --def: #0f5f6b;
+  --inverse: #1f2640;
+  --inverse-ink: #f8f7f4;
+  --inverse-muted: #cbc7be;
+  --shadow-sm: 0 1px 2px rgb(28 27 24 / 0.06);
+  --shadow-md: 0 6px 24px -6px rgb(28 27 24 / 0.12), 0 2px 6px rgb(28 27 24 / 0.04);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --spark: #f2c230;
+  --highlight: #fbe7a1;
+  --spark-soft: #fcf1c7;
+  --spark-ink: #6b4c00;
+  --shadow-lg: 0 24px 48px -12px rgb(28 27 24 / 0.10);
+  --radius-xl: 20px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --surface-2: #1f2630;
-  --fg: #f4f4f5;
-  --muted: #a1a1aa;
-  --border: #2d3440;
-  --accent: #60a5fa;
-  --accent-fg: #0d1117;
-  --accent-soft: #172554;
-  --good: #4ade80;
-  --warn: #fbbf24;
-  --bad: #f87171;
-  --def: #5eead4;
+  --bg: #141413;
+  --surface: #1b1a18;
+  --surface-2: #252421;
+  --fg: #ecebe6;
+  --muted: #9a968d;
+  --border: #2e2c29;
+  --accent: #a9bbf2;
+  --accent-hover: #c9d5f7;
+  --accent-fg: #141413;
+  --accent-soft: #1f2640;
+  --good: #6ee7a8;
+  --warn: #f5c16c;
+  --bad: #f0a0a0;
+  --def: #7fd4d0;
+  --inverse: #0e0e0d;
+  --inverse-ink: #ecebe6;
+  --inverse-muted: #cbc7be;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
+  --spark: #e6b72e;
+  --highlight: #4d3f12;
+  --spark-soft: #352c10;
+  --spark-ink: #f3d27a;
+  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
   color-scheme: dark;
+}
+
+/* Accent overrides. The dark rule follows the light rule so it wins (higher specificity). */
+[data-accent='ink'] {
+  --accent: #2847a8;
+  --accent-hover: #1f3888;
+  --accent-fg: #ffffff;
+  --accent-soft: #e9edf8;
+}
+[data-theme='dark'][data-accent='ink'] {
+  --accent: #a9bbf2;
+  --accent-hover: #c9d5f7;
+  --accent-fg: #141413;
+  --accent-soft: #1f2640;
+}
+[data-accent='navy'] {
+  --accent: #1e4d8c;
+  --accent-hover: #163e73;
+  --accent-fg: #ffffff;
+  --accent-soft: #e7f0fa;
+}
+[data-theme='dark'][data-accent='navy'] {
+  --accent: #9dc0ea;
+  --accent-hover: #c5d9f4;
+  --accent-fg: #0e1520;
+  --accent-soft: #1a2c44;
+}
+[data-accent='teal'] {
+  --accent: #0c5c66;
+  --accent-hover: #094850;
+  --accent-fg: #ffffff;
+  --accent-soft: #e5f4f6;
+}
+[data-theme='dark'][data-accent='teal'] {
+  --accent: #7ecfcb;
+  --accent-hover: #b6ebe8;
+  --accent-fg: #0e1520;
+  --accent-soft: #123033;
+}
+[data-accent='forest'] {
+  --accent: #0f6b45;
+  --accent-hover: #0b5235;
+  --accent-fg: #ffffff;
+  --accent-soft: #e7f6ee;
+}
+[data-theme='dark'][data-accent='forest'] {
+  --accent: #6ee7a8;
+  --accent-hover: #b6f5d4;
+  --accent-fg: #0e1520;
+  --accent-soft: #123226;
+}
+[data-accent='slate'] {
+  --accent: #334155;
+  --accent-hover: #1e293b;
+  --accent-fg: #ffffff;
+  --accent-soft: #e8edf3;
+}
+[data-theme='dark'][data-accent='slate'] {
+  --accent: #cbd5e1;
+  --accent-hover: #e2e8f0;
+  --accent-fg: #0e1520;
+  --accent-soft: #1c2633;
+}
+[data-accent='amber'] {
+  --accent: #8a4b08;
+  --accent-hover: #6b3a06;
+  --accent-fg: #ffffff;
+  --accent-soft: #fbf3e4;
+}
+[data-theme='dark'][data-accent='amber'] {
+  --accent: #f5c16c;
+  --accent-hover: #f8d7a0;
+  --accent-fg: #0e1520;
+  --accent-soft: #3a2a10;
 }
 
 @theme inline {
@@ -49,31 +154,148 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-def: var(--def);
+  --color-inverse: var(--inverse);
+  --color-inverse-ink: var(--inverse-ink);
+  --color-inverse-muted: var(--inverse-muted);
+  --color-spark: var(--spark);
+  --color-highlight: var(--highlight);
+  --color-spark-soft: var(--spark-soft);
+  --color-spark-ink: var(--spark-ink);
+  --font-sans: var(--font-inter), 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
 }
 
 @theme {
   /* Content rising into place on the welcome surfaces; off with reduced motion (below). */
-  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   @keyframes rise {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: none; }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
 
+/* The signature (ADR-0114): a flat highlighter stroke behind a key phrase, the way a student marks a page. A hard stop,
+   not a blend: the lower part of the line carries the marker, the text keeps its own colour. */
+.lvn-marker {
+  background-image: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Placeholder bars for the first load. Opacity only, so the block keeps its height (no layout shift). */
+.lvn-skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lvn-skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface) 37%, var(--surface-2) 63%);
+    background-size: 400% 100%;
+    animation: lvn-shimmer 1.2s ease infinite;
+  }
+}
+@keyframes lvn-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
 html { background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; }
+/* Backup for the inline hide on `/` (lib/auth/hint.ts). The head script sets visibility itself so this is not required before first paint. */
+html[data-landing='away'] { visibility: hidden; }
 body { font-family: var(--font-sans); min-height: 100dvh; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* Text fields: one border, not that outline stacked on the field (a bright double box — the search
+   overlay, inputs, textareas). Unlayered, so it wins over Tailwind's outline and ring utilities.
+   Checkboxes, radios and buttons keep the outline. A field with no border of its own (border-0, inside
+   a labelled box) does not grow one. */
+input:not([type='button']):not([type='checkbox']):not([type='color']):not([type='file']):not([type='hidden']):not([type='image']):not([type='radio']):not([type='range']):not([type='reset']):not([type='submit']):focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+dialog:focus,
+dialog:focus-visible {
+  outline: none;
+}
+input:not([type='button']):not([type='checkbox']):not([type='color']):not([type='file']):not([type='hidden']):not([type='image']):not([type='radio']):not([type='range']):not([type='reset']):not([type='submit']):not(.border-0):not([aria-invalid='true']):focus-visible,
+textarea:not(.border-0):not([aria-invalid='true']):focus-visible,
+select:not([aria-invalid='true']):focus-visible {
+  border-color: var(--accent);
+}
+
+/* Code in a note (a code card, a fenced block, the editor). The pre scrolls sideways; the line stays
+   one line; flex and grid parents may shrink so the card does not widen the page or get clipped. A
+   sideways swipe scrolls the code, and a vertical one still scrolls the page. */
+.lvn-code-scroll {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+}
+.lvn-code-scroll code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  touch-action: pan-x pan-y;
+}
+/* Flex and grid items on the way up can shrink, so a long line scrolls inside the card
+   instead of widening the page or being clipped by a parent. */
+:where(.flex, .grid) > :has(.lvn-code-scroll) {
+  min-width: 0;
+  max-width: 100%;
+}
+/* ProseMirror and the code node view set white-space: pre-wrap, including an inline style on the
+   content element. important is what keeps the line one line so the pre can scroll. */
+.lvn-editor .ProseMirror pre.lvn-code-scroll,
+.lvn-editor .ProseMirror pre.lvn-code-scroll code,
+.lvn-editor .ProseMirror pre.lvn-code-scroll [data-node-view-content],
+.lvn-editor .ProseMirror pre.lvn-code-scroll [data-node-view-content-react] {
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+/* An indeterminate wait (StudyLoader): the highlighter slides across its track. Off with reduced motion, where it rests. */
+@media (prefers-reduced-motion: no-preference) {
+  .lvn-sweep { animation: lvn-sweep 1.2s var(--ease) infinite; }
+}
+@keyframes lvn-sweep { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+
+/* Page changes (ADR-0114): the old page fades, the new one fades in and rises 8px. One curve, short, nothing on loop. */
+::view-transition-old(.lvn-page) { animation: lvn-page-out var(--dur-fast) var(--ease) both; }
+::view-transition-new(.lvn-page) { animation: lvn-page-in var(--dur-slow) var(--ease) both; }
+@keyframes lvn-page-out { to { opacity: 0; } }
+@keyframes lvn-page-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
 /* The note editor (features/notes/editor): one Tiptap document whose top-level nodes are cards. */
+.lvn-editor,
+.lvn-editor .ProseMirror { min-width: 0; max-width: 100%; }
 .lvn-editor .ProseMirror { outline: none; display: flex; flex-direction: column; gap: 0.9rem; font-size: 1.0625rem; line-height: 1.7; }
 .lvn-editor .ProseMirror > .lvn-card,
-.lvn-editor .ProseMirror > [data-node-view-wrapper] { border-radius: 0.75rem; transition: background-color 0.2s, box-shadow 0.2s; }
+.lvn-editor .ProseMirror > [data-node-view-wrapper] { min-width: 0; max-width: 100%; border-radius: 0.75rem; transition: background-color 0.2s, box-shadow 0.2s; }
 .lvn-editor .ProseMirror p { min-height: 1.5em; }
 .lvn-editor .ProseMirror .lvn-card-text > p + p,
 .lvn-editor .ProseMirror blockquote p + p,
@@ -104,12 +326,12 @@ body { font-family: var(--font-sans); min-height: 100dvh; }
 .lvn-mark-highlight[data-color='PINK'] { background: rgb(244 114 182 / 0.45); }
 /* The API's PURPLE highlight is drawn, and named, orange (lvn-backend ADR-0094). */
 .lvn-mark-highlight[data-color='PURPLE'] { background: rgb(251 146 60 / 0.45); }
-.lvn-mark-anchor { background: rgb(37 99 235 / 0.08); border-bottom: 2px solid rgb(37 99 235 / 0.75); }
-.lvn-mark-pending { outline: 2px dashed rgb(37 99 235); background: rgb(37 99 235 / 0.1); }
-.lvn-mark-flash { background: rgb(37 99 235 / 0.35); animation: lvn-flash 1.8s ease-out forwards; }
+.lvn-mark-anchor { background: color-mix(in srgb, var(--accent) 8%, transparent); border-bottom: 2px solid color-mix(in srgb, var(--accent) 75%, transparent); }
+.lvn-mark-pending { outline: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.lvn-mark-flash { background: color-mix(in srgb, var(--spark) 55%, transparent); animation: lvn-flash 1.8s ease-out forwards; }
 @keyframes lvn-flash { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
 .lvn-snipping, .lvn-snipping .textLayer { cursor: crosshair; user-select: none; touch-action: none; }
-.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: rgb(37 99 235 / 0.12); pointer-events: none; }
+.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; }
 .lvn-anchor-chip { align-self: flex-end; display: inline-flex; align-items: center; gap: 0.25rem; margin-top: -0.5rem; border-radius: 9999px; border: 1px solid var(--border); background: var(--surface); padding: 0.125rem 0.6rem; font-size: 0.75rem; line-height: 1.2rem; color: var(--muted); cursor: pointer; user-select: none; }
 .lvn-anchor-chip:hover { border-color: var(--accent); color: var(--accent); }
 .lvn-card-flash { animation: lvn-card-flash 1.8s ease-out; }

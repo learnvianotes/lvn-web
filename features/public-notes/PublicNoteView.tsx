@@ -1,4 +1,4 @@
-import { BookMarked, Clock, GitFork, NotebookPen, Sparkles } from 'lucide-react'
+import { BookBookmark, Clock, GitFork, NotebookPen, TextQuote } from 'lucide-react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { NightSky } from '@/components/brand/NightSky'
@@ -35,23 +35,23 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:py-12">
+    <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 py-8 sm:py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <header className="flex animate-rise flex-col gap-4">
         {note.topics.length ? (
           <ul className="flex flex-wrap gap-1.5 text-xs" aria-label={t('topics')}>
             {note.topics.map((topic) => (
-              <li key={topic.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-muted">
-                <BookMarked className="size-3.5" aria-hidden />
+              <li key={topic.id} className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1 text-muted">
+                <BookBookmark className="size-3.5" aria-hidden />
                 {topic.title} · {topic.subject.title}
               </li>
             ))}
           </ul>
         ) : null}
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-[2.75rem]">{note.title || t('untitled')}</h1>
+        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-[2.75rem]">{note.title || t('untitled')}</h1>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
           <span className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-full text-sm font-bold text-white shadow-sm" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+            <span className="grid size-9 place-items-center rounded-full text-sm font-semibold text-white shadow-sm" style={{ background: accent.from }} aria-hidden>
               {note.owner.displayName.charAt(0).toUpperCase()}
             </span>
             <span>
@@ -80,7 +80,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
 
       <PublicMedia noteId={note.id} hasMedia={note.cards.some((c) => c.hasMedia)}>
         <QuizTopicsProvider topicKeys={note.topics.map((topic) => `topic:${topic.id}`)}>
-          <article className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
+          <article className="flex min-w-0 max-w-full flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
             {note.cards.map((c) => (
               <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
             ))}
@@ -95,19 +95,19 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
       <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
-            <p className="flex items-center gap-1.5 text-sm font-medium text-[#BFDBFE]">
-              <Sparkles className="size-4" aria-hidden />
+            <p className="flex items-center gap-1.5 text-sm font-medium text-inverse-muted">
+              <TextQuote className="size-4" aria-hidden />
               {t('ctaKicker')}
             </p>
-            <p className="text-xl font-bold">{t('ctaTitle')}</p>
-            <p className="text-sm text-white/80">{t('ctaLead')}</p>
+            <p className="text-xl font-semibold">{t('ctaTitle')}</p>
+            <p className="text-sm text-inverse-muted">{t('ctaLead')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0B1220] hover:bg-white/90">
+            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-full bg-inverse-ink px-4 py-2 text-sm font-semibold text-inverse hover:opacity-90">
               <NotebookPen className="size-4" aria-hidden />
               {t('ctaStart')}
             </Link>
-            <Link href={`/notes/${note.id}`} className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-white/40 hover:bg-white/10">
+            <Link href={`/notes/${note.id}`} className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-inverse-ink/40 hover:bg-white/10">
               {t('ctaOpen')}
             </Link>
           </div>

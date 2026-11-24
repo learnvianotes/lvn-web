@@ -1,6 +1,6 @@
 'use client'
 
-import { BookMarked, FileText, Globe, GraduationCap, Library, Lock, Search, Users, X } from 'lucide-react'
+import { BookBookmark, FileText, Globe, GraduationCap, Library, Link2, Lock, Search, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -11,8 +11,9 @@ import type { NoteKind, NoteSource, SearchScope } from '@/graphql/generated/grap
 import { cn } from '@/lib/cn'
 import { Snippet } from './Snippet'
 import { useSearch } from './useSearch'
+import { StudyLoader } from '@/components/ui/study-loader'
 
-const VISIBILITY_ICON = { PRIVATE: Lock, SHARED: Users, PUBLIC: Globe } as const
+const VISIBILITY_ICON = { PRIVATE: Lock, SHARED: Users, UNLISTED: Link2, PUBLIC: Globe } as const
 const KINDS: NoteKind[] = ['NOTE', 'BLOG', 'POST', 'PROJECT']
 const SOURCES: NoteSource[] = ['MINE', 'SHARED', 'PUBLIC']
 type Tab = 'all' | 'notes' | 'topics' | 'groups' | 'users' | 'resources'
@@ -83,8 +84,8 @@ export function SearchPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
-      <label className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 shadow-sm focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
+      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <label className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 shadow-sm focus-within:border-accent">
         <Search className="size-5 text-muted" aria-hidden />
         <span className="sr-only">{t('label')}</span>
         <input
@@ -95,7 +96,7 @@ export function SearchPage() {
             go({ q: e.target.value })
           }}
           placeholder={t('placeholder')}
-          className="h-14 flex-1 bg-transparent text-lg placeholder:text-muted focus:outline-none focus-visible:outline-none"
+          className="h-14 min-w-0 flex-1 border-0 bg-transparent text-lg placeholder:text-muted outline-none"
         />
       </label>
       <div role="tablist" aria-label={t('tabs.label')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
@@ -160,7 +161,7 @@ export function SearchPage() {
                     go({ topic: null })
                   }}
                 >
-                  <BookMarked className="size-3.5" aria-hidden />
+                  <BookBookmark className="size-3.5" aria-hidden />
                   {topic.title}
                   <X className="size-3.5" aria-hidden />
                 </button>
@@ -181,11 +182,11 @@ export function SearchPage() {
               {people.map((p) => (
                 <li key={p.id}>
                   <Link href={`/u/${p.handle}`} className="inline-flex items-center gap-2 rounded-full border border-border bg-surface py-1 pl-1 pr-3 text-sm hover:border-accent hover:text-accent">
-                    <span aria-hidden className="grid size-7 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent">
+                    <span aria-hidden className="grid size-7 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
                       {p.displayName.slice(0, 1).toUpperCase()}
                     </span>
                     {p.displayName} <span className="text-muted">@{p.handle}</span>
-                    {p.globalRole === 'TEACHER' ? <span className="rounded-full bg-accent-soft px-1.5 text-[10px] font-semibold uppercase text-accent">{t('teacher')}</span> : null}
+                    {p.globalRole === 'TEACHER' ? <span className="rounded-[10px] bg-accent-soft px-1.5 text-[10px] font-semibold text-accent">{t('teacher')}</span> : null}
                   </Link>
                 </li>
               ))}
@@ -263,9 +264,9 @@ export function SearchPage() {
                     setTab(where)
                     go({ q: '', topic: chosen, tab: where })
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent"
+                  className="inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent"
                 >
-                  <BookMarked className="size-3.5" aria-hidden />
+                  <BookBookmark className="size-3.5" aria-hidden />
                   {tp.title} <span className="text-muted">· {tp.subject.title}</span>
                 </button>
               ))}
@@ -277,6 +278,7 @@ export function SearchPage() {
             <h2 id="notes-heading" className="text-sm font-semibold text-muted">
               {settled.length < 2 && filtering ? t('newest') : t('notes')}
             </h2>
+            {loading && !notes.length && settled ? <StudyLoader kind="search" compact className="py-4" /> : null}
             {searched && !notes.length ? <p className="text-sm text-muted">{settled ? t('nothing', { query: settled }) : t('nothingFiltered')}</p> : null}
             {!settled && !filtering ? <p className="text-sm text-muted">{t('hint')}</p> : null}
             <ul className="flex flex-col gap-3">
@@ -284,7 +286,7 @@ export function SearchPage() {
                 const Icon = VISIBILITY_ICON[note.visibility]
                 return (
                   <li key={note.id}>
-                    <Link href={`/notes/${note.id}`} className="group flex flex-col gap-1.5 rounded-2xl border border-border bg-surface p-4 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10">
+                    <Link href={`/notes/${note.id}`} className="group flex flex-col gap-1.5 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40 hover:border-fg/20">
                       <span className="flex items-center gap-2 font-semibold">
                         <FileText className="size-4 text-accent" aria-hidden />
                         {note.title || t('untitled')}

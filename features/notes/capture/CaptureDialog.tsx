@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { CreateNoteDocument, RunAiTaskDocument, UpdateNoteDraftDocument } from '@/graphql/generated/graphql'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { QuickNoteLimits } from '@/lib/contracts/domain/enums'
 import { positionBetween } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
@@ -15,6 +16,7 @@ import { mimeOf, uploadToNote, UploadError } from '@/features/notes/media'
 import { newCardId } from '@/features/notes/model/doc'
 import { compressPicture } from './compress'
 import { addToTray, sizeLabel, type TrayItem } from './tray'
+import { useFeatureUse } from '@/lib/analytics'
 
 type Busy = { adding: true } | { upload: number; of: number; progress: number } | { making: true } | null
 
@@ -29,6 +31,7 @@ const key = () => `t${Date.now()}-${next++}`
  */
 export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onClose: () => void; folderId?: string | null }) {
   const t = useTranslations('notes.capture')
+  useFeatureUse(open ? 'quick_capture' : null)
   const client = useApolloClient()
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)
@@ -86,8 +89,9 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
         setBusy({ upload: 0, of: items.length, progress: 0 })
         const when = new Date().toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
         const created = await client.mutate({ mutation: CreateNoteDocument, variables: { input: { title: t('noteTitle', { when }), ...(folderId ? { folderId } : {}) } } })
+        const createdProblem = created.data?.createNote.userErrors[0]
         const noteId = created.data?.createNote.note?.id
-        if (!noteId) throw new UploadError(created.data?.createNote.userErrors[0]?.message ?? t('failed'))
+        if (!noteId) throw new UploadError(createdProblem?.message ?? t('failed'), isLimitCode(createdProblem?.code))
         made.current = { noteId, carded: new Set(), last: null }
       }
       const state = made.current
@@ -106,7 +110,8 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
       })
       if (ops.length) {
         const saved = await client.mutate({ mutation: UpdateNoteDraftDocument, variables: { input: { noteId: state.noteId, ops } } })
-        if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(saved.data.updateNoteDraft.userErrors[0]!.message)
+        const savedProblem = saved.data?.updateNoteDraft.userErrors[0]
+        if (saved.data?.updateNoteDraft.userErrors.length) throw new UploadError(savedProblem!.message, isLimitCode(savedProblem?.code))
         list.forEach((item) => state.carded.add(item.key))
         state.last = last
       }
@@ -115,7 +120,8 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
       await client.mutate({ mutation: RunAiTaskDocument, variables: { input: { noteId: state.noteId, task: 'QUICK_NOTE' } } })
       router.push(`/notes/${state.noteId}?ai=1`)
     } catch (e) {
-      setProblems([e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : t('failed')])
+      const refused = e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : refusalMessage(e)
+      setProblems([refused ?? t('failed')])
       setBusy(null)
     }
   }
@@ -153,7 +159,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
             setDragging(false)
             if (!full && !busy) void add(Array.from(e.dataTransfer.files))
           }}
-          className={cn('flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50', dragging && 'border-accent bg-accent-soft')}
+          className={cn('flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50', dragging && 'border-accent bg-accent-soft')}
         >
           <ImagePlus className="size-7 text-accent" aria-hidden />
           <span className="font-semibold">{full ? t('full') : t('choose')}</span>
@@ -188,7 +194,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
           </ul>
         ) : null}
         {problems.length ? (
-          <div role="alert" className="flex flex-col gap-1 text-sm text-red-600 dark:text-red-400">
+          <div role="alert" className="flex flex-col gap-1 text-sm text-bad">
             {problems.map((p) => (
               <p key={p}>{p}</p>
             ))}
@@ -198,7 +204,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
           <div className="flex flex-col gap-1.5" role="status">
             <span className="text-sm">{busy.upload ? t('uploading', { n: busy.upload, of: busy.of }) : t('creating')}</span>
             <span className="block h-1.5 overflow-hidden rounded-full bg-surface-2">
-              <span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(((Math.max(0, busy.upload - 1) + busy.progress) / Math.max(1, busy.of)) * 100)}%` }} />
+              <span className="block h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(((Math.max(0, busy.upload - 1) + busy.progress) / Math.max(1, busy.of)) * 100)}%` }} />
             </span>
           </div>
         ) : null}

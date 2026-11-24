@@ -65,10 +65,9 @@ const router = createBrowserRouter([
   },
 ], { basename: '/core' })
 
-/** Every page needs the catalog: once it has loaded (or failed), the splash goes. */
+/** The shell is ready as soon as this mounts. The catalog's own loading and error states take over; the splash must not cover them. */
 function SplashGate() {
-  const { status } = useCatalog()
-  useEffect(() => { if (status !== 'loading') requestAnimationFrame(() => hideSplash()) }, [status])
+  useEffect(() => { requestAnimationFrame(() => hideSplash()) }, [])
   return null
 }
 

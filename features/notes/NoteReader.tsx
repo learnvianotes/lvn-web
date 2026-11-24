@@ -11,6 +11,7 @@ import { accentOf, readingMinutes } from './look'
 import { ReadAloudControls } from './ReadAloudControls'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { CopyLinkButton, ForkCredit, MakeCopyButton, useMakeCopy } from './ShareDialog'
+import { useAllowForks } from './share/forks'
 import type { StoredCard } from './model/doc'
 import { useReadAloud } from './readAloud'
 import { CardView } from './render/CardView'
@@ -36,6 +37,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
   const spoken = useCallback(() => cards.map((c) => ({ id: c.id, text: cardPlainText(c.type, c.content) })), [cards])
   const reader = useReadAloud(spoken)
   const copy = useMakeCopy(meta.id)
+  const forks = useAllowForks(meta.id, meta.allowForks)
   const headings = cards.filter((c) => c.type === 'heading')
   const minutes = readingMinutes(cards.map((c) => cardPlainText(c.type, c.content)).join(' '))
   const accent = accentOf(meta.id)
@@ -57,10 +59,10 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
       <article className="flex min-w-0 flex-col gap-4">
         <Breadcrumb meta={meta} own={false} />
         <header className="flex animate-rise flex-col gap-3">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-[2.6rem]">{meta.title || t('editor.untitled')}</h1>
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-[2.6rem]">{meta.title || t('editor.untitled')}</h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
             <span className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-full text-sm font-bold text-white" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+              <span className="grid size-8 place-items-center rounded-full text-sm font-semibold text-white" style={{ background: accent.from }} aria-hidden>
                 {meta.owner.displayName.charAt(0).toUpperCase()}
               </span>
               {t('reader.by', { name: meta.owner.displayName })}
@@ -76,14 +78,16 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
           {meta.kind === 'PROJECT' ? <NoteCredits noteId={meta.id} /> : null}
           <div className="flex flex-wrap items-center gap-2">
             <ReadAloudControls reader={reader} />
-            {meta.viewerCan.fork ? <MakeCopyButton copy={copy} /> : null}
+            {meta.viewerCan.fork && forks.allowForks ? <MakeCopyButton copy={copy} /> : null}
+            {!forks.allowForks ? <p className="text-xs text-muted">{t('share.forksOff')}</p> : null}
+            {forks.forkCount > 0 ? <span className="text-xs text-muted">{t('share.forkCount', { n: forks.forkCount })}</span> : null}
             <CopyLinkButton note={meta} />
             <SaveNoteButton noteId={meta.id} />
             <AiButton onClick={() => setAiOpen(true)} />
             <ReportButton entityType="NOTE" entityId={meta.id} className="ml-auto" />
           </div>
           {copy.copyError ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {copy.copyError}
             </p>
           ) : null}
@@ -92,7 +96,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
         <NoteTabPanel idBase={idBase} tab="content" current={tab} keepMounted>
           <CardRail sections={headings.map((h) => ({ key: h.id, text: cardPlainText('heading', h.content) }))} onGo={(i) => document.getElementById(`card-${headings[i]?.id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })} />
           <QuizTopicsProvider topicKeys={(meta.topics ?? []).map((x) => `topic:${x.id}`)}>
-            <div className="flex flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
+            <div className="flex min-w-0 max-w-full flex-col gap-5 rounded-3xl border border-border bg-surface px-5 py-7 text-[1.0625rem] leading-relaxed shadow-sm sm:px-10">
               {cards.map((c) => (
                 <CardView key={c.id} id={c.id} type={c.type} content={c.content} highlighted={reader.current === c.id} onAnchor={(anchor, cardId) => router.push(`/notes/${meta.id}/read/${anchor.fileId}?page=${anchor.page}&card=${cardId}`)} />
               ))}

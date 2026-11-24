@@ -1,0 +1,253 @@
+# Anonymous reads for public pages and the catalogue. These used to be request strings in feature data modules.
+
+query PublicNote($id: UUID!, $after: String) {
+  note(id: $id) {
+    id
+    title
+    slug
+    kind
+    publishedAt
+    owner {
+      displayName
+      handle
+    }
+    topics {
+      id
+      title
+      subject {
+        title
+      }
+    }
+    forkedFrom {
+      title
+      author {
+        displayName
+      }
+    }
+    contributors {
+      role
+      user {
+        id
+        displayName
+        handle
+      }
+    }
+    aiInsights {
+      id
+      task
+      status
+      markdown
+      title
+      cards {
+        type
+        content
+      }
+    }
+    cards(first: 100, after: $after) {
+      edges {
+        node {
+          id
+          type
+          content
+          media {
+            id
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+
+query PublicNotes($after: String) {
+  publicNotes(first: 100, after: $after) {
+    edges {
+      node {
+        id
+        slug
+        publishedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query PublicNoteMedia($id: UUID!) {
+  note(id: $id) {
+    cards(first: 100) {
+      edges {
+        node {
+          media {
+            id
+            url
+            mimeType
+            fileName
+            sizeBytes
+            width
+            height
+            pageCount
+            thumbUrl
+            mediumUrl
+            largeUrl
+            posterUrl
+            playbackUrl
+          }
+        }
+      }
+    }
+  }
+}
+
+query PublicProfile($handle: String!) {
+  userByHandle(handle: $handle) {
+    id
+    handle
+    displayName
+    globalRole
+    verified
+    createdAt
+    followerMilestone
+    profile {
+      department
+      yearOfStudy
+    }
+    teacherProfile {
+      headline
+      bio
+      skills {
+        id
+        kind
+        name
+        detail
+        source
+        sourceUrl
+        fetchedAt
+      }
+    }
+    achievements {
+      id
+      kind
+      title
+      description
+    }
+    contribution {
+      points
+      level
+    }
+    publicNotes(first: 60) {
+      edges {
+        node {
+          id
+          title
+          slug
+          kind
+          publishedAt
+        }
+      }
+    }
+  }
+}
+
+query PublicResource($id: UUID!) {
+  resource(id: $id) {
+    id
+    type
+    title
+    description
+    url
+    author
+    isbn
+    saveCount
+    indexable
+    createdAt
+  }
+}
+
+query Subjects {
+  subjects {
+    id
+    slug
+    title
+    topics {
+      id
+      slug
+      title
+      children {
+        id
+        slug
+        title
+      }
+    }
+  }
+}
+
+query Subject($slug: String!) {
+  subject(slug: $slug) {
+    id
+    slug
+    title
+    topics {
+      id
+      slug
+      title
+      children {
+        id
+        slug
+        title
+      }
+    }
+  }
+}
+
+query SubjectShelf($filters: SearchFilters, $scopes: [SearchScope!]) {
+  search(query: "", scopes: $scopes, filters: $filters, first: 20) {
+    notes {
+      note {
+        id
+        title
+        slug
+        kind
+        publishedAt
+        owner {
+          displayName
+        }
+      }
+    }
+  }
+}
+
+# Indexable resource pages for sitemap.xml. Guests may read `resources` (approved only).
+query SitemapResources($after: String) {
+  resources(first: 100, after: $after) {
+    edges {
+      node {
+        id
+        indexable
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query TopicResources($topicId: UUID!) {
+  resources(filter: { topicId: $topicId }, first: 10) {
+    edges {
+      node {
+        id
+        type
+        title
+        host
+        author
+      }
+    }
+  }
+}

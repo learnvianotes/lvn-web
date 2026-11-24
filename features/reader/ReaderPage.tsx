@@ -2,11 +2,12 @@
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import type { Editor } from '@tiptap/react'
-import { ArrowLeft, Crop, Highlighter, ListTree, Minus, NotebookPen, PanelRightClose, PanelRightOpen, Plus, Search, StretchHorizontal, Wand2, X } from 'lucide-react'
+import { ArrowLeft, Crop, Highlighter, ListTree, Minus, NotebookPen, PanelRightClose, PanelRightOpen, Plus, Search, StretchHorizontal, FilePenLine, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { StudyLoader } from '@/components/ui/study-loader'
 import { Button } from '@/components/ui/button'
 import { LoadFailed } from '@/components/ui/query-state'
 import {
@@ -36,6 +37,7 @@ import type { PageRect } from './geometry'
 import { ACTIVE, ConversionBanner, ConvertDialog } from './convert'
 import { AreaActions, FindBar, HighlightCard, HighlightsList, OutlineList, SelectionActions, ToolButton } from './parts'
 import { PdfViewer, type AreaSelection, type Mark, type OutlineItem, type PdfViewerHandle, type TextSelection } from './PdfViewer'
+import { useFeatureUse } from '@/lib/analytics'
 
 type Panel = 'notes' | 'highlights' | 'contents'
 type Anchored = { cardId: string; anchor: CardAnchor }
@@ -51,6 +53,7 @@ const paragraph = (text: string) => ({ type: 'doc', content: [{ type: 'paragraph
  * it and can start notes of their own on it.
  */
 export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string }) {
+  useFeatureUse('pdf_viewer')
   const t = useTranslations('reader')
   const client = useApolloClient()
   const router = useRouter()
@@ -291,6 +294,22 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
   }
 
   const fileName = file.data?.noteFile?.fileName ?? ''
+  const [scanWaitOver, setScanWaitOver] = useState(false)
+  const scanPoll = !file.loading && !file.error && !file.data?.noteFile && !scanWaitOver
+  useEffect(() => {
+    if (!scanPoll) return
+    const started = Date.now()
+    const tick = setInterval(() => {
+      if (Date.now() - started > SCAN_WAIT_MS) {
+        clearInterval(tick)
+        setScanWaitOver(true)
+        return
+      }
+      void file.refetch().catch(() => undefined)
+    }, SCAN_POLL_MS)
+    return () => clearInterval(tick)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one loop per wait, not one per refetch
+  }, [scanPoll])
   const activeHighlight = active?.id.startsWith('h:') ? highlights.find((h) => h.id === active.id.slice(2)) : undefined
   const meta: NoteMeta | null = ready ? loaded.meta : null
   const onNote = useCallback((m: NoteMeta) => setLoaded((l) => (l.state === 'ready' ? { ...l, meta: m } : l)), [setLoaded])
@@ -300,16 +319,27 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
   // ── States without a PDF ─────────────────────────────────────────────────────────────────────────────────
   // Not found only when the API said so; a file that could not be asked for is offered again.
   const fileFailed = !file.loading && !file.data?.noteFile && !!file.error && !isNotThere(file.error)
-  const fileMissing = !file.loading && !file.data?.noteFile && !fileFailed
+  const fileAbsent = !file.loading && !file.data?.noteFile && !fileFailed
+  // A PDF uploaded a moment ago is served only after its virus scan (lvn-backend ADR-0102): ask again every few seconds
+  // for up to SCAN_WAIT_MS before saying it is not there. The reader opens by itself when the scan is done.
+  const waitingForScan = fileAbsent && loaded.state !== 'missing' && !scanWaitOver
+  const fileMissing = fileAbsent && !waitingForScan
   // The note beside it: the viewer could not be known, or the note could not be asked for.
   const viewerFailed = !userId && !!viewerQuery.error && !viewerQuery.loading
   const notesFailed = loaded.state === 'failed' || viewerFailed
   const retryNotes = () => (viewerFailed ? viewerQuery.refetch() : setGeneration((g) => g + 1))
   if (fileFailed) return <LoadFailed className="mx-auto my-16 max-w-md" onRetry={file.refetch} />
+  if (waitingForScan) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-2 py-16">
+        <StudyLoader kind="scan" label={t('scanning')} detail={t('scanningLead')} />
+      </div>
+    )
+  }
   if (loaded.state === 'missing' || fileMissing) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notFound')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notFound')}</h1>
         <Link href={`/notes/${noteId}`} className="text-accent hover:underline">
           {t('back')}
         </Link>
@@ -374,7 +404,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               }}
             />
           ) : null}
-          {meta?.viewerCan.fork && !converting ? <ToolButton icon={Wand2} label={t('convert.button')} onClick={() => setConvertOpen(true)} /> : null}
+          {meta?.viewerCan.fork && !converting ? <ToolButton icon={FilePenLine} label={t('convert.button')} onClick={() => setConvertOpen(true)} /> : null}
           <ToolButton icon={panelOpen ? PanelRightClose : PanelRightOpen} label={panelOpen ? t('hidePanel') : t('showPanel')} pressed={panelOpen} onClick={() => setPanelOpen((o) => !o)} />
         </header>
         {conversion && !bannerHidden ? <ConversionBanner conversion={conversion} onDismiss={() => setBannerHidden(true)} /> : null}
@@ -418,9 +448,15 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               />
             ) : null}
             {pdfState !== 'ready' ? (
-              <div role="status" className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">
-                {pdfState === 'loading' ? t('loading') : pdfState === 'password' ? t('passwordNeeded') : t('failed')}
-              </div>
+              pdfState === 'loading' ? (
+                <div className="absolute inset-0 grid place-items-center p-6">
+                  <StudyLoader kind="pdf" label={t('loading')} />
+                </div>
+              ) : (
+                <div role="status" className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">
+                  {pdfState === 'password' ? t('passwordNeeded') : t('failed')}
+                </div>
+              )
             ) : null}
           </section>
 
@@ -437,7 +473,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
               {tab('contents', t('panels.contents'), ListTree)}
               <ToolButton icon={X} label={t('hidePanel')} onClick={() => setPanelOpen(false)} className="ml-auto lg:hidden" />
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3">
               <div className={cn(panel !== 'notes' && 'hidden')}>
                 {notesFailed ? (
                   <LoadFailed onRetry={retryNotes} />
@@ -462,7 +498,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
                     compact
                   />
                 ) : (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex min-w-0 max-w-full flex-col gap-4">
                     <div className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft p-4 text-sm">
                       <p>{t('readOnly')}</p>
                       {loaded.meta.viewerCan.fork ? (
@@ -474,7 +510,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
                         <p className="text-muted">{t('noCopies')}</p>
                       )}
                     </div>
-                    <h2 className="text-xl font-bold">{loaded.meta.title || t('untitled')}</h2>
+                    <h2 className="text-xl font-semibold">{loaded.meta.title || t('untitled')}</h2>
                     {loaded.cards.map((c) => (
                       <CardView key={c.id} id={c.id} type={c.type} content={c.content} onAnchor={openAnchor} />
                     ))}
@@ -587,3 +623,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
     </MediaProvider>
   )
 }
+
+/** How often the reader asks again for a PDF still in its virus scan, and for how long. */
+const SCAN_POLL_MS = 3_000
+const SCAN_WAIT_MS = 3 * 60_000

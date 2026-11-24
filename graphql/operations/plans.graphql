@@ -1,0 +1,38 @@
+# Plans a person can see, and how much of theirs they have used (lvn-backend contracts 0.70.0).
+
+fragment PublicPlanFields on PublicPlan {
+  id
+  code
+  name
+  priceMinor
+  currency
+  interval
+  features
+  current
+  limits {
+    key
+    label
+    limit
+  }
+}
+
+query Plans {
+  plans {
+    ...PublicPlanFields
+  }
+}
+
+query MyPlan {
+  myPlan {
+    plan {
+      ...PublicPlanFields
+    }
+    usage {
+      key
+      label
+      used
+      limit
+      resetsAt
+    }
+  }
+}

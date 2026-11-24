@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarCheck, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, CalendarCheck, CircleCheck } from 'lucide-react'
 import type { Catalog } from '@core/features/catalog/types'
 import { useUser } from '@core/features/auth/auth'
 import { dayKey, useProgress } from '@core/features/progress/store'
@@ -51,7 +51,7 @@ export function ProblemOfTheDay({ catalog }: { catalog: Catalog }) {
       <span className="daily-end">
         <span className="muted small daily-left">New in {left}</span>
         {solved
-          ? <span className="daily-solved"><CheckCircle2 size={15} aria-hidden /> Solved</span>
+          ? <span className="daily-solved"><CircleCheck size={15} aria-hidden /> Solved</span>
           : <span className="daily-cta">Solve <ArrowRight size={14} aria-hidden /></span>}
       </span>
     </Link>

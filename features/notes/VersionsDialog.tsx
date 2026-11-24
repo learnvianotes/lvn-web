@@ -48,7 +48,7 @@ export function VersionsDialog({ noteId, open, initialVersionId, onClose, onRest
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="truncate text-lg font-bold">{version.title || t('untitled')}</h3>
+                <h3 className="truncate text-lg font-semibold">{version.title || t('untitled')}</h3>
                 <Button
                   size="sm"
                   disabled={restoring.loading}
@@ -65,7 +65,7 @@ export function VersionsDialog({ noteId, open, initialVersionId, onClose, onRest
               </div>
               <p className="text-xs text-muted">{t('restoreHint')}</p>
               <MediaProvider noteId={null} cards={version.cards.edges.map((e) => e.node)}>
-                <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+                <div className="flex min-w-0 max-w-full flex-col gap-3 rounded-xl border border-border bg-surface p-4">
                   {version.cards.edges.map(({ node: c }) => (
                     <CardView key={c.id} id={c.id} type={c.type} content={c.content} />
                   ))}

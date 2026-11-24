@@ -1,0 +1,116 @@
+# College ID verification (lvn-backend ADR-0099): a student sends one card, an admin reviews it.
+# The bytes are PUT to createStudentIdUploadIntent; submitStudentIdVerification checks them.
+# Do not call completeUpload. The card URL is fetched on open and is not cached.
+
+fragment StudentIdVerificationFields on StudentIdVerificationRequest {
+  id
+  status
+  reason
+  createdAt
+  decidedAt
+  requester {
+    id
+    displayName
+    handle
+  }
+}
+
+query StudentIdVerificationEnabled {
+  studentIdVerificationEnabled
+}
+
+query MyStudentIdVerification {
+  myStudentIdVerification {
+    ...StudentIdVerificationFields
+  }
+}
+
+query StudentIdVerificationQueue($after: UUID, $first: Int) {
+  studentIdVerificationQueue(after: $after, first: $first) {
+    ...StudentIdVerificationFields
+    aiCheck {
+      ...AiCheckFields
+    }
+    requester {
+      email
+      institution {
+        name
+      }
+      profile {
+        department
+      }
+    }
+  }
+}
+
+# Used when a server does not know aiCheck yet. The queue falls back to this.
+query StudentIdVerificationQueueBasic($first: Int) {
+  studentIdVerificationQueue(first: $first) {
+    ...StudentIdVerificationFields
+  }
+}
+
+query StudentIdCardUrl($requestId: UUID!) {
+  studentIdCardUrl(requestId: $requestId) {
+    url
+    expiresAt
+  }
+}
+
+mutation CreateStudentIdUploadIntent($input: CreateStudentIdUploadInput!) {
+  createStudentIdUploadIntent(input: $input) {
+    upload {
+      fileId
+      uploadUrl
+      uploadHeaders {
+        name
+        value
+      }
+      expiresAt
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation SubmitStudentIdVerification($input: SubmitStudentIdVerificationInput!) {
+  submitStudentIdVerification(input: $input) {
+    request {
+      ...StudentIdVerificationFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation WithdrawStudentIdVerification($requestId: UUID!) {
+  withdrawStudentIdVerification(requestId: $requestId) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation SetStudentIdVerificationEnabled($enabled: Boolean!) {
+  setStudentIdVerificationEnabled(enabled: $enabled) {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation ReviewStudentIdVerification($input: ReviewStudentIdVerificationInput!) {
+  reviewStudentIdVerification(input: $input) {
+    request {
+      id
+      status
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

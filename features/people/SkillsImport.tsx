@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Check, Copy, RefreshCw, Trash2 } from 'lucide-react'
+import { Check, Copy, RefreshCw, Trash } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -116,7 +116,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{tk(`source.${i.kind}`)}</span>
                 <span className="min-w-0 truncate text-muted">{i.value}</span>
-                <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', i.verified ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-surface-2 text-muted')}>{i.verified ? t('proven') : t('notProven')}</span>
+                <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', i.verified ? 'bg-good/10 text-good' : 'bg-surface-2 text-muted')}>{i.verified ? t('proven') : t('notProven')}</span>
                 <span className="flex-1" />
                 <Button
                   type="button"
@@ -146,7 +146,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
                     void run(async () => ({ problem: (await remove({ variables: { identityId: i.id } })).data?.removeExternalIdentity.userErrors[0]?.message }))
                   }}
                 >
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </div>
               {!i.verified ? (
@@ -173,7 +173,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
                 </div>
               ) : null}
               {i.lastError ? (
-                <p role="alert" className="text-red-600 dark:text-red-400">
+                <p role="alert" className="text-bad">
                   {i.lastError}
                 </p>
               ) : null}
@@ -242,7 +242,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
                   aria-label={t('takeAway', { name: s.name })}
                   onClick={() => void run(async () => ({ problem: (await discard({ variables: { skillIds: [s.id] } })).data?.discardTeacherSkills.userErrors[0]?.message }))}
                 >
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </li>
             ))}
@@ -250,7 +250,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
         </div>
       ) : null}
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

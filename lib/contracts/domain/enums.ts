@@ -6,10 +6,10 @@
 
 const values = <T extends Record<string, string>>(o: T) => Object.values(o) as [T[keyof T], ...T[keyof T][]]
 
-export const Visibility = { PRIVATE: 'PRIVATE', SHARED: 'SHARED', PUBLIC: 'PUBLIC' } as const
+export const Visibility = { PRIVATE: 'PRIVATE', SHARED: 'SHARED', UNLISTED: 'UNLISTED', PUBLIC: 'PUBLIC' } as const
 export type Visibility = (typeof Visibility)[keyof typeof Visibility]
 
-export const GlobalRole = { STUDENT: 'STUDENT', TEACHER: 'TEACHER', PLATFORM_ADMIN: 'PLATFORM_ADMIN' } as const
+export const GlobalRole = { STUDENT: 'STUDENT', TEACHER: 'TEACHER', MANAGER: 'MANAGER', PLATFORM_ADMIN: 'PLATFORM_ADMIN' } as const
 export type GlobalRole = (typeof GlobalRole)[keyof typeof GlobalRole]
 
 /** MENTOR exists only in PROJECT groups: a teacher the team invited (ADR-0015). */
@@ -86,8 +86,23 @@ export const ErrorCode = {
   CONFLICT: 'CONFLICT', RATE_LIMITED: 'RATE_LIMITED', INTERNAL: 'INTERNAL',
   /** A service the request needs is off or out of budget for now (AI, ADR-0058); worth trying later */
   UNAVAILABLE: 'UNAVAILABLE',
-  /** Sign-up refused: the date of birth given is below ACCOUNT_MINIMUM_AGE (ADR-0091) */
+  /** Sign-up refused: the age given is below the sign-up floor, at least 13 (ADR-0091, ADR-0109, ADR-0113). Kept for older clients. */
   UNDER_MINIMUM_AGE: 'UNDER_MINIMUM_AGE',
+  /** The account exists and is age-blocked. `userErrors[].supportEmail` is who to contact. */
+  AGE_RESTRICTED: 'AGE_RESTRICTED',
+  /**
+   * A minor (under 18, or an unknown age) asked for an AI feature that would have to send their content to OpenAI,
+   * and no other provider can do that job. Clients show this instead of calling the feature.
+   */
+  AI_UNAVAILABLE_FOR_MINOR: 'AI_UNAVAILABLE_FOR_MINOR',
+  /** An under-13 account asked for push, a capture upload, or a social feature a parent has not turned on. */
+  FEATURE_UNAVAILABLE_FOR_MINOR: 'FEATURE_UNAVAILABLE_FOR_MINOR',
+  /** A minor's post or message contained a phone, email, street address or social handle, and the filter is set to block. */
+  MINOR_PII_BLOCKED: 'MINOR_PII_BLOCKED',
+  /** This session still needs a second factor. `startMfaChallenge` then `verifyMfaChallenge`. */
+  MFA_REQUIRED: 'MFA_REQUIRED',
+  /** An admin or staff session still needs the emailed code before an admin operation. */
+  ADMIN_MFA_REQUIRED: 'ADMIN_MFA_REQUIRED',
 } as const
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
 
@@ -147,14 +162,14 @@ export const LegacyImportStatus = { NOT_FOUND: 'NOT_FOUND', AVAILABLE: 'AVAILABL
 export type LegacyImportStatus = (typeof LegacyImportStatus)[keyof typeof LegacyImportStatus]
 
 /**
- * Every usage limit, read from the user's (or organisation's) plan — never written in code (ADR-0024). Only the
- * FREE plan exists today; paid plans and organisation seat limits come later without code changes.
+ * Every usage limit, read from the user's plan — never a number written at the call site (ADR-0024).
+ * A missing row means unlimited. NOTES_OWNED and AI_REQUESTS_DAILY are the caps a person can see on a plan.
  */
 export const LimitKey = {
   STORAGE_BYTES: 'STORAGE_BYTES', AI_TOKENS_DAILY: 'AI_TOKENS_DAILY', PDF_PAGES_MONTHLY: 'PDF_PAGES_MONTHLY',
   GROUPS_OWNED: 'GROUPS_OWNED', GROUP_MEMBERS: 'GROUP_MEMBERS', CLASSROOMS_OWNED: 'CLASSROOMS_OWNED',
   CLASSROOM_MEMBERS: 'CLASSROOM_MEMBERS', PROJECT_WORKSPACES: 'PROJECT_WORKSPACES', EXPORTS_DAILY: 'EXPORTS_DAILY',
-  IMPORTS_DAILY: 'IMPORTS_DAILY', ORG_SEATS: 'ORG_SEATS',
+  IMPORTS_DAILY: 'IMPORTS_DAILY', ORG_SEATS: 'ORG_SEATS', NOTES_OWNED: 'NOTES_OWNED', AI_REQUESTS_DAILY: 'AI_REQUESTS_DAILY',
 } as const
 export type LimitKey = (typeof LimitKey)[keyof typeof LimitKey]
 

@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Who answers AI requests (lvn-backend ADR-0065), for platform admins, until the admin app exists. */
 export default function AiProvidersPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <AiProviders />
     </div>
   )

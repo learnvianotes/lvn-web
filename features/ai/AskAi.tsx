@@ -2,15 +2,20 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, Globe, LoaderCircle, MessageCircleQuestion, NotebookPen, Sparkles, Trash2, Users, type LucideIcon } from 'lucide-react'
+import { BookOpen, Globe, LoaderCircle, MessageCircleQuestionMark, NotebookPen, TextQuote, Trash, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { StudyLoader } from '@/components/ui/study-loader'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { Loading } from '@/components/ui/query-state'
+import { limitMessageFromUserErrors, refusalMessage } from '@/lib/limit-error'
 import { AiAnswerDocument, AiStateDocument, AskAiAboutDoubtDocument, AskAiDocument, DeleteAiAnswerDocument, MyAiAnswersDocument, type AiAnswerFieldsFragment, type AskAiScope } from '@/graphql/generated/graphql'
 import { cn } from '@/lib/cn'
 import { useLive } from '@/features/notifications/live'
 import { Markdown } from '@/features/notes/render/Markdown'
+import { trackFeature } from '@/lib/analytics'
 
 /**
  * Ask AI (lvn-backend ADR-0060): a question over the notes the asker may read — one note, their notes, their groups'
@@ -46,22 +51,29 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
   const [askDoubt, askingDoubt] = useMutation(AskAiAboutDoubtDocument, { refetchQueries: ['MyAiAnswers'] })
   const [question, setQuestion] = useState(initialQuestion)
   const [error, setError] = useState<string | null>(null)
+  const [limit, setLimit] = useState(false)
   const status = state.data?.aiStatus
   const off = status ? !status.available : false
   const busy = asking.loading || askingDoubt.loading
 
   const submit = async (event?: React.FormEvent) => {
     event?.preventDefault()
+    trackFeature('ai_assist')
     setError(null)
+    setLimit(false)
     try {
       const res = doubtId ? (await askDoubt({ variables: { doubtId } })).data?.askAiAboutDoubt : (await askAi({ variables: { input: { question: question.trim(), scope, noteId } } })).data?.askAi
-      setError(problemOf(null, res, t('failed')))
+      const hit = limitMessageFromUserErrors(res?.userErrors)
+      setLimit(!!hit)
+      setError(hit ?? problemOf(null, res, t('failed')))
       if (res?.answer) {
         setQuestion('')
         onAsked?.(res.answer)
       }
     } catch (e) {
-      setError(problemOf(e, null, t('failed')))
+      const hit = refusalMessage(e)
+      setLimit(!!hit)
+      setError(hit ?? problemOf(e, null, t('failed')))
     }
   }
 
@@ -69,14 +81,16 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
     return (
       <div className="flex flex-col gap-2">
         <Button variant="secondary" size="sm" className="w-fit gap-1.5" disabled={off || busy} onClick={() => void submit()}>
-          <Sparkles className="size-4 text-accent" aria-hidden />
+          <TextQuote className="size-4 text-accent" aria-hidden />
           {t('aboutDoubt')}
         </Button>
         {off ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
+          limit ? <LimitNotice>{error}</LimitNotice> : (
+            <p role="alert" className="text-sm text-bad">
+              {error}
+            </p>
+          )
         ) : null}
       </div>
     )
@@ -109,9 +123,11 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
       </div>
       {off && offNotice ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
+        limit ? <LimitNotice>{error}</LimitNotice> : (
+          <p role="alert" className="text-sm text-bad">
+            {error}
+          </p>
+        )
       ) : null}
     </form>
   )
@@ -127,21 +143,18 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
   return (
     <article aria-label={a.question} data-answer-status={a.status} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <header className="flex items-start gap-2">
-        <MessageCircleQuestion className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+        <MessageCircleQuestionMark className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
         <h3 className={cn('min-w-0 flex-1 font-semibold', compact ? 'text-sm' : 'text-base')}>{a.question}</h3>
         {pending ? null : (
           <Button variant="ghost" size="icon" aria-label={t('delete')} title={t('delete')} disabled={removing.loading} onClick={() => void remove({ variables: { id: a.id } }).catch(() => undefined)}>
-            <Trash2 className="size-4" aria-hidden />
+            <Trash className="size-4" aria-hidden />
           </Button>
         )}
       </header>
       {pending ? (
         <>
           <Follow id={a.id} />
-          <p role="status" className="flex items-center gap-2 text-sm text-muted">
-            <LoaderCircle className="size-4 animate-spin" aria-hidden />
-            {t(a.status === 'QUEUED' ? 'queued' : 'writing')}
-          </p>
+          <StudyLoader kind="nova" label={t(a.status === 'QUEUED' ? 'queued' : 'writing')} compact />
         </>
       ) : null}
       {a.text ? (
@@ -150,7 +163,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
           className="flex flex-col gap-2.5 text-sm leading-relaxed"
           cite={(n) =>
             cited.has(n) ? (
-              <a href={`#${anchor(n)}`} className="mx-0.5 inline-flex min-w-5 items-center justify-center rounded-md bg-accent-soft px-1 align-super text-[0.7em] font-bold text-accent no-underline hover:bg-accent hover:text-accent-fg" aria-label={t('source', { n })}>
+              <a href={`#${anchor(n)}`} className="mx-0.5 inline-flex min-w-5 items-center justify-center rounded-md bg-accent-soft px-1 align-super text-[0.7em] font-semibold text-accent no-underline hover:bg-accent hover:text-accent-fg" aria-label={t('source', { n })}>
                 {n}
               </a>
             ) : (
@@ -160,18 +173,18 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
         />
       ) : null}
       {a.status === 'FAILED' ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {a.error ?? t('failed')}
         </p>
       ) : null}
       {a.status === 'READY' && a.sources.length ? (
         <section aria-label={t('sources')} className="flex flex-col gap-2">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-muted">{t('sources')}</h4>
+          <h4 className="text-xs font-semibold text-muted">{t('sources')}</h4>
           <ol className="flex flex-col gap-2">
             {a.sources.map((s) => (
               <li key={s.n} id={anchor(s.n)} className="scroll-mt-24">
-                <Link href={`/notes/${s.noteId}`} className="flex gap-3 rounded-xl border border-border bg-bg p-3 text-sm transition hover:border-accent">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-md bg-accent-soft text-xs font-bold text-accent">{s.n}</span>
+                <Link href={`/notes/${s.noteId}`} className="flex gap-3 rounded-xl border border-border bg-bg p-3 text-sm transition-colors hover:border-accent">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-md bg-accent-soft text-xs font-semibold text-accent">{s.n}</span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 font-semibold">
                       <BookOpen className="size-3.5 text-muted" aria-hidden />
@@ -194,7 +207,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
 export function AnswerList({ noteId, doubtId, compact, emptyText }: { noteId?: string; doubtId?: string; compact?: boolean; emptyText?: string }) {
   const { data, loading } = useQuery(MyAiAnswersDocument, { variables: { first: 20, noteId: noteId ?? null, doubtId: doubtId ?? null }, fetchPolicy: 'cache-and-network' })
   const answers = data?.myAiAnswers ?? []
-  if (loading && !data) return null
+  if (loading && !data) return <Loading />
   if (!answers.length) return emptyText ? <p className="text-sm text-muted">{emptyText}</p> : null
   return (
     <div className="flex flex-col gap-3">
@@ -219,8 +232,8 @@ export function AskPage({ question }: { question?: string } = {}) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Sparkles className="size-6 text-accent" aria-hidden />
+        <h1 className="flex items-center gap-2 text-2xl font-semibold">
+          <TextQuote className="size-6 text-accent" aria-hidden />
           {t('title')}
         </h1>
         <p className="text-sm text-muted">{t('lead')}</p>
@@ -243,7 +256,7 @@ export function AskPage({ question }: { question?: string } = {}) {
       <p className="-mt-3 text-xs text-muted">{t(`scopeHint.${scope}`)}</p>
       <AskForm scope={scope} initialQuestion={question} />
       <section aria-label={t('history')} className="flex flex-col gap-3">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('history')}</h2>
+        <h2 className="text-sm font-semibold text-muted">{t('history')}</h2>
         <AnswerList emptyText={t('none')} />
       </section>
     </div>

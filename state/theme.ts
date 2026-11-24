@@ -1,25 +1,61 @@
 'use client'
 
 import { create } from 'zustand'
-import { THEME_KEY } from '@/lib/theme'
+import {
+  ACCENT_KEY,
+  THEME_KEY,
+  applyAppearance,
+  prefersDark,
+  readAccent,
+  readMode,
+  type AccentId,
+  type ResolvedTheme,
+  type ThemeMode,
+} from '@/lib/theme'
 
-export type Theme = 'light' | 'dark'
-
-interface ThemeState {
-  theme: Theme
-  setTheme: (theme: Theme) => void
+interface AppearanceState {
+  mode: ThemeMode
+  accent: AccentId
+  resolved: ResolvedTheme
+  setMode: (mode: ThemeMode) => void
+  setAccent: (accent: AccentId) => void
+  /** Read this device's storage and paint. Used after hydration and when the OS scheme changes. */
+  sync: () => void
 }
 
-function current(): Theme {
-  if (typeof document === 'undefined') return 'light'
-  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+function persist(key: string, value: string) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    /* private mode: the choice lasts for this tab */
+  }
 }
 
-export const useTheme = create<ThemeState>((set) => ({
-  theme: current(),
-  setTheme: (theme) => {
-    document.documentElement.dataset.theme = theme
-    try { localStorage.setItem(THEME_KEY, JSON.stringify(theme)) } catch { /* private mode: theme lasts for this tab */ }
-    set({ theme })
+export const useAppearance = create<AppearanceState>((set, get) => ({
+  // Server and the first client render agree. ThemeSync reads storage after mount.
+  mode: 'system',
+  accent: 'ink',
+  resolved: 'light',
+  setMode: (mode) => {
+    persist(THEME_KEY, mode)
+    const resolved = applyAppearance(mode, get().accent, prefersDark())
+    set({ mode, resolved })
+  },
+  setAccent: (accent) => {
+    persist(ACCENT_KEY, accent)
+    applyAppearance(get().mode, accent, prefersDark())
+    set({ accent })
+  },
+  sync: () => {
+    let mode: ThemeMode = 'system'
+    let accent: AccentId = 'ink'
+    try {
+      mode = readMode(localStorage.getItem(THEME_KEY))
+      accent = readAccent(localStorage.getItem(ACCENT_KEY))
+    } catch {
+      /* storage blocked */
+    }
+    const resolved = applyAppearance(mode, accent, prefersDark())
+    set({ mode, accent, resolved })
   },
 }))

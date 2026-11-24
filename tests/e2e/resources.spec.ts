@@ -125,9 +125,7 @@ test('one’s resources, each with its state, from the account page', async ({ p
     MyVerificationRequests: () => ({ myVerificationRequests: [] }),
     MyResources: () => ({ myResources: [resource({ status: 'APPROVED', viewerCan: { __typename: 'ResourceActions', edit: false, delete: true, report: false } }), resource({ id: `${ID.slice(0, -1)}2`, title: 'A sales page', status: 'REJECTED', reason: 'A shop, not a resource.' })] }),
   }, { profile: null, legacyImport: { __typename: 'LegacyImport', status: 'NOT_FOUND', claimedAt: null, counts: null } })
-  await page.goto('/profile')
-  await page.getByRole('link', { name: 'Your resources' }).click()
-  await expect(page).toHaveURL(/\/resources\/mine$/)
+  await page.goto('/resources/mine')
   const items = page.getByRole('listitem')
   await expect(items).toHaveCount(2)
   await expect(items.nth(0)).toContainText('In the catalogue')

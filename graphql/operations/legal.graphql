@@ -1,5 +1,10 @@
 # Accepting the Terms, Privacy Policy and content licence again when they change (lvn-backend §15.2).
 
+# The version in effect, read anonymously by the legal pages on the server (lvn-backend ADR-0103).
+query LegalTermsVersion {
+  termsVersion
+}
+
 query TermsStatus {
   termsVersion
   viewer {

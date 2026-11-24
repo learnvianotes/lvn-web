@@ -9,10 +9,11 @@ import { useState } from 'react'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { LoadFailed } from '@/components/ui/query-state'
+import { LoadFailed, Loading } from '@/components/ui/query-state'
 import { Discussion } from '@/features/discussion/Discussion'
 import { ReportButton } from '@/features/moderation/ReportDialog'
 import { DeleteResourceDocument, MyResourcesDocument, ResourceDocument, type ResourceFieldsFragment } from '@/graphql/generated/graphql'
+import { safeLinkHref } from '@/lib/http-url'
 import { isNotThere } from '@/lib/query'
 import { useSession } from '@/state/session'
 import { SaveButton } from './Catalogue'
@@ -33,7 +34,14 @@ function Page({ id }: { id: string }) {
   const { data, loading, error, refetch } = useQuery(ResourceDocument, { variables: { id }, skip: status === 'unknown', fetchPolicy: 'cache-and-network' })
   const resource = data?.resource
   if (!resource) {
-    if (loading || status === 'unknown' || (!data && !error)) return <div className="mx-auto max-w-3xl px-4 py-10" aria-busy="true" />
+    if (status === 'unreachable' && !resource) {
+      return (
+        <div className="mx-auto max-w-md px-4 py-16">
+          <LoadFailed onRetry={refetch} />
+        </div>
+      )
+    }
+    if (loading || status === 'unknown' || (!data && !error)) return <Loading className="mx-auto max-w-3xl px-4 py-10" />
     // Not there only when the API said so; a resource that could not be asked for is offered again.
     if (error && !isNotThere(error)) {
       return (
@@ -44,7 +52,7 @@ function Page({ id }: { id: string }) {
     }
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notFound')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notFound')}</h1>
         <p className="mt-2 text-sm text-muted">{t('notFoundLead')}</p>
       </div>
     )
@@ -64,10 +72,11 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
   const [error, setError] = useState<string | null>(null)
   const [recommending, setRecommending] = useState(false)
   const signedIn = useSession((s) => s.status) === 'signed-in'
+  const link = safeLinkHref(r.url)
   return (
     <article className="flex flex-col gap-5" aria-labelledby="resource-title">
       {r.status !== 'APPROVED' ? (
-        <section role="note" className={`flex flex-col gap-1 rounded-2xl border p-4 text-sm ${r.status === 'REJECTED' ? 'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-border bg-surface-2'}`}>
+        <section role="note" className={`flex flex-col gap-1 rounded-2xl border p-4 text-sm ${r.status === 'REJECTED' ? 'border-bad/30 bg-bad/10' : 'border-border bg-surface-2'}`}>
           <p className="font-semibold">{t(`status.${r.status}`)}</p>
           {r.status === 'PENDING' ? <p className="text-muted">{t('pendingNote')}</p> : null}
           {r.status === 'REJECTED' && r.reason ? (
@@ -81,19 +90,23 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
       <div className="flex flex-col gap-5 sm:flex-row">
         {r.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- a short-lived read URL from storage
-          <img src={r.coverUrl} alt="" className="h-48 w-auto self-start rounded-xl border border-border object-contain" />
+          <img src={r.coverUrl} alt="" className="h-48 w-auto max-w-full self-start rounded-xl border border-border object-contain" />
         ) : null}
         <div className="flex min-w-0 flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">{t(`type.${r.type}`)}</span>
-          <h1 id="resource-title" className="text-2xl font-extrabold tracking-tight">
+          <span className="text-xs font-semibold text-accent">{t(`type.${r.type}`)}</span>
+          <h1 id="resource-title" className="text-2xl font-semibold">
             {r.title}
           </h1>
           {r.author ? <p className="text-sm text-muted">{t('by', { author: r.author })}</p> : null}
           {/* A link people added: marked as user content and not followed by search engines (ADR-0074). */}
-          <a href={r.url} rel="ugc nofollow noopener" target="_blank" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90">
-            {t('open', { host: r.host })}
-            <ExternalLink className="size-4" aria-hidden />
-          </a>
+          {link ? (
+            <a href={link} rel="ugc nofollow noopener" target="_blank" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90">
+              {t('open', { host: r.host })}
+              <ExternalLink className="size-4" aria-hidden />
+            </a>
+          ) : (
+            <span className="text-sm text-muted">{t('open', { host: r.host })}</span>
+          )}
         </div>
       </div>
       {r.description ? <p className="whitespace-pre-line">{r.description}</p> : null}

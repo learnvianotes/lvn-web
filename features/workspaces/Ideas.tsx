@@ -29,7 +29,7 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
     <div className="flex flex-col gap-4">
       {group.viewerCan.post ? (
         <form
-          className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3"
+          className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3 focus-within:border-accent"
           onSubmit={(e) => {
             e.preventDefault()
             void attempt(async () => {
@@ -45,14 +45,14 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
           <label className="sr-only" htmlFor="new-idea">
             {t('ideaLabel')}
           </label>
-          <textarea id="new-idea" value={text} rows={2} onChange={(e) => setText(e.target.value)} placeholder={t('ideaPlaceholder')} className="resize-y bg-transparent text-sm focus:outline-none" />
+          <textarea id="new-idea" value={text} rows={2} onChange={(e) => setText(e.target.value)} placeholder={t('ideaPlaceholder')} className="resize-y border-0 bg-transparent text-sm focus:outline-none" />
           <Button type="submit" size="sm" className="self-end" disabled={creating.loading || !text.trim()}>
             {t('shareIdea')}
           </Button>
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -62,17 +62,17 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
           {ideas.map((idea, i) => (
             <li key={idea.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-center gap-2 text-sm">
-                <span className="grid size-6 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent" aria-label={t('rank', { n: i + 1 })}>
+                <span className="grid size-6 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent" aria-label={t('rank', { n: i + 1 })}>
                   {i + 1}
                 </span>
-                <Lightbulb className="size-4 text-amber-500" aria-hidden />
+                <Lightbulb className="size-4 text-warn" aria-hidden />
                 <Link href={`/u/${idea.author.handle}`} className="font-semibold hover:text-accent">
                   {idea.author.displayName}
                 </Link>
                 <span className="text-xs text-muted">{ago(idea.createdAt)}</span>
                 <span className="ml-auto flex items-center gap-3 text-xs font-semibold text-muted">
                   {idea.viewerCan.delete ? (
-                    <button type="button" className="hover:text-red-600" onClick={() => void remove({ variables: { postId: idea.id } }).then(() => refetch())}>
+                    <button type="button" className="hover:text-bad" onClick={() => void remove({ variables: { postId: idea.id } }).then(() => refetch())}>
                       {t('delete')}
                     </button>
                   ) : null}

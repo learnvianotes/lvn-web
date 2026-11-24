@@ -33,7 +33,7 @@ const viewer = (over: Record<string, unknown> = {}) => ({
 const session = (user = viewer()) => ({ __typename: 'Session', accessToken: 'header.payload.sig', accessTokenExpiresAt: new Date(Date.now() + 900_000).toISOString(), user })
 const ok = { __typename: 'OkPayload', ok: true, userErrors: [] }
 /** A userError as the API sends it (Apollo matches fragments by __typename). */
-const problem = (field: string[] | null, message: string, code = 'VALIDATION') => ({ __typename: 'UserError', field, message, code })
+const problem = (field: string[] | null, message: string, code = 'VALIDATION', supportEmail: string | null = null, retryAfter: number | null = null) => ({ __typename: 'UserError', field, message, code, supportEmail, retryAfter })
 const fail = (...problems: ReturnType<typeof problem>[]) => ({ __typename: 'OkPayload', ok: false, userErrors: problems })
 
 /**
@@ -52,6 +52,8 @@ async function mockApi(page: Page, handlers: Record<string, Handler>, refresh: '
       if (refresh === 'signed-out') return route.fulfill({ json: { data: null, errors: [{ message: 'Session ended', extensions: { code: 'UNAUTHENTICATED' } }] } })
     } else if (op === 'SignInOptions') {
       data = { signInOptions: { emailPassword: true, google: !!handlers.withGoogle, github: false, linkedin: false }, termsVersion: '2026-10-08' }
+    } else if (op === 'AccessPolicy') {
+      data = handlers.AccessPolicy ? handlers.AccessPolicy(body.variables ?? {}) : { accessPolicy: { __typename: 'AccessPolicy', inviteOnly: false } }
     } else if (handlers[op]) {
       data = handlers[op]!(body.variables ?? {})
     } else {
@@ -82,6 +84,20 @@ test.describe('sign up', () => {
     await expect(page.getByText('An account with this email already exists. Sign in instead.')).toBeVisible()
   })
 
+  test('a forbidden sign-up names the invite, and the notice shows when the beta is closed', async ({ page }) => {
+    const message = 'LearnViaNotes beta is invite-only. Ask an admin to add your email.'
+    await mockApi(page, {
+      AccessPolicy: () => ({ accessPolicy: { __typename: 'AccessPolicy', inviteOnly: true } }),
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'email'], message, 'FORBIDDEN')] } }),
+    })
+    await page.goto('/sign-up')
+    await expect(page.getByRole('status')).toHaveText(/invite-only/)
+    await fillSignUp(page)
+    await createAccount(page)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('Something went wrong')).toHaveCount(0)
+  })
+
   test('signs up with the current terms version and lands on the account page', async ({ page }) => {
     const calls = await mockApi(page, { SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: session(), userErrors: [] } }), Viewer: () => ({ viewer: viewer() }) })
     await page.goto('/sign-up')
@@ -90,7 +106,9 @@ test.describe('sign up', () => {
     await expect(page).toHaveURL(/\/profile$/)
     await expect(page.getByRole('heading', { name: 'Asha Rao' })).toBeVisible()
     const input = calls.find((c) => c.op === 'SignUp')!.variables.input as Record<string, unknown>
-    expect(input).toMatchObject({ acceptedTermsVersion: '2026-10-08', dateOfBirth: '2004-05-01', institutionalEmail: null })
+    expect(input).toMatchObject({ acceptedTermsVersion: '2026-10-08', age: 22, institutionalEmail: null })
+    // Only the age (lvn-backend ADR-0104): the deprecated date of birth is for older phone builds.
+    expect(input).not.toHaveProperty('dateOfBirth')
   })
 
   test('someone who teaches picks Teach, and goes on to apply (lvn-backend ADR-0073)', async ({ page }) => {
@@ -123,18 +141,21 @@ test.describe('sign up', () => {
   })
 })
 
-test.describe('the age check (lvn-backend ADR-0091)', () => {
-  test('every date of birth is shown in words and confirmed before anything is sent', async ({ page }) => {
+test.describe('the age check (lvn-backend ADR-0091, ADR-0104)', () => {
+  test('asks for the age as a number, with no date picker, and confirms every answer before anything is sent', async ({ page }) => {
     const calls = await mockApi(page, { SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: session(), userErrors: [] } }), Viewer: () => ({ viewer: viewer() }) })
     await page.goto('/sign-up')
+    const age = page.getByRole('textbox', { name: 'Your age' })
+    await expect(age).toHaveAttribute('inputmode', 'numeric')
+    await expect(page.getByLabel('Date of birth')).toHaveCount(0)
+    await expect(page.locator('input[type="date"]')).toHaveCount(0)
     await fillSignUp(page)
-    await expect(page.getByText('1 May 2004', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Create account' }).click()
     const confirm = page.getByRole('dialog', { name: 'Is this right?' })
-    await expect(confirm).toContainText('1 May 2004')
+    await expect(confirm).toContainText('You are 22 years old.')
     await confirm.getByRole('button', { name: 'Change it' }).click()
     await expect(confirm).toBeHidden()
-    await expect(page.getByLabel('Date of birth')).toBeFocused()
+    await expect(age).toBeFocused()
     expect(calls.filter((c) => c.op === 'SignUp')).toHaveLength(0)
     // Nothing on the form names the cut-off.
     await expect(page.getByRole('main')).not.toContainText('18')
@@ -142,25 +163,77 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await expect(page).toHaveURL(/\/profile$/)
   })
 
-  test('a refusal closes sign-up on this device for a day, and deletes or signs out nobody', async ({ page }) => {
+  test('takes only a whole number from 13 to 120, and shows the API’s age error on the field', async ({ page }) => {
     const calls = await mockApi(page, {
-      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'dateOfBirth'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')] } }),
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'age'], 'Enter an age from 1 to 120.')] } }),
     })
     await page.goto('/sign-up')
     await fillSignUp(page)
-    await page.getByLabel('Date of birth').fill('2012-05-01')
-    await createAccount(page, '1 May 2012')
+    const age = page.getByRole('textbox', { name: 'Your age' })
+    for (const [text, message] of [
+      ['', 'Enter your age.'],
+      ['17.5', 'Enter your age as a whole number.'],
+      ['18 years', 'Enter your age as a whole number.'],
+      ['0', 'Enter an age from 13 to 120.'],
+      ['8', 'Enter an age from 13 to 120.'],
+      ['12', 'Enter an age from 13 to 120.'],
+      ['121', 'Enter an age from 13 to 120.'],
+    ] as const) {
+      await age.fill(text)
+      await page.getByRole('button', { name: 'Create account' }).click()
+      await expect(page.getByRole('alert').filter({ hasText: message })).toBeVisible()
+      await expect(age).toHaveAttribute('aria-invalid', 'true')
+      await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    }
+    expect(calls.filter((c) => c.op === 'SignUp')).toHaveLength(0)
+    // The API checks again; its error lands on the same field.
+    await age.fill('45')
+    await expect(age).not.toHaveAttribute('aria-invalid', 'true')
+    await createAccount(page, 'You are 45 years old.')
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 1 to 120.' })).toBeVisible()
+    await expect(age).toHaveAttribute('aria-invalid', 'true')
+    expect(calls.find((c) => c.op === 'SignUp')?.variables.input).toMatchObject({ age: 45 })
+  })
+
+  test('an age-restricted sign-up explains how to reach an admin', async ({ page }) => {
+    await mockApi(page, {
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'The account could not be activated.', 'AGE_RESTRICTED', 'support@learnvianotes.in')] } }),
+    })
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => undefined)
+    await page.goto('/sign-up')
+    await fillSignUp(page)
+    await page.getByLabel('Your age').fill('13')
+    await createAccount(page, 'You are 13 years old.')
+    await expect(page.getByRole('heading', { level: 1, name: 'This account couldn’t be activated' })).toBeVisible()
+    await expect(page.getByText('We couldn’t activate the account because of the age requirement.')).toBeVisible()
+    await expect(page.getByText(/contact admin at/)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+    await expect(page.getByRole('main')).not.toContainText('18')
+    await page.getByRole('button', { name: 'Copy email' }).click()
+    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
+    const dir = process.env.ADMIN_PLATFORM_SHOTS
+    if (dir) await page.screenshot({ path: `${dir}/age_blocked.png`, fullPage: true })
+  })
+
+  test('a refusal closes sign-up on this device for a day, and deletes or signs out nobody', async ({ page }) => {
+    const calls = await mockApi(page, {
+      SignUp: () => ({ signUp: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'age'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')] } }),
+    })
+    await page.goto('/sign-up')
+    await fillSignUp(page)
+    await page.getByLabel('Your age').fill('14')
+    await createAccount(page, 'You are 14 years old.')
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Read the public notes' })).toHaveAttribute('href', '/subjects')
     // Going back and answering again doesn't reopen it.
     await page.reload()
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
-    await expect(page.getByLabel('Date of birth')).toHaveCount(0)
-    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions'].includes(op))).toEqual(['SignUp'])
+    await expect(page.getByLabel('Your age')).toHaveCount(0)
+    expect(calls.map((c) => c.op).filter((op) => !['Refresh', 'RefreshSession', 'SignInOptions', 'AccessPolicy', 'AnalyticsOptOut', 'IngestAnalytics'].includes(op))).toEqual(['SignUp'])
     // A day later the form is back.
     await page.evaluate(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() - 86_400_001 })))
     await page.reload()
-    await expect(page.getByLabel('Date of birth')).toBeVisible()
+    await expect(page.getByLabel('Your age')).toBeVisible()
   })
 
   test('an under-age answer on a new provider account leaves it, signed out, at the refusal', async ({ page }) => {
@@ -171,17 +244,17 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
         Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
         CompleteRegistration: () => {
           completed++
-          return { completeRegistration: fail(problem(['input', 'dateOfBirth'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')) }
+          return { completeRegistration: fail(problem(['input', 'age'], 'Sorry, you can’t create an account.', 'UNDER_MINIMUM_AGE')) }
         },
         SignOut: () => ({ signOut: ok }),
       },
       'signed-in',
     )
     await page.goto('/sign-up/details')
-    await page.getByLabel('Date of birth').fill('2011-02-03')
+    await page.getByLabel('Your age').fill('15')
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Continue' }).click()
-    await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
     await expect(page).toHaveURL(/\/sign-up$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
     expect(completed).toBe(1)
@@ -193,7 +266,7 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
     await page.addInitScript(() => localStorage.setItem('lvn.age-refused', JSON.stringify({ at: Date.now() })))
     await page.goto('/sign-up/details')
     await expect(page.getByRole('heading', { level: 1, name: 'Sorry, you can’t create an account' })).toBeVisible()
-    await expect(page.getByLabel('Date of birth')).toHaveCount(0)
+    await expect(page.getByLabel('Your age')).toHaveCount(0)
     expect(calls.filter((c) => c.op === 'CompleteRegistration' || c.op === 'RequestAccountDeletion')).toHaveLength(0)
     await page.getByRole('button', { name: 'Sign out' }).click()
     await expect(page).toHaveURL(/\/$/)
@@ -201,13 +274,68 @@ test.describe('the age check (lvn-backend ADR-0091)', () => {
 })
 
 test.describe('sign in', () => {
+  test('an age-blocked account sees the same message as a refused sign-up', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'This account could not be activated.', 'AGE_RESTRICTED', 'support@learnvianotes.in')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
+    await page.getByLabel('Email').fill('ravi@college.edu')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'This account couldn’t be activated' })).toBeVisible()
+    await expect(page.getByText(/contact admin at/)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+    await expect(page.getByLabel('Password')).toHaveCount(0)
+  })
+
+  test('a blocked sign-in names the admin to contact', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'This account is blocked.', 'FORBIDDEN', 'support@learnvianotes.in')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
+    await page.getByLabel('Email').fill('ravi@college.edu')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'This account is blocked' })).toBeVisible()
+    await expect(page.getByText(/contact admin at/)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'support@learnvianotes.in' })).toHaveAttribute('href', 'mailto:support@learnvianotes.in')
+    await expect(page.getByLabel('Password')).toHaveCount(0)
+  })
+
   test('shows one message for a wrong email or password', async ({ page }) => {
     await mockApi(page, { SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(null, 'Email or password is incorrect.')] } }) })
     await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
     await page.getByLabel('Email').fill('asha@example.com')
     await page.getByLabel('Password').fill('wrong password')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
     await expect(page.getByRole('main').getByRole('alert')).toHaveText('Email or password is incorrect.')
+  })
+
+  test('says the beta is invite-only, and a forbidden sign-in is that message', async ({ page }) => {
+    const message = 'LearnViaNotes beta is invite-only. Ask an admin to add your email.'
+    await mockApi(page, {
+      AccessPolicy: () => ({ accessPolicy: { __typename: 'AccessPolicy', inviteOnly: true } }),
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'email'], message, 'FORBIDDEN')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
+    await expect(page.getByRole('status')).toHaveText(/invite-only/)
+    await page.getByLabel('Email').fill('outsider@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('Something went wrong')).toHaveCount(0)
+  })
+
+  test('a Google callback that was blocked lands on a clear invite-only message', async ({ page }) => {
+    await mockApi(page, {})
+    await page.goto('/signin?error=invite_only')
+    await expect(page).toHaveURL(/\/sign-in\?error=invite_only$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText('LearnViaNotes beta is invite-only. Ask an admin to add your email.')
+    await expect(page.getByText('That sign-in did not work')).toHaveCount(0)
   })
 
   test('asks a new provider account for its registration details', async ({ page }) => {
@@ -216,12 +344,119 @@ test.describe('sign in', () => {
       Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
     })
     await page.goto('/sign-in?next=/subjects/dsa')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
     await page.getByLabel('Email').fill('asha@example.com')
     await page.getByLabel('Password').fill('a long enough passphrase')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
     await expect(page).toHaveURL(/\/sign-up\/details\?next=%2Fsubjects%2Fdsa$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Almost there, Asha')
     await expect(page.getByLabel('Your name')).toHaveValue('Asha Rao')
+  })
+
+  test('email sign-in opens Home and remembers it for the next visit to /', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
+    await page.getByLabel('Email').fill('asha@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+    // The mark the landing page reads before paint. The session itself stays in memory and the refresh cookie.
+    expect(await page.evaluate(() => localStorage.getItem('lvn.signed-in'))).toBe('1')
+  })
+
+  test('a deep link in next still wins, and next=/ finishes on Home', async ({ page }) => {
+    await mockApi(page, {
+      SignIn: () => ({ signIn: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.goto('/sign-in?next=/subjects/dsa')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
+    await page.getByLabel('Email').fill('asha@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page).toHaveURL(/\/subjects\/dsa$/)
+
+    await page.goto('/sign-in?next=/')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
+    await page.getByLabel('Email').fill('asha@example.com')
+    await page.getByLabel('Password').fill('a long enough passphrase')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+  })
+
+  test('a provider sign-in opens Home, and keeps a return path (Google finishes the same way)', async ({ page }) => {
+    await mockApi(page, {
+      OAuthExchange: () => ({ oauthExchange: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.addInitScript(() => sessionStorage.setItem('lvn:oauth', JSON.stringify({ provider: 'GITHUB', verifier: 'verifier', state: 'state-1', next: '/subjects/dsa' })))
+    await page.goto('/oauth/callback?code=abc&state=state-1')
+    await expect(page).toHaveURL(/\/subjects\/dsa$/)
+
+    await page.addInitScript(() => sessionStorage.setItem('lvn:oauth', JSON.stringify({ provider: 'GITHUB', verifier: 'verifier', state: 'state-2' })))
+    await page.goto('/oauth/callback?code=def&state=state-2')
+    await expect(page).toHaveURL(/\/home$/)
+  })
+
+  test('finishing a new provider account opens Home, or the page they were sent to', async ({ page }) => {
+    const calls = await mockApi(page, {
+      Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
+      CompleteRegistration: () => ({ completeRegistration: ok }),
+    }, 'signed-in')
+    await page.goto('/sign-up/details')
+    await expect(page.getByLabel('Date of birth')).toHaveCount(0)
+    await page.getByLabel('Your age').fill('13')
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    await expect(page).toHaveURL(/\/home$/)
+    const input = calls.find((c) => c.op === 'CompleteRegistration')!.variables.input as Record<string, unknown>
+    expect(input).toMatchObject({ displayName: 'Asha Rao', age: 13, institutionalEmail: null })
+    expect(input).not.toHaveProperty('dateOfBirth')
+
+    await page.goto('/sign-up/details?next=/subjects/dsa')
+    await page.getByLabel('Your age').fill('17')
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    await expect(page).toHaveURL(/\/subjects\/dsa$/)
+  })
+
+  test('the details step checks the age the same way, and shows the API’s age error on the field', async ({ page }) => {
+    const calls = await mockApi(page, {
+      Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
+      CompleteRegistration: () => ({ completeRegistration: fail(problem(['input', 'age'], 'Enter an age from 1 to 120.')) }),
+    }, 'signed-in')
+    await page.goto('/sign-up/details')
+    const age = page.getByRole('textbox', { name: 'Your age' })
+    await expect(age).toHaveAttribute('inputmode', 'numeric')
+    await page.getByRole('checkbox').check()
+    await age.fill('20.5')
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter your age as a whole number.' })).toBeVisible()
+    await age.fill('12')
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 13 to 120.' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    expect(calls.filter((c) => c.op === 'CompleteRegistration')).toHaveLength(0)
+    await age.fill('200')
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 13 to 120.' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    expect(calls.filter((c) => c.op === 'CompleteRegistration')).toHaveLength(0)
+    await age.fill('13')
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('dialog', { name: 'Is this right?' })).toHaveCount(0)
+    await expect(page.getByRole('alert').filter({ hasText: 'Enter an age from 1 to 120.' })).toBeVisible()
+    expect(calls.find((c) => c.op === 'CompleteRegistration')?.variables.input).toMatchObject({ age: 13 })
+    await expect(age).toHaveAttribute('aria-invalid', 'true')
+    await expect(page).toHaveURL(/\/sign-up\/details$/)
   })
 
   test('sends signed-out visitors of the account page to sign in and back', async ({ page }) => {
@@ -240,11 +475,83 @@ test.describe('sign in', () => {
 
 test.describe('links from emails', () => {
   test('confirms the sign-in email from /verify?token=', async ({ page }) => {
-    await mockApi(page, { VerifyEmail: (v) => ({ verifyEmail: v.token === 'good' ? ok : fail(problem(['input', 'token'], 'This link is invalid or has expired. Ask for a new one.')) }) })
+    await mockApi(page, { VerifyEmail: (v) => ({ verifyEmail: v.token === 'good' ? { ...ok, user: null } : { ...fail(problem(['input', 'token'], 'This link is invalid or has expired. Ask for a new one.')), user: null } }) })
     await page.goto('/verify?token=good')
     await expect(page.getByText('Your email is confirmed.')).toBeVisible()
+    await expect(page.getByText('Your account is verified.')).toHaveCount(0)
     await page.goto('/verify?token=old')
     await expect(page.getByText('This link is invalid or has expired. Ask for a new one.')).toBeVisible()
+  })
+
+  test('a signed-in confirmation updates the account without a reload', async ({ page }) => {
+    const confirmed = viewer({ emailVerified: true, verified: true, verificationMethod: 'INSTITUTIONAL_EMAIL' })
+    await mockApi(
+      page,
+      {
+        VerifyEmail: () => ({ verifyEmail: { __typename: 'VerifyEmailPayload', ok: true, user: confirmed, userErrors: [] } }),
+        Viewer: () => ({ viewer: confirmed }),
+      },
+      'signed-in',
+    )
+    await page.goto('/verify?token=good')
+    await expect(page.getByText('Your email is confirmed.')).toBeVisible()
+    await expect(page.getByText('Your account is verified.')).toBeVisible()
+    await page.getByRole('link', { name: 'Continue' }).click()
+    await expect(page).toHaveURL(/\/profile$/)
+    await expect(page.getByText('✓ Verified')).toBeVisible()
+  })
+
+  test('an unverified person can resend the confirmation email, and a rate limit says how long to wait', async ({ page }) => {
+    let limited = false
+    await mockApi(
+      page,
+      {
+        Viewer: () => ({ viewer: viewer({ emailVerified: false }) }),
+        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish', 'workshop.custom'] }),
+        ResendVerification: () => {
+          if (!limited) {
+            limited = true
+            return { resendVerification: ok }
+          }
+          return { resendVerification: fail(problem(null, 'Please wait before asking again.', 'RATE_LIMITED', null, 60)) }
+        },
+      },
+      'signed-in',
+    )
+    await page.goto('/profile')
+    const banner = page.getByRole('region', { name: 'Verify your email' })
+    await expect(banner).toBeVisible()
+    await expect(banner).toContainText('publishing notes')
+    await expect(banner).toContainText('workshop.custom')
+    await banner.getByRole('button', { name: 'Resend verification email' }).click()
+    await expect(banner.getByRole('status')).toHaveText('If your email can receive it, a new link is on its way.')
+    await banner.getByRole('button', { name: 'Resend verification email' }).click()
+    await expect(banner.getByRole('alert')).toHaveText('Please wait before asking again. You can try again in 60 seconds.')
+  })
+
+  test('a platform admin is never asked to verify', async ({ page }) => {
+    await mockApi(page, { Viewer: () => ({ viewer: viewer({ emailVerified: false, globalRole: 'PLATFORM_ADMIN' }) }) }, 'signed-in')
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Resend verification email' })).toHaveCount(0)
+  })
+
+  test('viewerNeedsVerification false hides the prompt, and null falls back to the role', async ({ page }) => {
+    await mockApi(page, { Viewer: () => ({ viewer: viewer({ emailVerified: false, viewerNeedsVerification: false }) }) }, 'signed-in')
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toHaveCount(0)
+
+    await mockApi(
+      page,
+      {
+        Viewer: () => ({ viewer: viewer({ emailVerified: false, globalRole: 'STUDENT', viewerNeedsVerification: null }) }),
+        UnverifiedGatedActions: () => ({ unverifiedGatedActions: ['note.publish'] }),
+      },
+      'signed-in',
+    )
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible()
+    await expect(page.getByText('publishing notes')).toBeVisible()
   })
 
   test('requests a reset link, then sets a new password from it', async ({ page }) => {
@@ -269,12 +576,68 @@ test.describe('links from emails', () => {
 test.describe('Google first', () => {
   const offered = { withGoogle: () => null }
 
+  test('Continue with Google signs into an account that already exists, on sign-in and sign-up', async ({ page }) => {
+    const calls = await mockApi(page, {
+      ...offered,
+      SignInWithGoogle: () => ({ signInWithGoogle: { __typename: 'AuthPayload', session: session(), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer() }),
+    })
+    await page.goto('/sign-in')
+    const button = page.getByRole('button', { name: 'Continue with Google' })
+    const box = await button.boundingBox()
+    expect(box?.width ?? 0).toBeGreaterThan(280)
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await button.click()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+    expect(calls.find((call) => call.op === 'SignInWithGoogle')?.variables).toMatchObject({ idToken: 'e2e-google-id-token' })
+    expect(calls.filter((call) => call.op === 'SignUp')).toHaveLength(0)
+
+    await page.goto('/sign-up')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    expect(calls.filter((call) => call.op === 'SignUp')).toHaveLength(0)
+    expect(calls.filter((call) => call.op === 'SignInWithGoogle')).toHaveLength(2)
+  })
+
+  test('a first Google sign-in continues to registration details', async ({ page }) => {
+    await mockApi(page, {
+      ...offered,
+      SignInWithGoogle: () => ({ signInWithGoogle: { __typename: 'AuthPayload', session: session(viewer({ registrationComplete: false })), userErrors: [] } }),
+      Viewer: () => ({ viewer: viewer({ registrationComplete: false }) }),
+    })
+    await page.goto('/sign-up')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-up\/details$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Almost there, Asha')
+  })
+
+  test('a refused Google sign-in shows the invite-only message, not a generic failure', async ({ page }) => {
+    const message = 'LearnViaNotes beta is invite-only. Ask an admin to add your email.'
+    await mockApi(page, {
+      ...offered,
+      AccessPolicy: () => ({ accessPolicy: { __typename: 'AccessPolicy', inviteOnly: true } }),
+      SignInWithGoogle: () => ({ signInWithGoogle: { __typename: 'AuthPayload', session: null, userErrors: [problem(['input', 'idToken'], message, 'FORBIDDEN')] } }),
+    })
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-in$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('That sign-in did not work')).toHaveCount(0)
+
+    await page.goto('/sign-up')
+    await page.getByRole('button', { name: 'Continue with Google' }).click()
+    await expect(page).toHaveURL(/\/sign-up$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'invite-only' })).toHaveText(message)
+    await expect(page.getByText('That sign-in did not work')).toHaveCount(0)
+  })
+
   test('the landing page offers Get Started Free and Continue with Google side by side, then sign-in (board A)', async ({ page }) => {
     await mockApi(page, offered)
     await page.goto('/')
     const main = page.getByRole('main')
-    await expect(main.getByRole('heading', { level: 1 })).toHaveText('Your Learning Community for a Brighter Tomorrow')
-    await expect(main.getByRole('link', { name: 'Get Started Free' })).toHaveAttribute('href', '/sign-up')
+    await expect(main.getByRole('heading', { level: 1 })).toHaveText('Learn from your own notes and PDFs')
+    await expect(main.getByRole('link', { name: 'Create a free account' })).toHaveAttribute('href', '/sign-up')
     await expect(main.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
     await main.getByRole('link', { name: 'Sign in', exact: true }).click()
     await expect(page).toHaveURL(/\/sign-in$/)
@@ -286,19 +649,30 @@ test.describe('Google first', () => {
     await page.goto('/')
     const main = page.getByRole('main')
     await expect(main.getByRole('button', { name: 'Continue with Google' })).toHaveCount(0)
-    await main.getByRole('link', { name: 'Get Started Free' }).click()
+    await main.getByRole('link', { name: 'Create a free account' }).click()
     await expect(page).toHaveURL(/\/sign-up$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Create your account')
   })
 
-  test('someone signed in is offered their account instead', async ({ page }) => {
+  test('someone signed in who opens / is sent to Home, without the landing page being shown', async ({ page }) => {
+    await watchLanding(page)
+    await page.addInitScript(() => localStorage.setItem('lvn.signed-in', '1'))
     await mockApi(page, { Viewer: () => ({ viewer: viewer() }) }, 'signed-in')
     await page.goto('/')
-    const main = page.getByRole('main')
-    await expect(main.getByRole('link', { name: 'Open your home' })).toHaveAttribute('href', '/home')
-    await expect(main.getByRole('link', { name: 'Get Started Free' })).toHaveCount(0)
-    await main.getByRole('link', { name: 'Your account' }).click()
-    await expect(page).toHaveURL(/\/profile$/)
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByRole('heading', { level: 1, name: /Asha/ })).toBeVisible()
+    expect(await page.evaluate(() => sessionStorage.getItem('lvn.landing-shown'))).toBeNull()
+    // Home does not send them back.
+    await expect(page).toHaveURL(/\/home$/)
+  })
+
+  test('a signed-out visitor still sees the landing page, even with a leftover hint', async ({ page }) => {
+    await mockApi(page, {})
+    await page.addInitScript(() => localStorage.setItem('lvn.signed-in', '1'))
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Learn from your own notes and PDFs' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Create a free account' })).toBeVisible()
   })
 })
 
@@ -314,8 +688,21 @@ test('sign-in and sign-up have no serious accessibility violations', async ({ pa
   }
 })
 
-/** Create account, then "Is this right?" about the date of birth (shown in words) → yes. */
-async function createAccount(page: Page, words = '1 May 2004') {
+/** Records a visible landing headline across the redirect to Home (sessionStorage survives the navigation). */
+async function watchLanding(page: Page) {
+  await page.addInitScript(() => {
+    const watch = () => {
+      const h1 = document.querySelector('h1')
+      if (!h1 || !/Brighter Tomorrow/.test(h1.textContent ?? '')) return
+      if (getComputedStyle(h1).visibility !== 'hidden') sessionStorage.setItem('lvn.landing-shown', '1')
+    }
+    new MutationObserver(watch).observe(document.documentElement, { subtree: true, childList: true, attributes: true })
+    watch()
+  })
+}
+
+/** Create account, then "Is this right?" about the age ("You are 22 years old.") → yes. */
+async function createAccount(page: Page, words = 'You are 22 years old.') {
   await page.getByRole('button', { name: 'Create account' }).click()
   const confirm = page.getByRole('dialog', { name: 'Is this right?' })
   await expect(confirm).toContainText(words)
@@ -326,6 +713,6 @@ async function fillSignUp(page: Page) {
   await page.getByLabel('Your name').fill('Asha Rao')
   await page.getByLabel('Email', { exact: true }).fill('asha@example.com')
   await page.getByLabel('Password').fill('a long enough passphrase')
-  await page.getByLabel('Date of birth').fill('2004-05-01')
+  await page.getByLabel('Your age').fill('22')
   await page.getByRole('checkbox').check()
 }

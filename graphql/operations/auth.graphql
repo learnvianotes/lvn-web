@@ -10,6 +10,7 @@ fragment ViewerFields on User {
   registrationComplete
   verified
   verificationMethod
+  viewerNeedsVerification
   globalRole
   teacherStatus
   restrictedMinor
@@ -33,6 +34,8 @@ fragment Problems on UserError {
   field
   message
   code
+  supportEmail
+  retryAfter
 }
 
 query Viewer {
@@ -61,14 +64,16 @@ query SignInOptions {
   signInOptions {
     emailPassword
     google
-    github
-    linkedin
+    emailCode
+    passkey
   }
   termsVersion
 }
 
 mutation SignUp($input: SignUpInput!) {
   signUp(input: $input) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -80,6 +85,8 @@ mutation SignUp($input: SignUpInput!) {
 
 mutation SignIn($input: SignInInput!) {
   signIn(input: $input) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -91,6 +98,8 @@ mutation SignIn($input: SignInInput!) {
 
 mutation RefreshSession {
   refreshSession(input: {}) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -105,6 +114,8 @@ mutation SignOut {
 
 mutation SignInWithGoogle($idToken: String!) {
   signInWithGoogle(input: { idToken: $idToken }) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -116,6 +127,8 @@ mutation SignInWithGoogle($idToken: String!) {
 
 mutation OAuthExchange($input: OAuthExchangeInput!) {
   oauthExchange(input: $input) {
+    mfaRequired
+    mfaFactors
     session {
       ...SessionFields
     }
@@ -137,10 +150,26 @@ mutation CompleteRegistration($input: CompleteRegistrationInput!) {
 mutation VerifyEmail($token: String!) {
   verifyEmail(input: { token: $token }) {
     ok
+    user {
+      ...ViewerFields
+    }
     userErrors {
       ...Problems
     }
   }
+}
+
+mutation ResendVerification {
+  resendVerification {
+    ok
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+query UnverifiedGatedActions {
+  unverifiedGatedActions
 }
 
 mutation RequestPasswordReset($email: String!) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Award, BadgeCheck, Bell, CalendarClock, CheckCheck, CircleHelp, DoorOpen, Download, FileInput, GraduationCap, Handshake, ListChecks, Megaphone, MessageSquare, School, Share2, ShieldAlert, UserPlus, Users } from 'lucide-react'
+import { Award, BadgeCheck, Bell, CalendarClock, CheckCheck, CircleQuestionMark, DoorOpen, Download, FileInput, GraduationCap, Handshake, ListChecks, Megaphone, MessageSquare, School, Share2, ShieldAlert, UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -27,7 +27,7 @@ const ICONS: Partial<Record<NotificationFieldsFragment['category'], typeof Bell>
   REVISION_REMINDER: CalendarClock,
   COMMENT: MessageSquare,
   MENTOR_INVITE: School,
-  DOUBT: CircleHelp,
+  DOUBT: CircleQuestionMark,
   MODERATION: ShieldAlert,
   ACHIEVEMENT: Award,
 }
@@ -80,7 +80,7 @@ export function NotificationsList() {
   return (
     <section className="mx-auto max-w-2xl">
       <header className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         {unread ? (
           <button type="button" onClick={() => void markRead({ all: true })} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-accent hover:bg-accent-soft">
             <CheckCheck className="size-4" aria-hidden />
@@ -102,7 +102,7 @@ export function NotificationsList() {
             const Icon = ICONS[n.category] ?? Bell
             return (
               <li key={n.id}>
-                <button type="button" onClick={() => open(n)} className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-surface-2 ${n.readAt ? '' : 'bg-accent-soft/40'}`}>
+                <button type="button" onClick={() => open(n)} className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2 ${n.readAt ? '' : 'bg-accent-soft/40'}`}>
                   <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
                     <Icon className="size-4" aria-hidden />
                   </span>

@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { getShelf, getSubject } from '@/features/subjects/data'
+import { getShelf, getSubject, loadSubject } from '@/features/subjects/data'
+import { SubjectsDown } from '@/features/subjects/SubjectsDown'
 import { Shelf } from '@/features/subjects/Shelf'
 import { templated } from '@/lib/page-title'
 
@@ -18,8 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 /** A subject: its topics, each with its own page, and the public notes and resources on it. */
 export default async function SubjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const subject = await getSubject(slug).catch(() => null)
-  if (!subject) notFound()
+  const loaded = await loadSubject(slug)
+  if (loaded.status === 'down') return <SubjectsDown />
+  if (loaded.status === 'missing') notFound()
+  const subject = loaded.subject
   const t = await getTranslations('subjects')
   const shelf = await getShelf({ subjectId: subject.id }).catch(() => ({ notes: [], resources: [] }))
   return (
@@ -31,11 +34,11 @@ export default async function SubjectPage({ params }: { params: Promise<{ slug: 
         › <span className="text-fg">{subject.title}</span>
       </nav>
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{subject.title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{subject.title}</h1>
         <p className="max-w-2xl text-muted">{t('subjectLead', { subject: subject.title })}</p>
       </header>
       <section aria-labelledby="subject-topics" className="flex flex-col gap-3">
-        <h2 id="subject-topics" className="text-lg font-bold">
+        <h2 id="subject-topics" className="text-lg font-semibold">
           {t('topics')}
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -48,7 +51,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ slug: 
                 <ul className="flex flex-wrap gap-1.5">
                   {topic.children.map((c) => (
                     <li key={c.id}>
-                      <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent hover:underline">
+                      <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[10px] bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent hover:underline">
                         {c.title}
                       </Link>
                     </li>

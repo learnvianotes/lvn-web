@@ -34,7 +34,7 @@ export function Rhythm() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {error && !r && !loading ? <LoadFailed message={t('failed')} onRetry={refetch} /> : null}
@@ -102,10 +102,10 @@ export function Today({ r }: { r: R }) {
   return (
     <section aria-labelledby="rhythm-today" className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
       <div className="flex items-center justify-between gap-2">
-        <h2 id="rhythm-today" className="text-lg font-bold">
+        <h2 id="rhythm-today" className="text-lg font-semibold">
           {t('today')}
         </h2>
-        {today.counted ? <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('counted')}</span> : null}
+        {today.counted ? <span className="rounded-[10px] bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('counted')}</span> : null}
       </div>
       <div className="flex items-center gap-5">
         <Ring share={ringShare(today)} comeback={today.comeback} />
@@ -149,10 +149,10 @@ export function Week({ r }: { r: R }) {
   return (
     <section aria-labelledby="rhythm-week" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
       <div className="flex items-center justify-between gap-2">
-        <h2 id="rhythm-week" className="text-lg font-bold">
+        <h2 id="rhythm-week" className="text-lg font-semibold">
           {t('week')}
         </h2>
-        {r.met ? <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('met')}</span> : null}
+        {r.met ? <span className="rounded-[10px] bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('met')}</span> : null}
       </div>
       <ol className="grid grid-cols-7 gap-1">
         {r.week.map((d) => {
@@ -161,7 +161,7 @@ export function Week({ r }: { r: R }) {
           const status = d.status === 'AHEAD' && !d.planned ? t('status.REST') : t(`status.${d.status}`)
           return (
             <li key={d.day} aria-label={t('dayLabel', { day: name, status: d.planned && d.status !== 'MISSED' ? `${status}, ${t('plannedTag')}` : status })} className="flex flex-col items-center gap-1.5">
-              <span aria-hidden className={cn('text-xs', d.status === 'TODAY' || (d.status === 'COUNTED' && d.day === r.today.day) ? 'font-bold text-accent' : 'text-muted')}>
+              <span aria-hidden className={cn('text-xs', d.status === 'TODAY' || (d.status === 'COUNTED' && d.day === r.today.day) ? 'font-semibold text-accent' : 'text-muted')}>
                 {format.dateTime(date, { weekday: 'narrow', timeZone: 'UTC' })}
               </span>
               <span
@@ -198,7 +198,7 @@ function Counters({ r }: { r: R }) {
     <section aria-label={t('counters')} className="grid grid-cols-3 gap-2">
       {items.map(([label, n]) => (
         <div key={label} className="flex flex-col gap-1 rounded-2xl border border-border bg-surface p-3">
-          <span className="text-2xl font-extrabold">{n}</span>
+          <span className="text-2xl font-semibold">{n}</span>
           <span className="text-xs text-muted">{label}</span>
         </div>
       ))}
@@ -219,7 +219,7 @@ function Plan({ r }: { r: R }) {
   const name = (weekday: number) => format.dateTime(new Date(Date.UTC(2026, 0, 4 + weekday, 12)), { weekday: 'long', timeZone: 'UTC' })
   return (
     <section aria-labelledby="rhythm-plan" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="rhythm-plan" className="text-lg font-bold">
+      <h2 id="rhythm-plan" className="text-lg font-semibold">
         {t('plan')}
       </h2>
       <p className="text-sm text-muted">{t('planHelp')}</p>
@@ -235,7 +235,7 @@ function Plan({ r }: { r: R }) {
                 setSaved(false)
                 setDays((prev) => (on ? prev.filter((x) => x !== d) : [...prev, d].sort((a, b) => a - b)))
               }}
-              className={cn('h-10 rounded-full border px-4 text-sm font-medium', on ? 'border-accent bg-accent text-accent-fg' : 'border-border bg-surface hover:bg-surface-2')}
+              className={cn('h-10 rounded-[10px] border px-4 text-sm font-medium', on ? 'border-accent bg-accent text-accent-fg' : 'border-border bg-surface hover:bg-surface-2')}
             >
               {name(d)}
             </button>
@@ -280,7 +280,7 @@ function Pauses({ r }: { r: R }) {
   const show = (day: string) => format.dateTime(new Date(`${day}T12:00:00Z`), { day: 'numeric', month: 'short', timeZone: 'UTC' })
   return (
     <section aria-labelledby="rhythm-pauses" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="rhythm-pauses" className="text-lg font-bold">
+      <h2 id="rhythm-pauses" className="text-lg font-semibold">
         {t('pauses')}
       </h2>
       <p className="text-sm text-muted">{t('pauseHelp', { left: r.pauseDaysLeft })}</p>
@@ -290,7 +290,7 @@ function Pauses({ r }: { r: R }) {
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
               <span className="flex flex-wrap items-center gap-2">
                 <span>{t('pauseRange', { reason: t(`reasons.${p.reason}`), from: show(p.from), to: show(p.to) })}</span>
-                {p.active ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('pausedNow')}</span> : null}
+                {p.active ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('pausedNow')}</span> : null}
               </span>
               <Button variant="ghost" size="sm" disabled={ending.loading} onClick={() => void end({ variables: { input: { id: p.id } } })}>
                 {p.active && p.from < r.today.day ? t('endPause') : t('dropPause')}

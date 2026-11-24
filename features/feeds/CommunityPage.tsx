@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { BookOpen, CircleHelp, FileText, GitBranch, GraduationCap, Lightbulb, Megaphone, MessageSquare, Users } from 'lucide-react'
+import { BookOpen, CircleQuestionMark, FileText, GitBranch, GraduationCap, Lightbulb, Megaphone, MessageSquare, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import { publicNotePath } from '@/features/public-notes/paths'
 import { ActivityFeedDocument, FollowingFeedDocument, ForYouFeedDocument, TrendingFeedDocument, type ActivityFeedQuery } from '@/graphql/generated/graphql'
 import { PostCard } from './PostCard'
 import type { Doc } from '@/lib/contracts/validation'
+import { safeLinkHref } from '@/lib/http-url'
 
 type Tab = 'forYou' | 'trending' | 'following' | 'activity'
 const TABS: Tab[] = ['forYou', 'trending', 'following', 'activity']
@@ -28,7 +29,7 @@ export function CommunityPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <nav aria-label={t('places')} className="flex gap-2">
           <Link href="/groups" className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-semibold hover:border-accent">
             <Users className="size-4" aria-hidden />
@@ -85,7 +86,7 @@ function Activity() {
   )
 }
 
-const ICON = { GROUP_POST: MessageSquare, IDEA: Lightbulb, DOUBT: CircleHelp, CLASS_ANNOUNCEMENT: Megaphone, SHARED_NOTE: FileText, REPOSITORY: GitBranch } as const
+const ICON = { GROUP_POST: MessageSquare, IDEA: Lightbulb, DOUBT: CircleQuestionMark, CLASS_ANNOUNCEMENT: Megaphone, SHARED_NOTE: FileText, REPOSITORY: GitBranch } as const
 
 /** One thing that happened, in words written here from ids (ADR-0049). */
 function ActivityCard({ item }: { item: Item }) {
@@ -95,6 +96,7 @@ function ActivityCard({ item }: { item: Item }) {
   const actor = item.actor?.displayName ?? item.repositoryEvent?.authorLogin ?? t('someone')
   const body = item.post?.body ?? item.announcement?.body
   const href = item.doubt && item.group ? `/groups/${item.group.id}/doubts/${item.doubt.id}` : item.note ? `/notes/${item.note.id}` : (place?.href ?? '#')
+  const eventUrl = item.repositoryEvent ? safeLinkHref(item.repositoryEvent.url) : null
   // A shared note the viewer can no longer read resolves to nothing; nothing is shown for it.
   if (item.kind === 'SHARED_NOTE' && !item.note) return null
   return (
@@ -120,10 +122,17 @@ function ActivityCard({ item }: { item: Item }) {
         </Link>
       ) : null}
       {item.repositoryEvent ? (
-        <a href={item.repositoryEvent.url} target="_blank" rel="noopener noreferrer nofollow" className="font-semibold hover:text-accent">
-          {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
-          {item.repositoryEvent.title}
-        </a>
+        eventUrl ? (
+          <a href={eventUrl} target="_blank" rel="noopener noreferrer nofollow" className="font-semibold hover:text-accent">
+            {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
+            {item.repositoryEvent.title}
+          </a>
+        ) : (
+          <span className="font-semibold">
+            {item.repositoryEvent.number ? `#${item.repositoryEvent.number} ` : ''}
+            {item.repositoryEvent.title}
+          </span>
+        )
       ) : null}
       {item.note ? (
         <Link href={href} className="inline-flex w-fit items-center gap-2 font-semibold hover:text-accent">
@@ -158,7 +167,7 @@ function Following() {
                 {node.owner.displayName}
                 {node.publishedAt ? <span>· {ago(node.publishedAt)}</span> : null}
               </span>
-              <span className="text-lg font-bold">{node.title || t('untitled')}</span>
+              <span className="text-lg font-semibold">{node.title || t('untitled')}</span>
             </Link>
           </li>
         ))}

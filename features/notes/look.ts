@@ -3,14 +3,17 @@
  * a greeting for the time of day, and reading time.
  */
 
-/** Soft accents from the brand palette (ui-reference: one blue accent, warm tints for tiles; no purples, ADR-0094). */
+/**
+ * Flat note colours from the study desk (ADR-0114, unslop): pen ink, teal, moss, clay, umber, graphite. Each carries white
+ * text at 4.5:1 or more. `to` equals `from`: notes get one solid colour, never a gradient.
+ */
 export const ACCENTS = [
-  { name: 'blue', from: '#3B82F6', to: '#93C5FD', tint: 'rgb(59 130 246 / 0.10)' },
-  { name: 'teal', from: '#14B8A6', to: '#5EEAD4', tint: 'rgb(20 184 166 / 0.10)' },
-  { name: 'sky', from: '#0EA5E9', to: '#7DD3FC', tint: 'rgb(14 165 233 / 0.10)' },
-  { name: 'emerald', from: '#10B981', to: '#6EE7B7', tint: 'rgb(16 185 129 / 0.10)' },
-  { name: 'amber', from: '#F59E0B', to: '#FCD34D', tint: 'rgb(245 158 11 / 0.12)' },
-  { name: 'rose', from: '#F43F5E', to: '#FDA4AF', tint: 'rgb(244 63 94 / 0.10)' },
+  { name: 'ink', from: '#2847a8', to: '#2847a8', tint: 'rgb(40 71 168 / 0.08)' },
+  { name: 'teal', from: '#0c5c66', to: '#0c5c66', tint: 'rgb(12 92 102 / 0.08)' },
+  { name: 'moss', from: '#3d6b2c', to: '#3d6b2c', tint: 'rgb(61 107 44 / 0.08)' },
+  { name: 'clay', from: '#9a4a2b', to: '#9a4a2b', tint: 'rgb(154 74 43 / 0.08)' },
+  { name: 'umber', from: '#7a5a12', to: '#7a5a12', tint: 'rgb(122 90 18 / 0.08)' },
+  { name: 'graphite', from: '#4a4740', to: '#4a4740', tint: 'rgb(74 71 64 / 0.08)' },
 ] as const
 
 export function accentOf(id: string) {

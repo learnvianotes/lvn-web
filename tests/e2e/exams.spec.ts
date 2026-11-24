@@ -9,6 +9,12 @@ const viewerExtras = { profile: null, legacyImport: { __typename: 'LegacyImport'
 const EXAM = '01920000-0000-7000-8000-0000000e0001'
 const TOPIC_A = '01920000-0000-7000-8000-0000000070a1'
 const TOPIC_B = '01920000-0000-7000-8000-0000000070b2'
+/** A calendar day the exam form will accept: its date input refuses anything before today. */
+const futureDay = (days: number) => {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 const topic = (id: string, title: string, over: Record<string, unknown> = {}) => ({ __typename: 'ExamTopic', key: `topic:${id}`, title, recall: null, accuracy: null, mastery: 0, ...over })
 const task = (n: number, day: string, titles: string[], over: Record<string, unknown> = {}) => ({ __typename: 'ExamPlanTask', id: `01920000-0000-7000-8000-00000000aa0${n}`, day, done: false, today: false, topics: titles.map((title) => ({ __typename: 'ExamPlanTopic', key: `topic:${title}`, title })), ...over })
 const exam = (over: Record<string, unknown> = {}) => ({
@@ -32,9 +38,7 @@ const weakTopics = [
 
 test('lists exams with Readiness against today’s target, today’s revision, and the weak topics', async ({ page }) => {
   await mockApi(page, { Exams: () => ({ exams: [exam()] }), WeakTopics: () => ({ weakTopics }) }, viewerExtras)
-  await page.goto('/profile')
-  await page.getByRole('main').getByRole('link', { name: /^Exams/ }).click()
-  await expect(page).toHaveURL(/\/exams$/)
+  await page.goto('/exams')
   const card = page.getByRole('article', { name: 'Operating Systems' })
   await expect(card.getByText('Readiness 34%')).toBeVisible()
   await expect(card.getByRole('meter', { name: 'Readiness: 34%, target today 40%' })).toBeVisible()
@@ -69,7 +73,8 @@ test('adds an exam with topics found by name', async ({ page }) => {
   await page.getByRole('button', { name: 'Add an exam' }).click()
   const form = page.getByRole('region', { name: 'Add an exam' })
   await form.getByLabel('Exam').fill('Operating Systems')
-  await form.getByLabel('Date').fill('2026-10-25')
+  const date = futureDay(30)
+  await form.getByLabel('Date').fill(date)
   await expect(form.getByRole('button', { name: 'Add the exam' })).toBeDisabled() // no topics yet
   await form.getByLabel('Find a topic').fill('pag')
   await form.getByRole('button', { name: 'Add Paging' }).click()
@@ -79,7 +84,7 @@ test('adds an exam with topics found by name', async ({ page }) => {
   await form.getByLabel('Find a topic').fill('pag')
   await form.getByRole('button', { name: 'Add Paging' }).click()
   await form.getByRole('button', { name: 'Add the exam' }).click()
-  await expect.poll(() => calls.find((c) => c.op === 'CreateExam')?.variables).toEqual({ input: { name: 'Operating Systems', date: '2026-10-25', topicIds: [TOPIC_B, TOPIC_A] } })
+  await expect.poll(() => calls.find((c) => c.op === 'CreateExam')?.variables).toEqual({ input: { name: 'Operating Systems', date, topicIds: [TOPIC_B, TOPIC_A] } })
   await expect(page.getByRole('article', { name: 'Operating Systems' })).toBeVisible()
 })
 

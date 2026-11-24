@@ -1,0 +1,37 @@
+# Second factor for admin and staff sign-in (lvn-backend PR #92). These calls do not themselves require MFA.
+
+query MfaStatus {
+  mfaStatus {
+    required
+    satisfied
+    verifiedAt
+    allowedFactors
+    factors {
+      id
+      type
+      status
+    }
+  }
+}
+
+mutation StartMfaChallenge($factor: MfaFactorType!) {
+  startMfaChallenge(factor: $factor) {
+    challengeId
+    factor
+    expiresAt
+    userErrors {
+      ...Problems
+    }
+  }
+}
+
+mutation VerifyMfaChallenge($challengeId: UUID!, $code: String!) {
+  verifyMfaChallenge(challengeId: $challengeId, code: $code) {
+    session {
+      ...SessionFields
+    }
+    userErrors {
+      ...Problems
+    }
+  }
+}

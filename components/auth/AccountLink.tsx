@@ -1,6 +1,6 @@
 'use client'
 
-import { NotebookPen, Sparkles, UserRound } from 'lucide-react'
+import { NotebookPen, TextQuote, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useSession } from '@/state/session'
 
@@ -17,7 +17,7 @@ export function AccountLink({ labels }: { labels: { signIn: string; account: str
       {signedIn ? (
         // From 640 px: phones reach Ask AI from their notes (the header must fit 360 px, notifications.spec.ts).
         <Link href="/ask" aria-label={labels.askAi} className="hidden items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-surface-2 hover:text-fg sm:inline-flex lg:px-3">
-          <Sparkles className="size-4 lg:hidden" aria-hidden />
+          <TextQuote className="size-4 lg:hidden" aria-hidden />
           <span className="hidden lg:inline">{labels.askAi}</span>
         </Link>
       ) : null}

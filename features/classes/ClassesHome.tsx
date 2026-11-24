@@ -32,7 +32,7 @@ export function ClassesHome() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-8">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         {teacher ? (
           <Button className="gap-1.5" onClick={() => setCreating(true)}>
             <Plus className="size-4" aria-hidden />
@@ -51,7 +51,7 @@ export function ClassesHome() {
         <div className="flex flex-wrap gap-2">
           <label className="min-w-0 flex-1">
             <span className="sr-only">{t('codeLabel')}</span>
-            <input value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('codePlaceholder')} autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={16} className="h-11 w-full rounded-xl border border-border bg-bg px-3 font-mono uppercase tracking-widest" />
+            <input value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('codePlaceholder')} autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={16} className="h-11 w-full rounded-xl border border-border bg-bg px-3 font-mono" />
           </label>
           <Button type="submit" disabled={!cleanCode(code)}>
             {t('find')}
@@ -82,7 +82,7 @@ export function ClassesHome() {
         </section>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -144,7 +144,7 @@ function CreateClassDialog({ open, onClose }: { open: boolean; onClose: () => vo
           <textarea value={description} maxLength={2000} rows={3} onChange={(e) => setDescription(e.target.value)} className="rounded-xl border border-border bg-surface px-3 py-2" />
         </label>
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

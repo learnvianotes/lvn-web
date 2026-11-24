@@ -1,0 +1,40 @@
+# Platform-admin content browser (lvn-backend PR 93). Private notes are excluded by the query.
+
+query AdminContent($filter: AdminContentFilter, $first: Int, $after: String) {
+  adminContent(filter: $filter, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        type
+        title
+        excerpt
+        author {
+          id
+          handle
+          email
+        }
+        visibility
+        createdAt
+        updatedAt
+        moderation
+        deepLink
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query AdminContentCounts($from: DateTime, $to: DateTime) {
+  adminContentCounts(from: $from, to: $to) {
+    from
+    to
+    counts {
+      type
+      count
+    }
+  }
+}

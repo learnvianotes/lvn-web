@@ -6,7 +6,7 @@ Both go through `.github/workflows/deploy.yml`. CI (`ci.yml`) checks every push.
 
 | Push | Deploys to | Web build | GitHub environment |
 | --- | --- | --- | --- |
-| a `release/**` branch | beta, `https://beta.learnvianotes.in` | `NEXT_PUBLIC_APP_ENV=sandbox`: noindex, robots `Disallow: /`, the test Firebase project | `beta` |
+| a `release/**` branch | beta, `https://beta.learnvianotes.in` | `NEXT_PUBLIC_APP_ENV=sandbox`: page noindex, robots allows `/` and disallows private areas, the test Firebase project | `beta` |
 | a `v*` tag, e.g. `v1.0.0` | production, `https://www.learnvianotes.in` | `NEXT_PUBLIC_APP_ENV=production`: launch checks, sitemap, the production Firebase project | `production`, with a required reviewer |
 
 **Production has no VM for now:** its server was deleted on 2026-10-22. A `v*` tag builds the image and then stops at
@@ -30,7 +30,9 @@ first deploy: the web's deploy refuses until `/opt/lvn/lvn.sh` exists.
   deploy. CI's "launch readiness" job shows the same error on every push.
 - `config/legal.ts` → `RETENTION` matches reality: the backup schedule, log retention and Google Analytics → Admin →
   Data retention.
-- `TERMS_VERSION` is bumped in both repositories once the legal text is final ([launch.md](../launch.md)).
+- The final legal text is published: its version is the last entry of `PUBLISHED_TERMS_VERSIONS`
+  (`features/legal/documents.ts`). The API's `terms_published_versions` lists the same versions, and
+  /admin/settings → Legal has it in effect ([launch.md](../launch.md), lvn-backend ADR-0103).
 - Production has a VM again, and the GitHub environments exist in both repositories ([infra.md §4](infra.md#4-deploy-credentials)).
 
 ## Releasing
@@ -41,8 +43,8 @@ first deploy: the web's deploy refuses until `/opt/lvn/lvn.sh` exists.
    git -C lvn-web switch -c release/2026-11 main && git -C lvn-web push -u origin release/2026-11
    ```
    Fixes found on beta go on these branches, then back into `main`.
-2. Check beta: the landing page, a subject, sign-up with an adult date of birth (the email arrives),
-   `/legal/grievance`, `/robots.txt` (`Disallow: /`), and that `/no-such-page` answers 404.
+2. Check beta: the landing page, a subject, sign-up with an adult age (the email arrives),
+   `/legal/grievance`, `/robots.txt` (`Allow: /`, private areas disallowed, Sitemap set), and that `/no-such-page` answers 404.
 3. Production, once it has a VM: tag the release commit in **both** repositories with the same tag, lvn-backend first:
    ```bash
    git -C lvn-backend tag -a v1.0.0 -m "v1.0.0" && git -C lvn-backend push origin v1.0.0

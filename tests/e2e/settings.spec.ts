@@ -5,15 +5,15 @@ import { mockApi } from './support/notes-api'
 
 const categories = (over: Record<string, { push?: boolean; email?: boolean | null }> = {}) =>
   ['SHARE', 'COMMENT', 'FOLLOW', 'CLASSROOM_POST'].map((category) => ({ __typename: 'CategoryPreference', category, push: over[category]?.push ?? true, email: over[category]?.email !== undefined ? over[category]!.email : category === 'CLASSROOM_POST' ? true : null }))
-const settings = (over: Record<string, unknown> = {}) => ({ __typename: 'NotificationSettings', quietStart: '22:00', quietEnd: '07:00', timeZone: 'Asia/Kolkata', weeklyDigest: true, pushAvailable: false, devices: 1, categories: categories(), ...over })
+const settings = (over: Record<string, unknown> = {}) => ({ __typename: 'NotificationSettings', quietStart: '22:00', quietEnd: '07:00', timeZone: 'Asia/Kolkata', weeklyDigest: true, productEmails: true, pushAvailable: false, devices: 1, categories: categories(), ...over })
 
 test('the settings page saves each choice as it is made', async ({ page }) => {
   let current = settings()
   const calls = await mockApi(page, {
     NotificationSettings: () => ({ notificationSettings: current }),
     UpdateNotificationSettings: (v) => {
-      const input = v.input as { categories?: { category: string; push?: boolean; email?: boolean }[]; weeklyDigest?: boolean; timeZone?: string; quietStart?: string }
-      current = settings({ ...(input.weeklyDigest !== undefined ? { weeklyDigest: input.weeklyDigest } : {}), ...(input.timeZone ? { timeZone: input.timeZone } : {}), categories: categories(Object.fromEntries((input.categories ?? []).map((c) => [c.category, c]))) })
+      const input = v.input as { categories?: { category: string; push?: boolean; email?: boolean }[]; weeklyDigest?: boolean; productEmails?: boolean; timeZone?: string; quietStart?: string }
+      current = settings({ ...(input.weeklyDigest !== undefined ? { weeklyDigest: input.weeklyDigest } : {}), ...(input.productEmails !== undefined ? { productEmails: input.productEmails } : {}), ...(input.timeZone ? { timeZone: input.timeZone } : {}), categories: categories(Object.fromEntries((input.categories ?? []).map((c) => [c.category, c]))) })
       return { updateNotificationSettings: { __typename: 'NotificationSettingsPayload', settings: current, userErrors: [] } }
     },
   })

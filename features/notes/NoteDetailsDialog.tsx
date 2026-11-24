@@ -90,7 +90,7 @@ export function NoteDetailsDialog({ meta, open, onClose, onSaved }: { meta: Note
           ) : null}
           <ul className="flex flex-wrap gap-2">
             {topics.map((x) => (
-              <li key={x.id} className="flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm">
+              <li key={x.id} className="flex items-center gap-1 rounded-[10px] bg-accent-soft px-3 py-1 text-sm">
                 {x.title}
                 <button type="button" aria-label={t('removeTopic', { topic: x.title })} className="text-muted hover:text-fg" onClick={() => setTopics((list) => list.filter((y) => y.id !== x.id))}>
                   ✕
@@ -100,7 +100,7 @@ export function NoteDetailsDialog({ meta, open, onClose, onSaved }: { meta: Note
           </ul>
         </div>
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

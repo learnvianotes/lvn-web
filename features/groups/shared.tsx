@@ -35,7 +35,7 @@ export function GroupCardView({ group }: { group: GroupCardFragment }) {
   const t = useTranslations('groups')
   const Icon = group.privacy === 'PRIVATE' ? Lock : Globe
   return (
-    <Link href={`/groups/${group.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/50 hover:shadow-md">
+    <Link href={`/groups/${group.id}`} className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/50 hover:shadow-md">
       <span className="flex items-center gap-2 font-semibold">
         <Icon className="size-4 shrink-0 text-accent" aria-label={t(`privacy.${group.privacy}`)} />
         <span className="truncate">{group.name}</span>
@@ -45,7 +45,7 @@ export function GroupCardView({ group }: { group: GroupCardFragment }) {
       <span className="mt-auto flex items-center gap-1.5 text-xs text-muted">
         <Users className="size-3.5" aria-hidden />
         {t('members', { count: group.memberCount })}
-        {group.viewerRole ? <span className="ml-auto rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
+        {group.viewerRole ? <span className="ml-auto rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
       </span>
     </Link>
   )

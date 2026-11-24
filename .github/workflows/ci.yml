@@ -19,14 +19,16 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       # Every URL comes from .env (lvn-backend ADR-0022); CI uses the documented development values.
       - run: cp .env.example .env
+      # Hand-written requests used to skip codegen. Every operation document has to validate against the vendored schema.
+      - run: pnpm graphql:check
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -36,9 +38,9 @@ jobs:
       - name: Lighthouse ≥ 90 on the public note page (spec §18, Phase 2 exit)
         run: pnpm lighthouse
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: { name: lighthouse-report, path: lighthouse-report, retention-days: 7 }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
 
@@ -48,14 +50,14 @@ jobs:
     # lvn-backend needs a read-only token in the LVN_BACKEND_READ_TOKEN secret.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: learnvianotes/lvn-backend
           path: .lvn-backend
           token: ${{ secrets.LVN_BACKEND_READ_TOKEN || github.token }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm graphql:sync && pnpm codegen
@@ -70,9 +72,9 @@ jobs:
     # ADR-0096).
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -81,6 +83,7 @@ jobs:
             NEXT_PUBLIC_APP_ENV=sandbox
             NEXT_PUBLIC_SITE_URL=https://beta.learnvianotes.in
             NEXT_PUBLIC_API_URL=https://beta.learnvianotes.in/graphql
+            NEXT_PUBLIC_GIT_SHA=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -90,9 +93,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: cp .env.example .env
@@ -105,17 +108,17 @@ jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm audit --prod --audit-level high

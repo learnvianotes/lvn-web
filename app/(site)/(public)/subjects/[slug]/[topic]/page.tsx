@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { getShelf, getSubject, type SubjectSummary } from '@/features/subjects/data'
+import { getShelf, getSubject, loadSubject, type SubjectSummary } from '@/features/subjects/data'
+import { SubjectsDown } from '@/features/subjects/SubjectsDown'
 import { Shelf } from '@/features/subjects/Shelf'
 import { templated } from '@/lib/page-title'
 
@@ -29,9 +30,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 /** A topic: its subtopics, and the public notes and resources on it. */
 export default async function TopicPage({ params }: { params: Promise<{ slug: string; topic: string }> }) {
   const { slug, topic: topicSlug } = await params
-  const subject = await getSubject(slug).catch(() => null)
-  const found = subject ? find(subject, topicSlug) : null
-  if (!subject || !found) notFound()
+  const loaded = await loadSubject(slug)
+  if (loaded.status === 'down') return <SubjectsDown />
+  if (loaded.status === 'missing') notFound()
+  const subject = loaded.subject
+  const found = find(subject, topicSlug)
+  if (!found) notFound()
   const { topic, parent } = found
   const t = await getTranslations('subjects')
   const shelf = await getShelf({ topicId: topic.id }).catch(() => ({ notes: [], resources: [] }))
@@ -57,18 +61,18 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         <span className="text-fg">{topic.title}</span>
       </nav>
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{topic.title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{topic.title}</h1>
         <p className="max-w-2xl text-muted">{t('topicLead', { topic: topic.title })}</p>
       </header>
       {topic.children.length ? (
         <section aria-labelledby="topic-children" className="flex flex-col gap-2">
-          <h2 id="topic-children" className="text-lg font-bold">
+          <h2 id="topic-children" className="text-lg font-semibold">
             {t('subtopics')}
           </h2>
           <ul className="flex flex-wrap gap-2">
             {topic.children.map((c) => (
               <li key={c.id}>
-                <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent hover:underline">
+                <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[10px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent hover:underline">
                   {c.title}
                 </Link>
               </li>

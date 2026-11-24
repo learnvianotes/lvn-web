@@ -18,6 +18,13 @@ import { PDF_TEXT, samplePdf } from './support/sample-pdf'
  */
 test.skip(!process.env.E2E_LIVE || !process.env.E2E_BASE_URL, 'needs a deployed environment: E2E_LIVE=1 E2E_BASE_URL=<public url>')
 
+/** The first-run tour covers the shell after a new profile. Live tests drive the app, so they skip it. */
+async function dismissFirstRunTour(page: Page) {
+  const skip = page.getByRole('button', { name: 'Skip the tour' })
+  await skip.waitFor({ state: 'visible', timeout: 12_000 }).catch(() => undefined)
+  if (await skip.isVisible().catch(() => false)) await skip.click()
+}
+
 /** Opens a sidebar entry: the sidebar from 1024 px, the menu below (lvn-backend ADR-0076). */
 async function fromSidebar(page: Page, name: string) {
   const menu = page.getByRole('button', { name: 'Menu' })
@@ -31,18 +38,19 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 
   await page.goto('/')
   const main = page.getByRole('main')
-  await expect(main.getByRole('heading', { name: 'Your Learning Community for a Brighter Tomorrow' })).toBeVisible()
-  await main.getByRole('link', { name: 'Get Started Free' }).click()
+  await expect(main.getByRole('heading', { name: 'Learn from your own notes and PDFs' })).toBeVisible()
+  await main.getByRole('link', { name: 'Create a free account' }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
   await page.getByLabel('Your name').fill('Live Test')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
-  // Every date of birth is confirmed in words before it is sent (lvn-backend ADR-0091).
+  // Every age is confirmed before it is sent (lvn-backend ADR-0091, ADR-0104).
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('heading', { name: 'Live Test' })).toBeVisible()
 
@@ -57,7 +65,7 @@ test('a new learner signs up with email, keeps the session across a reload, sign
 
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('heading', { name: 'Live Test' })).toBeVisible()
 })
@@ -76,10 +84,11 @@ test('a learner writes a note: cards from the slash menu, autosave, back after a
   await page.getByLabel('Your name').fill('Live Writer')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -140,10 +149,11 @@ test('a learner adds a picture to a note: it goes to storage, and is there after
   await page.getByLabel('Your name').fill('Live Picture')
   await page.getByLabel('Email', { exact: true }).fill(`live-media-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await page.goto('/notes')
@@ -169,10 +179,11 @@ test('a learner reads a PDF beside a new note: a highlight and a passage in the 
   await page.getByLabel('Your name').fill('Live Reader')
   await page.getByLabel('Email', { exact: true }).fill(`live-pdf-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await page.goto('/notes')
@@ -212,10 +223,11 @@ test('a learner converts a PDF into cards with the real engine, and checks them 
   await page.getByLabel('Your name').fill('Live Converter')
   await page.getByLabel('Email', { exact: true }).fill(`live-convert-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await page.goto('/notes')
@@ -239,10 +251,11 @@ test('a notification reaches the bell live: the data export the worker builds (l
   await page.getByLabel('Your name').fill('Live Bell')
   await page.getByLabel('Email', { exact: true }).fill(`live-bell-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible()
 
@@ -260,10 +273,11 @@ test('a new learner opens their own profile from their account, rendered by the 
   await page.getByLabel('Your name').fill('Live Profile')
   await page.getByLabel('Email', { exact: true }).fill(`live-profile-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await page.getByRole('link', { name: 'Followers, following and blocked people' }).click()
   await expect(page.getByText('Nobody follows you yet.')).toBeVisible()
@@ -274,10 +288,14 @@ test('a new learner opens their own profile from their account, rendered by the 
   await expect(page.getByText('No public notes yet.')).toBeVisible()
 })
 
-test('the documents the web shows are the version the API asks people to accept', async ({ request }) => {
-  const { TERMS_VERSION } = await import('../../features/legal/documents')
+test('the documents the web shows are the version the API asks people to accept', async ({ request, page }) => {
+  // An admin chooses the version (lvn-backend ADR-0103), only among those this web build publishes.
+  const { isPublishedTermsVersion } = await import('../../features/legal/documents')
   const res = await request.post(process.env.E2E_API_URL ?? '/graphql', { data: { query: '{ termsVersion }' } })
-  expect(((await res.json()) as { data: { termsVersion: string } }).data.termsVersion).toBe(TERMS_VERSION)
+  const version = ((await res.json()) as { data: { termsVersion: string } }).data.termsVersion
+  expect(isPublishedTermsVersion(version)).toBe(true)
+  await page.goto('/legal/terms')
+  await expect(page.getByText(`Version ${version}`)).toBeVisible()
 })
 
 /** The API as a teacher made for the test would call it; and SQL on the local environment's database (E2E_VM). */
@@ -295,7 +313,7 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-teacher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Teacher', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-teacher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Teacher', age: 36, acceptedTermsVersion: termsVersion },
   })
   const teacher = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
@@ -307,10 +325,11 @@ test('a learner joins a class with its code, is let in, and reads the announceme
   await page.getByLabel('Your name').fill('Live Learner')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   // Asking to join needs a verified account (ADR-0017).
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
@@ -371,7 +390,7 @@ test('a learner starts a project workspace, a teacher mentors it and answers a d
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-mentor-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Mentor', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-mentor-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Mentor', age: 36, acceptedTermsVersion: termsVersion },
   })
   const mentor = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${mentor.user.id}'`)
@@ -382,10 +401,11 @@ test('a learner starts a project workspace, a teacher mentors it and answers a d
   await page.getByLabel('Your name').fill('Live Builder')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -429,7 +449,7 @@ test('a group’s owner hides a reported post from the Reports tab, and puts it 
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const account = async (who: string, name: string) => {
     const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '2000-01-01', acceptedTermsVersion: termsVersion },
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, age: 26, acceptedTermsVersion: termsVersion },
     })
     sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
     return up.signUp.session
@@ -442,10 +462,11 @@ test('a group’s owner hides a reported post from the Reports tab, and puts it 
   await page.getByLabel('Your name').fill('Live Lead')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -494,7 +515,7 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-owner-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Owner', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-owner-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Owner', age: 31, acceptedTermsVersion: termsVersion },
   })
   const owner = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${owner.user.id}'`)
@@ -506,10 +527,11 @@ test('a learner finds a public group, joins it and posts; the owner reads the po
   await page.getByLabel('Your name').fill('Live Joiner')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -536,7 +558,7 @@ test('a platform admin suspends a learner, who reads why on their account and is
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -546,10 +568,11 @@ test('a platform admin suspends a learner, who reads why on their account and is
   await page.getByLabel('Your name').fill('Live Suspended')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
   const learnerId = execFileSync(process.env.E2E_VM!, ['ssh', `docker exec lvn-local-postgres psql -U lvn -d lvn -tAc "SELECT id FROM users.\\"User\\" WHERE email = '${email}'"`]).toString().trim()
@@ -579,14 +602,14 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-voucher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Vouching Teacher ${stamp}`, dateOfBirth: '1985-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-voucher-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Vouching Teacher ${stamp}`, age: 41, acceptedTermsVersion: termsVersion },
   })
   const teacher = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
   // People search indexes a new account in the background (lvn-backend ADR-0055), and the teacher picker searches once:
   // on a busy machine the index can lag behind signing the learner up. Wait until the teacher can be found.
   const probe = await api<{ signUp: { session: { accessToken: string } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken } } }', {
-    input: { email: `live-probe-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Probe', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-probe-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Probe', age: 36, acceptedTermsVersion: termsVersion },
   })
   await expect
     .poll(async () => (await api<{ search: { people: { id: string }[] } }>('query ($q: String!) { search(query: $q, scopes: [PEOPLE], first: 8) { people { id } } }', { q: `Vouching Teacher ${stamp}` }, probe.signUp.session.accessToken)).search.people.some((p) => p.id === teacher.user.id), { timeout: 30_000 })
@@ -596,10 +619,11 @@ test('a learner without a college email asks a teacher to vouch, and is verified
   await page.getByLabel('Your name').fill('Live Learner Without Email')
   await page.getByLabel('Email', { exact: true }).fill(`live-novouch-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2004-01-01')
+  await page.getByLabel('Your age').fill('22')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await page.getByRole('button', { name: 'Ask a teacher' }).click()
   await page.getByLabel('Find your teacher').fill(`Vouching Teacher ${stamp}`)
@@ -621,7 +645,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   const word = `zorbix${Date.now().toString(36)}${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } | null; userErrors: { message: string }[] } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } userErrors { message } } }', {
-    input: { email: `live-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', age: 31, acceptedTermsVersion: termsVersion },
   })
   if (!up.signUp.session) throw new Error(`sign-up refused: ${up.signUp.userErrors[0]?.message}`)
   const author = up.signUp.session
@@ -643,10 +667,11 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await page.getByLabel('Your name').fill('Live Searcher')
   await page.getByLabel('Email', { exact: true }).fill(`live-searcher-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   // "kruskl" is a typo of a word in the notes, not their titles: only Typesense forgives that.
@@ -659,7 +684,7 @@ test('a learner searches: a typo still finds a public note, the Projects chip na
   await expect(page.getByRole('link', { name: /Spanning trees(?! visualiser)/ })).toHaveCount(0)
 
   await page.goto('/notes')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('button', { name: 'Search or ask Nova' }).click()
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await palette.getByRole('combobox').fill(group)
   await palette.getByRole('option', { name: new RegExp(`${group} · Group`) }).click()
@@ -676,10 +701,11 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.getByLabel('Your name').fill('Live Asker')
   await page.getByLabel('Email', { exact: true }).fill(`live-ai-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -692,8 +718,8 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await page.keyboard.type('A min-heap keeps the smallest item at the root. Insert adds at the end and sifts it up; extract-min moves the last item to the root and sifts it down. Both take O(log n).')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('button', { name: /^Summarise/ }).click()
   const summary = panel.getByRole('article', { name: 'Summarise' })
   await expect(summary).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
@@ -710,7 +736,7 @@ test('a learner asks AI about a note with the real model: a summary, then flashc
   await flashcards.getByRole('button', { name: `Add ${keeping} card${keeping === 1 ? '' : 's'} to this note` }).click()
   // The panel closes and the note loads again with the cards in its draft.
   await expect(page.getByText('Added to this note.')).toBeVisible({ timeout: 20_000 })
-  // The note's own cards (the docked Ask AI lists the result's cards too, from 1280 px).
+  // The note's own cards (the docked Ask Nova lists the result's cards too, from 1280 px).
   await expect(page.getByRole('textbox', { name: 'Note content' }).getByLabel('Front')).toHaveCount(keeping)
 })
 
@@ -722,10 +748,11 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.getByLabel('Your name').fill('Live Questioner')
   await page.getByLabel('Email', { exact: true }).fill(`live-ask-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -737,8 +764,8 @@ test('a learner asks the real model about their note and gets an answer citing i
   await page.keyboard.type('Plants turn light into chemical energy in the chloroplast. Chlorophyll absorbs red and blue light and reflects green.')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('textbox', { name: 'Ask about this note' }).fill('Which colours of light does chlorophyll absorb?')
   await panel.getByRole('button', { name: 'Ask', exact: true }).click()
   const card = panel.getByRole('article', { name: 'Which colours of light does chlorophyll absorb?' })
@@ -756,7 +783,7 @@ test('a public note gets its study aids from the real model, on its public page 
   const stamp = `${Date.now()}${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } | null; userErrors: { message: string }[] } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } userErrors { message } } }', {
-    input: { email: `live-aids-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Aids', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-aids-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Aids', age: 31, acceptedTermsVersion: termsVersion },
   })
   if (!up.signUp.session) throw new Error(`sign-up refused: ${up.signUp.userErrors[0]?.message}`)
   const author = up.signUp.session
@@ -790,10 +817,11 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.getByLabel('Your name').fill('Live Tidier')
   await page.getByLabel('Email', { exact: true }).fill(`live-tidy-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -804,8 +832,8 @@ test('a learner tidies rough notes into clean ones with the real model (lvn-back
   await page.keyboard.type('bio lec 4 - mitochondria = powerhouse, ATP made by resp. glycolysis in cytoplasm, krebs in matrix, ETC inner membrane')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('button', { name: /^Tidy into notes/ }).click()
   const result = panel.getByRole('article', { name: 'Tidy into notes' })
   await expect(result).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
@@ -821,10 +849,11 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.getByLabel('Your name').fill('Live Cleaner')
   await page.getByLabel('Email', { exact: true }).fill(`live-clean-${Date.now()}-${info.project.name}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${Date.now()}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   await fromSidebar(page, 'My Notes')
@@ -836,8 +865,8 @@ test('a learner cleans up words a conversion broke with the real model, and appl
   await page.keyboard.type('Respiration releases the en- ergy stored in glucose. Cells use tbis energy to grow and repair themselves.')
   await saved
 
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  const panel = page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  const panel = page.getByRole('dialog', { name: 'Nova tasks' })
   await panel.getByRole('button', { name: /^Clean up the text/ }).click()
   const result = panel.getByRole('article', { name: 'Clean up the text' })
   await expect(result).toHaveAttribute('data-ai-status', 'READY', { timeout: 150_000 })
@@ -856,7 +885,7 @@ test('a teacher makes a class quiz from a note with the real model and publishes
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const signUp = async (who: string, name: string) =>
-    (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', { input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion } })).signUp.session
+    (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', { input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, age: 36, acceptedTermsVersion: termsVersion } })).signUp.session
   const teacher = await signUp('quiz-teacher', 'Quiz Teacher')
   const student = await signUp('quiz-student', 'Quiz Student')
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'TEACHER', "globalRole" = 'TEACHER' WHERE id = '${teacher.user.id}'`)
@@ -870,9 +899,10 @@ test('a teacher makes a class quiz from a note with the real model and publishes
   await api('mutation ($input: ReviewClassroomJoinRequestInput!) { reviewClassroomJoinRequest(input: $input) { classroom { id } } }', { input: { requestId: asking.classroom.joinRequests[0]!.id, decision: 'APPROVED' } }, teacher.accessToken)
 
   await page.goto('/sign-in')
+  await page.getByRole('button', { name: 'Use a password instead' }).click()
   await page.getByLabel('Email').fill(`live-quiz-teacher-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await page.waitForURL((u) => !u.pathname.startsWith('/sign-in'))
   await page.goto(`/classes/${classroomId}`)
   await page.getByRole('tab', { name: 'Quizzes' }).click()
@@ -909,18 +939,19 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
   const password = `live passphrase ${stamp}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email, password, displayName: 'Live AI Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email, password, displayName: 'Live AI Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
   const name = `Ollama through its OpenAI API ${stamp}`
   try {
     await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Use a password instead' }).click()
     await page.getByLabel('Email').fill(email)
     await page.getByLabel('Password').fill(password)
-    await page.getByRole('button', { name: 'Sign in' }).click()
-    await expect(page).toHaveURL(/\/profile$/)
-    await page.getByRole('link', { name: /AI providers/ }).click()
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page).toHaveURL(/\/home$/)
+    await page.goto('/admin/ai')
     await expect(page.getByRole('heading', { name: 'AI providers' })).toBeVisible()
 
     await page.getByRole('button', { name: /^Custom \(OpenAI-compatible/ }).click()
@@ -939,7 +970,7 @@ test('a platform admin adds a custom OpenAI-compatible provider, tests it, and i
     await expect(card.getByRole('status')).toContainText('embeddinggemma gave 768 numbers', { timeout: 180_000 })
     await expect(card.getByRole('status')).toContainText(/models? listed: .*gemma4/)
 
-    await page.getByLabel(/Chats, tasks and Ask AI/).selectOption({ label: `${name} · gemma4` })
+    await page.getByLabel(/Chats, tasks and Ask Nova/).selectOption({ label: `${name} · gemma4` })
     await expect(card.getByText('Answers chats')).toBeVisible()
 
     // A task now goes through the connection: the usage row says who answered.
@@ -965,10 +996,11 @@ test('a learner’s reading reaches the learning events: the note opened and the
   await page.getByLabel('Your name').fill('Live Reader')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
@@ -995,10 +1027,11 @@ test('a learner reviews the flashcard of their note, and the day shows in their 
   await page.getByLabel('Your name').fill('Live Reviewer')
   await page.getByLabel('Email', { exact: true }).fill(`live-review-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await fromSidebar(page, 'My Notes')
   await page.getByRole('button', { name: 'New note' }).click()
@@ -1037,10 +1070,11 @@ test('a learner sees this week on their Rhythm, plans six days and pauses for ex
   await page.getByLabel('Your name').fill('Live Rhythm')
   await page.getByLabel('Email', { exact: true }).fill(`live-rhythm-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await page.getByRole('main').getByRole('link', { name: /^Rhythm/ }).click()
   await expect(page).toHaveURL(/\/rhythm$/)
@@ -1074,10 +1108,11 @@ test('a learner adds an exam on a topic found by name, is recommended its topic,
   await page.getByLabel('Your name').fill('Live Exams')
   await page.getByLabel('Email', { exact: true }).fill(`live-exams-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
 
   // An exam ten days away on a curated topic.
@@ -1115,7 +1150,7 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-teach-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-teach-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -1124,11 +1159,12 @@ test('a new teacher signs up to teach, sets up a class while waiting, and takes 
   await page.getByLabel('Your name').fill(`Live New Teacher ${stamp}`)
   await page.getByLabel('Email', { exact: true }).fill(`live-new-teacher-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('1988-01-01')
+  await page.getByLabel('Your age').fill('38')
   await page.getByText('Teach', { exact: true }).click()
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/teach$/)
   const form = page.getByRole('form', { name: 'Apply to teach' })
   await form.getByLabel('Where you teach').fill('Govt. Junior College, Guntur')
@@ -1165,7 +1201,7 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-res-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', dateOfBirth: '1990-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-res-admin-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Admin', age: 36, acceptedTermsVersion: termsVersion },
   })
   const admin = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL', "globalRole" = 'PLATFORM_ADMIN' WHERE id = '${admin.user.id}'`)
@@ -1175,10 +1211,11 @@ test('a learner adds a book found on Open Library; it waits for moderators, and 
   await page.getByLabel('Your name').fill('Live Reader')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -1219,7 +1256,7 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const signUp = async (who: string, name: string) =>
     (await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: name, age: 31, acceptedTermsVersion: termsVersion },
     })).signUp.session
   const admin = await signUp('cat-admin', 'Live Admin')
   const author = await signUp('cat-author', 'Live Author')
@@ -1236,10 +1273,11 @@ test('a learner finds an approved resource in the catalogue, saves it and discus
   await page.getByLabel('Your name').fill('Live Catalogue Reader')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE email = '${email}'`)
 
@@ -1278,14 +1316,15 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   await page.getByLabel('Your name').fill('Live Shell')
   await page.getByLabel('Email', { exact: true }).fill(`live-shell-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   const entries: [string, RegExp][] = [
     ['Home', /\/home$/], ['My Notes', /\/notes$/], ['Explore', /\/search$/], ['Groups', /\/groups$/], ['Classrooms', /\/classes$/], ['Exams', /\/exams$/],
-    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['AI Assistant', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/subjects$/],
+    ['Rhythm', /\/rhythm$/], ['Resources', /\/resources$/], ['Community', /\/community$/], ['Nova', /\/ask$/], ['Bookmarks', /\/saved$/], ['Subjects', /\/subjects$/],
   ]
   for (const [name, url] of entries) {
     if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
@@ -1296,7 +1335,7 @@ test('a new learner opens every sidebar entry: each page answers with its headin
   }
   // The top bar: the avatar opens the account, and Create Note makes a note that opens.
   await page.goto('/home')
-  await page.getByRole('link', { name: 'Your account' }).click()
+  await page.getByRole('link', { name: 'Your account', exact: true }).click()
   await expect(page).toHaveURL(/\/profile$/)
   if (info.project.name === 'phone') await page.getByRole('button', { name: 'Menu' }).click()
   await page.getByRole('button', { name: 'Create Note' }).click()
@@ -1309,7 +1348,7 @@ test('a learner saves someone’s public note and finds it in Bookmarks (lvn-bac
   const stamp = `${Date.now()}-${info.project.name}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email: `live-saved-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email: `live-saved-author-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: 'Live Author', age: 31, acceptedTermsVersion: termsVersion },
   })
   const author = up.signUp.session
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${author.user.id}'`)
@@ -1323,10 +1362,11 @@ test('a learner saves someone’s public note and finds it in Bookmarks (lvn-bac
   await page.getByLabel('Your name').fill('Live Saver')
   await page.getByLabel('Email', { exact: true }).fill(`live-saver-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   await page.goto(`/notes/${id}`)
   await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -1343,7 +1383,7 @@ test('a learner follows a topic and finds someone’s public note on it in For Y
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const verified = async (who: string) => {
     const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Live ${who}`, dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+      input: { email: `live-${who}-${stamp}@example.com`, password: `live passphrase ${stamp}`, displayName: `Live ${who}`, age: 31, acceptedTermsVersion: termsVersion },
     })
     sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
     return up.signUp.session.accessToken
@@ -1361,10 +1401,11 @@ test('a learner follows a topic and finds someone’s public note on it in For Y
   await page.getByLabel('Your name').fill('Live Follower')
   await page.getByLabel('Email', { exact: true }).fill(`live-follower-${stamp}@example.com`)
   await page.getByLabel('Password').fill(`live passphrase ${stamp}`)
-  await page.getByLabel('Date of birth').fill('2000-01-01')
+  await page.getByLabel('Your age').fill('26')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.getByRole('dialog', { name: 'Is this right?' }).getByRole('button', { name: 'Yes, that’s right' }).click()
+  await dismissFirstRunTour(page)
   await expect(page).toHaveURL(/\/profile$/)
   // No topics yet: For You leads to choosing some, on the account.
   await fromSidebar(page, 'Community')
@@ -1395,7 +1436,7 @@ test('a group’s admin chooses its picture from this computer; it goes to stora
   const password = `live passphrase ${stamp}`
   const { termsVersion } = await api<{ termsVersion: string }>('{ termsVersion }')
   const up = await api<{ signUp: { session: { accessToken: string; user: { id: string } } } }>('mutation ($input: SignUpInput!) { signUp(input: $input) { session { accessToken user { id } } } }', {
-    input: { email, password, displayName: 'Live Admin', dateOfBirth: '1995-01-01', acceptedTermsVersion: termsVersion },
+    input: { email, password, displayName: 'Live Admin', age: 31, acceptedTermsVersion: termsVersion },
   })
   sql(`UPDATE users."User" SET "verifiedAt" = now(), "verificationMethod" = 'INSTITUTIONAL_EMAIL' WHERE id = '${up.signUp.session.user.id}'`)
   const name = `Live picture club ${stamp}`
@@ -1404,7 +1445,7 @@ test('a group’s admin chooses its picture from this computer; it goes to stora
   await page.goto(`/sign-in?next=${encodeURIComponent(`/groups/${groupId}`)}`)
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page).toHaveURL(new RegExp(`/groups/${groupId}$`))
   await page.getByRole('tab', { name: 'Settings' }).click()
   // A real 1×1 PNG: storage checks that the bytes are the picture they claim to be.
@@ -1412,6 +1453,6 @@ test('a group’s admin chooses its picture from this computer; it goes to stora
   await page.getByLabel('Choose a picture').setInputFiles({ name: 'club.png', mimeType: 'image/png', buffer: png })
   await expect(page.getByText('Picture saved.')).toBeVisible({ timeout: 15_000 })
   const picture = page.getByRole('img', { name: `The picture of ${name}` })
-  await expect(picture).toBeVisible()
-  await expect.poll(() => picture.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
+  await expect(picture).toHaveCount(2)
+  await expect.poll(() => picture.first().evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
 })

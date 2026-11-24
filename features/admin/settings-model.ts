@@ -1,0 +1,84 @@
+/** Client checks for platform settings, including the floor the product never crosses. */
+
+import { ACCOUNTS_FROM_AGE } from '@/config/legal'
+
+export const SETTING_CATEGORIES = ['auth', 'verification', 'uploads', 'ai', 'search', 'accounts', 'legal'] as const
+
+export const ACCOUNT_MINIMUM_AGE_KEY = 'account_minimum_age'
+/** Lowest value an admin may store for account_minimum_age. Matches config/legal.ts ACCOUNTS_FROM_AGE. */
+export const MINIMUM_ACCOUNT_AGE = ACCOUNTS_FROM_AGE
+
+export type SettingType = 'BOOLEAN' | 'INTEGER' | 'STRING'
+
+export type SettingConstraints = {
+  min: number | null
+  max: number | null
+  maxLength: number | null
+  pattern: string | null
+  nullable: boolean
+}
+
+export type SettingShape = {
+  key: string
+  type: SettingType
+  constraints: SettingConstraints
+}
+
+export type SettingIssue = 'boolean' | 'required' | 'integer' | 'min' | 'max' | 'maxLength' | 'pattern' | 'minimumAge'
+
+/**
+ * Turning these off, turning the allowlist on, or changing an age or the terms version, is confirmed before it is
+ * saved. A new terms version asks every signed-in person to accept again (lvn-backend ADR-0103).
+ */
+const RISKY_WHEN_OFF = new Set(['google_sign_in', 'student_id_verification', 'uploads_enabled', 'ai_public_pipeline', 'search_hybrid'])
+const RISKY_WHEN_ON = new Set(['access_allowlist_enabled'])
+const RISKY_WHEN_CHANGED = new Set([ACCOUNT_MINIMUM_AGE_KEY, 'digital_consent_age', 'terms_version'])
+
+/** The lowest integer the control accepts. account_minimum_age is never below 13, whatever the server sent. */
+export function effectiveIntegerMin(setting: SettingShape): number | null {
+  if (setting.key === ACCOUNT_MINIMUM_AGE_KEY) return Math.max(setting.constraints.min ?? MINIMUM_ACCOUNT_AGE, MINIMUM_ACCOUNT_AGE)
+  return setting.constraints.min
+}
+
+export function validateSetting(setting: SettingShape, value: string): SettingIssue | null {
+  if (setting.type === 'BOOLEAN') return value === 'true' || value === 'false' ? null : 'boolean'
+  if (setting.type === 'INTEGER') {
+    if (value === '') return setting.constraints.nullable ? null : 'required'
+    if (!/^-?\d+$/.test(value)) return 'integer'
+    const n = Number(value)
+    if (!Number.isSafeInteger(n)) return 'integer'
+    if (setting.key === ACCOUNT_MINIMUM_AGE_KEY && n < MINIMUM_ACCOUNT_AGE) return 'minimumAge'
+    const min = effectiveIntegerMin(setting)
+    if (min != null && n < min) return setting.key === ACCOUNT_MINIMUM_AGE_KEY ? 'minimumAge' : 'min'
+    if (setting.constraints.max != null && n > setting.constraints.max) return 'max'
+    return null
+  }
+  if (setting.constraints.maxLength != null && [...value].length > setting.constraints.maxLength) return 'maxLength'
+  if (setting.constraints.pattern) {
+    let pattern: RegExp
+    try {
+      pattern = new RegExp(setting.constraints.pattern)
+    } catch {
+      return null
+    }
+    if (!pattern.test(value)) return 'pattern'
+  }
+  return null
+}
+
+/** True when saving this draft needs a confirm step. The value has not been sent yet. */
+export function isRiskyChange(setting: SettingShape, previous: string, next: string): boolean {
+  if (previous === next) return false
+  if (RISKY_WHEN_CHANGED.has(setting.key)) return true
+  if (setting.type === 'BOOLEAN' && RISKY_WHEN_ON.has(setting.key) && next === 'true') return true
+  return setting.type === 'BOOLEAN' && RISKY_WHEN_OFF.has(setting.key) && next === 'false'
+}
+
+export function groupSettings<T extends { category: string }>(settings: readonly T[]): { category: string; settings: T[] }[] {
+  const known = new Set<string>(SETTING_CATEGORIES)
+  const extras = settings.map((s) => s.category).filter((c) => !known.has(c))
+  const order = [...new Set<string>([...SETTING_CATEGORIES, ...extras])]
+  return order
+    .map((category) => ({ category, settings: settings.filter((s) => s.category === category) }))
+    .filter((group) => group.settings.length > 0)
+}

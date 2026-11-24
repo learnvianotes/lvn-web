@@ -1,6 +1,8 @@
 import 'server-only'
+import { print } from 'graphql'
 import { cache } from 'react'
 import { PAGE_REVALIDATE_SECONDS } from '@/features/public-notes/data'
+import { SubjectDocument, SubjectShelfDocument, SubjectsDocument, TopicResourcesDocument } from '@/graphql/generated/graphql'
 import { serverEnv } from '@/lib/server-env'
 
 /** LearnViaNotes' own subjects and topics (curated, lvn-backend ADR-0012 catalogue): titles, never the old /core pages. */
@@ -46,24 +48,29 @@ async function query<T>(source: string, variables: Record<string, unknown>): Pro
   return body.data
 }
 
-const TOPICS = 'topics { id slug title children { id slug title } }'
-
 /** Every subject with its topics, in the catalogue's order; empty when the API cannot answer. */
-export const listSubjects = cache(async (): Promise<SubjectSummary[]> => (await query<{ subjects: SubjectSummary[] }>(`query Subjects { subjects { id slug title ${TOPICS} } }`, {})).subjects)
+export const listSubjects = cache(async (): Promise<SubjectSummary[]> => (await query<{ subjects: SubjectSummary[] }>(print(SubjectsDocument), {})).subjects)
+
+/** A subject, or why it is not on the page: missing is a real 404; down is an API failure. */
+export async function loadSubject(slug: string): Promise<{ status: 'ok'; subject: SubjectSummary } | { status: 'missing' } | { status: 'down' }> {
+  try {
+    const subject = await getSubject(slug)
+    return subject ? { status: 'ok', subject } : { status: 'missing' }
+  } catch {
+    return { status: 'down' }
+  }
+}
 
 export const getSubject = cache(
-  async (slug: string): Promise<SubjectSummary | null> => (await query<{ subject: SubjectSummary | null }>(`query Subject($slug: String!) { subject(slug: $slug) { id slug title ${TOPICS} } }`, { slug })).subject,
+  async (slug: string): Promise<SubjectSummary | null> => (await query<{ subject: SubjectSummary | null }>(print(SubjectDocument), { slug })).subject,
 )
 
 /** Public notes and approved resources on a subject or one of its topics, newest first. */
 export const getShelf = cache(async (on: { subjectId?: string; topicId?: string }): Promise<{ notes: TopicNote[]; resources: TopicResource[] }> => {
-  const data = await query<{ search: { notes: { note: TopicNote }[] } }>(
-    `query SubjectShelf($filters: SearchFilters, $scopes: [SearchScope!]) { search(query: "", scopes: $scopes, filters: $filters, first: 20) { notes { note { id title slug kind publishedAt owner { displayName } } } } }`,
-    { filters: on, scopes: ['NOTES'] },
-  )
+  const data = await query<{ search: { notes: { note: TopicNote }[] } }>(print(SubjectShelfDocument), { filters: on, scopes: ['NOTES'] })
   const resources = on.topicId
     ? ((
-        await query<{ resources: { edges: { node: TopicResource }[] } }>(`query TopicResources($topicId: UUID!) { resources(filter: { topicId: $topicId }, first: 10) { edges { node { id type title host author } } } }`, {
+        await query<{ resources: { edges: { node: TopicResource }[] } }>(print(TopicResourcesDocument), {
           topicId: on.topicId,
         }).catch(() => null)
       )?.resources.edges.map((e) => e.node) ?? [])

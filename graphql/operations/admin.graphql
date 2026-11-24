@@ -1,0 +1,217 @@
+# Platform admin overview, configuration, and plans (lvn-backend contracts 0.68.0).
+
+query AdminMetrics($from: DateTime, $to: DateTime) {
+  adminMetrics(from: $from, to: $to) {
+    generatedAt
+    users {
+      total
+      newLast7Days
+      newLast30Days
+      active
+    }
+    content {
+      notes
+      publicNotes
+      subjects
+      topics
+      groups
+      classrooms
+    }
+    ai {
+      from
+      to
+      tasksRun
+      failures
+      promptTokens
+      completionTokens
+      costMicroUsd
+      byProvider {
+        provider
+        tasksRun
+        failures
+        promptTokens
+        completionTokens
+        costMicroUsd
+      }
+      byModel {
+        provider
+        model
+        tasksRun
+        failures
+        promptTokens
+        completionTokens
+        costMicroUsd
+      }
+      byTask {
+        task
+        tasksRun
+        failures
+        promptTokens
+        completionTokens
+        costMicroUsd
+      }
+    }
+    storage {
+      bytes
+      files
+    }
+    verification {
+      studentIdQueue
+      pendingRequests
+      domainReviews
+    }
+    moderation {
+      openReports
+      openAppeals
+    }
+  }
+}
+
+query AdminSettings {
+  adminSettings {
+    key
+    type
+    category
+    description
+    value
+    overridden
+    updatedAt
+    constraints {
+      min
+      max
+      maxLength
+      pattern
+      nullable
+    }
+  }
+}
+
+mutation UpdateAdminSetting($input: UpdateAdminSettingInput!) {
+  updateAdminSetting(input: $input) {
+    setting {
+      key
+      type
+      category
+      description
+      value
+      overridden
+      updatedAt
+      constraints {
+        min
+        max
+        maxLength
+        pattern
+        nullable
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+mutation ResetAdminSetting($key: String!) {
+  resetAdminSetting(key: $key) {
+    setting {
+      key
+      type
+      category
+      description
+      value
+      overridden
+      updatedAt
+      constraints {
+        min
+        max
+        maxLength
+        pattern
+        nullable
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+# The terms version in effect, where it comes from, the versions the API allows and who accepted it (lvn-backend
+# ADR-0103). Changed with UpdateAdminSetting / ResetAdminSetting on key terms_version.
+query AdminTermsStatus {
+  adminTermsStatus {
+    current
+    source
+    publishedVersions
+    acceptedCurrent
+    acceptedOlder
+    lastChange {
+      actorId
+      actorDisplayName
+      at
+      previous
+    }
+  }
+}
+
+fragment AdminPlanFields on AdminPlan {
+  id
+  code
+  name
+  priceMinor
+  currency
+  interval
+  features
+  active
+  subscriberCount
+  entitlements {
+    key
+    limit
+    appliesToRole
+  }
+}
+
+query AdminPlans {
+  adminPlans {
+    ...AdminPlanFields
+  }
+}
+
+mutation CreateAdminPlan($input: CreateAdminPlanInput!) {
+  createAdminPlan(input: $input) {
+    plan {
+      ...AdminPlanFields
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+mutation UpdateAdminPlan($input: UpdateAdminPlanInput!) {
+  updateAdminPlan(input: $input) {
+    plan {
+      ...AdminPlanFields
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+mutation DeleteAdminPlan($id: UUID!) {
+  deleteAdminPlan(id: $id) {
+    ok
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

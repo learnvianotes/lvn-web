@@ -1,6 +1,8 @@
 'use client'
 
+import { print } from 'graphql'
 import { useEffect, useState, type ReactNode } from 'react'
+import { PublicNoteMediaDocument } from '@/graphql/generated/graphql'
 import { env } from '@/lib/env'
 import { MediaMapProvider, type MediaInfo } from '@/features/notes/media'
 
@@ -17,7 +19,7 @@ export function PublicMedia({ noteId, hasMedia, children }: { noteId: string; ha
     void fetch(env.NEXT_PUBLIC_API_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ query: 'query PublicNoteMedia($id: UUID!) { note(id: $id) { cards(first: 100) { edges { node { media { id url mimeType fileName sizeBytes width height pageCount thumbUrl mediumUrl largeUrl posterUrl playbackUrl } } } } } }', variables: { id: noteId } }),
+      body: JSON.stringify({ query: print(PublicNoteMediaDocument), variables: { id: noteId } }),
       signal: controller.signal,
     })
       .then((r) => r.json() as Promise<{ data?: { note: { cards: { edges: { node: { media: (MediaInfo & { id: string }) | null } }[] } } | null } }>)

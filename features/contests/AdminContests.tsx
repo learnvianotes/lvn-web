@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
@@ -48,9 +48,9 @@ export function AdminContests() {
   if (error && !data) return <Alert tone="error">{t('forbidden')}</Alert>
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
           <p className="text-sm text-muted">{t('lead')}</p>
         </div>
         {!editing ? (
@@ -66,13 +66,13 @@ export function AdminContests() {
           <li key={c.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="font-semibold">{c.title}</span>
-              <span className="text-sm text-muted">
+              <span className="text-sm break-words text-muted">
                 {format.dateTime(new Date(c.opensAt), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} – {format.dateTime(new Date(c.closesAt), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · {t('pool', { count: c.questions.length, asked: c.questionCount })} · {t('attempts', { count: c.attempts })}
               </span>
             </span>
             <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold">{c.published ? t('published') : t('draft')}</span>
             {!c.published ? (
-              <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(fromRow(c))}>
+              <Button type="button" variant="secondary" size="sm" className="h-11" onClick={() => setEditing(fromRow(c))}>
                 {t('edit')}
               </Button>
             ) : null}
@@ -105,20 +105,20 @@ function Editor({ draft, onDone }: { draft: Draft; onDone: () => void }) {
   }
   return (
     <form
-      className="flex flex-col gap-4 rounded-3xl border border-border bg-surface p-5"
+      className="flex min-w-0 flex-col gap-4 rounded-3xl border border-border bg-surface p-4 sm:p-5"
       onSubmit={async (e) => {
         e.preventDefault()
         if (await persist()) onDone()
       }}
     >
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+      <div className="grid gap-3 sm:grid-cols-2 sm:[&>*]:min-w-0">
+        <label className="flex min-w-0 flex-col gap-1 text-sm sm:col-span-2">
           {t('contestTitle')}
-          <input value={d.title} maxLength={120} onChange={(e) => setD({ ...d, title: e.target.value })} className="h-10 rounded-xl border border-border bg-bg px-3" />
+          <input value={d.title} maxLength={120} onChange={(e) => setD({ ...d, title: e.target.value })} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('subject')}
-          <select value={d.subjectId} onChange={(e) => setD({ ...d, subjectId: e.target.value })} className="h-10 rounded-xl border border-border bg-bg px-3">
+          <select value={d.subjectId} onChange={(e) => setD({ ...d, subjectId: e.target.value })} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3">
             <option value="">{t('anySubject')}</option>
             {subjects.map((s) => (
               <option key={s.id} value={s.id}>
@@ -130,20 +130,20 @@ function Editor({ draft, onDone }: { draft: Draft; onDone: () => void }) {
         <div className="flex gap-3">
           <label className="flex flex-1 flex-col gap-1 text-sm">
             {t('minutes')}
-            <input type="number" min={5} max={60} value={d.minutes} onChange={(e) => setD({ ...d, minutes: Number(e.target.value) })} className="h-10 rounded-xl border border-border bg-bg px-3" />
+            <input type="number" min={5} max={60} value={d.minutes} onChange={(e) => setD({ ...d, minutes: Number(e.target.value) })} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3" />
           </label>
           <label className="flex flex-1 flex-col gap-1 text-sm">
             {t('asked')}
-            <input type="number" min={3} max={30} value={d.questionCount} onChange={(e) => setD({ ...d, questionCount: Number(e.target.value) })} className="h-10 rounded-xl border border-border bg-bg px-3" />
+            <input type="number" min={3} max={30} value={d.questionCount} onChange={(e) => setD({ ...d, questionCount: Number(e.target.value) })} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3" />
           </label>
         </div>
         <label className="flex flex-col gap-1 text-sm">
           {t('opens')}
-          <input type="datetime-local" value={d.opensAt} onChange={(e) => setD({ ...d, opensAt: e.target.value })} className="h-10 rounded-xl border border-border bg-bg px-3" />
+          <input type="datetime-local" value={d.opensAt} onChange={(e) => setD({ ...d, opensAt: e.target.value })} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('closes')}
-          <input type="datetime-local" value={d.closesAt} onChange={(e) => setD({ ...d, closesAt: e.target.value })} className="h-10 rounded-xl border border-border bg-bg px-3" />
+          <input type="datetime-local" value={d.closesAt} onChange={(e) => setD({ ...d, closesAt: e.target.value })} className="h-11 w-full min-w-0 rounded-xl border border-border bg-bg px-3" />
         </label>
       </div>
       <p className="text-xs text-muted">{t('indiaTime')}</p>
@@ -155,7 +155,7 @@ function Editor({ draft, onDone }: { draft: Draft; onDone: () => void }) {
               <span className="text-sm font-semibold">{t('question', { n: i + 1 })}</span>
               {d.questions.length > 1 ? (
                 <button type="button" aria-label={t('removeQuestion', { n: i + 1 })} className="rounded-lg p-1.5 text-muted hover:text-fg" onClick={() => setD({ ...d, questions: d.questions.filter((_, j) => j !== i) })}>
-                  <Trash2 className="size-4" />
+                  <Trash className="size-4" />
                 </button>
               ) : null}
             </div>
@@ -168,7 +168,7 @@ function Editor({ draft, onDone }: { draft: Draft; onDone: () => void }) {
               {q.choices.map((choice, c) => (
                 <div key={c} className="flex items-center gap-2">
                   <input type="radio" name={`correct-${i}`} aria-label={t('markRight', { n: c + 1 })} checked={q.correct === c} onChange={() => setQ(i, { correct: c })} className="size-4" />
-                  <input aria-label={t('choice', { n: c + 1 })} value={choice} maxLength={200} onChange={(e) => setQ(i, { choices: q.choices.map((x, k) => (k === c ? e.target.value : x)) })} className="h-9 flex-1 rounded-xl border border-border bg-bg px-3 text-sm" />
+                  <input aria-label={t('choice', { n: c + 1 })} value={choice} maxLength={200} onChange={(e) => setQ(i, { choices: q.choices.map((x, k) => (k === c ? e.target.value : x)) })} className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-bg px-3 text-sm" />
                 </div>
               ))}
               {q.choices.length < 6 ? (
@@ -188,7 +188,7 @@ function Editor({ draft, onDone }: { draft: Draft; onDone: () => void }) {
         {t('addQuestion')}
       </Button>
       {problem ? <Alert tone="error">{problem}</Alert> : null}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button type="submit" disabled={saving.loading}>
           {t('saveDraft')}
         </Button>

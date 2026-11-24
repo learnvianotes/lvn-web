@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Fragment, type ReactNode } from 'react'
 import type { BlockNode, Doc, Inline, Mark } from '@/lib/contracts/validation'
+import { safeLinkHref } from '@/lib/http-url'
 
 /**
  * Card rich text as React elements — never as HTML strings (web addendum: user notes are rendered through components).
@@ -21,17 +22,21 @@ function withMarks(text: ReactNode, marks: Mark[] | undefined): ReactNode {
       case 'code':
         return <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.9em]">{inner}</code>
       case 'highlight':
-        return <mark className="rounded bg-amber-200/70 px-0.5 text-fg dark:bg-amber-400/30">{inner}</mark>
+        return <mark className="rounded bg-warn/70 px-0.5 text-fg">{inner}</mark>
       case 'subscript':
         return <sub>{inner}</sub>
       case 'superscript':
         return <sup>{inner}</sup>
-      case 'link':
+      case 'link': {
+        // The API validates links. Check again here: a stored javascript: or data: URL would run in this page.
+        const href = safeLinkHref(mark.attrs.href, { mailto: true })
+        if (!href) return inner
         return (
-          <a href={mark.attrs.href} rel="nofollow ugc noopener" target="_blank" className="text-accent underline underline-offset-2">
+          <a href={href} rel="nofollow ugc noopener" target="_blank" className="text-accent underline underline-offset-2">
             {inner}
           </a>
         )
+      }
       default:
         return inner
     }

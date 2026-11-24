@@ -4,6 +4,7 @@ import { BookOpenText, Download, FileText, ImageOff } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { Inline } from '@/lib/contracts/validation'
+import { safeLinkHref } from '@/lib/http-url'
 import { formatBytes, srcSetOf, useMedia, type MediaCardType } from '../media'
 import { InlineText } from './RichText'
 
@@ -24,7 +25,11 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
     </figcaption>
   ) : null
   if (!file && store.loading) return <div aria-hidden className="h-48 animate-pulse rounded-xl bg-surface-2" />
-  if (!file) {
+  // blob: is the preview of a file just chosen on this device (media.tsx upload). Stored notes use http(s).
+  const picture = safeLinkHref(file?.mediumUrl ?? file?.url, { blob: true })
+  const playback = safeLinkHref(file?.playbackUrl ?? file?.url, { blob: true })
+  const poster = safeLinkHref(file?.posterUrl, { blob: true })
+  if (!file || (type === 'image' && !picture) || ((type === 'video' || type === 'audio') && !playback)) {
     return (
       <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted">
         <ImageOff className="size-4" aria-hidden />
@@ -38,7 +43,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
         <figure>
           {/* eslint-disable-next-line @next/next/no-img-element -- short-lived storage URLs, not for next/image */}
           <img
-            src={file.mediumUrl ?? file.url}
+            src={picture ?? undefined}
             srcSet={srcSetOf(file)}
             sizes="(min-width: 48rem) 48rem, 100vw"
             width={file.width ?? undefined}
@@ -53,7 +58,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
     case 'video':
       return (
         <figure>
-          <video src={file.playbackUrl ?? file.url} poster={file.posterUrl ?? undefined} controls preload="metadata" playsInline className="w-full rounded-xl bg-black shadow-sm" />
+          <video src={playback ?? undefined} poster={poster ?? undefined} controls preload="metadata" playsInline className="w-full rounded-xl bg-black shadow-sm" />
           {caption}
         </figure>
       )
@@ -61,7 +66,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
       return (
         <figure className="rounded-xl border border-border bg-surface-2 p-3">
           <p className="mb-2 truncate text-sm font-medium">{file.fileName}</p>
-          <audio src={file.playbackUrl ?? file.url} controls preload="metadata" className="w-full" />
+          <audio src={playback ?? undefined} controls preload="metadata" className="w-full" />
           {caption}
         </figure>
       )
@@ -70,7 +75,7 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
       return (
         <figure className="flex flex-col gap-2">
           {reader ? (
-            <Link href={reader} className="flex items-center gap-3 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-fg shadow-md shadow-accent/20 transition hover:bg-accent/90">
+            <Link href={reader} className="flex items-center gap-3 rounded-xl bg-accent px-4 py-3 font-semibold text-accent-fg shadow-md shadow-accent/20 transition-colors hover:bg-accent/90">
               <BookOpenText className="size-5 shrink-0" aria-hidden />
               <span className="flex min-w-0 flex-col">
                 <span>{t('read')}</span>
@@ -78,25 +83,37 @@ export function MediaBlock({ type, content, editing }: { type: MediaCardType; co
               </span>
             </Link>
           ) : null}
-          <a href={file.url} target="_blank" rel="noopener noreferrer" className="lvn-chip group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition hover:border-accent/50 hover:shadow-md">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-              <FileText className="size-5" aria-hidden />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate font-medium">{file.fileName}</span>
-              <span className="text-xs text-muted">
-                {formatBytes(file.sizeBytes)}
-                {file.pageCount ? ` · ${t('pages', { count: file.pageCount })}` : null}
-              </span>
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1 text-sm text-muted group-hover:text-accent">
-              <Download className="size-4" aria-hidden />
-              {t('open')}
-            </span>
-          </a>
+          <FileLink url={file.url} name={file.fileName} detail={`${formatBytes(file.sizeBytes)}${file.pageCount ? ` · ${t('pages', { count: file.pageCount })}` : ''}`} open={t('open')} />
           {caption}
         </figure>
       )
     }
   }
+}
+
+/** The file's read URL. A non-http(s) value is shown, not followed. */
+function FileLink({ url, name, detail, open }: { url: string; name: string; detail: string; open: string }) {
+  const href = safeLinkHref(url)
+  const body = (
+    <>
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+        <FileText className="size-5" aria-hidden />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-medium">{name}</span>
+        <span className="text-xs text-muted">{detail}</span>
+      </span>
+      <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1 text-sm text-muted group-hover:text-accent">
+        <Download className="size-4" aria-hidden />
+        {open}
+      </span>
+    </>
+  )
+  const className = 'lvn-chip group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-accent/50 hover:shadow-md'
+  if (!href) return <div className={className}>{body}</div>
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      {body}
+    </a>
+  )
 }

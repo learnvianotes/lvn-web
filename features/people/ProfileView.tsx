@@ -13,18 +13,18 @@ export async function ProfileView({ person }: { person: PublicProfile }) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
       <header className="flex flex-col gap-4 rounded-3xl border border-border bg-surface p-6 shadow-sm sm:flex-row sm:items-center">
-        <span aria-hidden className="grid size-20 shrink-0 place-items-center rounded-full bg-accent-soft text-3xl font-extrabold text-accent">
+        <span aria-hidden className="grid size-20 shrink-0 place-items-center rounded-full bg-accent-soft text-3xl font-semibold text-accent">
           {person.displayName.slice(0, 1).toUpperCase()}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-extrabold tracking-tight">
+          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold">
             {person.displayName}
             {person.verified ? <BadgeCheck className="size-5 text-accent" aria-label={t('verified')} /> : null}
           </h1>
           <p className="text-sm text-muted">@{person.handle}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
             {teacher ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 font-semibold text-accent">
+              <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2.5 py-0.5 font-semibold text-accent">
                 <GraduationCap className="size-4" aria-hidden />
                 {t('teacher')}
               </span>
@@ -37,7 +37,7 @@ export async function ProfileView({ person }: { person: PublicProfile }) {
       </header>
       {person.achievements?.length ? (
         <section aria-labelledby="profile-achievements" className="flex flex-col gap-3">
-          <h2 id="profile-achievements" className="flex flex-wrap items-baseline gap-2 text-lg font-bold">
+          <h2 id="profile-achievements" className="flex flex-wrap items-baseline gap-2 text-lg font-semibold">
             {t('achievements')}
             {person.contribution && person.contribution.level !== 'NEWCOMER' ? <span className="text-sm font-semibold text-accent">{t(`level.${person.contribution.level}`)}</span> : null}
           </h2>

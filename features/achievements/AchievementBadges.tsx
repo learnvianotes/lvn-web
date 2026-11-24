@@ -12,11 +12,11 @@ export interface Badge {
 
 /** Each kind's icon and tint, as board A draws its achievement row. */
 const LOOK: Record<AchievementKindName, { icon: LucideIcon; tint: string }> = {
-  TOPICS_MASTERED: { icon: Brain, tint: 'bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300' },
-  QUIZ_MASTER: { icon: Target, tint: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
-  EXAM_READY: { icon: ClipboardCheck, tint: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' },
-  RHYTHM_WEEKS: { icon: CalendarCheck, tint: 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300' },
-  SUBJECT_CONTRIBUTOR: { icon: HandHeart, tint: 'bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300' },
+  TOPICS_MASTERED: { icon: Brain, tint: 'bg-def/10 text-def' },
+  QUIZ_MASTER: { icon: Target, tint: 'bg-warn/10 text-warn' },
+  EXAM_READY: { icon: ClipboardCheck, tint: 'bg-accent/10 text-accent' },
+  RHYTHM_WEEKS: { icon: CalendarCheck, tint: 'bg-warn/10 text-warn' },
+  SUBJECT_CONTRIBUTOR: { icon: HandHeart, tint: 'bg-bad/10 text-bad' },
 }
 
 /**

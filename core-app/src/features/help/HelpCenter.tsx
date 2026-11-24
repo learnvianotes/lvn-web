@@ -15,7 +15,7 @@
 import './help.css'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, ChevronDown, CircleHelp, Keyboard, MessageSquareWarning, Search, Send, WifiOff, X } from 'lucide-react'
+import { Camera, ChevronDown, CircleQuestionMark, Keyboard, MessageSquareWarning, Search, Send, WifiOff, X } from 'lucide-react'
 import { APP_NAME, APP_VERSION, FEEDBACK_URL } from '@core/config'
 import { useUser } from '@core/features/auth/auth'
 import { captureContext, screenshotVisible, type CapturedContext } from './capture'
@@ -56,8 +56,8 @@ export function HelpCenter() {
   return <HelpPanel key={state.ctx.page + state.ctx.section} ctx={state.ctx} initialTab={state.tab} />
 }
 
-const TABS: { id: Tab; label: string; icon: typeof CircleHelp }[] = [
-  { id: 'help', label: 'Help', icon: CircleHelp },
+const TABS: { id: Tab; label: string; icon: typeof CircleQuestionMark }[] = [
+  { id: 'help', label: 'Help', icon: CircleQuestionMark },
   { id: 'report', label: 'Report', icon: MessageSquareWarning },
   { id: 'shortcuts', label: 'Shortcuts', icon: Keyboard },
 ]

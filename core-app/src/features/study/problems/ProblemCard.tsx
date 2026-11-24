@@ -7,7 +7,7 @@
 
 import { memo, type ReactNode } from 'react'
 import {
-  ArrowLeftRight, Bookmark, Code2, ExternalLink, FileText, Layers, Lightbulb, ListOrdered, Ruler, Sparkles, Timer, Turtle, Youtube,
+  ArrowLeftRight, Bookmark, CodeXml, ExternalLink, FileText, Layers, Lightbulb, ListOrdered, Ruler, Sparkles, Timer, Turtle, Video,
   type LucideIcon,
 } from 'lucide-react'
 import type { Problem, Solution } from '@core/features/catalog/types'
@@ -98,7 +98,7 @@ export const ProblemCard = memo(function ProblemCard({ problem: p, index, status
           {/* Only a video that exists is shown: no greyed-out button waiting for one. */}
           {p.youtubeUrl ? (
             <a className="icon-btn" href={p.youtubeUrl} target="_blank" rel="noopener noreferrer" aria-label="Video explanation on YouTube">
-              <Youtube size={18} />
+              <Video size={18} />
             </a>
           ) : null}
         </div>
@@ -117,7 +117,7 @@ export const ProblemCard = memo(function ProblemCard({ problem: p, index, status
       {p.intuition && <Section title="Intuition" icon={Sparkles} kind="intuition"><ContentView content={p.intuition} /></Section>}
       {p.approach && <Section title="Algorithm" icon={ListOrdered}><ContentView content={p.approach} /></Section>}
       {p.optimal && (
-        <Section title={p.optimal.title || 'Optimized code'} icon={Code2} kind="optimal">
+        <Section title={p.optimal.title || 'Optimized code'} icon={CodeXml} kind="optimal">
           <SolutionBody solution={p.optimal} />
         </Section>
       )}

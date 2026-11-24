@@ -1,0 +1,35 @@
+# Append-only admin audit log (lvn-backend PR #92). Platform admins with a valid MFA.
+
+query AdminActivitySummary($from: DateTime, $to: DateTime) {
+  adminActivitySummary(from: $from, to: $to) {
+    from
+    to
+    total
+    byAction {
+      action
+      count
+    }
+    byDay {
+      day
+      count
+    }
+  }
+}
+
+query AdminActivity($filter: AdminActivityFilter, $cursor: String, $limit: Int) {
+  adminActivity(filter: $filter, cursor: $cursor, limit: $limit) {
+    nextCursor
+    entries {
+      id
+      actorId
+      actorEmail
+      action
+      targetType
+      targetId
+      details
+      ip
+      userAgent
+      createdAt
+    }
+  }
+}

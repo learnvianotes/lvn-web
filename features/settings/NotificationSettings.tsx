@@ -41,16 +41,16 @@ export function NotificationSettings() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}
       <section aria-labelledby="kinds" className="flex flex-col gap-3">
-        <h2 id="kinds" className="font-bold">
+        <h2 id="kinds" className="font-semibold">
           {t('kinds')}
         </h2>
         {!s.pushAvailable ? <p className="rounded-xl bg-surface-2 px-3 py-2 text-xs text-muted">{t('pushOff')}</p> : null}
@@ -70,7 +70,7 @@ export function NotificationSettings() {
         </table>
       </section>
       <section aria-labelledby="quiet" className="flex flex-col gap-3">
-        <h2 id="quiet" className="font-bold">
+        <h2 id="quiet" className="font-semibold">
           {t('quiet')}
         </h2>
         <p className="text-sm text-muted">{t('quietHint')}</p>
@@ -96,7 +96,7 @@ export function NotificationSettings() {
         </div>
       </section>
       <section aria-labelledby="digest" className="flex flex-col gap-2">
-        <h2 id="digest" className="font-bold">
+        <h2 id="digest" className="font-semibold">
           {t('digest')}
         </h2>
         <label className="flex items-center gap-2 text-sm">
@@ -104,12 +104,24 @@ export function NotificationSettings() {
           {t('digestLabel')}
         </label>
       </section>
+      {/* productEmails defaults to true on the server (lvn-backend). Turning it off leaves the product audience. */}
+      <section className="flex flex-col gap-2">
+        <h2 id="product-emails" className="font-semibold">
+          {t('productEmails')}
+        </h2>
+        <label className="flex items-start gap-2 text-sm">
+          <input name="productEmails" type="checkbox" className="mt-0.5" checked={s.productEmails} aria-labelledby="product-emails" aria-describedby="product-emails-hint" onChange={(e) => void save({ productEmails: e.target.checked })} />
+          <span id="product-emails-hint" className="text-muted">
+            {t('productEmailsHint')}
+          </span>
+        </label>
+      </section>
       <p className="text-xs text-muted">{t('devices', { count: s.devices })}</p>
     </div>
   )
 }
 
-type SettingsInput = { categories?: { category: NotificationCategory; push?: boolean; email?: boolean }[]; quietStart?: string; quietEnd?: string; timeZone?: string; weeklyDigest?: boolean }
+type SettingsInput = { categories?: { category: NotificationCategory; push?: boolean; email?: boolean }[]; quietStart?: string; quietEnd?: string; timeZone?: string; weeklyDigest?: boolean; productEmails?: boolean }
 
 /** What the settings become once the API accepts the change. */
 function applied(s: NotificationSettingsFieldsFragment, input: SettingsInput): NotificationSettingsFieldsFragment {
@@ -120,6 +132,7 @@ function applied(s: NotificationSettingsFieldsFragment, input: SettingsInput): N
     ...(input.quietEnd !== undefined ? { quietEnd: input.quietEnd } : {}),
     ...(input.timeZone !== undefined ? { timeZone: input.timeZone } : {}),
     ...(input.weeklyDigest !== undefined ? { weeklyDigest: input.weeklyDigest } : {}),
+    ...(input.productEmails !== undefined ? { productEmails: input.productEmails } : {}),
     categories: s.categories.map((c) => {
       const d = changed.get(c.category)
       return d ? { ...c, ...(d.push !== undefined ? { push: d.push } : {}), ...(d.email !== undefined && c.email !== null ? { email: d.email } : {}) } : c

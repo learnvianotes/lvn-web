@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Trash } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -73,7 +73,7 @@ export function SkillsEditor() {
         }}
       >
         <header className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('editTitle')}</h1>
+          <h1 className="text-2xl font-semibold">{t('editTitle')}</h1>
           <Link href={`/u/${viewer.handle}`} className="text-sm font-medium text-accent hover:underline">
             {t('seeProfile')}
           </Link>
@@ -122,7 +122,7 @@ export function SkillsEditor() {
                   <ArrowDown className="size-4" aria-hidden />
                 </Button>
                 <Button type="button" variant="ghost" size="icon" aria-label={t('remove', { name: item.name || t('item', { n: i + 1 }) })} onClick={() => setItems((list) => list.filter((x) => x.key !== item.key))}>
-                  <Trash2 className="size-4" aria-hidden />
+                  <Trash className="size-4" aria-hidden />
                 </Button>
               </div>
             </fieldset>
@@ -133,7 +133,7 @@ export function SkillsEditor() {
           </Button>
         </section>
         {message ? (
-          <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+          <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
             {message.text}
           </p>
         ) : null}

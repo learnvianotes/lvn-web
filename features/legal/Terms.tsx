@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ACCOUNTS_FROM_AGE, RETENTION } from '@/config/legal'
+import { ACCOUNTS_FROM_AGE, FULL_ACCOUNT_FROM_AGE, RETENTION } from '@/config/legal'
 import { Fact, Mailbox } from './Fact'
 import { LEGAL_DOCUMENTS } from './documents'
 
@@ -17,11 +17,17 @@ export function Terms() {
       <ul>
         <li>Anyone may read public notes and subjects without an account.</li>
         <li>
-          Accounts are only for people who are {ACCOUNTS_FROM_AGE} or older. You give your real date of birth when you
-          sign up, and by creating an account you confirm you are {ACCOUNTS_FROM_AGE} or older. We delete accounts that
-          belong to someone younger.
+          Accounts are for people who are {ACCOUNTS_FROM_AGE} or older. LearnViaNotes is not directed at children under{' '}
+          {ACCOUNTS_FROM_AGE}. You give your real age when you sign up. From {ACCOUNTS_FROM_AGE} until{' '}
+          {FULL_ACCOUNT_FROM_AGE}, the account is restricted (some features stay off) and a parent or guardian must give
+          verifiable consent, in line with India’s Digital Personal Data Protection Act, 2023. We do not create an account
+          for someone under {ACCOUNTS_FROM_AGE}. If we learn that an account belongs to someone under {ACCOUNTS_FROM_AGE},
+          we remove it.
         </li>
-        <li>One person, one account. Keep your password safe and tell us if someone else gets into your account.</li>
+        <li>
+          One person, one account. Keep your password, passkeys and email safe, and tell us if someone else gets into your
+          account.
+        </li>
       </ul>
 
       <h2>2. Your notes</h2>
@@ -40,7 +46,8 @@ export function Terms() {
         <li>bully, harass, threaten or shame anyone;</li>
         <li>attack people for who they are (hate), or share sexual content;</li>
         <li>encourage self-harm — if you are struggling, please talk to someone you trust or a local helpline;</li>
-        <li>post spam or advertising, or try to get around limits, security or moderation;</li>
+        <li>post spam or advertising, or try to get around limits, security or moderation — scripts or tools that send
+          requests far faster than a person put the account on an automatic one-hour pause;</li>
         <li>share other people’s work without permission, or their personal information.</li>
       </ul>
 
@@ -64,9 +71,9 @@ export function Terms() {
       <p>
         You can download your data and delete your account at any time from your profile page; the account goes{' '}
         {RETENTION.deletionGraceDays} days after you ask, and you can change your mind until then. We don’t delete an
-        account nobody asked us to delete, unless it belongs to someone under {ACCOUNTS_FROM_AGE} or seriously or
-        repeatedly breaks these terms: then we may suspend or close it, and where we can, we tell you first and let you
-        download your data.
+        account nobody asked us to delete, unless it belongs to someone under {ACCOUNTS_FROM_AGE} — then we remove it — or
+        it seriously or repeatedly breaks these terms: then we may suspend or close it, and where we can, we tell you
+        first and let you download your data.
       </p>
 
       <h2>6. The service</h2>

@@ -60,11 +60,15 @@ code is not written early").
 - **GraphQL.** Operations live in `graphql/operations/*.graphql`; `pnpm graphql:sync` copies the API schema from
   lvn-backend (`contracts/graphql/schema.graphql`) and `pnpm codegen` writes typed documents to `graphql/generated/`.
 - **Providers.** Google uses Firebase Authentication, loaded only when the button is pressed and signed out of
-  straight after; GitHub and LinkedIn use Authorization Code + PKCE with the verifier kept in this tab. A button shows
-  only when both the API (`signInOptions`) and this deployment's env offer the provider.
-- **Theme** is applied before first paint by an inline script in each root layout and stored under `cnote:theme`
-  (the old site's key, JSON-encoded) so the choice carries between `/` and `/core` (per-device preference, not auth
-  data — §7.1 storage rules are respected).
+  straight after. On https the SDK's auth domain is this site, and `/__/auth` is proxied to `<project>.firebaseapp.com`
+  so the Google result stays in first-party storage. GitHub and LinkedIn use Authorization Code + PKCE with the
+  verifier kept in this tab. A button shows only when both the API (`signInOptions`) and this deployment's env offer
+  the provider. The API exchanges the Firebase ID token (`signInWithGoogle`) and links an email that already has an
+  account; this app does not create one.
+- **Theme** is applied before first paint by one inline script (`lib/theme.ts`) in each root layout. `cnote:theme`
+  is JSON `"system"` (the default), `"light"`, or `"dark"`. `cnote:accent` is JSON `"navy"` (the default), `"teal"`,
+  `"forest"`, `"slate"`, or `"amber"`. `data-theme` is the resolved scheme. The choice is per device, not auth data
+  (§7.1), and it carries between `/` and `/core`.
 - **The note editor (P2b).** A note is one Tiptap document whose top-level nodes are cards, one node type per card
   type (§12.2); rich-text cards hold paragraphs and lists, structured cards (table, question, quiz, flashcard) are atoms
   edited through forms. Every card node carries its id, position and revision, so a save sends only what changed:
@@ -81,6 +85,26 @@ code is not written early").
   mode, read aloud with the current card highlighted, and confetti on a first publish — never with reduced motion.
 - **Contracts code.** Until @lvn/contracts is published (lvn-backend ADR-0031), `pnpm contracts:sync` copies the parts the
   web runs into `lib/contracts/`; CI checks the copies match lvn-backend.
+- **Terms version (lvn-backend ADR-0103; owner default (a), which the owner may veto).**
+  - **The list.** `PUBLISHED_TERMS_VERSIONS` in `features/legal/documents.ts` is the one list of versions this app has
+    published, oldest first, each with a short summary of what changed. `TERMS_VERSION` is its last entry, the
+    version of the text the pages ship.
+  - **Who decides.** The version people accept is the API's `Query.termsVersion`. A platform admin sets it on
+    /admin/settings → Legal (`features/admin/AdminTermsVersion.tsx`).
+  - **What can be picked.** Only versions on both this list and the API's `terms_published_versions` allowlist. That
+    allowlist is the setting, else `TERMS_PUBLISHED_VERSIONS`, else the API's built-in `2026-10-08,2026-11-03`. The
+    operator keeps it equal to this list, and the card names any version that is on only one of them.
+  - **Confirming.** A switch or a reset asks for a confirm saying every signed-in person is asked to accept again. The
+    card shows how many people accepted each version. These counts come from the API, which hides a count below 5.
+  - **The page label.** The legal pages read `Query.termsVersion` on the server (ISR, 60 s;
+    `features/legal/terms-version.ts`) for their "Version" label. If the API is unreachable, they show
+    `TERMS_VERSION`. If the API's version is not on the list, they show `TERMS_VERSION` and log a warning.
+  - **Label and text can differ.** The pages always carry the newest text. So the label names a different version
+    than the text in two cases: between deploying a new text and switching to it, and after switching back to an
+    older version. Keep the gap short.
+  - **To publish a version:** add it last on the list with its text, deploy, add it to `terms_published_versions`,
+    then switch.
+  - **Google Analytics** (ADR-0092) is not involved.
 - **Search engines:** `NEXT_PUBLIC_APP_ENV` ≠ `production` sets `noindex` and a disallow-all robots.txt, so sandbox
   never competes with production.
 

@@ -1,0 +1,186 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { isPublishedTermsVersion, legalLastUpdated, PUBLISHED_TERMS_VERSIONS, publishedTermsVersion, TERMS_VERSION } from '@/features/legal/documents'
+import { LegalPage } from '@/features/legal/LegalPage'
+import { AccountDeletionPage } from '@/features/legal/AccountDeletionPage'
+import { Privacy } from '@/features/legal/Privacy'
+import { Terms } from '@/features/legal/Terms'
+import { displayedTermsVersion, fetchTermsVersion, getDisplayedTermsVersion, TERMS_VERSION_REVALIDATE_SECONDS } from '@/features/legal/terms-version'
+
+/** The API's rule for a version (lvn-backend contexts/users/src/domain/terms.ts isTermsVersion): a real YYYY-MM-DD. */
+const isRealDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v
+
+describe('PUBLISHED_TERMS_VERSIONS (lvn-backend ADR-0103)', () => {
+  const versions = PUBLISHED_TERMS_VERSIONS.map((v) => v.version)
+
+  it('is sorted oldest first, without duplicates', () => {
+    expect(versions.length).toBeGreaterThan(0)
+    expect([...versions].sort()).toEqual(versions)
+    expect(new Set(versions).size).toBe(versions.length)
+  })
+
+  it('holds real YYYY-MM-DD dates, as the API accepts, each with a short summary', () => {
+    for (const v of PUBLISHED_TERMS_VERSIONS) {
+      expect(isRealDate(v.version), v.version).toBe(true)
+      expect(v.summary.trim().length, v.version).toBeGreaterThan(0)
+      expect(v.summary.length, v.version).toBeLessThanOrEqual(160)
+    }
+  })
+
+  it('ends with TERMS_VERSION, the version of the text the pages ship', () => {
+    expect(versions).toContain(TERMS_VERSION)
+    expect(versions.at(-1)).toBe(TERMS_VERSION)
+    expect(TERMS_VERSION).toBe('2026-11-25')
+    expect(legalLastUpdated()).toBe('25 November 2026')
+    expect(legalLastUpdated('2026-10-08')).toBe('8 October 2026')
+  })
+
+  it('keeps every version people have accepted', () => {
+    // The API's built-in allowlist (DEFAULT_PUBLISHED_TERMS_VERSIONS) is 2026-10-08,2026-11-03; dropping one here
+    // would make the admin page refuse a version the API still allows.
+    expect(versions).toEqual(expect.arrayContaining(['2026-10-08', '2026-11-03', '2026-11-12']))
+  })
+
+  it('answers whether a version is published', () => {
+    expect(isPublishedTermsVersion(TERMS_VERSION)).toBe(true)
+    expect(isPublishedTermsVersion('2026-10-08')).toBe(true)
+    expect(isPublishedTermsVersion('2099-01-01')).toBe(false)
+    expect(isPublishedTermsVersion('')).toBe(false)
+    expect(publishedTermsVersion('2026-10-08')?.summary).toMatch(/First/)
+    expect(publishedTermsVersion('2099-01-01')).toBeUndefined()
+  })
+})
+
+describe('the legal pages’ version label', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const answer = (body: unknown, status = 200) => vi.fn(async () => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }))
+
+  it('shows the API’s version when this web build published it', () => {
+    const warn = vi.fn()
+    expect(displayedTermsVersion('2026-10-08', warn)).toBe('2026-10-08')
+    expect(displayedTermsVersion(TERMS_VERSION, warn)).toBe(TERMS_VERSION)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the newest local version when the API cannot answer', () => {
+    const warn = vi.fn()
+    expect(displayedTermsVersion(null, warn)).toBe(TERMS_VERSION)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('shows the newest local version and warns when the API’s version has no text here', () => {
+    const warn = vi.fn()
+    expect(displayedTermsVersion('2099-01-01', warn)).toBe(TERMS_VERSION)
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn.mock.calls[0]?.[0]).toMatch(/2099-01-01.*PUBLISHED_TERMS_VERSIONS/)
+  })
+
+  it('asks the API anonymously for Query.termsVersion, cached for a minute', async () => {
+    const fetch = answer({ data: { termsVersion: '2026-10-08' } })
+    vi.stubGlobal('fetch', fetch)
+    await expect(fetchTermsVersion()).resolves.toBe('2026-10-08')
+    expect(TERMS_VERSION_REVALIDATE_SECONDS).toBe(60)
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit & { next: { revalidate: number; tags: string[] } }]
+    expect(url).toBe('http://localhost:4000/graphql')
+    expect(init.method).toBe('POST')
+    expect(new Headers(init.headers).has('authorization')).toBe(false)
+    expect(init.credentials).toBeUndefined()
+    expect(JSON.parse(init.body as string).query).toMatch(/query LegalTermsVersion\s*\{\s*termsVersion\s*\}/)
+    expect(init.next).toEqual({ revalidate: 60, tags: ['terms-version'] })
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('treats an HTTP failure, a GraphQL error, a missing value or a network error as no answer', async () => {
+    vi.stubGlobal('fetch', answer({ errors: [{ message: 'down' }] }, 503))
+    await expect(fetchTermsVersion()).resolves.toBeNull()
+    vi.stubGlobal('fetch', answer({ errors: [{ message: 'boom' }], data: null }))
+    await expect(fetchTermsVersion()).resolves.toBeNull()
+    vi.stubGlobal('fetch', answer({ data: { termsVersion: '' } }))
+    await expect(fetchTermsVersion()).resolves.toBeNull()
+    vi.stubGlobal('fetch', answer({ data: { termsVersion: 20261103 } }))
+    await expect(fetchTermsVersion()).resolves.toBeNull()
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
+    await expect(fetchTermsVersion()).resolves.toBeNull()
+    await expect(getDisplayedTermsVersion()).resolves.toBe(TERMS_VERSION)
+  })
+
+  it('renders the label on the page, never crashing on an unknown version', async () => {
+    const page = async () => renderToStaticMarkup(await LegalPage({ doc: 'terms', children: createElement('p', null, 'text') }))
+    vi.stubGlobal('fetch', answer({ data: { termsVersion: '2026-10-08' } }))
+    expect(await page()).toContain('Version 2026-10-08')
+    expect(await page()).toContain('Last updated 25 November 2026')
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    vi.stubGlobal('fetch', answer({ data: { termsVersion: '2099-01-01' } }))
+    expect(await page()).toContain(`Version ${TERMS_VERSION}`)
+    expect(warn).toHaveBeenCalledOnce()
+
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
+    expect(await page()).toContain(`Version ${TERMS_VERSION}`)
+  })
+})
+
+describe('the 13+ age rules and the processors the apps use', () => {
+  const privacy = () => renderToStaticMarkup(createElement(Privacy))
+  const terms = () => renderToStaticMarkup(createElement(Terms))
+
+  it('says LearnViaNotes is 13+, needs parental consent from 13 to 17, and removes an under-13 account', () => {
+    for (const html of [privacy(), terms()]) {
+      expect(html).toContain('not directed at children under 13')
+      expect(html).toContain('verifiable consent')
+      expect(html).toContain('Digital Personal Data Protection Act, 2023')
+      expect(html).toContain('we remove it')
+      expect(html).toContain('K Manideep &amp; K Thrishank')
+      expect(html).toContain('support@learnvianotes.in')
+      expect(html).toContain('Bengaluru')
+    }
+    expect(terms()).toContain('courts at Bengaluru')
+  })
+
+  it('names the processors the code actually calls, and drops AWS storage and email', () => {
+    const html = privacy()
+    expect(html).toContain('Amazon Web Services (Lightsail)')
+    expect(html).toContain('Cloudflare')
+    expect(html).toContain('R2')
+    expect(html).toContain('Firebase Authentication')
+    expect(html).toContain('Firebase Cloud Messaging')
+    expect(html).toContain('Resend')
+    expect(html).toContain('Sentry')
+    expect(html).toContain('OpenAI')
+    expect(html).toContain('Anthropic')
+    expect(html).toContain('a model we run ourselves')
+    expect(html).not.toContain('Gemini')
+    expect(html).not.toContain('hosting, storage and email')
+    expect(html).toContain('href="/delete-account"')
+  })
+})
+
+describe('the public account-deletion page', () => {
+  const html = () => renderToStaticMarkup(createElement(AccountDeletionPage))
+
+  it('names the real controls, the 14-day deletion, and what stays', () => {
+    const page = html()
+    expect(page).toContain('Your account')
+    expect(page).toContain('Delete your account')
+    expect(page).toContain('Your password')
+    expect(page).toContain('Type DELETE to confirm')
+    expect(page).toContain('Delete my account')
+    expect(page).toContain('Keep my account')
+    expect(page).toContain('14 days')
+    expect(page).toContain('mailto:support@learnvianotes.in')
+    expect(page).toContain('Deleted user')
+    expect(page).toContain('Move to trash')
+    expect(page).toContain('My Notes')
+    expect(page).toContain('Trash')
+    expect(page).toContain('Delete forever')
+    expect(page).toContain('Delete card')
+    expect(page).toContain('Remove picture')
+    expect(page).toContain('30 days')
+    expect(page).toContain('7 days')
+  })
+})

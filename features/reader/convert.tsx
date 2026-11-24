@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { CheckCircle2, Loader2, TriangleAlert, Wand2, X } from 'lucide-react'
+import { CircleCheck, LoaderCircle, TriangleAlert, FilePenLine, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -42,7 +42,7 @@ export function ConvertDialog({ open, onClose, noteId, fileId, fileName }: { ope
         </ul>
         {pages ? <p className="text-xs text-muted">{pages.limit === null ? t('usageUnlimited', { used: pages.used }) : t('usage', { used: pages.used, limit: pages.limit })}</p> : null}
         {error ? (
-          <p role="alert" className="text-red-600 dark:text-red-400">
+          <p role="alert" className="text-bad">
             {error}
           </p>
         ) : null}
@@ -51,7 +51,7 @@ export function ConvertDialog({ open, onClose, noteId, fileId, fileName }: { ope
             {t('cancel')}
           </Button>
           <Button className="gap-1.5" disabled={converting.loading} onClick={() => void start()}>
-            <Wand2 className="size-4" aria-hidden />
+            <FilePenLine className="size-4" aria-hidden />
             {converting.loading ? t('starting') : t('start')}
           </Button>
         </div>
@@ -67,13 +67,13 @@ export function ConversionBanner({ conversion, onDismiss }: { conversion: Conver
   if (active) {
     return (
       <div role="status" className="flex shrink-0 items-center gap-3 border-b border-border bg-accent-soft px-3 py-2 text-sm">
-        <Loader2 className="size-4 shrink-0 animate-spin text-accent" aria-hidden />
+        <LoaderCircle className="size-4 shrink-0 animate-spin text-accent" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="font-semibold">{t(`stage.${conversion.status}`)}</span>
           {conversion.pages ? <span className="text-muted"> · {t('pages', { n: conversion.pages, scanned: conversion.scannedPages ?? 0 })}</span> : null}
         </span>
         <span className="h-1.5 w-24 overflow-hidden rounded-full bg-border sm:w-40" aria-hidden>
-          <span className="block h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${conversion.progress}%` }} />
+          <span className="block h-full rounded-[10px] bg-accent transition-[width] duration-500" style={{ width: `${conversion.progress}%` }} />
         </span>
       </div>
     )
@@ -81,7 +81,7 @@ export function ConversionBanner({ conversion, onDismiss }: { conversion: Conver
   const done = conversion.status === 'DONE'
   return (
     <div role="status" className="flex shrink-0 items-start gap-3 border-b border-border bg-surface px-3 py-2 text-sm">
-      {done ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />}
+      {done ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-good" aria-hidden /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />}
       <span className="min-w-0 flex-1">
         {done ? t('done', { cards: conversion.cards ?? 0, pages: conversion.pages ?? 0 }) : (conversion.error ?? t('failed'))}
         {/* Pages the vision model read again (ADR-0063), and where scanned text may need mending. */}

@@ -1,13 +1,14 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { GraduationCap, Layers, ListChecks, Plus, ScrollText, Sparkles } from 'lucide-react'
+import { GraduationCap, Layers, ListChecks, Plus, ScrollText, TextQuote } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { AiResult, useRunAiTask } from '@/features/ai/AiPanel'
 import { StudyAids } from '@/features/ai/StudyAids'
 import { StudyCardsButton } from '@/features/learning/StudyCardsButton'
+import { ShareQuiz } from '@/features/quizzes/ShareQuiz'
 import { useLive } from '@/features/notifications/live'
 import { NoteAiArtifactsDocument, NoteInsightsDocument, type AiTask } from '@/graphql/generated/graphql'
 import type { CardType } from '@/lib/contracts/domain/enums'
@@ -38,7 +39,7 @@ function Results({ noteId, study, tab, canEdit, onAddedToNote }: { noteId: strin
   if (!mine.length) return null
   return (
     <section aria-label={t('yourResults')} className="flex flex-col gap-3">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('yourResults')}</h3>
+      <h3 className="text-sm font-semibold text-muted">{t('yourResults')}</h3>
       {mine.map((a) => (
         <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void study.ai.run(a.task, a.language)} onAddedToNote={onAddedToNote} />
       ))}
@@ -46,7 +47,7 @@ function Results({ noteId, study, tab, canEdit, onAddedToNote }: { noteId: strin
   )
 }
 
-function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: string; icon: typeof Sparkles }) {
+function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: string; icon: typeof TextQuote }) {
   if (!ai.available) return null
   return (
     <Button size="sm" className="gap-1.5" disabled={ai.spent || ai.running} onClick={() => void ai.run(task)}>
@@ -58,7 +59,7 @@ function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: st
 
 function Problem({ ai }: { ai: Ai }) {
   return ai.error ? (
-    <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+    <p role="alert" className="text-sm text-bad">
       {ai.error}
     </p>
   ) : null
@@ -85,7 +86,7 @@ export function SummaryTab({ noteId, study, canEdit, onAddedToNote }: { noteId: 
  * Flashcards or Quiz: the note's own cards of that kind, its public aid, the viewer's AI results, and the ways to get
  * more — AI, or a card added to the note for its editors; flashcards are studied from here too (ADR-0068).
  */
-export function CardsTab({ kind, noteId, cards, study, canEdit, reader, onAdd, onAddedToNote }: { kind: 'flashcards' | 'quiz'; noteId: string; cards: { id: string; type: string; content: unknown }[]; study: NoteStudy; canEdit: boolean; reader: boolean; onAdd?: (type: CardType) => void; onAddedToNote?: () => void }) {
+export function CardsTab({ kind, noteId, noteTitle, cards, study, canEdit, reader, onAdd, onAddedToNote }: { kind: 'flashcards' | 'quiz'; noteId: string; noteTitle?: string; cards: { id: string; type: string; content: unknown }[]; study: NoteStudy; canEdit: boolean; reader: boolean; onAdd?: (type: CardType) => void; onAddedToNote?: () => void }) {
   const t = useTranslations(`notes.view.${kind}`)
   const own = cards.filter((c) => TAB_CARDS[kind].includes(c.type))
   const any = own.length > 0 || study.tasks.some((task) => TAB_TASKS[kind].includes(task))
@@ -93,10 +94,10 @@ export function CardsTab({ kind, noteId, cards, study, canEdit, reader, onAdd, o
   return (
     <>
       {own.length ? (
-        <section aria-label={t('inNote')} className="flex flex-col gap-3">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('inNote')}</h3>
+        <section aria-label={t('inNote')} className="flex min-w-0 max-w-full flex-col gap-3">
+          <h3 className="text-sm font-semibold text-muted">{t('inNote')}</h3>
           {own.map((c) => (
-            <div key={c.id} className="rounded-2xl border border-border bg-surface p-4">
+            <div key={c.id} className="min-w-0 max-w-full rounded-2xl border border-border bg-surface p-4">
               <CardView id={`tab-${c.id}`} type={c.type as CardType} content={c.content} />
             </div>
           ))}
@@ -105,6 +106,7 @@ export function CardsTab({ kind, noteId, cards, study, canEdit, reader, onAdd, o
       <StudyAids noteId={noteId} tasks={[task]} />
       <Results noteId={noteId} study={study} tab={kind} canEdit={canEdit} onAddedToNote={onAddedToNote} />
       {!any ? <p className="text-sm text-muted">{t('none')}</p> : null}
+      {kind === 'quiz' && canEdit ? <ShareQuiz title={noteTitle || ''} questions={own.map((card) => card.content)} /> : null}
       <div className="flex flex-wrap items-center gap-2">
         <Make ai={study.ai} task={task} label={t('make')} icon={kind === 'flashcards' ? Layers : ListChecks} />
         {canEdit && onAdd ? (

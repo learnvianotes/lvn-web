@@ -30,7 +30,45 @@ query MyVerificationRequests {
   }
 }
 
+fragment AiCheckFields on IdCardCheck {
+  verdict
+  confidence
+  reason
+  checkedAt
+  extracted {
+    name
+    institution
+    idNumber
+    validUntil
+  }
+}
+
 query VerificationRequestsToReview($after: UUID) {
+  verificationRequestsToReview(first: 30, after: $after) {
+    ...VerificationRequestFields
+    aiCheck {
+      ...AiCheckFields
+    }
+    requester {
+      email
+      institution {
+        name
+      }
+      profile {
+        department
+      }
+    }
+    documents {
+      fileId
+      fileName
+      mimeType
+      sizeBytes
+    }
+  }
+}
+
+# Used when a server does not know aiCheck yet. The queue falls back to this.
+query VerificationRequestsToReviewBasic($after: UUID) {
   verificationRequestsToReview(first: 30, after: $after) {
     ...VerificationRequestFields
     documents {

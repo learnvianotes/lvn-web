@@ -13,8 +13,10 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { Content, ContentNode } from '@core-schema/content'
 import { CodeBlock } from './CodeBlock'
 import { Tabs } from './Tabs'
+import { safeLinkHref } from '@/lib/http-url'
 import { parseStyle } from './style'
 import { sectionAnchors } from './query'
+import { sanitizeSvgMarkup } from './svg'
 
 /** Anchor ids (`sec-N`) for top-level sections — the study kit links to them. */
 const AnchorContext = createContext<Map<ContentNode, string> | null>(null)
@@ -60,7 +62,11 @@ function Node({ node: n }: { node: ContentNode }): ReactNode {
     case 'span': return <span style={style}>{kids}</span>
     case 'br': return <br />
     case 'icon': return <i className={`ti ${n.icon}`} />
-    case 'link': return <a href={n.href} target="_blank" rel="noopener noreferrer">{kids}</a>
+    case 'link': {
+      const href = safeLinkHref(n.href, { mailto: true })
+      if (!href) return <span>{kids}</span>
+      return <a href={href} target="_blank" rel="noopener noreferrer">{kids}</a>
+    }
 
     /* blocks */
     case 'section': return <section className="block">{kids}</section>
@@ -99,7 +105,7 @@ function Node({ node: n }: { node: ContentNode }): ReactNode {
     case 'tabPanel': return <div id={anchors?.get(n)} className="tab-panel" data-label={n.label} style={style}>{kids}</div>
     case 'qa': return <details className="qa">{kids}</details>
     case 'qaQuestion': return <summary>{kids}</summary>
-    case 'svg': return <svg {...svgAttrs(n.attrs)} dangerouslySetInnerHTML={{ __html: n.value ?? '' }} />
+    case 'svg': return <svg {...svgAttrs(n.attrs)} dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup(n.value ?? '') }} />
     case 'footer': return <footer className={n.variant ? cx('callout', n.variant !== 'plain' && `callout--${n.variant}`) : undefined}>{kids}</footer>
     default: {
       const cls = CLASS_OF[n.type]
@@ -119,8 +125,10 @@ const CLASS_OF: Partial<Record<ContentNode['type'], string>> = {
 }
 const SPAN_TYPES = new Set<ContentNode['type']>(['kvKey', 'kvValue'])
 
+const SVG_ATTRS = new Set(['viewBox', 'width', 'height', 'role', 'aria-label'])
+
 function svgAttrs(attrs: Record<string, string> | undefined) {
   const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(attrs ?? {})) if (k !== 'xmlns') out[k] = v
+  for (const [k, v] of Object.entries(attrs ?? {})) if (SVG_ATTRS.has(k)) out[k] = v
   return out
 }

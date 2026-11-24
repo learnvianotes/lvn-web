@@ -66,6 +66,24 @@
           "media": {
             "id": "01920000-0000-7000-8000-00000000f101"
           }
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000c104",
+          "type": "code",
+          "content": {
+            "language": "cpp",
+            "filename": "fraction.cpp",
+            "code": "Fraction(int n, int d) : num_(n), den_(d) {} friend std::ostream& operator<<(std::ostream& os, const Fraction& f) { return os << f.num_; }"
+          },
+          "media": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000c105",
+          "type": "markdown",
+          "content": {
+            "source": "```\nOutput: 1/2\nFraction(int n, int d) : num_(n), den_(d) {} friend std::ostream& operator<<(std::ostream& os, const Fraction& f);\n```"
+          },
+          "media": null
         }
       ],
       "aiInsights": [

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, MoreHorizontal, NotebookPen, Plus, RotateCcw, Search, Sparkles, Trash2, Inbox, Users } from 'lucide-react'
+import { BookOpen, BookOpenText, Camera, ChevronRight, FileText, Folder, FolderPlus, Hash, Layers, ListChecks, Ellipsis, NotebookPen, Plus, RotateCcw, Search, TextQuote, Trash, Inbox, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -24,6 +24,8 @@ import {
   type NoteListFieldsFragment,
   type SharedWithMeQuery,
 } from '@/graphql/generated/graphql'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { isLimitCode, refusalMessage } from '@/lib/limit-error'
 import { cn } from '@/lib/cn'
 import { NotebookArt } from './art'
 import { VisibilityBadge } from './ShareDialog'
@@ -50,7 +52,7 @@ const filterOf = (v: View): NoteFilter => (v.kind === 'folder' ? { folderId: v.i
 
 type SharedNote = SharedWithMeQuery['sharedWithMe']['edges'][number]['node']
 
-const TEMPLATE_ICONS: Record<TemplateKey, typeof NotebookPen> = { lecture: NotebookPen, revision: ListChecks, flashcards: Layers, quiz: Sparkles }
+const TEMPLATE_ICONS: Record<TemplateKey, typeof NotebookPen> = { lecture: NotebookPen, revision: ListChecks, flashcards: Layers, quiz: TextQuote }
 
 /** The viewer's notes (lvn-backend §4.1, §4.5): a welcome, templates to start from, notes as cards, folders, tags and the trash. */
 export function NotesHome() {
@@ -71,6 +73,7 @@ export function NotesHome() {
   const [restore] = useMutation(RestoreNoteDocument)
   const [destroy] = useMutation(DeleteNoteForeverDocument)
   const [error, setError] = useState<string | null>(null)
+  const [errorLimit, setErrorLimit] = useState(false)
   const [query, setQuery] = useState('')
   const readPdf = useReadPdf()
   const pdfInput = useRef<HTMLInputElement>(null)
@@ -85,13 +88,25 @@ export function NotesHome() {
   const refresh = () => Promise.all([organise.refetch(), mine.refetch()])
   const firstName = viewer.data?.viewer?.displayName.split(' ')[0] ?? ''
 
+  const fail = (message: string, limit = false) => {
+    setError(message)
+    setErrorLimit(limit)
+  }
   const newNote = async (template?: TemplateKey, kind?: 'PROJECT' | 'BLOG' | 'POST') => {
-    const res = await create({
-      variables: { input: { ...(view.kind === 'folder' ? { folderId: view.id } : {}), ...(template ? { title: t(`templates.${template}.title`), cards: templateCards(template) } : {}), ...(kind ? { kind } : {}) } },
-    })
-    const id = res.data?.createNote.note?.id
-    if (id) router.push(`/notes/${id}`)
-    else setError(res.data?.createNote.userErrors[0]?.message ?? t('createFailed'))
+    setError(null)
+    setErrorLimit(false)
+    try {
+      const res = await create({
+        variables: { input: { ...(view.kind === 'folder' ? { folderId: view.id } : {}), ...(template ? { title: t(`templates.${template}.title`), cards: templateCards(template) } : {}), ...(kind ? { kind } : {}) } },
+      })
+      const problem = res.data?.createNote.userErrors[0]
+      const id = res.data?.createNote.note?.id
+      if (id) router.push(`/notes/${id}`)
+      else fail(problem?.message ?? t('createFailed'), isLimitCode(problem?.code))
+    } catch (e) {
+      const refused = refusalMessage(e)
+      fail(refused ?? t('createFailed'), !!refused)
+    }
   }
   const addFolder = async (parentId: string | null) => {
     const name = window.prompt(t('folderName'))
@@ -171,11 +186,11 @@ export function NotesHome() {
           {navItem({ kind: 'all' }, t('views.all'), BookOpen)}
           {navItem({ kind: 'unfiled' }, t('views.unfiled'), Inbox)}
           {navItem({ kind: 'shared' }, t('views.shared'), Users)}
-          {navItem({ kind: 'trash' }, t('views.trash'), Trash2)}
+          {navItem({ kind: 'trash' }, t('views.trash'), Trash)}
         </nav>
         <section aria-labelledby="folders-heading" className="flex flex-col gap-0.5">
           <div className="flex items-center justify-between px-3 pb-1">
-            <h2 id="folders-heading" className="text-xs font-semibold uppercase tracking-wider text-muted">
+            <h2 id="folders-heading" className="text-xs font-semibold text-muted">
               {t('folders')}
             </h2>
             <button type="button" className="rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-accent" aria-label={t('newFolder')} title={t('newFolder')} onClick={() => void addFolder(null)}>
@@ -187,7 +202,7 @@ export function NotesHome() {
               <div className="min-w-0 flex-1">{navItem({ kind: 'folder', id: f.id }, f.name, Folder, f.noteCount)}</div>
               <details className="relative">
                 <summary className="cursor-pointer list-none rounded-lg p-1 text-muted opacity-60 hover:bg-surface-2 hover:opacity-100" aria-label={t('folderActions', { name: f.name })}>
-                  <MoreHorizontal className="size-4" aria-hidden />
+                  <Ellipsis className="size-4" aria-hidden />
                 </summary>
                 <div className="absolute right-0 z-20 mt-1 flex w-44 flex-col rounded-xl border border-border bg-surface p-1 text-sm shadow-xl">
                   <button type="button" className="rounded-lg px-3 py-1.5 text-left hover:bg-surface-2" onClick={() => void addFolder(f.id)}>
@@ -196,7 +211,7 @@ export function NotesHome() {
                   <button type="button" className="rounded-lg px-3 py-1.5 text-left hover:bg-surface-2" onClick={() => void renameFolder(f.id, f.name)}>
                     {t('rename')}
                   </button>
-                  <button type="button" className="rounded-lg px-3 py-1.5 text-left text-red-600 hover:bg-surface-2 dark:text-red-400" onClick={() => void removeFolder(f.id, f.name)}>
+                  <button type="button" className="rounded-lg px-3 py-1.5 text-left text-bad hover:bg-surface-2" onClick={() => void removeFolder(f.id, f.name)}>
                     {t('delete')}
                   </button>
                 </div>
@@ -207,7 +222,7 @@ export function NotesHome() {
         </section>
         {tags.length ? (
           <section aria-labelledby="tags-heading" className="flex flex-col gap-1.5 px-1">
-            <h2 id="tags-heading" className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">
+            <h2 id="tags-heading" className="px-2 text-xs font-semibold text-muted">
               {t('tags')}
             </h2>
             <div className="flex flex-wrap gap-1.5">
@@ -230,12 +245,13 @@ export function NotesHome() {
           <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex animate-rise flex-col gap-1.5">
-                <p className="text-sm font-medium text-[#BFDBFE]">{t(`greeting.${daypart()}`, { name: firstName })}</p>
-                <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <p className="text-xs font-semibold text-inverse-muted">{t('kicker')}</p>
+                <p className="text-sm font-medium text-inverse-muted">{t(`greeting.${daypart()}`, { name: firstName })}</p>
+                <h1 id="notes-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   {all.length ? t('heroWithNotes') : t('heroFirst')}
                 </h1>
                 <div className="mt-3 flex flex-wrap gap-2 md:hidden">
-                  <Button size="lg" className="w-fit gap-2 bg-white text-[#0B1220] hover:bg-white/90" disabled={creating.loading} onClick={() => void newNote()}>
+                  <Button size="lg" className="w-fit gap-2 bg-inverse-ink text-inverse hover:opacity-90" disabled={creating.loading} onClick={() => void newNote()}>
                     <Plus className="size-5" aria-hidden />
                     {t('newNote')}
                   </Button>
@@ -254,7 +270,7 @@ export function NotesHome() {
                   <NewKinds onDark teacher={viewer.data?.viewer?.globalRole === 'TEACHER'} disabled={creating.loading} onNew={(kind) => void newNote(undefined, kind)} className="w-full" />
                 </div>
                 {latest ? (
-                  <Link href={`/notes/${latest.id}`} className="mt-2 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-white/10 py-1.5 pl-3 pr-2 text-sm font-medium ring-1 ring-white/20 transition hover:bg-white/20">
+                  <Link href={`/notes/${latest.id}`} className="mt-2 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-white/10 py-1.5 pl-3 pr-2 text-sm font-medium ring-1 ring-white/20 transition-colors hover:bg-white/20">
                     <span className="truncate">
                       {t('continue')} <strong className="font-semibold">{latest.title || t('untitled')}</strong>
                     </span>
@@ -262,11 +278,11 @@ export function NotesHome() {
                   </Link>
                 ) : null}
               </div>
-              <NotebookArt className="hidden w-36 shrink-0 drop-shadow-xl sm:block" />
+              <NotebookArt className="hidden w-36 shrink-0 sm:block" />
             </div>
           </NightSky>
         ) : (
-          <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight">
+          <h1 id="notes-heading" className="text-2xl font-semibold">
             {heading}
           </h1>
         )}
@@ -274,7 +290,7 @@ export function NotesHome() {
         {/* Phones: the views and folders as one row to scroll, instead of the sidebar. */}
         <nav aria-label={t('views.label')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden">
           <Link href="/ask" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent">
-            <Sparkles className="size-4" aria-hidden />
+            <TextQuote className="size-4" aria-hidden />
             {t('askAi')}
           </Link>
           {[
@@ -283,7 +299,7 @@ export function NotesHome() {
             { v: { kind: 'shared' } as View, label: t('views.shared'), icon: Users },
             ...folders.map((f) => ({ v: { kind: 'folder', id: f.id } as View, label: f.name, icon: Folder })),
             ...tags.map((x) => ({ v: { kind: 'tag', id: x.id } as View, label: `#${x.name}`, icon: Hash })),
-            { v: { kind: 'trash' } as View, label: t('views.trash'), icon: Trash2 },
+            { v: { kind: 'trash' } as View, label: t('views.trash'), icon: Trash },
           ].map(({ v, label, icon: Icon }) => {
             const active = hrefOf(v) === hrefOf(view)
             return (
@@ -313,7 +329,7 @@ export function NotesHome() {
                     type="button"
                     disabled={creating.loading}
                     onClick={() => void newNote(key)}
-                    className="group flex animate-rise flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.98]"
+                    className="group flex animate-rise flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-4 text-left transition-colors hover:border-accent/40 hover:border-fg/20 active:scale-[0.98]"
                     style={{ animationDelay: `${60 * i}ms` }}
                   >
                     <span className="grid size-9 place-items-center rounded-xl bg-accent-soft text-accent transition group-hover:bg-accent group-hover:text-accent-fg">
@@ -335,20 +351,24 @@ export function NotesHome() {
               <label className="relative w-full sm:w-64">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
                 <span className="sr-only">{t('search')}</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-full border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-[10px] border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none" />
               </label>
             ) : null}
           </div>
           {error || readPdf.error ? (
-            <p role="alert" className="rounded-xl border border-red-600/30 bg-red-50 px-4 py-3 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-200">
-              {error ?? readPdf.error}
-            </p>
+            errorLimit || readPdf.limit ? (
+              <LimitNotice>{error ?? readPdf.error}</LimitNotice>
+            ) : (
+              <p role="alert" className="rounded-xl border border-bad/30 bg-bad/10 px-4 py-3 text-sm text-bad">
+                {error ?? readPdf.error}
+              </p>
+            )
           ) : null}
           {readPdf.uploading ? (
             <div role="status" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
               <span className="truncate font-medium">{t('readPdfUploading', { name: readPdf.uploading.name })}</span>
               <span className="h-2 overflow-hidden rounded-full bg-border" aria-hidden>
-                <span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
+                <span className="block h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
               </span>
             </div>
           ) : null}
@@ -418,10 +438,10 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
   const accent = accentOf(n.id)
   const body = (
     <>
-      <span aria-hidden className="absolute inset-x-0 top-0 h-1.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${accent.from}, ${accent.to})` }} />
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1.5 rounded-t-2xl" style={{ background: accent.from }} />
       <span aria-hidden className="absolute -right-10 -top-10 size-28 rounded-full blur-2xl transition-opacity group-hover:opacity-100" style={{ background: accent.tint, opacity: 0.8 }} />
       <span className="relative flex items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl text-sm font-bold text-white shadow-sm" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl text-sm font-semibold text-white shadow-sm" style={{ background: accent.from }} aria-hidden>
           {(n.title || t('untitled')).trim().charAt(0).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1">
@@ -442,11 +462,11 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
           </span>
         ) : null}
         {'owner' in n ? (
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
+          <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
         ) : n.visibility !== 'PRIVATE' ? (
           <VisibilityBadge visibility={n.visibility} />
         ) : n.publishedAt ? (
-          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">{t('published')}</span>
+          <span className="rounded-full bg-good/10 px-2 py-0.5 font-medium text-good">{t('published')}</span>
         ) : null}
         {n.tags.slice(0, 3).map((x) => (
           <span key={x.id} className="rounded-full px-1.5 py-0.5" style={{ background: accent.tint }}>
@@ -474,7 +494,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
     )
   }
   return (
-    <Link href={`/notes/${n.id}`} className={cn(tile, 'hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/10 focus-visible:-translate-y-0.5 active:scale-[0.99]')}>
+    <Link href={`/notes/${n.id}`} className={cn(tile, ' hover:border-fg/20 active:scale-[0.99]')}>
       {body}
     </Link>
   )

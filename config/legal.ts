@@ -3,17 +3,19 @@
  * these in; until then the pages show each gap, and a production build refuses to run (lib/launch-checks.ts). They are
  * the same for every environment, so they live here rather than in the environment.
  */
+import { SUPPORT_EMAIL } from '../lib/site'
+
 export const LEGAL = {
   /** Legal name of the person or company that operates LearnViaNotes (the data fiduciary). */
   operator: 'K Manideep & K Thrishank',
   /** Postal address for notices: street, city, state, PIN. */
   address: 'Bengaluru 560046',
   /** City whose courts hear disputes under the Terms. */
-  courtsCity: '',
+  courtsCity: 'Bengaluru',
   /** The Grievance Officer's name (IT Rules 2021, rule 3(2); SPDI Rules 2011, rule 5(9)). */
-  grievanceOfficer: '',
-  /** Mailbox for privacy and grievance mail, e.g. grievance@learnvianotes.in. */
-  email: '',
+  grievanceOfficer: 'LearnViaNotes Admin',
+  /** Mailbox for support, privacy and grievance mail (lib/site.ts). */
+  email: SUPPORT_EMAIL,
 }
 
 export type LegalField = keyof typeof LEGAL
@@ -34,9 +36,17 @@ export function missingLegalFields(values: Record<LegalField, string> = LEGAL): 
 
 /**
  * The youngest age that may hold an account, as the Privacy Policy and Terms state it. Must match the API's
- * ACCOUNT_MINIMUM_AGE (lvn-backend ADR-0091). The sign-up forms never show it.
+ * ACCOUNT_MINIMUM_AGE (lvn-backend ADR-0091). Someone younger than this does not get an account.
+ * Ages from this value until {@link FULL_ACCOUNT_FROM_AGE} can sign up only with verifiable parental or guardian
+ * consent (India’s DPDP Act). The account stays restricted until {@link FULL_ACCOUNT_FROM_AGE}.
  */
-export const ACCOUNTS_FROM_AGE = 18
+export const ACCOUNTS_FROM_AGE = 13
+
+/**
+ * From {@link ACCOUNTS_FROM_AGE} until this age the account is restricted (some features stay off) and
+ * verifiable consent from a parent or guardian is required. Contest bands and public achievements still use this age.
+ */
+export const FULL_ACCOUNT_FROM_AGE = 18
 
 /**
  * How long data is kept, as the Privacy Policy states it (lvn-backend spec §15.2, ADR-0018, ADR-0088, ADR-0089). Change

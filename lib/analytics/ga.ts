@@ -7,7 +7,7 @@
  *   callbacks), and titles can name private notes, so no query, fragment or document title leaves the browser.
  * - Withdrawing stops collection at once and deletes the _ga cookies.
  */
-import { getAnalyticsConsent, subscribeConsent } from './consent'
+import { getAnalyticsConsent, subscribeConsent } from '../consent'
 
 type Gtag = (...args: unknown[]) => void
 interface GaWindow {

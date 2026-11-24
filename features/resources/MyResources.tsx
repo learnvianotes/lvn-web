@@ -11,8 +11,8 @@ import { MyResourcesDocument } from "@/graphql/generated/graphql";
 const TONE = {
   PENDING: "bg-surface-2 text-muted",
   APPROVED:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+    "bg-good/10 text-good",
+  REJECTED: "bg-bad/10 text-bad",
 } as const;
 
 /** The resources a person sent (lvn-backend ADR-0074), newest first, each with its state and, if rejected, why. */
@@ -26,7 +26,7 @@ export function MyResources() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-extrabold tracking-tight">
+          <h1 className="text-2xl font-semibold">
             {t("title")}
           </h1>
           <p className="text-sm text-muted">{t("lead")}</p>
@@ -59,7 +59,7 @@ export function MyResources() {
               className="flex flex-col gap-1 rounded-2xl border border-border bg-surface p-4 hover:border-accent"
             >
               <span className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+                <span className="text-xs font-semibold text-accent">
                   {t(`type.${r.type}`)}
                 </span>
                 <span
@@ -71,7 +71,7 @@ export function MyResources() {
               <span className="font-semibold">{r.title}</span>
               <span className="text-xs text-muted">{r.host}</span>
               {r.status === "REJECTED" && r.reason ? (
-                <span className="text-sm text-red-700 dark:text-red-300">
+                <span className="text-sm text-bad">
                   {r.reason}
                 </span>
               ) : null}

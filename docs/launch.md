@@ -20,9 +20,9 @@ to the new VM.
 
 | Launch item | State | Where |
 | --- | --- | --- |
-| Privacy, Terms and Grievance pages, operator named in config | Built. Operator and address are filled in. **The courts city, the Grievance Officer and the mailbox are still blank** | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
+| Privacy, Terms and Grievance pages, operator named in config | Built. All filled in: operator, address, courts (Bengaluru), Grievance Officer (LearnViaNotes Admin) and mailbox | `/legal/privacy`, `/legal/terms`, `/legal/grievance`; `config/legal.ts` → `LEGAL` |
 | Grievances resolved within 7 days, removals within 36 h | Built | `features/legal/Grievance.tsx`, Terms §9 |
-| Date of birth at sign-up, refusing under-18s, every answer confirmed | Built (web, phone, API) | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE`); `lib/age.ts`, `components/auth/AgeCheck.tsx` |
+| Age (whole years) at sign-up. Under 13 is refused. Ages 13 to 17 can sign up with verifiable parental or guardian consent; the account is restricted until 18. Email sign-up still confirms the age; the create-profile step does not | Built on the web. The API’s `ACCOUNT_MINIMUM_AGE` must match | lvn-backend ADR-0091 (`ACCOUNT_MINIMUM_AGE`), ADR-0104; `config/legal.ts` `ACCOUNTS_FROM_AGE` = 13; `lib/age.ts`, `components/auth/AgeCheck.tsx` |
 | Google Analytics only after consent, synced across tabs | Built; off until `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set | lvn-backend ADR-0092; `lib/consent.ts`, `lib/analytics.ts` |
 | Real 404s, robots.txt, sitemap | Built | `app/robots.ts`, `app/sitemap.ts`, `tests/e2e/landing.spec.ts` |
 | Brand blue, no purple | Built across web, phone and emails | lvn-backend ADR-0094 |
@@ -111,15 +111,20 @@ emails.
 
 ## Decisions waiting for the owner
 
-1. **The rest of the legal details** (`config/legal.ts`): the courts city, the Grievance Officer and the mailbox (see
-   [infra.md §5](runbooks/infra.md#5-the-grievance-mailbox)). The operator and address are in.
-2. **`TERMS_VERSION`.** The Privacy Policy and Terms changed materially: adults only, Google Analytics, the Grievance
-   page. Bump `TERMS_VERSION` in lvn-web (`features/legal/documents.ts`) and lvn-backend
-   (`contexts/users/src/domain/rules.ts`) together once the text is final, so every account accepts it again. It is
-   left at `2026-10-08` while the text is still a draft.
+1. **The legal details** (`config/legal.ts`) are filled in (2026-11-03): courts in Bengaluru, Grievance Officer
+   LearnViaNotes Admin at support@learnvianotes.in (`lib/site.ts`, also `config/legal.ts`).
+   ([infra.md §5](runbooks/infra.md#5-the-grievance-mailbox) is how that mailbox receives mail.)
+2. **The terms version** is `2026-11-12` (last updated 12 November 2026): the Privacy Policy and Terms changed
+   materially (accounts from 13, verifiable parental or guardian consent for ages 13–17, and the processor list), so
+   every account accepts them again once the API’s allowlist includes `2026-11-12` and an admin switches to it. It is the
+   newest entry of `PUBLISHED_TERMS_VERSIONS` in lvn-web (`features/legal/documents.ts`). The version people accept
+   is the API's (lvn-backend ADR-0103), and a platform admin can switch it on /admin/settings → Legal. They can only
+   pick a version that is both on that list and on the API's `terms_published_versions` allowlist (owner default
+   (a); the owner may veto it). Keep the allowlist equal to `PUBLISHED_TERMS_VERSIONS`. The admin card names any
+   version that is on only one of them.
 3. **Which Firebase project is production for the rewrite.**
-   - `config/firebase-projects.json` says `learnvianotes-2e2d7`: the old site's project, so returning Google users
-     keep their Firebase UID (ADR-0007).
+   - `config/firebase-projects.json` says `learnvianotes-in`: production now uses this new project (owner's decision,
+     2026-11-03), not the old site's. Google accounts from the old site's project are not carried over automatically.
    - Development uses `learnvianotes-com`.
    - Beta should use `learnvianotes-test`, still to be created ([infra.md §1](runbooks/infra.md#1-the-test-firebase-project)).
      Until then beta offers email sign-in only.
@@ -136,19 +141,29 @@ emails.
 
 ## How the age check works
 
-- **What people see.** Sign-up, and the details step after a first Google sign-in, ask the date of birth with nothing
-  about the cut-off.
-  - The chosen date is shown in words ("14 March 2001").
-  - Every answer, adult or not, gets "Is this right?" before it is sent. No answer stands out, and one mis-picked year
-    can't refuse or erase anyone (FTC COPPA FAQ H.3, D.7: a neutral age screen).
-- **What the API does** (`ACCOUNT_MINIMUM_AGE`, default 18; `0` turns it off):
-  - `signUp` refuses a younger date, and nothing is stored;
-  - `completeRegistration` erases the unfinished account a Google sign-in had just created, with the same refusal.
+- **What people see.** Sign-up, and the details step after a first Google sign-in, ask the age in whole years
+  (lvn-backend ADR-0104). There is no date picker.
+  - A text box with the phone's number pad. The form refuses an empty answer, anything that is not a whole number
+    ("17.5", "18 years") and anything outside 13 to 120 before it sends anything. Age 12 is refused here. Age 13 is sent.
+    The API checks the same again and its errors land on the same field.
+  - Email sign-up still asks "Is this right?" before the age is sent. The create-profile step (after a provider
+    sign-in) does not: Continue sends the checked age straight away.
+  - Only `age` is sent. The API still takes the deprecated `dateOfBirth` from phone builds made before ADR-0104.
+- **What the API does** (`ACCOUNT_MINIMUM_AGE`, which the web now treats as 13):
+  - `signUp` and `completeRegistration` should accept ages 13 to 17. Those accounts are restricted until 18, and the
+    Terms require verifiable consent from a parent or guardian (India’s DPDP Act). Contest bands and public
+    achievements still stay private until 18.
+  - An age under 13 is refused, and nothing is stored. `completeRegistration` erases the unfinished account a provider
+    sign-in had just created, with the same refusal. If we later learn an account belongs to someone under 13, we remove it.
 - **The device remembers a refusal for a day.**
   - The sign-up forms show "Sorry, you can't create an account" instead, and analytics is set to "don't allow".
   - It deletes nothing and signs nobody out: on the details page it only offers Sign out.
-- **The date of birth is stored** with the account, as ADR-0017 says. The old app stored only the outcome; the
-  rewrite's restricted-minor rules and the School track need the date.
+- **What is stored** (ADR-0104, amending ADR-0017): the age given and when, for new accounts. Accounts that gave a
+  date of birth before keep it, untouched, and their age comes from it. Otherwise the age now is the age given plus
+  the whole years since, which is never more than the real age, so the restricted-minor rules never lift early.
+- **Admins** (/admin/users) see each account's age, and the date of birth only where one is stored. They correct the
+  age, or the date of birth on an account that has one; the form sends a value only when it changed, because the API
+  restarts a declared age's clock on every age it is sent.
 
 ## Legal notes (have a lawyer read the pages)
 

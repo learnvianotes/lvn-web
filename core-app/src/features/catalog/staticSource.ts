@@ -11,7 +11,7 @@ import { NotFoundError } from './errors'
 const BASE = '/core/data'
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}/${path}`)
+  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(8_000) })
   if (res.status === 404) throw new NotFoundError()
   if (!res.ok) throw new Error(`Content request failed (${res.status})`)
   return (await res.json()) as T

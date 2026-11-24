@@ -58,7 +58,7 @@ function Block({ block, cite }: { block: MdBlock; cite?: Cite }) {
     case 'heading': {
       const H = `h${block.level + 2}` as 'h3' | 'h4' | 'h5'
       return (
-        <H className={cn('font-bold tracking-tight', block.level === 1 ? 'text-xl' : block.level === 2 ? 'text-lg' : 'text-base')}>
+        <H className={cn('font-semibold', block.level === 1 ? 'text-xl' : block.level === 2 ? 'text-lg' : 'text-base')}>
           <Inlines content={block.content} cite={cite} />
         </H>
       )
@@ -71,7 +71,7 @@ function Block({ block, cite }: { block: MdBlock; cite?: Cite }) {
       )
     case 'code':
       return (
-        <pre className="overflow-x-auto rounded-xl border border-border bg-surface-2 p-3 font-mono text-sm leading-relaxed">
+        <pre className="lvn-code-scroll rounded-xl border border-border bg-surface-2 p-3 font-mono text-sm leading-relaxed">
           <code>{block.text}</code>
         </pre>
       )
@@ -94,7 +94,7 @@ function Block({ block, cite }: { block: MdBlock; cite?: Cite }) {
 
 export function Markdown({ source, className, cite }: { source: string; className?: string; cite?: Cite }) {
   return (
-    <div className={className ?? 'flex flex-col gap-2.5'}>
+    <div className={cn('flex min-w-0 max-w-full flex-col gap-2.5', className)}>
       {parseMarkdown(source).map((b, i) => (
         <Block key={i} block={b} cite={cite} />
       ))}

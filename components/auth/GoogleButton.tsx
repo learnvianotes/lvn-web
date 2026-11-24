@@ -24,7 +24,7 @@ export function GoogleButton({ onClick, busy, disabled, tone = 'auto', className
       disabled={disabled || busy}
       aria-busy={busy || undefined}
       className={cn(
-        'inline-flex h-12 w-full items-center justify-center gap-3 rounded-full border px-6 text-[15px] font-semibold transition-[background-color,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-80',
+        'inline-flex h-12 w-full items-center justify-center gap-3 rounded-[10px] border px-6 text-[15px] font-semibold transition-[background-color,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-80',
         tones[tone],
         className,
       )}

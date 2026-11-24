@@ -2,7 +2,7 @@
 
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { BookOpenCheck, CircleHelp, Eye, EyeOff, Layers, Lightbulb, ListChecks, LoaderCircle, ScrollText, type LucideIcon } from 'lucide-react'
+import { BookOpenCheck, CircleQuestionMark, Eye, EyeOff, Layers, Lightbulb, ListChecks, LoaderCircle, ScrollText, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -12,6 +12,7 @@ import type { CardType } from '@/lib/contracts/domain/enums'
 import { cn } from '@/lib/cn'
 import { useLive } from '@/features/notifications/live'
 import { CardView } from '@/features/notes/render/CardView'
+import { PracticeQuizProvider } from '@/features/notes/render/interactive'
 import { Markdown } from '@/features/notes/render/Markdown'
 
 /**
@@ -30,20 +31,22 @@ export interface Aid {
   hidden?: boolean
 }
 
-const ICON: Record<string, LucideIcon> = { SUMMARIZE: ScrollText, KEY_CONCEPTS: Lightbulb, PRACTICE_QUESTIONS: CircleHelp, QUIZ: ListChecks, FLASHCARDS: Layers }
+const ICON: Record<string, LucideIcon> = { SUMMARIZE: ScrollText, KEY_CONCEPTS: Lightbulb, PRACTICE_QUESTIONS: CircleQuestionMark, QUIZ: ListChecks, FLASHCARDS: Layers }
 const POLL_MS = 3000
 
 /** One aid's body: Markdown, or its cards to try. */
 function AidBody({ aid }: { aid: Aid }) {
   if (aid.markdown != null) return <Markdown source={aid.markdown} className="flex flex-col gap-2.5 text-[0.95rem] leading-relaxed" />
   return (
-    <div className="flex flex-col gap-3">
-      {(aid.cards ?? []).map((c, i) => (
-        <div key={i} className="rounded-2xl border border-border bg-bg p-4">
-          <CardView id={`${aid.id}-${i}`} type={c.type as CardType} content={c.content} />
-        </div>
-      ))}
-    </div>
+    <PracticeQuizProvider>
+      <div className="flex min-w-0 max-w-full flex-col gap-3">
+        {(aid.cards ?? []).map((c, i) => (
+          <div key={i} className="min-w-0 max-w-full rounded-2xl border border-border bg-bg p-4">
+            <CardView id={`${aid.id}-${i}`} type={c.type as CardType} content={c.content} />
+          </div>
+        ))}
+      </div>
+    </PracticeQuizProvider>
   )
 }
 
@@ -70,9 +73,9 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
     }
   }
   return (
-    <section aria-labelledby="study-aids" className="flex flex-col gap-4 rounded-3xl border border-accent/25 bg-surface p-5 sm:p-6">
+    <section aria-labelledby="study-aids" className="flex min-w-0 max-w-full flex-col gap-4 rounded-3xl border border-accent/25 bg-surface p-5 sm:p-6">
       <header className="flex flex-col gap-1">
-        <h2 id="study-aids" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+        <h2 id="study-aids" className="flex items-center gap-2 text-xl font-semibold">
           <BookOpenCheck className="size-5 text-accent" aria-hidden />
           {t('title')}
         </h2>
@@ -146,7 +149,7 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
           </div>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

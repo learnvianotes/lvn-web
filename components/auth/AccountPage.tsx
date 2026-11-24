@@ -20,15 +20,18 @@ import {
   type ViewerQuery,
   type YearOfStudy,
 } from '@/graphql/generated/graphql'
+import { skipsVerificationPrompt } from '@/lib/auth/gates'
 import { signedOut } from '@/lib/auth/session'
 import { clearDraftMirrors, countDraftMirrors } from '@/features/notes/editor/mirror'
 import { YourData } from '@/features/data/YourData'
 import { DeleteAccount } from '@/features/data/DeleteAccount'
 import { AccountStanding } from '@/features/moderation/Standing'
-import { ReviewRequests } from '@/features/verification/ReviewRequests'
+import { AnalyticsOptOut } from '@/features/settings/AnalyticsOptOut'
+import { PasskeySettings } from '@/features/settings/PasskeySettings'
 import { VerifyAccount } from '@/features/verification/VerifyAccount'
 import { AiAccountSection } from '@/features/ai/AiPanel'
 import { Interests } from '@/features/community/Interests'
+import { AppearanceSettings } from '@/components/theme/AppearanceSettings'
 
 type Viewer = NonNullable<ViewerQuery['viewer']>
 const YEARS: YearOfStudy[] = ['YEAR_1', 'YEAR_2', 'YEAR_3', 'YEAR_4', 'YEAR_5', 'POSTGRADUATE', 'GRADUATED', 'SCHOOL', 'NOT_STUDYING']
@@ -47,98 +50,38 @@ export function AccountPage() {
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{viewer.displayName}</h1>
+          <h1 className="text-2xl font-medium">{viewer.displayName}</h1>
           <p className="text-sm text-muted">@{viewer.handle} · {viewer.email}</p>
         </div>
         <SignOutButton />
       </header>
+      <AppearanceSettings />
       <AccountStanding userId={viewer.id} />
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/verification" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('verificationQueue')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/moderation" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('moderationQueue')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/ai" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('aiProviders')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'PLATFORM_ADMIN' ? (
-        <Link href="/admin/contests" className="flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent hover:border-accent">
-          {t('adminContests')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      <Link href="/home" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('home')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/exams" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('exams')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/rhythm" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('rhythm')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/achievements" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('achievements')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/review" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('review')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/history" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('history')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/classes" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('classes')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/groups" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('groups')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/resources/mine" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('resources')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/saved" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('savedResources')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/profile/notifications" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('notificationSettings')}
-        <span aria-hidden>→</span>
-      </Link>
-      <Link href="/profile/people" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-        {t('people')}
-        <span aria-hidden>→</span>
-      </Link>
-      {viewer.globalRole === 'STUDENT' && !viewer.restrictedMinor ? (
-        <Link href="/teach" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-          {viewer.teacherStatus === 'PENDING' ? tt('accountPending') : viewer.teacherStatus === 'DECLINED' ? tt('accountDeclined') : tt('accountCard')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
-      {viewer.globalRole === 'TEACHER' || viewer.teacherStatus === 'PENDING' ? (
-        <Link href="/profile/skills" className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:border-accent">
-          {t('skills')}
-          <span aria-hidden>→</span>
-        </Link>
-      ) : null}
+      <nav aria-label={t('accountLinks')} className="overflow-hidden rounded-2xl border border-border bg-surface">
+        <ul className="divide-y divide-border">
+          {[
+            { href: '/achievements', label: t('achievements') },
+            { href: '/history', label: t('history') },
+            { href: '/plans', label: t('plan') },
+            { href: '/profile/notifications', label: t('notificationSettings') },
+            { href: '/profile/people', label: t('people') },
+            ...(viewer.globalRole === 'STUDENT' && !viewer.restrictedMinor
+              ? [{ href: '/teach', label: viewer.teacherStatus === 'PENDING' ? tt('accountPending') : viewer.teacherStatus === 'DECLINED' ? tt('accountDeclined') : tt('accountCard') }]
+              : []),
+            ...(viewer.globalRole === 'TEACHER' || viewer.teacherStatus === 'PENDING' ? [{ href: '/profile/skills', label: t('skills') }] : []),
+          ].map(({ href, label }) => (
+            <li key={href}>
+              <Link href={href} className="flex min-h-12 items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-surface-2">
+                {label}
+                <span aria-hidden className="text-muted">→</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <PasskeySettings className={card} />
       <Verification viewer={viewer} />
-      {viewer.globalRole === 'TEACHER' && viewer.verified ? <ReviewRequests /> : null}
+      <AnalyticsOptOut className={card} />
       {viewer.restrictedMinor ? <Alert>{t('minor')}</Alert> : null}
       <InstitutionalEmail viewer={viewer} />
       <StudyDetails viewer={viewer} />
@@ -183,10 +126,9 @@ function Verification({ viewer }: { viewer: Viewer }) {
         {viewer.verified ? `✓ ${t('verified')}` : t('notVerified')}
         {viewer.verified && viewer.verificationMethod ? <span className="text-sm font-normal text-muted"> {t(`verifiedBy.${viewer.verificationMethod}`)}</span> : null}
       </h2>
-      {!viewer.verified ? <p className="text-sm text-muted">{t('verifyLead')}</p> : null}
-      {!viewer.emailVerified ? <Alert>{t('emailUnverified')}</Alert> : null}
+      {!skipsVerificationPrompt(viewer) && !viewer.verified ? <p className="text-sm text-muted">{t('verifyLead')}</p> : null}
       {/* Without a college email (ADR-0019): a teacher vouches, or our team checks proof of study. */}
-      {!viewer.verified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
+      {!skipsVerificationPrompt(viewer) && !viewer.verified ? <VerifyAccount restrictedMinor={!!viewer.restrictedMinor} /> : null}
     </section>
   )
 }
@@ -270,7 +212,7 @@ function StudyDetails({ viewer }: { viewer: Viewer }) {
         </label>
         <div className="flex items-center gap-3">
           <Button type="submit" size="sm">{t('save')}</Button>
-          {state === 'saved' ? <span role="status" className="text-sm text-muted">{t('saved')}</span> : state !== 'idle' ? <span role="alert" className="text-sm text-red-600">{state}</span> : null}
+          {state === 'saved' ? <span role="status" className="text-sm text-muted">{t('saved')}</span> : state !== 'idle' ? <span role="alert" className="text-sm text-bad">{state}</span> : null}
         </div>
       </form>
     </section>

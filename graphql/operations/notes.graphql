@@ -93,7 +93,8 @@ fragment NoteMeta on Note {
     number
     createdAt
   }
-  forkingEnabled
+  allowForks
+  forkCount
   moderation {
     state
     reason
@@ -567,4 +568,18 @@ query SavedNotes($first: Int, $after: String) {
 # lvn-backend ADR-0097: whether people may upload here; while not, every upload control is hidden.
 query UploadsEnabled {
   uploadsEnabled
+}
+
+# Setting public_notes_require_verification. Public visibility follows this, not unverifiedGatedActions.
+query PublicNotesRequireVerification {
+  publicNotesRequireVerification
+}
+
+# Contracts 0.76.0: the boolean is a query. The note carries allowForks and forkCount.
+query NoteForks($id: UUID!) {
+  forkingEnabled(noteId: $id)
+  note(id: $id) {
+    allowForks
+    forkCount
+  }
 }

@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '@/messages/en.json'
-import { ADMIN_SECTIONS, AdminNav, activeAdminSection, canSeeAdminNav } from '@/features/admin/AdminNav'
+import { ADMIN_GATE_ROUTES, ADMIN_SECTIONS, AdminNav, activeAdminSection, canSeeAdminNav, sectionsForRole } from '@/features/admin/AdminNav'
 
 const nav = vi.hoisted(() => ({ pathname: '/admin/ai' }))
 
@@ -34,7 +34,19 @@ vi.mock('next/link', async () => {
 })
 
 const SECTIONS: [group: string, label: string, href: string][] = [
+  ['Platform', 'Overview', '/admin'],
+  ['Platform', 'Configuration', '/admin/settings'],
+  ['Platform', 'Plans & pricing', '/admin/plans'],
+  ['Platform', 'Errors', '/admin/errors'],
+  ['Platform', 'Usage', '/admin/usage'],
+  ['Platform', 'Activity', '/admin/activity'],
+  ['People', 'Beta access', '/admin/access'],
+  ['People', 'Users', '/admin/users'],
+  ['People', 'Roles', '/admin/roles'],
+  ['People', 'Institution domains', '/admin/domains'],
   ['People', 'Proof of study to review', '/admin/verification'],
+  ['People', 'College ID cards', '/admin/student-id'],
+  ['Content', 'Content', '/admin/content'],
   ['Content', 'Moderation queue', '/admin/moderation'],
   ['Content', 'Weekly contests', '/admin/contests'],
   ['AI', 'AI providers', '/admin/ai'],
@@ -87,7 +99,9 @@ describe('admin settings sidebar', () => {
   }
 
   it('lists every admin page, grouped, with its address', async () => {
-    expect(ADMIN_SECTIONS.map((section) => section.href).sort()).toEqual(adminPageRoutes().sort())
+    const routes = adminPageRoutes()
+    expect(ADMIN_SECTIONS.map((section) => section.href).sort()).toEqual(routes.filter((href) => !(ADMIN_GATE_ROUTES as readonly string[]).includes(href)).sort())
+    expect(routes).toEqual(expect.arrayContaining([...ADMIN_GATE_ROUTES]))
     await mount()
     const aside = container!.querySelector('aside')!
     const links = [...aside.querySelectorAll('a')].map((a) => ({
@@ -100,6 +114,9 @@ describe('admin settings sidebar', () => {
   })
 
   it('marks the open section and nothing else', async () => {
+    expect(activeAdminSection('/admin')?.key).toBe('overview')
+    expect(activeAdminSection('/admin/settings')?.key).toBe('settings')
+    expect(activeAdminSection('/admin/plans')?.key).toBe('plans')
     expect(activeAdminSection('/admin/ai')?.href).toBe('/admin/ai')
     expect(activeAdminSection('/admin/ai/models')?.href).toBe('/admin/ai')
     expect(activeAdminSection('/admin/moderation')?.key).toBe('moderation')
@@ -145,11 +162,19 @@ describe('admin settings sidebar', () => {
     expect(container!.querySelector('[role="dialog"]')).toBeNull()
   })
 
-  it('is for platform admins', () => {
+  it('opens review queues only to platform admins and verified teachers', () => {
     expect(canSeeAdminNav('PLATFORM_ADMIN')).toBe(true)
-    expect(canSeeAdminNav('STUDENT')).toBe(false)
+    expect(canSeeAdminNav('MANAGER')).toBe(false)
     expect(canSeeAdminNav('TEACHER')).toBe(false)
+    expect(canSeeAdminNav('TEACHER', { verified: true })).toBe(true)
+    expect(canSeeAdminNav('STUDENT')).toBe(false)
     expect(canSeeAdminNav(undefined)).toBe(false)
     expect(canSeeAdminNav(null)).toBe(false)
+    expect(sectionsForRole('PLATFORM_ADMIN').map((section) => section.href)).toEqual(ADMIN_SECTIONS.map((section) => section.href))
+    expect(sectionsForRole('MANAGER')).toEqual([])
+    expect(sectionsForRole('TEACHER')).toEqual([])
+    expect(sectionsForRole('TEACHER', { verified: false })).toEqual([])
+    expect(sectionsForRole('TEACHER', { verified: true }).map((section) => section.key)).toEqual(['verification', 'studentId'])
+    expect(sectionsForRole('STUDENT')).toEqual([])
   })
 })

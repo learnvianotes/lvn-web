@@ -8,7 +8,7 @@ import { Placeholder } from '@tiptap/extensions'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
-import { AlertCircle, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, Loader2, type LucideIcon, Maximize2, Mic, Minimize2, MoreHorizontal, Plus, Redo2, Strikethrough, Trash2, Underline, Undo2, Volume2, Wand2 } from 'lucide-react'
+import { CircleAlert, ArrowDown, ArrowUp, Bold, Check, CloudOff, Code, Copy, GripVertical, Highlighter, Italic, Link2, List, ListOrdered, ListTree, LoaderCircle, type LucideIcon, Maximize2, Mic, Minimize2, Ellipsis, Notebook, Plus, Redo2, Strikethrough, Trash, Underline, Undo2, Volume2, WandSparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
@@ -25,8 +25,10 @@ import { AnchorChips } from './anchors'
 import { ReadingHighlight, setReadingCard } from './reading'
 import { uploads, useUploadsEnabled } from '../uploads'
 import { cardMenu, SlashMenu } from './slash'
+import { PageEditor } from '../pages/PageEditor'
 import { RecordDialog } from './Recorder'
 import { CardRail } from '../view/CardRail'
+import { useFeatureUse } from '@/lib/analytics'
 
 export interface NoteEditorProps {
   noteId: string
@@ -68,12 +70,14 @@ const SAFE_LINK = /^(https?:\/\/|mailto:)/i
  */
 export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, send, actions, meta, menuItems = [], onOpenVersion, onAnchor, onEditor, compact = false, tabs, panel, contentPanel, aside }: NoteEditorProps) {
   const t = useTranslations('notes.editor')
+  useFeatureUse('notes_editor')
   // Keeps `uploads.enabled` current for the slash menu, drop and paste (lvn-backend ADR-0097).
   useUploadsEnabled()
   const anchorRef = useRef(onAnchor)
   anchorRef.current = onAnchor
   const [title, setTitle] = useState(initialTitle)
   const [focus, setFocus] = useState(false)
+  const [pages, setPages] = useState(false)
   const [contentsOpen, setContentsOpen] = useState(false)
   const titleRef = useRef(initialTitle)
   const autosave = useAutosave({ userId, noteId, saved, send })
@@ -166,7 +170,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-accent/40 bg-accent/10 text-accent')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
+              <Notebook className="size-4" aria-hidden />
+              {t('pages')}
+            </button>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
               <ListTree className="size-4" aria-hidden />
               {t('contents')}
             </button>
@@ -202,7 +210,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         <div className="flex flex-col gap-2 px-1">
           <textarea
             rows={1}
-            className={cn('w-full resize-none overflow-hidden bg-transparent font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
+            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-semibold leading-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
             placeholder={t('untitled')}
             aria-label={t('title')}
             value={title}
@@ -225,15 +233,16 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         </div>
 
         {!focus ? tabs : null}
-        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel} className={showPanel ? 'hidden' : 'flex flex-col gap-4'}>
+        {pages && !focus ? <PageEditor noteId={noteId} /> : null}
+        <div role={contentPanel ? 'tabpanel' : undefined} id={contentPanel?.id} aria-labelledby={contentPanel?.labelledBy} hidden={showPanel || pages} className={showPanel || pages ? 'hidden' : 'flex min-w-0 max-w-full flex-col gap-4'}>
           {wide ? <EditorRail editor={editor} /> : null}
           <Toolbar editor={editor} sticky={compact ? 'top-0' : 'top-14'} />
-          <div className={cn('lvn-editor relative rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
+          <div className={cn('lvn-editor relative min-w-0 max-w-full rounded-3xl border border-border bg-surface py-5 pl-10 pr-4 shadow-sm', compact ? 'sm:pl-12 sm:pr-5' : 'sm:py-6 sm:pl-14 sm:pr-10')}>
             {editor ? <CardHandle editor={editor} /> : null}
             {editor ? <SelectionMenu editor={editor} /> : null}
             <EditorContent editor={editor} />
           </div>
-          <AddCardMenu editor={editor} />
+          <AddCardMenu editor={editor} noteId={noteId} />
           <p className="text-xs text-muted">{t('shortcuts')}</p>
         </div>
         {showPanel ? panel : null}
@@ -252,11 +261,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
 function SavePill({ status }: { status: SaveStatus }) {
   const t = useTranslations('notes.editor.status')
   const look: Record<SaveStatus, { icon: LucideIcon; className: string; spin?: boolean }> = {
-    saved: { icon: Check, className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
-    pending: { icon: Loader2, className: 'bg-surface-2 text-muted', spin: false },
-    saving: { icon: Loader2, className: 'bg-accent-soft text-accent', spin: true },
-    offline: { icon: CloudOff, className: 'bg-amber-500/15 text-amber-800 dark:text-amber-300' },
-    error: { icon: AlertCircle, className: 'bg-red-500/10 text-red-700 dark:text-red-400' },
+    saved: { icon: Check, className: 'bg-good/10 text-good' },
+    pending: { icon: LoaderCircle, className: 'bg-surface-2 text-muted', spin: false },
+    saving: { icon: LoaderCircle, className: 'bg-accent-soft text-accent', spin: true },
+    offline: { icon: CloudOff, className: 'bg-warn/15 text-warn' },
+    error: { icon: CircleAlert, className: 'bg-bad/10 text-bad' },
   }
   const { icon: Icon, className, spin } = look[status]
   return (
@@ -270,8 +279,8 @@ function SavePill({ status }: { status: SaveStatus }) {
 function Banner({ tone, children, onClose }: { tone: 'warning' | 'error'; children: React.ReactNode; onClose?: () => void }) {
   const t = useTranslations('notes.editor')
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-red-600/30 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200' : 'border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100')}>
-      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-bad/30 bg-bad/10 text-bad' : 'border-warn/40 bg-warn/10 text-warn')}>
+      <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="flex-1">{children}</div>
       {onClose ? (
         <button type="button" className="text-xs underline" onClick={onClose}>
@@ -291,7 +300,7 @@ function IconButton({ icon: Icon, label, onClick, pressed, disabled, className }
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-fg transition hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent', className)}
+      className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-fg transition-colors hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent', className)}
     >
       <Icon className="size-[18px]" aria-hidden />
     </button>
@@ -358,7 +367,7 @@ function Toolbar({ editor, sticky }: { editor: Editor | null; sticky: 'top-0' | 
       <IconButton icon={ArrowUp} label={t('moveUp')} onClick={() => moveCard(editor, -1)} />
       <IconButton icon={ArrowDown} label={t('moveDown')} onClick={() => moveCard(editor, 1)} />
       <IconButton icon={Copy} label={t('duplicateCard')} onClick={() => duplicateCard(editor)} />
-      <IconButton icon={Trash2} label={t('deleteCard')} onClick={() => deleteCard(editor)} />
+      <IconButton icon={Trash} label={t('deleteCard')} onClick={() => deleteCard(editor)} />
       <span className="ml-auto flex shrink-0 items-center gap-0.5">
         <IconButton icon={Undo2} label={t('undo')} onClick={() => editor.chain().focus().undo().run()} />
         <IconButton icon={Redo2} label={t('redo')} onClick={() => editor.chain().focus().redo().run()} />
@@ -424,10 +433,10 @@ function CardHandle({ editor }: { editor: Editor }) {
 
   return (
     <div ref={box} contentEditable={false} className="absolute left-1.5 z-10 flex flex-col items-center gap-0.5 transition-[top] duration-150 sm:left-3" style={{ top: (at?.top ?? 24) + 2, opacity: at ? 1 : 0 }}>
-      <button type="button" aria-label={t('addCardBelow')} title={t('addCardBelow')} aria-expanded={menu === 'add'} className="grid size-7 place-items-center rounded-lg text-muted transition hover:bg-accent-soft hover:text-accent" onClick={() => setMenu((m) => (m === 'add' ? null : 'add'))}>
+      <button type="button" aria-label={t('addCardBelow')} title={t('addCardBelow')} aria-expanded={menu === 'add'} className="grid size-7 place-items-center rounded-lg text-muted transition-colors hover:bg-accent-soft hover:text-accent" onClick={() => setMenu((m) => (m === 'add' ? null : 'add'))}>
         <Plus className="size-4" aria-hidden />
       </button>
-      <button type="button" aria-label={t('cardMenu')} title={t('cardMenu')} aria-expanded={menu === 'card'} className="grid size-7 cursor-grab place-items-center rounded-lg text-muted transition hover:bg-surface-2 hover:text-fg" onClick={() => setMenu((m) => (m === 'card' ? null : 'card'))}>
+      <button type="button" aria-label={t('cardMenu')} title={t('cardMenu')} aria-expanded={menu === 'card'} className="grid size-7 cursor-grab place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg" onClick={() => setMenu((m) => (m === 'card' ? null : 'card'))}>
         <GripVertical className="size-4" aria-hidden />
       </button>
       {menu ? (
@@ -450,8 +459,8 @@ function CardHandle({ editor }: { editor: Editor }) {
               <MenuItem icon={Copy} label={t('duplicateCard')} onClick={() => act(() => duplicateCard(editor))} />
               {convertible ? (
                 <>
-                  <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-                    <Wand2 className="size-3.5" aria-hidden />
+                  <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold text-muted">
+                    <WandSparkles className="size-3.5" aria-hidden />
                     {t('turnInto')}
                   </p>
                   {CONVERTIBLE.map((type: CardType) => (
@@ -460,7 +469,7 @@ function CardHandle({ editor }: { editor: Editor }) {
                 </>
               ) : null}
               <span className="my-1 h-px bg-border" aria-hidden />
-              <MenuItem icon={Trash2} label={t('deleteCard')} danger onClick={() => act(() => deleteCard(editor))} />
+              <MenuItem icon={Trash} label={t('deleteCard')} danger onClick={() => act(() => deleteCard(editor))} />
             </div>
           )}
         </div>
@@ -476,7 +485,7 @@ function MoreMenu({ items }: { items: { label: string; icon: LucideIcon; onClick
   if (!items.length) return null
   return (
     <div className="relative sm:hidden">
-      <IconButton icon={MoreHorizontal} label={t('more')} pressed={open} onClick={() => setOpen((o) => !o)} className="border border-border bg-surface" />
+      <IconButton icon={Ellipsis} label={t('more')} pressed={open} onClick={() => setOpen((o) => !o)} className="border border-border bg-surface" />
       {open ? (
         <div className="absolute right-0 z-30 mt-2 flex w-52 animate-rise flex-col rounded-2xl border border-border bg-surface p-1.5 text-sm shadow-2xl shadow-black/15">
           {items.map((item) => (
@@ -490,14 +499,14 @@ function MoreMenu({ items }: { items: { label: string; icon: LucideIcon; onClick
 
 function MenuItem({ icon: Icon, label, onClick, danger }: { icon?: LucideIcon; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button type="button" onClick={onClick} className={cn('flex items-center gap-2 rounded-xl px-3 py-1.5 text-left hover:bg-surface-2', danger && 'text-red-600 dark:text-red-400')}>
+    <button type="button" onClick={onClick} className={cn('flex items-center gap-2 rounded-xl px-3 py-1.5 text-left hover:bg-surface-2', danger && 'text-bad')}>
       {Icon ? <Icon className="size-4" aria-hidden /> : <span className="size-4" aria-hidden />}
       {label}
     </button>
   )
 }
 
-function AddCardMenu({ editor }: { editor: Editor | null }) {
+function AddCardMenu({ editor, noteId }: { editor: Editor | null; noteId: string }) {
   const t = useTranslations('notes.editor')
   const tRecord = useTranslations('notes.record')
   const [open, setOpen] = useState(false)
@@ -511,7 +520,7 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
   }
   return (
     <div className="relative">
-      <button type="button" aria-expanded={open} className="inline-flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm font-medium text-muted transition hover:border-accent hover:bg-accent-soft hover:text-accent" onClick={() => setOpen((o) => !o)}>
+      <button type="button" aria-expanded={open} className="inline-flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent" onClick={() => setOpen((o) => !o)}>
         <Plus className="size-4" aria-hidden />
         {t('addCard')}
       </button>
@@ -547,6 +556,7 @@ function AddCardMenu({ editor }: { editor: Editor | null }) {
       ) : null}
       <RecordDialog
         open={recording}
+        noteId={noteId}
         onClose={() => setRecording(false)}
         onDone={(file) => {
           setRecording(false)
@@ -572,13 +582,13 @@ function Outline({ editor, onPick }: { editor: Editor | null; onPick?: () => voi
   })
   return (
     <div className="flex flex-col gap-1">
-      <p className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('outline')}</p>
+      <p className="px-2 text-xs font-semibold text-muted">{t('outline')}</p>
       {headings?.length ? (
         headings.map((h) => (
           <button
             key={h.pos}
             type="button"
-            className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-fg"
+            className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg"
             style={{ paddingLeft: `${0.5 + (h.level - 1) * 0.75}rem` }}
             onClick={() => {
               editor?.chain().focus().setTextSelection(h.pos + 1).run()

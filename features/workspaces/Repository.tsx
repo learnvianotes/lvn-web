@@ -3,11 +3,12 @@
 import { useMutation } from '@apollo/client/react'
 import { ExternalLink, GitBranch, Star } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { attempt } from '@/features/groups/shared'
 import { ago } from '@/features/notes/look'
 import { DisconnectRepositoryAppDocument, SetGroupRepositoryDocument, type RepositoryCardFragment } from '@/graphql/generated/graphql'
+import { safeLinkHref } from '@/lib/http-url'
 
 /**
  * A workspace's repository (lvn-backend ADR-0048): public details from GitHub or GitLab when the provider shows them,
@@ -31,11 +32,11 @@ export function RepositoryCard({ groupId, repository, canManage, onChanged }: { 
     <div className="flex flex-col gap-2 rounded-2xl border border-border bg-bg p-4">
       {repository && !editing ? (
         <div className="flex flex-col gap-1.5">
-          <a href={repository.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="inline-flex w-fit items-center gap-2 font-semibold hover:text-accent">
+          <RepositoryLink url={repository.url} rel="noopener noreferrer nofollow ugc" className="inline-flex w-fit items-center gap-2 font-semibold hover:text-accent">
             <GitBranch className="size-4 text-accent" aria-hidden />
             {repository.name ?? repository.url.replace(/^https:\/\//, '')}
             <ExternalLink className="size-3.5 text-muted" aria-hidden />
-          </a>
+          </RepositoryLink>
           {repository.available ? (
             <>
               {repository.description ? <p className="text-sm text-muted">{repository.description}</p> : null}
@@ -89,7 +90,7 @@ export function RepositoryCard({ groupId, repository, canManage, onChanged }: { 
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -103,12 +104,13 @@ function RepositoryApp({ groupId, app, events, canManage, onChanged }: { groupId
   const [disconnect, disconnecting] = useMutation(DisconnectRepositoryAppDocument)
   const [error, setError] = useState<string | null>(null)
   if (!app.connected) {
-    if (!app.installUrl) return <p className="text-xs text-muted">{t('notConnected')}</p>
+    const installUrl = safeLinkHref(app.installUrl)
+    if (!installUrl) return <p className="text-xs text-muted">{t('notConnected')}</p>
     return (
       <div className="flex flex-col gap-1.5 border-t border-border pt-2">
         <p className="text-xs text-muted">{t('connectHint')}</p>
         <Button asChild size="sm" className="w-fit">
-          <a href={app.installUrl}>{t('connect')}</a>
+          <a href={installUrl}>{t('connect')}</a>
         </Button>
       </div>
     )
@@ -122,10 +124,10 @@ function RepositoryApp({ groupId, app, events, canManage, onChanged }: { groupId
         <ul className="flex flex-col gap-1.5">
           {events.map((e) => (
             <li key={e.id} className="flex flex-col text-sm">
-              <a href={e.url} target="_blank" rel="noopener noreferrer nofollow" className="font-medium hover:text-accent">
+              <RepositoryLink url={e.url} rel="noopener noreferrer nofollow" className="font-medium hover:text-accent">
                 {e.number ? `#${e.number} ` : ''}
                 {e.title}
-              </a>
+              </RepositoryLink>
               <span className="text-xs text-muted">
                 {t(`kind.${e.kind}`)} {t(`action.${e.action}`)}
                 {e.authorLogin ? ` ${t('by', { login: e.authorLogin })}` : ''} · {ago(e.at)}
@@ -154,10 +156,21 @@ function RepositoryApp({ groupId, app, events, canManage, onChanged }: { groupId
         </Button>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
     </section>
+  )
+}
+
+/** A repository or event URL people typed or a provider sent. Anything other than http(s) stays text. */
+function RepositoryLink({ url, className, rel, children }: { url: string; className: string; rel: string; children: ReactNode }) {
+  const href = safeLinkHref(url)
+  if (!href) return <span className={className}>{children}</span>
+  return (
+    <a href={href} target="_blank" rel={rel} className={className}>
+      {children}
+    </a>
   )
 }

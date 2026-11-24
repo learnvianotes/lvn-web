@@ -4,7 +4,7 @@ import { LEGAL, LEGAL_FIELD_LABELS, type LegalField } from '@/config/legal'
 export function Fact({ field }: { field: LegalField }) {
   const value = LEGAL[field].trim()
   if (value) return <>{value}</>
-  return <mark className="rounded bg-amber-100 px-1 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">[{LEGAL_FIELD_LABELS[field]}]</mark>
+  return <mark className="rounded bg-warn/10 px-1 text-warn">[{LEGAL_FIELD_LABELS[field]}]</mark>
 }
 
 /** The grievance mailbox as a link, or its gap. */

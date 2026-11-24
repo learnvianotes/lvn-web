@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { inlineText } from '@/lib/contracts/validation'
 import { cn } from '@/lib/cn'
+import { LimitNotice } from '@/components/ui/limit-notice'
+import { refusalMessage } from '@/lib/limit-error'
 import { acceptFor, pendingFiles, UploadError, useMedia, type MediaCardType } from '../media'
 import { MediaBlock, type MediaContent } from '../render/MediaBlock'
 import { writeCard } from './views'
@@ -28,6 +30,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
   const input = useRef<HTMLInputElement>(null)
   const [progress, setProgress] = useState<{ name: string; value: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [limit, setLimit] = useState(false)
   const [over, setOver] = useState(false)
   const altId = useId()
   const captionId = useId()
@@ -37,15 +40,17 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
   const start = useCallback(
     async (file: File) => {
       setError(null)
+      setLimit(false)
       setProgress({ name: file.name, value: 0 })
       try {
         const fileId = await media.upload(file, (value) => setProgress({ name: file.name, value }))
         const current = (latest.current.attrs.data ?? {}) as MediaContent
         updateAttributes({ data: { ...current, fileId, ...(type === 'image' ? { alt: current.alt ?? '' } : {}) }, upload: null })
       } catch (e) {
-        // The API's words when it refused the file (too big, wrong kind); ours for network trouble.
-        const message = e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : t('media.failed')
-        setError(message)
+        // The API's words when it refused the file (too big, a plan limit); ours for network trouble.
+        const refused = e instanceof UploadError && !/^(network|storage answered)/.test(e.message) ? e.message : refusalMessage(e)
+        setLimit(Boolean((e instanceof UploadError && e.limit) || refusalMessage(e)))
+        setError(refused ?? t('media.failed'))
       } finally {
         setProgress(null)
       }
@@ -95,7 +100,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
           <div role="status" className="flex flex-col gap-2 rounded-xl bg-surface-2 px-4 py-5">
             <p className="truncate text-sm font-medium">{t('media.uploading', { name: progress.name })}</p>
             <div className="h-2 overflow-hidden rounded-full bg-border" aria-hidden>
-              <div className="h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${Math.round(progress.value * 100)}%` }} />
+              <div className="h-full rounded-[10px] bg-accent transition-[width] duration-200" style={{ width: `${Math.round(progress.value * 100)}%` }} />
             </div>
             <p className="text-xs text-muted">{Math.round(progress.value * 100)}%</p>
           </div>
@@ -162,8 +167,8 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
             <span className="text-xs text-muted">{t(`media.limits.${type}`)}</span>
           </button>
         )}
-        {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        {error ? limit ? <LimitNotice>{error}</LimitNotice> : (
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}
