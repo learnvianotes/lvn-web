@@ -133,13 +133,13 @@ export function Home() {
         </section>
         <section aria-labelledby="next-exam" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
           <h2 id="next-exam" className="flex items-center gap-2 text-sm font-semibold text-muted">
-            <CalendarCheck aria-hidden className="size-4 text-orange-500" />
+            <CalendarCheck aria-hidden className="size-4 text-warn" />
             {t('nextExam')}
           </h2>
           {next ? (
             <div className="flex flex-col gap-2">
               <span className="truncate font-semibold">{next.name}</span>
-              <span className="text-sm font-semibold text-red-600 dark:text-red-400">{t('inDays', { count: next.daysLeft ?? 0 })}</span>
+              <span className="text-sm font-semibold text-bad">{t('inDays', { count: next.daysLeft ?? 0 })}</span>
               <Link href={`/exams/${next.id}`} className="inline-flex w-fit items-center gap-1 rounded-full border border-border px-3 py-1 text-sm font-semibold text-accent hover:border-accent">
                 {t('viewPlan')}
               </Link>
@@ -157,7 +157,7 @@ export function Home() {
         </section>
         <section aria-labelledby="weekly-goal" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
           <h2 id="weekly-goal" className="flex items-center gap-2 text-sm font-semibold text-muted">
-            <span aria-hidden className="size-2 rounded-full bg-emerald-500" />
+            <span aria-hidden className="size-2 rounded-full bg-good" />
             {t('weeklyGoal')}
           </h2>
           {rhythm ? (
@@ -165,7 +165,7 @@ export function Home() {
               <GoalRing done={rhythm.countedDays} target={rhythm.target} />
               <span className="flex flex-col">
                 <span className="text-xl font-semibold">{t('ofDays', { done: rhythm.countedDays, target: rhythm.target })}</span>
-                <span className="text-xs text-emerald-700 dark:text-emerald-400">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
+                <span className="text-xs text-good">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
               </span>
             </div>
           ) : (

@@ -76,7 +76,7 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
   return (
     <article className="flex flex-col gap-5" aria-labelledby="resource-title">
       {r.status !== 'APPROVED' ? (
-        <section role="note" className={`flex flex-col gap-1 rounded-2xl border p-4 text-sm ${r.status === 'REJECTED' ? 'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-border bg-surface-2'}`}>
+        <section role="note" className={`flex flex-col gap-1 rounded-2xl border p-4 text-sm ${r.status === 'REJECTED' ? 'border-bad/30 bg-bad/10' : 'border-border bg-surface-2'}`}>
           <p className="font-semibold">{t(`status.${r.status}`)}</p>
           {r.status === 'PENDING' ? <p className="text-muted">{t('pendingNote')}</p> : null}
           {r.status === 'REJECTED' && r.reason ? (
@@ -94,13 +94,13 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
         ) : null}
         <div className="flex min-w-0 flex-col gap-2">
           <span className="text-xs font-semibold text-accent">{t(`type.${r.type}`)}</span>
-          <h1 id="resource-title" className="text-2xl font-semibold tracking-tight">
+          <h1 id="resource-title" className="text-2xl font-semibold">
             {r.title}
           </h1>
           {r.author ? <p className="text-sm text-muted">{t('by', { author: r.author })}</p> : null}
           {/* A link people added: marked as user content and not followed by search engines (ADR-0074). */}
           {link ? (
-            <a href={link} rel="ugc nofollow noopener" target="_blank" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90">
+            <a href={link} rel="ugc nofollow noopener" target="_blank" className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90">
               {t('open', { host: r.host })}
               <ExternalLink className="size-4" aria-hidden />
             </a>

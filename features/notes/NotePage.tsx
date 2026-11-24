@@ -243,11 +243,11 @@ export function NotePage({ id }: { id: string }) {
         {meta.moderation ? <ModerationBanner entityType="NOTE" entityId={id} moderation={meta.moderation} /> : null}
         {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
         {copy.copyError ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {copy.copyError}
           </p>
         ) : null}
-        {loaded.offline ? <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">{t('offlineCopy')}</p> : null}
+        {loaded.offline ? <p role="status" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">{t('offlineCopy')}</p> : null}
         {notice ? (
           <p role="status" className="animate-rise rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-medium">
             {notice}

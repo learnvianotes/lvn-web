@@ -29,7 +29,7 @@ export function GroupsHome() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-8">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <Button className="gap-1.5" onClick={() => setCreating(true)}>
           <Plus className="size-4" aria-hidden />
           {t('new')}
@@ -150,7 +150,7 @@ function CreateGroupDialog({ open, onClose }: { open: boolean; onClose: () => vo
           </label>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

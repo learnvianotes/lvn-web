@@ -87,7 +87,7 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
             <ReportButton entityType="NOTE" entityId={meta.id} className="ml-auto" />
           </div>
           {copy.copyError ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {copy.copyError}
             </p>
           ) : null}

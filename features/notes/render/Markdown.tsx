@@ -58,7 +58,7 @@ function Block({ block, cite }: { block: MdBlock; cite?: Cite }) {
     case 'heading': {
       const H = `h${block.level + 2}` as 'h3' | 'h4' | 'h5'
       return (
-        <H className={cn('font-semibold tracking-tight', block.level === 1 ? 'text-xl' : block.level === 2 ? 'text-lg' : 'text-base')}>
+        <H className={cn('font-semibold', block.level === 1 ? 'text-xl' : block.level === 2 ? 'text-lg' : 'text-base')}>
           <Inlines content={block.content} cite={cite} />
         </H>
       )

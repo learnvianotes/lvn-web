@@ -77,7 +77,7 @@ export function ShareQuiz({ title, questions }: { title: string; questions: unkn
   }
 
   return (
-    <section aria-label={t('title')} className="flex flex-col gap-3 rounded-2xl border border-sky-700/30 bg-sky-50 p-4 dark:bg-sky-950/30">
+    <section aria-label={t('title')} className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent/10 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">{t('title')}</h3>
         <Button type="button" size="sm" variant="secondary" className="gap-1.5" disabled={busy} onClick={() => void share()}>
@@ -86,7 +86,7 @@ export function ShareQuiz({ title, questions }: { title: string; questions: unkn
         </Button>
       </div>
       <p className="text-sm text-muted">{t('lead')}</p>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
       {link ? (
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">

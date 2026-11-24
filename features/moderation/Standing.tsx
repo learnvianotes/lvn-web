@@ -46,7 +46,7 @@ function AppealForm({ entityType, entityId, onDone }: { entityType: ReportEntity
       </label>
       <p className="text-xs opacity-80">{t('appealOnce')}</p>
       {error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -78,7 +78,7 @@ export function AccountStanding({ userId }: { userId: string }) {
         {t('title')}
       </h2>
       {s.suspendedUntil ? (
-        <div role="alert" className="flex items-start gap-3 rounded-2xl border border-red-500/40 bg-red-50 px-4 py-3 text-sm text-red-950 dark:bg-red-950/30 dark:text-red-100">
+        <div role="alert" className="flex items-start gap-3 rounded-2xl border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">
           <Ban className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <p className="font-semibold">{t('suspended', { until: format.dateTime(new Date(s.suspendedUntil), { dateStyle: 'long', timeStyle: 'short' }) })}</p>
@@ -89,7 +89,7 @@ export function AccountStanding({ userId }: { userId: string }) {
         </div>
       ) : null}
       {s.warnings.length ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">
           <MessageSquareWarning className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <p className="font-semibold">{t('warnings', { count: s.warnings.length })}</p>
@@ -114,7 +114,7 @@ export function RemovedGroupNotice({ id, fallback }: { id: string; fallback: Rea
   const g = data?.removedGroup
   if (!g) return loading ? null : <>{fallback}</>
   return (
-    <div role="alert" className="mx-auto flex max-w-2xl items-start gap-3 rounded-2xl border border-red-500/40 bg-red-50 px-4 py-4 text-sm text-red-950 dark:bg-red-950/30 dark:text-red-100">
+    <div role="alert" className="mx-auto flex max-w-2xl items-start gap-3 rounded-2xl border border-bad/40 bg-bad/10 px-4 py-4 text-sm text-bad">
       <ShieldAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <h1 className="text-lg font-semibold">{t('groupRemoved', { name: g.name })}</h1>

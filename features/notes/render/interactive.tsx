@@ -88,8 +88,8 @@ export function QuizCardView({ id, content }: { id?: string; content: { question
                 className={cn(
                   'w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors',
                   !checked && (isPicked ? 'border-accent bg-accent-soft' : 'border-border hover:bg-surface-2'),
-                  checked && isCorrect && 'border-emerald-500 bg-emerald-500/10',
-                  checked && isPicked && !isCorrect && 'border-red-500 bg-red-500/10',
+                  checked && isCorrect && 'border-good/40 bg-good/10',
+                  checked && isPicked && !isCorrect && 'border-bad/40 bg-bad/10',
                   checked && !isPicked && !isCorrect && 'border-border opacity-70',
                 )}
                 onClick={() => toggle(c.id)}
@@ -102,7 +102,7 @@ export function QuizCardView({ id, content }: { id?: string; content: { question
       </ul>
       {checked ? (
         <div role="status" className="flex flex-col gap-2 text-sm">
-          <p className={cn('font-semibold', right ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400')}>{right ? t('correct') : t('notQuite')}</p>
+          <p className={cn('font-semibold', right ? 'text-good' : 'text-bad')}>{right ? t('correct') : t('notQuite')}</p>
           {content.explanation ? <RichDoc doc={content.explanation} /> : null}
           <button type="button" className="self-start text-accent hover:underline" onClick={() => (setChecked(false), setPicked([]))}>
             {t('tryAgain')}

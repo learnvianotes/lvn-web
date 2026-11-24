@@ -32,7 +32,7 @@ export async function LegalPage({ doc, children }: { doc: LegalDocument; childre
         <p className="text-sm text-muted">Version {version}</p>
         <p className="text-sm text-muted">Last updated {legalLastUpdated(TERMS_VERSION)}</p>
       </header>
-      <p role="note" className="rounded-2xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+      <p role="note" className="rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">
         Draft for review. This text was written for LearnViaNotes’ owner to review with a lawyer before launch.
         {missing.length ? ` Still to be filled in: ${missing.map((k) => LEGAL_FIELD_LABELS[k]).join(', ')}.` : null}
       </p>

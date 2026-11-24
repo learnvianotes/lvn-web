@@ -30,7 +30,7 @@ export async function GuidePage() {
       </header>
       {SECTIONS.map((section) => (
         <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className="scroll-mt-24 rounded-2xl border border-border bg-surface p-4 sm:p-5">
-          <h2 id={`${section.id}-title`} className="text-lg font-semibold tracking-tight">
+          <h2 id={`${section.id}-title`} className="text-lg font-semibold">
             {t(`${section.id}.title`)}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted">{t(`${section.id}.lead`)}</p>
@@ -47,7 +47,7 @@ export async function GuidePage() {
         </section>
       ))}
       <section id="help" aria-labelledby="help-title" className="scroll-mt-24 rounded-2xl border border-border bg-surface p-4 sm:p-5">
-        <h2 id="help-title" className="text-lg font-semibold tracking-tight">
+        <h2 id="help-title" className="text-lg font-semibold">
           {t('helpTitle')}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted">{t('helpLead')}</p>

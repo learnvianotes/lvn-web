@@ -71,7 +71,7 @@ export function AgeRefused({ action }: { action?: ReactNode }) {
   const t = useTranslations('auth.age')
   return (
     <section role="status" aria-labelledby="age-refused" className="flex flex-col gap-4">
-      <h1 id="age-refused" className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+      <h1 id="age-refused" className="flex items-center gap-2 text-2xl font-semibold">
         <Info className="size-6 text-accent" aria-hidden />
         {t('refusedTitle')}
       </h1>

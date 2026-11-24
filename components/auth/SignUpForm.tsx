@@ -115,7 +115,7 @@ export function SignUpForm() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       <InviteOnlyNotice />
@@ -154,7 +154,7 @@ export function SignUpForm() {
           <input type="checkbox" className="mt-1 size-4 accent-[var(--accent)]" aria-invalid={errors.terms ? true : undefined} {...form.register('terms')} />
           <span>{t.rich('terms', legalLinks)}</span>
         </label>
-        {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-red-600 dark:text-red-400">{t('termsRequired')}</p> : null}
+        {errors.terms ? <p role="alert" className="-mt-2 text-xs font-medium text-bad">{t('termsRequired')}</p> : null}
         <Button type="submit" size="lg" disabled={isSubmitting || sending || !options}>{t('submit')}</Button>
       </form>
       <ConfirmAge

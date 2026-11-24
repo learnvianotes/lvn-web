@@ -114,7 +114,7 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
         <p className="text-sm text-muted">{d.whyNot}</p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -163,7 +163,7 @@ function ReplyBox({ target, parentId, onSent }: { target: { type: CommentTargetT
         </Button>
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -187,7 +187,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
   }
   if (c.removed) return <p className="rounded-2xl bg-surface-2 px-4 py-2 text-sm italic text-muted">{t('removed')}</p>
   return (
-    <article className={`flex flex-col gap-1.5 rounded-2xl border px-4 py-3 ${c.pendingApproval ? 'border-dashed border-amber-500/60' : 'border-border'} bg-bg`}>
+    <article className={`flex flex-col gap-1.5 rounded-2xl border px-4 py-3 ${c.pendingApproval ? 'border-dashed border-warn/60' : 'border-border'} bg-bg`}>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {c.author ? (
           <Link href={`/u/${c.author.handle}`} className="font-semibold hover:text-accent">
@@ -204,7 +204,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
             {t('private')}
           </span>
         ) : null}
-        {c.pendingApproval ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">{t('waiting')}</span> : null}
+        {c.pendingApproval ? <span className="rounded-full bg-warn/10 px-2 py-0.5 text-xs text-warn">{t('waiting')}</span> : null}
       </div>
       <ContentModeration entityType="COMMENT" item={c} onAppealed={onChanged} />
       {editing ? (
@@ -254,7 +254,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
           {c.viewerCan.delete ? (
             <button
               type="button"
-              className="hover:text-red-600"
+              className="hover:text-bad"
               onClick={() => {
                 if (window.confirm(t('deleteConfirm'))) void run(() => remove({ variables: { commentId: c.id } }))
               }}
@@ -266,7 +266,7 @@ function CommentView({ comment: c, onChanged }: { comment: CommentFieldsFragment
         </span>
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}

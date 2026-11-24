@@ -73,7 +73,7 @@ export function SkillsEditor() {
         }}
       >
         <header className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('editTitle')}</h1>
+          <h1 className="text-2xl font-semibold">{t('editTitle')}</h1>
           <Link href={`/u/${viewer.handle}`} className="text-sm font-medium text-accent hover:underline">
             {t('seeProfile')}
           </Link>
@@ -133,7 +133,7 @@ export function SkillsEditor() {
           </Button>
         </section>
         {message ? (
-          <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+          <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
             {message.text}
           </p>
         ) : null}

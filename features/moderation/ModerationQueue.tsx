@@ -42,7 +42,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
         <p className="text-sm text-muted">{t(`leadScoped.${scope.scope}`)}</p>
       ) : (
         <header className="flex flex-col gap-1">
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold">
             <ShieldCheck className="size-6 text-accent" aria-hidden />
             {t('title')}
           </h1>
@@ -51,7 +51,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
       )}
       {queue.data && !cases.length ? (
         <div className="flex flex-col items-center gap-2 rounded-3xl border border-dashed border-border px-6 py-12 text-center">
-          <Check className="size-8 text-emerald-500" aria-hidden />
+          <Check className="size-8 text-good" aria-hidden />
           <p className="font-semibold">{t('empty')}</p>
         </div>
       ) : null}
@@ -85,13 +85,13 @@ function choicesFor(c: Case): ModerationChoice[] {
   const keep = !!c.appeal && (c.content?.moderation === 'HIDDEN' || c.content?.moderation === 'REMOVED' || c.note?.moderation === 'HIDDEN' || c.note?.moderation === 'REMOVED')
   const dismiss: ModerationChoice = { action: 'DISMISS', label: keep ? 'KEEP' : 'DISMISS', icon: Flag, tone: '' }
   const warn: ModerationChoice = { action: 'WARN', label: 'WARN', icon: MessageSquareWarning, tone: '' }
-  const hide: ModerationChoice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
-  const remove: ModerationChoice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-red-600 dark:text-red-400' }
+  const hide: ModerationChoice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-warn' }
+  const remove: ModerationChoice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-bad' }
   const approve: ModerationChoice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
   // A new resource is approved or rejected (ADR-0074); people's reports on one in the catalogue are dismissed, or it is removed.
   if (c.entityType === 'RESOURCE') return c.reports.some((x) => x.reporter) ? [dismiss, remove] : [approve, { ...remove, label: 'REJECT' }]
   // Accounts are warned or suspended; a suspension is lifted or kept (ADR-0053).
-  if (c.entityType === 'USER') return c.suspendedUntil ? [{ action: 'APPROVE', label: 'LIFT', icon: Check, tone: '' }, { ...dismiss, label: c.appeal ? 'KEEP' : 'DISMISS' }, warn] : [dismiss, warn, { action: 'SUSPEND', label: 'SUSPEND', icon: Ban, tone: 'text-red-600 dark:text-red-400' }]
+  if (c.entityType === 'USER') return c.suspendedUntil ? [{ action: 'APPROVE', label: 'LIFT', icon: Check, tone: '' }, { ...dismiss, label: c.appeal ? 'KEEP' : 'DISMISS' }, warn] : [dismiss, warn, { action: 'SUSPEND', label: 'SUSPEND', icon: Ban, tone: 'text-bad' }]
   // A removed group is put back or stays removed.
   if (c.entityType === 'GROUP') return c.removedGroup ? [{ action: 'APPROVE', label: 'RESTORE', icon: Check, tone: '' }, { ...dismiss, label: 'KEEP' }] : [dismiss, warn, remove]
   // Approving content that is up changes nothing a dismissal doesn't.
@@ -163,8 +163,8 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
           {platform && c.scope !== 'PLATFORM' ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
           {state ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`state.${state}`)}</span> : null}
           {c.resource ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`resourceState.${c.resource.status}`)}</span> : null}
-          {c.suspendedUntil ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
-          {c.removedGroup ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t(`state.REMOVED`)}</span> : null}
+          {c.suspendedUntil ? <span className="rounded-full bg-bad/10 px-2 py-0.5 font-semibold text-bad">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
+          {c.removedGroup ? <span className="rounded-full bg-bad/10 px-2 py-0.5 font-semibold text-bad">{t(`state.REMOVED`)}</span> : null}
           <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('opened', { when: ago(c.openedAt) })}</span>
         </div>
       </header>
@@ -207,7 +207,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
         ) : null}
       </ModerationActions>
       {muteError ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {muteError}
         </p>
       ) : null}

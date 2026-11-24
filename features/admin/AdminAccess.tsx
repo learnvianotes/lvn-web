@@ -49,7 +49,7 @@ export function AdminAccess() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       <AllowlistSwitch setting={setting} failed={!!settings.error && !settings.data} onSaved={() => void settings.refetch()} />

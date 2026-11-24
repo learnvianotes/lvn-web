@@ -43,7 +43,7 @@ export function QuizPage({ classroomId, quizId }: { classroomId: string; quizId:
         {t('back')}
       </Link>
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{quiz.title}</h1>
+        <h1 className="text-2xl font-semibold">{quiz.title}</h1>
         <p className="text-sm text-muted">{t('meta', { n: quiz.questionCount, name: quiz.author.displayName, when: new Date(quiz.publishedAt).toLocaleDateString() })}</p>
         {quiz.submittedCount != null ? <p className="text-sm">{t('submitted', { n: quiz.submittedCount })}</p> : null}
       </header>
@@ -176,7 +176,7 @@ function TakeQuiz({ quiz, practice, onDone }: { quiz: Quiz; practice: boolean; o
       </nav>
       {left ? <p className="text-sm text-muted">{t('unanswered', { n: left })}</p> : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -222,7 +222,7 @@ function Review({ quiz, answers }: { quiz: Quiz; answers: Answers }) {
             <div className="flex gap-2">
               <span className="font-semibold text-muted">{i + 1}.</span>
               <RichDoc doc={q.question as Doc} className="flex flex-1 flex-col gap-2 font-medium" />
-              <span className={cn('inline-flex shrink-0 items-center gap-1 self-start rounded-full px-2 py-0.5 text-xs font-semibold', right ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-red-500/10 text-red-700 dark:text-red-400')}>
+              <span className={cn('inline-flex shrink-0 items-center gap-1 self-start rounded-full px-2 py-0.5 text-xs font-semibold', right ? 'bg-good/10 text-good' : 'bg-bad/10 text-bad')}>
                 {right ? <Check className="size-3" aria-hidden /> : <X className="size-3" aria-hidden />}
                 {right ? t('right') : t('wrong')}
               </span>
@@ -234,7 +234,7 @@ function Review({ quiz, answers }: { quiz: Quiz; answers: Answers }) {
                 return (
                   <li
                     key={c.id}
-                    className={cn('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', isCorrect ? 'border-emerald-500 bg-emerald-500/10' : isChosen ? 'border-red-500 bg-red-500/10' : 'border-border opacity-70')}
+                    className={cn('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', isCorrect ? 'border-good/40 bg-good/10' : isChosen ? 'border-bad/40 bg-bad/10' : 'border-border opacity-70')}
                   >
                     <InlineText content={c.content as Inline} />
                     <span className="flex-1" />

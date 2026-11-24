@@ -75,7 +75,7 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
   return (
     <section aria-labelledby="study-aids" className="flex min-w-0 max-w-full flex-col gap-4 rounded-3xl border border-accent/25 bg-surface p-5 sm:p-6">
       <header className="flex flex-col gap-1">
-        <h2 id="study-aids" className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+        <h2 id="study-aids" className="flex items-center gap-2 text-xl font-semibold">
           <BookOpenCheck className="size-5 text-accent" aria-hidden />
           {t('title')}
         </h2>
@@ -149,7 +149,7 @@ export function StudyAidsView({ aids, keep, keepHref, owner, onHidden, busy }: {
           </div>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

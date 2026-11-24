@@ -170,7 +170,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-sky-600 bg-sky-50 text-sky-900')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-accent/40 bg-accent/10 text-accent')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
               <Notebook className="size-4" aria-hidden />
               {t('pages')}
             </button>
@@ -210,7 +210,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         <div className="flex flex-col gap-2 px-1">
           <textarea
             rows={1}
-            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-semibold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
+            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-semibold leading-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
             placeholder={t('untitled')}
             aria-label={t('title')}
             value={title}
@@ -261,11 +261,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
 function SavePill({ status }: { status: SaveStatus }) {
   const t = useTranslations('notes.editor.status')
   const look: Record<SaveStatus, { icon: LucideIcon; className: string; spin?: boolean }> = {
-    saved: { icon: Check, className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+    saved: { icon: Check, className: 'bg-good/10 text-good' },
     pending: { icon: LoaderCircle, className: 'bg-surface-2 text-muted', spin: false },
     saving: { icon: LoaderCircle, className: 'bg-accent-soft text-accent', spin: true },
-    offline: { icon: CloudOff, className: 'bg-amber-500/15 text-amber-800 dark:text-amber-300' },
-    error: { icon: CircleAlert, className: 'bg-red-500/10 text-red-700 dark:text-red-400' },
+    offline: { icon: CloudOff, className: 'bg-warn/15 text-warn' },
+    error: { icon: CircleAlert, className: 'bg-bad/10 text-bad' },
   }
   const { icon: Icon, className, spin } = look[status]
   return (
@@ -279,7 +279,7 @@ function SavePill({ status }: { status: SaveStatus }) {
 function Banner({ tone, children, onClose }: { tone: 'warning' | 'error'; children: React.ReactNode; onClose?: () => void }) {
   const t = useTranslations('notes.editor')
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-red-600/30 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200' : 'border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100')}>
+    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-bad/30 bg-bad/10 text-bad' : 'border-warn/40 bg-warn/10 text-warn')}>
       <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="flex-1">{children}</div>
       {onClose ? (
@@ -499,7 +499,7 @@ function MoreMenu({ items }: { items: { label: string; icon: LucideIcon; onClick
 
 function MenuItem({ icon: Icon, label, onClick, danger }: { icon?: LucideIcon; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button type="button" onClick={onClick} className={cn('flex items-center gap-2 rounded-xl px-3 py-1.5 text-left hover:bg-surface-2', danger && 'text-red-600 dark:text-red-400')}>
+    <button type="button" onClick={onClick} className={cn('flex items-center gap-2 rounded-xl px-3 py-1.5 text-left hover:bg-surface-2', danger && 'text-bad')}>
       {Icon ? <Icon className="size-4" aria-hidden /> : <span className="size-4" aria-hidden />}
       {label}
     </button>

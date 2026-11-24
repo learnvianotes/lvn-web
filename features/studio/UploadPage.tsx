@@ -22,14 +22,14 @@ export function UploadPage() {
   }
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-      <header className="flex flex-wrap items-start justify-between gap-3 rounded-3xl border border-sky-700/25 bg-sky-50 px-4 py-4 text-sky-950 dark:bg-sky-950/40 dark:text-sky-50">
+      <header className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-4 text-accent">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-xs font-semibold">{t('kicker')}</p>
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             <FileUp className="size-7 shrink-0" aria-hidden />
             {t('title')}
           </h1>
-          <p className="max-w-xl text-sm text-sky-900/80 dark:text-sky-100/80">{t('lead')}</p>
+          <p className="max-w-xl text-sm text-accent">{t('lead')}</p>
         </div>
         <AiButton onClick={() => void ai.ask()} />
       </header>
@@ -44,16 +44,16 @@ export function UploadPage() {
           setOver(false)
           take(event.dataTransfer.files[0])
         }}
-        className={`flex min-h-64 flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed px-4 py-10 text-center ${over ? 'border-sky-600 bg-sky-50 dark:bg-sky-950/30' : 'border-sky-700/30 bg-surface'}`}
+        className={`flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed px-4 py-10 text-center ${over ? 'border-accent/40 bg-accent/10' : 'border-accent/30 bg-surface'}`}
       >
-        <FileUp className="size-10 text-sky-700" aria-hidden />
+        <FileUp className="size-10 text-accent" aria-hidden />
         <p className="text-lg font-semibold">{t('drop')}</p>
         <div className="flex flex-wrap justify-center gap-2">
-          <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => input.current?.click()}>
+          <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg" onClick={() => input.current?.click()}>
             <FileUp className="size-4" aria-hidden />
             {t('pdf')}
           </button>
-          <button type="button" className="inline-flex items-center gap-2 rounded-xl border border-sky-700 px-4 py-2 text-sm font-semibold text-sky-800 dark:text-sky-100" onClick={() => setCapture(true)}>
+          <button type="button" className="inline-flex items-center gap-2 rounded-xl border border-accent/40 px-4 py-2 text-sm font-semibold text-accent" onClick={() => setCapture(true)}>
             <Camera className="size-4" aria-hidden />
             {t('photos')}
           </button>
@@ -70,11 +70,11 @@ export function UploadPage() {
           }}
         />
         {pdf.uploading ? <p className="text-sm text-muted">{t('uploading', { name: pdf.uploading.name })}</p> : null}
-        {pdf.error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{pdf.error}</p> : null}
+        {pdf.error ? <p role="alert" className="text-sm text-bad">{pdf.error}</p> : null}
       </div>
       <AiResultPanel empty={!ai.busy && !ai.result && !ai.error}>
         {ai.busy ? <p className="text-sm text-muted">{t('working')}</p> : null}
-        {ai.error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{ai.error}</p> : null}
+        {ai.error ? <p role="alert" className="text-sm text-bad">{ai.error}</p> : null}
         {ai.result ? <p className="whitespace-pre-wrap text-sm leading-6">{ai.result}</p> : null}
       </AiResultPanel>
       {capture ? <CaptureDialog open onClose={() => setCapture(false)} folderId={null} /> : null}

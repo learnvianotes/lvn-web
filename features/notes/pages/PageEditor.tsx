@@ -216,7 +216,7 @@ export function PageEditor({ noteId }: { noteId: string }) {
       <div className="flex flex-col gap-3 lg:flex-row">
         <div className="flex gap-2 overflow-x-auto lg:w-24 lg:flex-col lg:overflow-visible">
           {history.present.map((item, i) => (
-            <button key={item.id} type="button" aria-current={i === pageIndex ? 'page' : undefined} className={cn('h-16 w-12 shrink-0 rounded-lg border bg-white text-xs text-slate-600', i === pageIndex ? 'border-sky-600 ring-2 ring-sky-600/40' : 'border-border')} onClick={() => setIndex(i)}>
+            <button key={item.id} type="button" aria-current={i === pageIndex ? 'page' : undefined} className={cn('h-16 w-12 shrink-0 rounded-lg border bg-white text-xs text-muted', i === pageIndex ? 'border-accent/40 ring-2 ring-accent/40' : 'border-border')} onClick={() => setIndex(i)}>
               {t('pageN', { n: i + 1 })}
             </button>
           ))}
@@ -238,7 +238,7 @@ export function PageEditor({ noteId }: { noteId: string }) {
           role="application"
           aria-label={t('board')}
           data-strokes={page.strokes.length}
-          className="relative aspect-[3/4] w-full max-w-3xl touch-none overflow-hidden rounded-2xl border border-border bg-white shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-600"
+          className="relative aspect-[3/4] w-full max-w-3xl touch-none overflow-hidden rounded-2xl border border-border bg-white shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           onPointerDown={down}
           onPointerMove={move}
           onPointerUp={up}
@@ -269,7 +269,7 @@ export function PageEditor({ noteId }: { noteId: string }) {
             <div
               key={image.id}
               data-image
-              className={cn('absolute touch-none', selected === image.id && 'ring-2 ring-sky-600')}
+              className={cn('absolute touch-none', selected === image.id && 'ring-2 ring-accent/40')}
               style={{ left: `${image.x * 100}%`, top: `${image.y * 100}%`, width: `${image.w * 100}%`, height: `${image.h * 100}%`, transform: `rotate(${image.rotation}deg)` }}
               onPointerDown={(event) => {
                 event.stopPropagation()
@@ -302,11 +302,11 @@ export function PageEditor({ noteId }: { noteId: string }) {
               ) : null}
               {selected === image.id ? (
                 <>
-                  <button type="button" data-handle="resize" aria-label={t('resize')} className="absolute -bottom-2 -right-2 size-4 rounded-full border border-sky-700 bg-white" />
+                  <button type="button" data-handle="resize" aria-label={t('resize')} className="absolute -bottom-2 -right-2 size-4 rounded-full border border-accent/40 bg-white" />
                   <button
                     type="button"
                     aria-label={t('rotate')}
-                    className="absolute -top-7 left-0 rounded-md bg-sky-700 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                    className="absolute -top-7 left-0 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-fg"
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={(event) => {
                       event.stopPropagation()
@@ -318,7 +318,7 @@ export function PageEditor({ noteId }: { noteId: string }) {
                   <button
                     type="button"
                     aria-label={t('removeImage')}
-                    className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-slate-900 text-white"
+                    className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-surface-2 text-white"
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={(event) => {
                       event.stopPropagation()
@@ -353,7 +353,7 @@ function ToolButton({ icon: Icon, label, pressed, disabled, onClick, marker }: {
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      className={cn('inline-flex size-10 items-center justify-center rounded-xl border border-border bg-surface text-fg disabled:opacity-40 aria-pressed:border-sky-600 aria-pressed:bg-sky-50 aria-pressed:text-sky-800', marker && 'text-sky-600')}
+      className={cn('inline-flex size-10 items-center justify-center rounded-xl border border-border bg-surface text-fg disabled:opacity-40 aria-pressed:border-accent/40 aria-pressed:bg-accent/10 aria-pressed:text-accent', marker && 'text-accent')}
     >
       <Icon className="size-[18px]" aria-hidden />
     </button>

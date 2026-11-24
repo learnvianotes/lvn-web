@@ -31,7 +31,7 @@ function QuizColumn({ title, items }: { title: string; items: QuizLink[] }) {
       <ul className="flex flex-col gap-2">
         {items.map((quiz) => (
           <li key={quiz.id}>
-            <Link href={quiz.sharePath || `/q/${quiz.id}`} className="block rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold hover:border-sky-600">
+            <Link href={quiz.sharePath || `/q/${quiz.id}`} className="block rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold hover:border-accent/40">
               {quiz.title}
             </Link>
           </li>

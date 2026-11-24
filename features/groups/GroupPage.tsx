@@ -144,7 +144,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
         {t('members', { count: group.memberCount })}
         {group.viewerRole ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
       </div>
-      <h1 className="text-2xl font-semibold tracking-tight">{group.name}</h1>
+      <h1 className="text-2xl font-semibold">{group.name}</h1>
       {group.description ? <p className="whitespace-pre-line text-muted">{group.description}</p> : null}
       {group.moderationWarning ? <ModerationBanner entityType="GROUP" entityId={group.id} moderation={{ state: 'OK', reason: group.moderationWarning, canAppeal: false }} /> : null}
       {group.type === 'PROJECT' ? <WorkspaceHeader group={group} onChanged={onChanged} /> : null}
@@ -187,7 +187,7 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -255,7 +255,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
                 className="resize-y rounded-xl border border-border bg-surface p-3 text-sm focus:border-accent focus:outline-none"
               />
               {postError ? (
-                <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+                <p role="alert" className="text-sm text-bad">
                   {postError}
                 </p>
               ) : null}
@@ -267,7 +267,7 @@ function Posts({ group }: { group: GroupDetailFragment }) {
         </>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -317,7 +317,7 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
             </button>
           ) : null}
           {post.viewerCan.delete ? (
-            <button type="button" onClick={onDelete} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
+            <button type="button" onClick={onDelete} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-bad">
               <Trash className="size-4" aria-hidden />
             </button>
           ) : null}
@@ -372,7 +372,7 @@ function SharedNotes({ group }: { group: GroupDetailFragment }) {
       </form>
       <p className="text-xs text-muted">{t('shareHint')}</p>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -418,7 +418,7 @@ function Members({ group }: { group: GroupDetailFragment }) {
   return (
     <div className="flex flex-col gap-3">
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -578,7 +578,7 @@ function PictureSetting({ group, onSaved }: { group: GroupDetailFragment; onSave
       </div>
       {uploadsOn ? <p className="text-xs text-muted">{t('pictureHint')}</p> : null}
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}
@@ -633,7 +633,7 @@ function Settings({ group, onSaved }: { group: GroupDetailFragment; onSaved: () 
         </label>
       ) : null}
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

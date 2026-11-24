@@ -168,7 +168,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
           </button>
         )}
         {error ? limit ? <LimitNotice>{error}</LimitNotice> : (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

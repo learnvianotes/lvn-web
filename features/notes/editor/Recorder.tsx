@@ -177,8 +177,8 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
   return (
     <Dialog open={open} onClose={onClose} title={t('title')}>
       <div className="flex flex-col items-center gap-4 py-2 text-center">
-        {state === 'denied' ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{t('denied')}</p> : null}
-        {state === 'unsupported' ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{t('unsupported')}</p> : null}
+        {state === 'denied' ? <p role="alert" className="text-sm text-bad">{t('denied')}</p> : null}
+        {state === 'unsupported' ? <p role="alert" className="text-sm text-bad">{t('unsupported')}</p> : null}
         {state === 'idle' || state === 'denied' || state === 'unsupported' ? (
           <>
             <p className="text-sm text-muted">{t('lead')}</p>
@@ -191,7 +191,7 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
         {state === 'recording' ? (
           <>
             <p role="status" className="flex items-center gap-2 font-mono text-3xl tabular-nums" aria-label={t('recordingFor', { time: clock(seconds) })}>
-              <span className="size-3 animate-pulse rounded-full bg-red-500" aria-hidden />
+              <span className="size-3 animate-pulse rounded-full bg-bad" aria-hidden />
               {clock(seconds)}
             </p>
             <p aria-live="polite" className="min-h-10 w-full rounded-xl bg-surface-2 px-3 py-2 text-left text-sm">
@@ -221,7 +221,7 @@ export function RecordDialog({ open, onClose, onDone, noteId }: { open: boolean;
             </div>
             <AiResultPanel empty={!transcript && !notes && !aiError && !aiBusy} className="w-full text-left">
               {aiBusy ? <p className="text-sm text-muted">{t('working')}</p> : null}
-              {aiError ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{aiError}</p> : null}
+              {aiError ? <p role="alert" className="text-sm text-bad">{aiError}</p> : null}
               {transcript ? <p className="whitespace-pre-wrap text-sm">{transcript}</p> : null}
               {notes ? <p className="whitespace-pre-wrap text-sm">{notes}</p> : null}
             </AiResultPanel>

@@ -69,7 +69,7 @@ export async function SubjectCard({ subject }: { subject: Subject }) {
       <span className="flex size-10 items-center justify-center rounded-xl bg-accent-soft text-accent">
         <Icon className="size-5" aria-hidden />
       </span>
-      <span className="font-semibold tracking-tight group-hover:text-accent">{subject.title}</span>
+      <span className="font-semibold group-hover:text-accent">{subject.title}</span>
       <span className="line-clamp-3 text-sm text-muted">{subject.description}</span>
       <span className="mt-auto text-xs font-medium text-muted">
         {subject.kind === 'problems' ? t('problems', { count: subject.itemCount }) : t('topics', { count: subject.itemCount })}

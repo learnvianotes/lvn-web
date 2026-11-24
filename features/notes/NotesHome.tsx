@@ -211,7 +211,7 @@ export function NotesHome() {
                   <button type="button" className="rounded-lg px-3 py-1.5 text-left hover:bg-surface-2" onClick={() => void renameFolder(f.id, f.name)}>
                     {t('rename')}
                   </button>
-                  <button type="button" className="rounded-lg px-3 py-1.5 text-left text-red-600 hover:bg-surface-2 dark:text-red-400" onClick={() => void removeFolder(f.id, f.name)}>
+                  <button type="button" className="rounded-lg px-3 py-1.5 text-left text-bad hover:bg-surface-2" onClick={() => void removeFolder(f.id, f.name)}>
                     {t('delete')}
                   </button>
                 </div>
@@ -282,7 +282,7 @@ export function NotesHome() {
             </div>
           </NightSky>
         ) : (
-          <h1 id="notes-heading" className="text-2xl font-semibold tracking-tight">
+          <h1 id="notes-heading" className="text-2xl font-semibold">
             {heading}
           </h1>
         )}
@@ -359,7 +359,7 @@ export function NotesHome() {
             errorLimit || readPdf.limit ? (
               <LimitNotice>{error ?? readPdf.error}</LimitNotice>
             ) : (
-              <p role="alert" className="rounded-xl border border-red-600/30 bg-red-50 px-4 py-3 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-200">
+              <p role="alert" className="rounded-xl border border-bad/30 bg-bad/10 px-4 py-3 text-sm text-bad">
                 {error ?? readPdf.error}
               </p>
             )
@@ -466,7 +466,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
         ) : n.visibility !== 'PRIVATE' ? (
           <VisibilityBadge visibility={n.visibility} />
         ) : n.publishedAt ? (
-          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">{t('published')}</span>
+          <span className="rounded-full bg-good/10 px-2 py-0.5 font-medium text-good">{t('published')}</span>
         ) : null}
         {n.tags.slice(0, 3).map((x) => (
           <span key={x.id} className="rounded-full px-1.5 py-0.5" style={{ background: accent.tint }}>

@@ -33,10 +33,10 @@ export function AdminDomains() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
       <section aria-labelledby="domain-queue" className="flex flex-col gap-3">
         <h2 id="domain-queue" className="text-lg font-semibold">{t('queue')}</h2>
         {rows && !queue.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
@@ -90,7 +90,7 @@ function DomainRow({ row, when, onDone }: { row: InstitutionDomain; when: string
         <Button size="sm" disabled={busy} onClick={() => void decide(true)}>{t('approve')}</Button>
         <Button size="sm" variant="secondary" disabled={busy} onClick={() => void decide(false)}>{t('reject')}</Button>
       </div>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
     </li>
   )
 }

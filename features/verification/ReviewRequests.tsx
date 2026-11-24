@@ -49,7 +49,7 @@ export function ReviewRequests({ title }: { title?: boolean }) {
   return (
     <section aria-labelledby="verify-requests" className="flex flex-col gap-3">
       {title ? (
-        <h1 id="verify-requests" className="text-2xl font-semibold tracking-tight">
+        <h1 id="verify-requests" className="text-2xl font-semibold">
           {teacher ? t('teacherTitle') : t('adminTitle')}
         </h1>
       ) : (
@@ -58,7 +58,7 @@ export function ReviewRequests({ title }: { title?: boolean }) {
         </h2>
       )}
       <p className="text-sm text-muted">{teacher ? t('teacherLead') : t('adminLead')}</p>
-      {failed ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{t('failed')}</p> : null}
+      {failed ? <p role="alert" className="text-sm text-bad">{t('failed')}</p> : null}
       {!failed && !requests.length ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-3">
         {requests.map((request) => (
@@ -140,7 +140,7 @@ function RequestCard({ request: r, canDecideRole, onDone }: { request: ReviewReq
         </>
       )}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -177,9 +177,9 @@ function DocumentProof({ requestId, fileId, name, mime, onError }: { requestId: 
 }
 
 const TONE = {
-  good: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
-  bad: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200',
-  pending: 'bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100',
+  good: 'bg-good/10 text-good',
+  bad: 'bg-bad/10 text-bad',
+  pending: 'bg-warn/10 text-warn',
 } as const
 
 function AiVerdict({ ai, profileName, profileInstitution }: { ai: AiVerdictView; profileName: string; profileInstitution: string | null }) {

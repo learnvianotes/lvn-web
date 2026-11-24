@@ -86,7 +86,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
         {off ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
         {error ? (
           limit ? <LimitNotice>{error}</LimitNotice> : (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {error}
             </p>
           )
@@ -123,7 +123,7 @@ export function AskForm({ scope, noteId, doubtId, onAsked, compact, offNotice = 
       {off && offNotice ? <p className="text-xs text-muted">{t(`off.${status?.reason ?? 'NOT_CONFIGURED'}`)}</p> : null}
       {error ? (
         limit ? <LimitNotice>{error}</LimitNotice> : (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         )
@@ -175,7 +175,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
         />
       ) : null}
       {a.status === 'FAILED' ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {a.error ?? t('failed')}
         </p>
       ) : null}
@@ -234,7 +234,7 @@ export function AskPage({ question }: { question?: string } = {}) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold">
           <Sparkles className="size-6 text-accent" aria-hidden />
           {t('title')}
         </h1>

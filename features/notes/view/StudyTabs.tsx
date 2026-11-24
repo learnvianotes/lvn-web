@@ -59,7 +59,7 @@ function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: st
 
 function Problem({ ai }: { ai: Ai }) {
   return ai.error ? (
-    <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+    <p role="alert" className="text-sm text-bad">
       {ai.error}
     </p>
   ) : null

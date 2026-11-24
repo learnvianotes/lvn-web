@@ -43,7 +43,7 @@ export function WorkspaceHeader({ group, onChanged }: { group: GroupDetailFragme
         </Link>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -79,7 +79,7 @@ export function InviteMentor({ groupId }: { groupId: string }) {
         </Button>
       </div>
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}
@@ -122,7 +122,7 @@ export function ShowcaseSetting({ group }: { group: GroupDetailFragment }) {
         </select>
       </label>
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

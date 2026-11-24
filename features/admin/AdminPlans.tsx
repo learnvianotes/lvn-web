@@ -55,7 +55,7 @@ export function AdminPlans() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
           <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
           <p className="text-sm font-medium">{t('priceNote')}</p>
         </div>
@@ -73,7 +73,7 @@ export function AdminPlans() {
                   <h2 className="text-lg font-semibold">{plan.name}</h2>
                   <p className="font-mono text-xs text-muted">{plan.code}</p>
                 </div>
-                <p className="text-xl font-semibold tracking-tight">{formatPlanPrice(plan.priceMinor, plan.currency, plan.interval, per)}</p>
+                <p className="text-xl font-semibold">{formatPlanPrice(plan.priceMinor, plan.currency, plan.interval, per)}</p>
               </div>
               <p className="flex flex-wrap gap-2 text-xs">
                 <span className={plan.active ? 'rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
@@ -241,7 +241,7 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
         <fieldset className="flex flex-col gap-3">
           <legend className="text-sm font-medium">{t('limits')}</legend>
           <p className="text-xs text-muted">{t('limitsHint')}</p>
-          {errors.entitlements ? <p role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">{errors.entitlements}</p> : null}
+          {errors.entitlements ? <p role="alert" className="text-xs font-medium text-bad">{errors.entitlements}</p> : null}
           {form.entitlements.map((row, index) => (
             <div key={index} className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_8rem_9rem_auto]">
               <select className={SELECT} aria-label={t('limitKey')} value={row.key} onChange={(e) => set({ entitlements: replace(form.entitlements, index, { ...row, key: e.target.value as LimitKey | '' }) })}>

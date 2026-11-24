@@ -116,7 +116,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{tk(`source.${i.kind}`)}</span>
                 <span className="min-w-0 truncate text-muted">{i.value}</span>
-                <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', i.verified ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-surface-2 text-muted')}>{i.verified ? t('proven') : t('notProven')}</span>
+                <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', i.verified ? 'bg-good/10 text-good' : 'bg-surface-2 text-muted')}>{i.verified ? t('proven') : t('notProven')}</span>
                 <span className="flex-1" />
                 <Button
                   type="button"
@@ -173,7 +173,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
                 </div>
               ) : null}
               {i.lastError ? (
-                <p role="alert" className="text-red-600 dark:text-red-400">
+                <p role="alert" className="text-bad">
                   {i.lastError}
                 </p>
               ) : null}
@@ -250,7 +250,7 @@ export function SkillsImport({ drafts, imported }: { drafts: TeacherSkillFieldsF
         </div>
       ) : null}
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

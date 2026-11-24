@@ -22,7 +22,7 @@ function withMarks(text: ReactNode, marks: Mark[] | undefined): ReactNode {
       case 'code':
         return <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.9em]">{inner}</code>
       case 'highlight':
-        return <mark className="rounded bg-amber-200/70 px-0.5 text-fg dark:bg-amber-400/30">{inner}</mark>
+        return <mark className="rounded bg-warn/70 px-0.5 text-fg">{inner}</mark>
       case 'subscript':
         return <sub>{inner}</sub>
       case 'superscript':

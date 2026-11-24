@@ -66,7 +66,7 @@ export function AdminSettings() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       <AiCheckSettingsCard settings={aiSettings} onSaved={() => void refetch()} />
@@ -243,7 +243,7 @@ function SettingRow({ setting, onSaved }: { setting: Setting; onSaved: () => voi
         </div>
       )}
       {shownIssue ? (
-        <p role="alert" className="text-sm font-medium text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm font-medium text-bad">
           {shownIssue}
         </p>
       ) : null}

@@ -55,7 +55,7 @@ export default async function HomePage() {
       {subjects.length ? (
         <div id="subjects" className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-12">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight">{t('categories')}</h2>
+            <h2 className="text-2xl font-semibold">{t('categories')}</h2>
             <Link href="/subjects" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline">
               {t('allSubjects')} <ArrowRight className="size-4" aria-hidden />
             </Link>

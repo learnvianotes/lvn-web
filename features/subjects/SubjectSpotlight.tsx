@@ -14,16 +14,16 @@ export function SubjectSpotlight({ subjects }: { subjects: SubjectSummary[] }) {
   const [query, setQuery] = useState('')
   const shown = subjects.slice(0, 4)
   return (
-    <section aria-labelledby="home-subjects" className="flex flex-col gap-3 rounded-3xl border border-sky-700/30 bg-sky-50 p-4 dark:bg-sky-950/30">
+    <section aria-labelledby="home-subjects" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold text-sky-800 dark:text-sky-200">{t('homeKicker')}</p>
-          <h2 id="home-subjects" className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-            <BookOpen className="size-5 text-sky-700" aria-hidden />
+          <p className="text-xs font-semibold text-accent">{t('homeKicker')}</p>
+          <h2 id="home-subjects" className="flex items-center gap-2 text-xl font-semibold">
+            <BookOpen className="size-5 text-accent" aria-hidden />
             {t('title')}
           </h2>
         </div>
-        <Link href="/subjects" className="text-sm font-semibold text-sky-800 hover:underline dark:text-sky-200">
+        <Link href="/subjects" className="text-sm font-semibold text-accent hover:underline">
           {t('browseAll')}
         </Link>
       </div>
@@ -39,7 +39,7 @@ export function SubjectSpotlight({ subjects }: { subjects: SubjectSummary[] }) {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('searchPlaceholder')} className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm" />
         </label>
-        <button type="submit" aria-label={t('search')} className="h-11 shrink-0 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white">
+        <button type="submit" aria-label={t('search')} className="h-11 shrink-0 rounded-xl bg-accent px-4 text-sm font-semibold text-accent-fg">
           {t('searchGo')}
         </button>
       </form>
@@ -47,8 +47,8 @@ export function SubjectSpotlight({ subjects }: { subjects: SubjectSummary[] }) {
         <ul className="grid gap-2 sm:grid-cols-2">
           {shown.map((subject) => (
             <li key={subject.id}>
-              <Link href={`/subjects/${subject.slug}`} className="flex items-center gap-2 rounded-xl border border-sky-700/20 bg-surface px-3 py-2 text-sm font-semibold hover:border-sky-600">
-                <BookOpen className="size-4 shrink-0 text-sky-700" aria-hidden />
+              <Link href={`/subjects/${subject.slug}`} className="flex items-center gap-2 rounded-xl border border-accent/20 bg-surface px-3 py-2 text-sm font-semibold hover:border-accent/40">
+                <BookOpen className="size-4 shrink-0 text-accent" aria-hidden />
                 <span className="truncate">{subject.title}</span>
               </Link>
             </li>

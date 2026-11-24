@@ -30,9 +30,9 @@ export function JoinByCode({ code: raw, via }: { code: string; via: 'CODE' | 'LI
   const problem = problemOf(lookup, undefined, t('failed'))
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('joinTitle')}</h1>
+      <h1 className="text-2xl font-semibold">{t('joinTitle')}</h1>
       {problem ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {problem}
         </p>
       ) : !found ? (
@@ -68,7 +68,7 @@ export function JoinByCode({ code: raw, via }: { code: string; via: 'CODE' | 'LI
             </>
           )}
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {error}
             </p>
           ) : null}

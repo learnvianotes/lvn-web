@@ -41,7 +41,7 @@ export function ContestPage({ id }: { id: string }) {
         </Link>
       </nav>
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
+        <h1 className="text-2xl font-semibold">{c.title}</h1>
         <p className="text-sm text-muted">
           {[c.subjectTitle, t('questions', { count: c.questionCount }), t('minutes', { count: c.minutes }), c.participantsMilestone ? t('participants', { count: c.participantsMilestone }) : null].filter(Boolean).join(' · ')}
         </p>
@@ -104,7 +104,7 @@ function Attempt({ attempt: a, onOver }: { attempt: ContestAttemptFieldsFragment
     <section aria-label={t('attempt')} className="flex flex-col gap-4">
       <div className="sticky top-16 z-10 flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm">
         <span className="text-sm text-muted">{t('answered', { answered, total: a.questions.length })}</span>
-        <span role="timer" aria-live="off" aria-label={t('timeLeft')} className={cn('font-mono text-lg font-semibold tabular-nums', left < 60 && 'text-red-600 dark:text-red-400')}>
+        <span role="timer" aria-live="off" aria-label={t('timeLeft')} className={cn('font-mono text-lg font-semibold tabular-nums', left < 60 && 'text-bad')}>
           {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
         </span>
       </div>
@@ -185,7 +185,7 @@ function Results({ attempt: a, subject, settings }: { attempt: ContestAttemptFie
                 const right = choice.id === q.correctChoiceId
                 const mine = choice.id === q.myChoiceId
                 return (
-                  <li key={choice.id} className={cn('flex items-center gap-2 rounded-xl px-3 py-2 text-sm', right ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300' : mine ? 'bg-surface-2' : '')}>
+                  <li key={choice.id} className={cn('flex items-center gap-2 rounded-xl px-3 py-2 text-sm', right ? 'bg-good/10 text-good' : mine ? 'bg-surface-2' : '')}>
                     {right ? <Check aria-hidden className="size-4" /> : mine ? <X aria-hidden className="size-4" /> : <span aria-hidden className="size-4" />}
                     <span className="flex-1">{choice.text}</span>
                     {mine ? <span className="text-xs font-semibold">{t('yours')}</span> : null}

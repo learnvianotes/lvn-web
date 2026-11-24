@@ -55,7 +55,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
           </span>
         </div>
         <ContentModeration entityType="DOUBT" item={d} onAppealed={() => void refetch()} />
-        <h1 className="text-2xl font-semibold tracking-tight">{d.title}</h1>
+        <h1 className="text-2xl font-semibold">{d.title}</h1>
         {d.repoRef ? <code className="w-fit rounded bg-surface-2 px-2 py-1 text-sm">{d.repoRef}</code> : null}
         <RichDoc doc={d.body as Doc} className="text-sm" />
         <div className="flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
           <p className="text-sm text-muted">{t('resolvedHint')}</p>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

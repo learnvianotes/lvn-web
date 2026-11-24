@@ -49,7 +49,7 @@ export function AccountPage() {
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{viewer.displayName}</h1>
+          <h1 className="text-2xl font-semibold">{viewer.displayName}</h1>
           <p className="text-sm text-muted">@{viewer.handle} · {viewer.email}</p>
         </div>
         <SignOutButton />
@@ -220,7 +220,7 @@ function StudyDetails({ viewer }: { viewer: Viewer }) {
         </label>
         <div className="flex items-center gap-3">
           <Button type="submit" size="sm">{t('save')}</Button>
-          {state === 'saved' ? <span role="status" className="text-sm text-muted">{t('saved')}</span> : state !== 'idle' ? <span role="alert" className="text-sm text-red-600">{state}</span> : null}
+          {state === 'saved' ? <span role="status" className="text-sm text-muted">{t('saved')}</span> : state !== 'idle' ? <span role="alert" className="text-sm text-bad">{state}</span> : null}
         </div>
       </form>
     </section>

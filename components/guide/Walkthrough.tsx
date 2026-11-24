@@ -267,7 +267,7 @@ export function Walkthrough() {
         style={{ top: box?.top ?? 0, left: box?.left ?? 12, width: 'min(22.5rem,calc(100vw-1.5rem))', visibility: box ? 'visible' : 'hidden' }}
       >
         <p className="text-xs font-medium text-muted">{t('progress', { step: step + 1, total: STEPS.length })}</p>
-        <h2 id={titleId} ref={titleRef} tabIndex={-1} className="mt-1 text-lg font-semibold tracking-tight outline-none">
+        <h2 id={titleId} ref={titleRef} tabIndex={-1} className="mt-1 text-lg font-semibold outline-none">
           {t(titleKey)}
         </h2>
         <p id={bodyId} className="mt-2 text-sm leading-6 text-muted">

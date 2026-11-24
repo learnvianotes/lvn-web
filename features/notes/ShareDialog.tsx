@@ -286,7 +286,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
         </label>
 
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}
@@ -361,7 +361,7 @@ export function VisibilityBadge({ visibility }: { visibility: Visibility }) {
   const t = useTranslations('notes.share')
   const Icon = VISIBILITIES.find((v) => v.value === visibility)!.icon
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', visibility === 'PUBLIC' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : visibility === 'SHARED' ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted')}>
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', visibility === 'PUBLIC' ? 'bg-good/10 text-good' : visibility === 'SHARED' ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted')}>
       <Icon className="size-3" aria-hidden />
       {t(`visibility.${visibility}`)}
     </span>

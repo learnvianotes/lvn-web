@@ -140,7 +140,7 @@ export function HighlightCard({ highlight, at, onColor, onComment, onAdd, onRemo
       <div className="flex flex-wrap items-center gap-1">
         {changed ? <ToolButton icon={MessageSquareText} label={t('saveComment')} onClick={() => onComment(comment)} showLabel className="bg-accent text-accent-fg hover:bg-accent/90" /> : null}
         <ToolButton icon={NotebookPen} label={highlight.cardId ? t('addAgain') : t('addToNotes')} onClick={onAdd} showLabel />
-        <ToolButton icon={Trash} label={t('remove')} onClick={onRemove} className="ml-auto text-red-600 dark:text-red-400" />
+        <ToolButton icon={Trash} label={t('remove')} onClick={onRemove} className="ml-auto text-bad" />
       </div>
     </Floating>
   )

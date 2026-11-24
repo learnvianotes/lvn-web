@@ -56,7 +56,7 @@ export function AnalyticsOptOut({ className }: { className?: string }) {
           <span className={cn('absolute top-0.5 size-6 rounded-full bg-bg shadow', optedOut ? 'left-5' : 'left-0.5')} />
         </button>
       </div>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
     </section>
   )
 }

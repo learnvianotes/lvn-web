@@ -213,12 +213,12 @@ function Nav() {
     }
   }
   return (
-    <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-1">
+    <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-0.5">
       {entries.map(({ href, key, icon: Icon, match }) => {
         const active = match ? match.test(path) : path === href || path.startsWith(`${href}/`)
         return (
-          <Link key={key} href={href} data-tour={key} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg', key === 'subjects' && !active && 'bg-sky-50 font-semibold text-sky-900 ring-1 ring-sky-700/30 dark:bg-sky-950/40 dark:text-sky-100')}>
-            <Icon className="size-[18px] shrink-0" aria-hidden />
+          <Link key={key} href={href} data-tour={key} aria-current={active ? 'page' : undefined} className={cn('flex h-9 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors', active ? 'bg-surface-2 font-medium text-fg' : 'text-muted hover:bg-surface-2/60 hover:text-fg')}>
+            <Icon className={cn('size-[18px] shrink-0', active && 'text-accent')} strokeWidth={1.5} aria-hidden />
             {t(`entries.${key}`)}
           </Link>
         )

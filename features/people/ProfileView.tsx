@@ -17,7 +17,7 @@ export async function ProfileView({ person }: { person: PublicProfile }) {
           {person.displayName.slice(0, 1).toUpperCase()}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
+          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold">
             {person.displayName}
             {person.verified ? <BadgeCheck className="size-5 text-accent" aria-label={t('verified')} /> : null}
           </h1>

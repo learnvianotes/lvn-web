@@ -43,7 +43,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
         <p className="text-xs text-muted">{t('lead')}</p>
       </header>
       {ai.status && !ai.status.available ? (
-        <p role="note" className="rounded-xl border border-amber-500/40 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+        <p role="note" className="rounded-xl border border-warn/40 bg-warn/10 px-3 py-2 text-sm text-warn">
           {tAi(`unavailable.${ai.status.reason ?? 'NOT_CONFIGURED'}`)}
         </p>
       ) : null}
@@ -64,7 +64,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
             ))}
           </ul>
           {ai.error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {ai.error}
             </p>
           ) : null}

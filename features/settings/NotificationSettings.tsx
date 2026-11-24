@@ -41,11 +41,11 @@ export function NotificationSettings() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

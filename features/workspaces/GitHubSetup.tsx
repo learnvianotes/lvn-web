@@ -36,7 +36,7 @@ export function GitHubSetup() {
   const back = state.groupId ?? linkState?.split('.')[0]
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('setupTitle')}</h1>
+      <h1 className="text-2xl font-semibold">{t('setupTitle')}</h1>
       {state.status === 'working' ? (
         <p role="status" className="text-muted">
           {t('setupWorking')}
@@ -44,7 +44,7 @@ export function GitHubSetup() {
       ) : null}
       {state.status === 'done' ? <p role="status">{t('setupDone')}</p> : null}
       {state.status === 'failed' ? (
-        <p role="alert" className="text-red-600 dark:text-red-400">
+        <p role="alert" className="text-bad">
           {state.text}
         </p>
       ) : null}

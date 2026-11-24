@@ -14,10 +14,10 @@ import { InlineText, RichDoc } from './RichText'
 
 const CALLOUT: Record<string, string> = {
   note: 'border-border bg-surface-2',
-  info: 'border-sky-500/40 bg-sky-500/10',
-  tip: 'border-emerald-500/40 bg-emerald-500/10',
-  warning: 'border-amber-500/40 bg-amber-500/10',
-  danger: 'border-red-500/40 bg-red-500/10',
+  info: 'border-accent/40 bg-accent/10',
+  tip: 'border-good/40 bg-good/10',
+  warning: 'border-warn/40 bg-warn/10',
+  danger: 'border-bad/40 bg-bad/10',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- card content is checked per type by the API
@@ -36,7 +36,7 @@ export function CardView({ id, type, content, highlighted, onAnchor }: { id: str
       case 'heading': {
         const H = `h${c.level}` as 'h1' | 'h2' | 'h3'
         return (
-          <H id={`card-${id}`} className={cn('scroll-mt-20 font-semibold tracking-tight', c.level === 1 ? 'text-3xl' : c.level === 2 ? 'text-2xl' : 'text-xl')}>
+          <H id={`card-${id}`} className={cn('scroll-mt-20 font-semibold', c.level === 1 ? 'text-3xl' : c.level === 2 ? 'text-2xl' : 'text-xl')}>
             <InlineText content={c.content as Inline} />
           </H>
         )

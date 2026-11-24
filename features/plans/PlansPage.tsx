@@ -35,7 +35,7 @@ export function PlansPage() {
               <h2 className="text-lg font-semibold">{t('yours')}</h2>
               <p className="text-sm text-muted">{myPlan.plan.name}</p>
             </div>
-            <p className="text-xl font-semibold tracking-tight">{publicPlanPrice(myPlan.plan.priceMinor, myPlan.plan.currency, myPlan.plan.interval, per, t('free'))}</p>
+            <p className="text-xl font-semibold">{publicPlanPrice(myPlan.plan.priceMinor, myPlan.plan.currency, myPlan.plan.interval, per, t('free'))}</p>
           </div>
           {myPlan.usage.length ? (
             <ul className="flex flex-col gap-3">
@@ -59,7 +59,7 @@ export function PlansPage() {
                         aria-valuetext={usageText(item.used, item.limit, t('unlimited'))}
                         className="h-2 overflow-hidden rounded-full bg-surface-2"
                       >
-                        <div className={cn('h-full rounded-full', ratio >= 1 ? 'bg-amber-600' : 'bg-accent')} style={{ width: `${Math.round(ratio * 100)}%` }} />
+                        <div className={cn('h-full rounded-full', ratio >= 1 ? 'bg-warn' : 'bg-accent')} style={{ width: `${Math.round(ratio * 100)}%` }} />
                       </div>
                     )}
                     {item.resetsAt ? <p className="text-xs text-muted">{t('resets', { when: formatResetsAt(item.resetsAt) })}</p> : null}
@@ -117,7 +117,7 @@ function PlanCard({ plan, per }: { plan: Plan; per: { month: string; year: strin
           <h2 className="text-lg font-semibold">{plan.name}</h2>
           <p className="text-xs text-muted">{t(`intervals.${plan.interval}`)}</p>
         </div>
-        <p className="text-xl font-semibold tracking-tight">{publicPlanPrice(plan.priceMinor, plan.currency, plan.interval, per, t('free'))}</p>
+        <p className="text-xl font-semibold">{publicPlanPrice(plan.priceMinor, plan.currency, plan.interval, per, t('free'))}</p>
       </div>
       {plan.current ? <p className="w-fit rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('current')}</p> : null}
       <div>

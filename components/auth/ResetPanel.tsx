@@ -43,7 +43,7 @@ function RequestLink() {
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {sent ? <Alert tone="success">{t('sent')}</Alert> : null}
@@ -88,7 +88,7 @@ function NewPassword({ token }: { token: string }) {
   }
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('newTitle')}</h1>
+      <h1 className="text-2xl font-semibold">{t('newTitle')}</h1>
       {general ? <Alert tone="error">{general}</Alert> : null}
       <Field label={t('password')} hint={ts('passwordHint')} error={errors.password ? (errors.password.type === 'server' ? errors.password.message : ts('passwordHint')) : undefined}>
         <Input type="password" autoComplete="new-password" {...form.register('password')} />

@@ -84,7 +84,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   return (
     <div className="flex flex-col gap-1 rounded-2xl border border-border bg-surface p-4">
       <dt className="text-sm text-muted">{label}</dt>
-      <dd className="text-2xl font-semibold tracking-tight">{value}</dd>
+      <dd className="text-2xl font-semibold">{value}</dd>
       {hint ? <dd className="text-xs text-muted">{hint}</dd> : null}
     </div>
   )

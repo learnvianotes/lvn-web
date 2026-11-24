@@ -23,7 +23,7 @@ export function ContestsPage() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {open.map((c) => (
@@ -54,7 +54,7 @@ export function ContestHero({ contest: c }: { contest: Item }) {
           <h2 className="text-2xl font-semibold">{c.title}</h2>
           <p className="text-sm text-inverse-muted">{c.subjectTitle ? t('testOn', { subject: c.subjectTitle }) : t('testYourself')}</p>
         </div>
-        <Trophy aria-hidden className="size-14 shrink-0 text-amber-300" />
+        <Trophy aria-hidden className="size-14 shrink-0 text-warn" />
       </div>
       <p className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <span>{t('questions', { count: c.questionCount })}</span>

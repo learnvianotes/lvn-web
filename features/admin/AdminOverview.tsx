@@ -49,7 +49,7 @@ export function AdminOverview() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
         <p className="text-sm text-muted">{t('generatedAt', { when: formatWhen(metrics.generatedAt) })}</p>
         <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -98,7 +98,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs break-words text-muted">{label}</dt>
-      <dd className="text-lg font-semibold tracking-tight break-words">{value}</dd>
+      <dd className="text-lg font-semibold break-words">{value}</dd>
     </div>
   )
 }

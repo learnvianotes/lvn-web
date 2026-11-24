@@ -194,7 +194,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
           </ul>
         ) : null}
         {problems.length ? (
-          <div role="alert" className="flex flex-col gap-1 text-sm text-red-600 dark:text-red-400">
+          <div role="alert" className="flex flex-col gap-1 text-sm text-bad">
             {problems.map((p) => (
               <p key={p}>{p}</p>
             ))}

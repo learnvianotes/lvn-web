@@ -178,7 +178,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
       <div className="flex flex-col gap-5">
         <p className="text-sm text-muted">{t('lead')}</p>
         {status && !status.available ? (
-          <p role="alert" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+          <p role="alert" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">
             {t(`unavailable.${status.reason ?? 'NOT_CONFIGURED'}`)}
           </p>
         ) : null}
@@ -240,7 +240,7 @@ export function AiPanel({ noteId, open, onClose, canEdit, canFork, hasCode, onAd
           </div>
           {error ? (
             limit ? <LimitNotice>{error}</LimitNotice> : (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p role="alert" className="text-sm text-bad">
                 {error}
               </p>
             )
@@ -270,7 +270,7 @@ export function Allowance({ used, limit, resetsAt }: { used: number; limit: numb
         {share < 1 ? <span>{t('allowanceResets', { time })}</span> : null}
       </div>
       <div role="meter" aria-label={t('allowanceLabel')} aria-valuemin={0} aria-valuemax={limit} aria-valuenow={Math.min(used, limit)} className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-        <div className={cn('h-full rounded-full', share >= 1 ? 'bg-red-500' : share >= 0.8 ? 'bg-amber-500' : 'bg-accent')} style={{ width: `${share * 100}%` }} />
+        <div className={cn('h-full rounded-full', share >= 1 ? 'bg-bad' : share >= 0.8 ? 'bg-warn' : 'bg-accent')} style={{ width: `${share * 100}%` }} />
       </div>
     </div>
   )
@@ -341,7 +341,7 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
       ) : null}
       {a.status === 'FAILED' ? (
         <div className="flex flex-wrap items-center gap-2">
-          <p role="alert" className="flex-1 text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="flex-1 text-sm text-bad">
             {a.error ?? t('runFailed')}
           </p>
           <Button size="sm" variant="secondary" className="gap-1.5" onClick={onRetry}>
@@ -439,7 +439,7 @@ function KeepCards({ artifact: a, canEdit, onAddedToNote }: { artifact: Artifact
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -512,7 +512,7 @@ function ApplyChanges({ artifact: a, onChanged }: { artifact: Artifact; onChange
               <input type="checkbox" checked={chosen.has(c.cardId)} onChange={() => toggle(c.cardId)} aria-label={t('pick', { n: i + 1 })} className="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
             )}
             <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-              <p className="whitespace-pre-wrap break-words text-muted line-through decoration-red-500/60">
+              <p className="whitespace-pre-wrap break-words text-muted line-through decoration-bad/60">
                 <span className="sr-only">{t('before')}: </span>
                 {c.before}
               </p>
@@ -539,7 +539,7 @@ function ApplyChanges({ artifact: a, onChanged }: { artifact: Artifact; onChange
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}

@@ -24,7 +24,7 @@ export function AchievementsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
 
@@ -138,7 +138,7 @@ function History() {
       <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
         {entries.map((e) => (
           <li key={e.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-            <span className={`w-10 shrink-0 font-semibold tabular-nums ${e.delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted'}`}>{e.delta > 0 ? `+${e.delta}` : e.delta}</span>
+            <span className={`w-10 shrink-0 font-semibold tabular-nums ${e.delta > 0 ? 'text-good' : 'text-muted'}`}>{e.delta > 0 ? `+${e.delta}` : e.delta}</span>
             <Link href={e.sourceType === 'NOTE' ? `/notes/${e.sourceId}` : `/resources/${e.sourceId}`} className="min-w-0 flex-1 hover:underline">
               {t(`rule.${e.rule}${e.delta < 0 ? '_BACK' : ''}`)}
               {e.subjectTitle ? <span className="text-muted"> · {e.subjectTitle}</span> : null}

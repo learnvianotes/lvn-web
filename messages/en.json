@@ -2649,9 +2649,9 @@
   "homeDashboard": {
     "title": "Home",
     "greeting": {
-      "morning": "Today",
-      "afternoon": "Today",
-      "evening": "Today"
+      "morning": "{name}'s desk",
+      "afternoon": "{name}'s desk",
+      "evening": "{name}'s desk"
     },
     "greetingAnon": "Good to see you",
     "lead": "Keep learning. Small steps lead to big achievements.",

@@ -49,7 +49,7 @@ export function Exams() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       <div role="tablist" aria-label={t('tabs.label')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
@@ -314,7 +314,7 @@ export function ExamDetail({ id }: { id: string }) {
       </Link>
       <header className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{exam.name}</h1>
+          <h1 className="text-2xl font-semibold">{exam.name}</h1>
           <span className="text-sm text-muted">
             {format.dateTime(new Date(`${exam.date}T12:00:00Z`), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })} · {exam.past ? t('past') : t('daysLeft', { days: exam.daysLeft })}
           </span>

@@ -56,7 +56,7 @@ export function HeadingView({ node, updateAttributes, editor }: ReactNodeViewPro
           <option value={3}>H3</option>
         </select>
       ) : null}
-      <NodeViewContent<'h1' | 'h2' | 'h3'> as={`h${level}`} className={cn('font-semibold tracking-tight', level === 1 ? 'text-3xl' : level === 2 ? 'text-2xl' : 'text-xl')} />
+      <NodeViewContent<'h1' | 'h2' | 'h3'> as={`h${level}`} className={cn('font-semibold', level === 1 ? 'text-3xl' : level === 2 ? 'text-2xl' : 'text-xl')} />
     </NodeViewWrapper>
   )
 }
@@ -80,10 +80,10 @@ export function QuoteView({ node, updateAttributes }: ReactNodeViewProps) {
 
 const CALLOUT_STYLES: Record<string, string> = {
   note: 'border-border bg-surface-2',
-  info: 'border-sky-500/40 bg-sky-500/10',
-  tip: 'border-emerald-500/40 bg-emerald-500/10',
-  warning: 'border-amber-500/40 bg-amber-500/10',
-  danger: 'border-red-500/40 bg-red-500/10',
+  info: 'border-accent/40 bg-accent/10',
+  tip: 'border-good/40 bg-good/10',
+  warning: 'border-warn/40 bg-warn/10',
+  danger: 'border-bad/40 bg-bad/10',
 }
 
 export function CalloutView({ node, updateAttributes }: ReactNodeViewProps) {
