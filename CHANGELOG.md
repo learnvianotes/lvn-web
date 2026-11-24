@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Every library is on its latest compatible release, and the site knows about the newest messages the server can send (an admin sign-in code, age limits, protections for younger users). Library updates now arrive as one weekly pull request instead of ten. [#84](https://github.com/learnvianotes/lvn-web/pull/84)
 
+### Fixed
+
+- PDFs keep opening in the phone app: the site stays on the pdf.js version the app is built with, because the app loads pdf.js's files from the site. [#85](https://github.com/learnvianotes/lvn-web/pull/85)
+
 ## [0.6.0] - 2026-11-17
 
 ### Security
