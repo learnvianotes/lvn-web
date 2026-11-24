@@ -16,8 +16,8 @@ export function QuickNotesPage() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-3 rounded-3xl border border-teal-700/25 bg-teal-50 px-4 py-4 text-teal-950 dark:bg-teal-950/40 dark:text-teal-50">
         <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-teal-800 dark:text-teal-200">{t('kicker')}</p>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          <p className="text-xs font-semibold text-teal-800 dark:text-teal-200">{t('kicker')}</p>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             <PenLine className="size-7 shrink-0" aria-hidden />
             {t('title')}
           </h1>
@@ -32,7 +32,7 @@ export function QuickNotesPage() {
           onChange={(event) => setText(event.target.value)}
           placeholder={t('placeholder')}
           className="min-h-[52dvh] w-full resize-y rounded-2xl border border-teal-800/20 bg-white px-4 py-4 text-base leading-8 text-slate-900 shadow-inner outline-none focus-visible:border-accent dark:bg-slate-950 dark:text-slate-100"
-          style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, rgb(20 184 166 / 0.28) 32px)' }}
+          style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, var(--border) 32px)' }}
         />
       </label>
       <AiResultPanel empty={!ai.busy && !ai.result && !ai.error}>

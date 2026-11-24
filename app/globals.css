@@ -1,60 +1,88 @@
 @import 'tailwindcss';
 
 /* Theme: data-theme, data-accent, and data-mode are set before first paint (lib/theme.ts).
-   Navy is the default accent. Other accents override brand only; paper and ink stay shared.
-   No purple, lavender, indigo, or violet (ADR-0094). Values: docs/ui-revamp/tokens.json. */
+   Ink is the default accent (ADR-0114, unslop direction; supersedes ADR-0094). Other accents override brand
+   only; the warm-paper ramp and the highlighter (spark) stay shared. Values: docs/ui-revamp/tokens.json. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  --bg: #f4f6f8;
+  --bg: #f8f7f4;
   --surface: #ffffff;
-  --surface-2: #e8edf3;
-  --fg: #152033;
-  --muted: #3d4b63;
-  --border: #d5dde8;
-  --accent: #1e4d8c;
-  --accent-hover: #163e73;
+  --surface-2: #f0eee9;
+  --fg: #1c1b18;
+  --muted: #66625b;
+  --border: #e4e1da;
+  --accent: #2847a8;
+  --accent-hover: #1f3888;
   --accent-fg: #ffffff;
-  --accent-soft: #e7f0fa;
+  --accent-soft: #e9edf8;
   --good: #0f6b45;
   --warn: #8a4b08;
   --bad: #9f1d1d;
   --def: #0f5f6b;
-  --inverse: #152033;
-  --inverse-ink: #f4f7fb;
-  --inverse-muted: #c5d4e8;
-  --shadow-sm: 0 1px 2px rgb(21 32 51 / 0.06);
-  --shadow-md: 0 4px 16px rgb(21 32 51 / 0.08);
+  --inverse: #1f2640;
+  --inverse-ink: #f8f7f4;
+  --inverse-muted: #cbc7be;
+  --shadow-sm: 0 1px 2px rgb(28 27 24 / 0.06);
+  --shadow-md: 0 6px 24px -6px rgb(28 27 24 / 0.12), 0 2px 6px rgb(28 27 24 / 0.04);
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --spark: #f2c230;
+  --highlight: #fbe7a1;
+  --spark-soft: #fcf1c7;
+  --spark-ink: #6b4c00;
+  --shadow-lg: 0 24px 48px -12px rgb(28 27 24 / 0.10);
+  --radius-xl: 20px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #0e1520;
-  --surface: #171e28;
-  --surface-2: #212a36;
-  --fg: #f4f7fb;
-  --muted: #b7c3d4;
-  --border: #2e3a4a;
-  --accent: #9dc0ea;
-  --accent-hover: #c5d9f4;
-  --accent-fg: #0e1520;
-  --accent-soft: #1a2c44;
+  --bg: #141413;
+  --surface: #1b1a18;
+  --surface-2: #252421;
+  --fg: #ecebe6;
+  --muted: #9a968d;
+  --border: #2e2c29;
+  --accent: #a9bbf2;
+  --accent-hover: #c9d5f7;
+  --accent-fg: #141413;
+  --accent-soft: #1f2640;
   --good: #6ee7a8;
   --warn: #f5c16c;
   --bad: #f0a0a0;
   --def: #7fd4d0;
-  --inverse: #0a1018;
-  --inverse-ink: #f4f7fb;
-  --inverse-muted: #c5d4e8;
+  --inverse: #0e0e0d;
+  --inverse-ink: #ecebe6;
+  --inverse-muted: #cbc7be;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
   --shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
+  --spark: #e6b72e;
+  --highlight: #4d3f12;
+  --spark-soft: #352c10;
+  --spark-ink: #f3d27a;
+  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }
 
 /* Accent overrides. The dark rule follows the light rule so it wins (higher specificity). */
+[data-accent='ink'] {
+  --accent: #2847a8;
+  --accent-hover: #1f3888;
+  --accent-fg: #ffffff;
+  --accent-soft: #e9edf8;
+}
+[data-theme='dark'][data-accent='ink'] {
+  --accent: #a9bbf2;
+  --accent-hover: #c9d5f7;
+  --accent-fg: #141413;
+  --accent-soft: #1f2640;
+}
 [data-accent='navy'] {
   --accent: #1e4d8c;
   --accent-hover: #163e73;
@@ -133,19 +161,32 @@
   --color-inverse: var(--inverse);
   --color-inverse-ink: var(--inverse-ink);
   --color-inverse-muted: var(--inverse-muted);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-spark: var(--spark);
+  --color-highlight: var(--highlight);
+  --color-spark-soft: var(--spark-soft);
+  --color-spark-ink: var(--spark-ink);
+  --font-sans: var(--font-inter), 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
 }
 
 @theme {
   /* Content rising into place on the welcome surfaces; off with reduced motion (below). */
-  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   @keyframes rise {
     from { opacity: 0; }
     to { opacity: 1; }
   }
+}
+
+/* The signature (ADR-0114): a flat highlighter stroke behind a key phrase, the way a student marks a page. A hard stop,
+   not a blend: the lower part of the line carries the marker, the text keeps its own colour. */
+.lvn-marker {
+  background-image: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* Placeholder bars for the first load. Opacity only, so the block keeps its height (no layout shift). */
@@ -270,12 +311,12 @@ select:not([aria-invalid='true']):focus-visible {
 .lvn-mark-highlight[data-color='PINK'] { background: rgb(244 114 182 / 0.45); }
 /* The API's PURPLE highlight is drawn, and named, orange (lvn-backend ADR-0094). */
 .lvn-mark-highlight[data-color='PURPLE'] { background: rgb(251 146 60 / 0.45); }
-.lvn-mark-anchor { background: rgb(37 99 235 / 0.08); border-bottom: 2px solid rgb(37 99 235 / 0.75); }
-.lvn-mark-pending { outline: 2px dashed rgb(37 99 235); background: rgb(37 99 235 / 0.1); }
-.lvn-mark-flash { background: rgb(37 99 235 / 0.35); animation: lvn-flash 1.8s ease-out forwards; }
+.lvn-mark-anchor { background: color-mix(in srgb, var(--accent) 8%, transparent); border-bottom: 2px solid color-mix(in srgb, var(--accent) 75%, transparent); }
+.lvn-mark-pending { outline: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.lvn-mark-flash { background: color-mix(in srgb, var(--spark) 55%, transparent); animation: lvn-flash 1.8s ease-out forwards; }
 @keyframes lvn-flash { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
 .lvn-snipping, .lvn-snipping .textLayer { cursor: crosshair; user-select: none; touch-action: none; }
-.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: rgb(37 99 235 / 0.12); pointer-events: none; }
+.lvn-snip-box { position: absolute; z-index: 2; border: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; }
 .lvn-anchor-chip { align-self: flex-end; display: inline-flex; align-items: center; gap: 0.25rem; margin-top: -0.5rem; border-radius: 9999px; border: 1px solid var(--border); background: var(--surface); padding: 0.125rem 0.6rem; font-size: 0.75rem; line-height: 1.2rem; color: var(--muted); cursor: pointer; user-select: none; }
 .lvn-anchor-chip:hover { border-color: var(--accent); color: var(--accent); }
 .lvn-card-flash { animation: lvn-card-flash 1.8s ease-out; }

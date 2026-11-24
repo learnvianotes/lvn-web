@@ -18,11 +18,11 @@ export async function GuidePage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8 sm:py-10">
       <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="max-w-2xl text-sm leading-6 text-muted sm:text-base">{t('lead')}</p>
         <nav aria-label={t('onThisPage')} className="flex flex-wrap gap-2">
           {SECTIONS.map((section) => (
-            <a key={section.id} href={`#${section.id}`} className="rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg hover:border-accent hover:text-accent">
+            <a key={section.id} href={`#${section.id}`} className="rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg hover:border-accent hover:text-accent">
               {t(`${section.id}.title`)}
             </a>
           ))}
@@ -30,7 +30,7 @@ export async function GuidePage() {
       </header>
       {SECTIONS.map((section) => (
         <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className="scroll-mt-24 rounded-2xl border border-border bg-surface p-4 sm:p-5">
-          <h2 id={`${section.id}-title`} className="text-lg font-bold tracking-tight">
+          <h2 id={`${section.id}-title`} className="text-lg font-semibold tracking-tight">
             {t(`${section.id}.title`)}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted">{t(`${section.id}.lead`)}</p>
@@ -47,7 +47,7 @@ export async function GuidePage() {
         </section>
       ))}
       <section id="help" aria-labelledby="help-title" className="scroll-mt-24 rounded-2xl border border-border bg-surface p-4 sm:p-5">
-        <h2 id="help-title" className="text-lg font-bold tracking-tight">
+        <h2 id="help-title" className="text-lg font-semibold tracking-tight">
           {t('helpTitle')}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted">{t('helpLead')}</p>

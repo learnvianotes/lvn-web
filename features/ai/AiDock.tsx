@@ -36,7 +36,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
   return (
     <aside aria-labelledby={`dock-${noteId}`} className="sticky top-20 flex max-h-[calc(100dvh-6rem)] flex-col gap-4 overflow-y-auto rounded-3xl border border-border bg-surface p-4">
       <header className="flex flex-col gap-1">
-        <h2 id={`dock-${noteId}`} className="flex items-center gap-2 text-base font-bold">
+        <h2 id={`dock-${noteId}`} className="flex items-center gap-2 text-base font-semibold">
           <Sparkles className="size-4 text-accent" aria-hidden />
           {t('title')}
         </h2>
@@ -74,7 +74,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
       ) : null}
       {results.length ? (
         <section aria-label={t('results')} className="flex flex-col gap-3">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{t('results')}</h3>
+          <h3 className="text-xs font-semibold text-muted">{t('results')}</h3>
           {results.map((a) => (
             <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void ai.run(a.task, a.language)} onAddedToNote={onAddedToNote} />
           ))}

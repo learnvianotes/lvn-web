@@ -142,7 +142,7 @@ export function AiProviders() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
 
@@ -275,7 +275,7 @@ export function AiProviders() {
 }
 
 function Badge({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
-  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
+  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
 }
 
 function Row({ term, value }: { term: string; value: string }) {

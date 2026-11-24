@@ -74,7 +74,7 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
         if (!items.length) return null
         return (
           <section key={k} aria-labelledby={`skills-${k}`} className="flex flex-col gap-2">
-            <h2 id={`skills-${k}`} className="text-sm font-semibold uppercase tracking-wide text-muted">
+            <h2 id={`skills-${k}`} className="text-sm font-semibold text-muted">
               {t(`kind.${k}`)}
             </h2>
             {k === 'SKILL' ? (
@@ -82,7 +82,7 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
                 {items.map((s) => (
                   <li
                     key={s.id}
-                    className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
+                    className="rounded-[10px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
                     title={[s.detail, s.source !== 'MANUAL' ? t('from', { source: t(`source.${s.source}`) }) : null].filter(Boolean).join(' · ') || undefined}
                   >
                     {s.name}

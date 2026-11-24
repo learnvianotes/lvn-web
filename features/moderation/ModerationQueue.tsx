@@ -31,7 +31,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
   if (forbidden) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notAllowed')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notAllowed')}</h1>
         <p className="mt-2 text-sm text-muted">{scope ? t('notAllowedScoped') : t('notAllowedLead')}</p>
       </div>
     )
@@ -42,7 +42,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
         <p className="text-sm text-muted">{t(`leadScoped.${scope.scope}`)}</p>
       ) : (
         <header className="flex flex-col gap-1">
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
             <ShieldCheck className="size-6 text-accent" aria-hidden />
             {t('title')}
           </h1>
@@ -128,29 +128,29 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
     <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5" aria-label={title}>
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t(`entity.${c.entityType}`)}</span>
+          <span className="text-xs font-semibold text-muted">{t(`entity.${c.entityType}`)}</span>
           {c.note ? (
-            <h2 className="text-lg font-bold">{title}</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
           ) : c.group ? (
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="size-4" aria-hidden />
               <Link href={`/groups/${c.group.id}`} className="hover:text-accent">
                 {c.group.name}
               </Link>
             </h2>
           ) : c.removedGroup ? (
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="size-4" aria-hidden />
               {c.removedGroup.name}
             </h2>
           ) : c.user ? (
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <User className="size-4" aria-hidden />
               {c.user.displayName} <span className="text-sm font-normal text-muted">@{c.user.handle}</span>
             </h2>
           ) : null}
           {c.resource ? (
-            <h2 className="text-lg font-bold">
+            <h2 className="text-lg font-semibold">
               <Link href={`/resources/${c.resource.id}`} className="hover:text-accent">
                 {c.resource.title}
               </Link>
@@ -160,7 +160,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
           {c.resource ? <p className="text-sm text-muted">{t('by', { name: c.resource.submittedBy.displayName, handle: c.resource.submittedBy.handle })}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {platform && c.scope !== 'PLATFORM' ? <span className="rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
+          {platform && c.scope !== 'PLATFORM' ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
           {state ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`state.${state}`)}</span> : null}
           {c.resource ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`resourceState.${c.resource.status}`)}</span> : null}
           {c.suspendedUntil ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
@@ -194,7 +194,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
       ) : null}
       {c.appeal ? (
         <blockquote className="rounded-xl border-l-4 border-accent bg-accent-soft px-3 py-2 text-sm">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-accent">{t('appeal')}</span>
+          <span className="block text-xs font-semibold text-accent">{t('appeal')}</span>
           {c.appeal.message}
         </blockquote>
       ) : null}

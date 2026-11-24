@@ -49,13 +49,13 @@ function tone(map: Record<string, string>, key: string) {
   return value
 }
 
-/** The palette mobile will copy. Purple, violet, indigo, lavender, and pink are out (ADR-0094). */
+/** The palette mobile will copy. Ink is the brand (ADR-0114, unslop); purple, violet, indigo, lavender and pink stay out. */
 describe('design tokens', () => {
   it('shares one base and overrides only the brand per accent', () => {
     expect(Object.keys(tokens.color.base.light).sort()).toEqual(Object.keys(tokens.color.base.dark).sort())
     expect(tokens.color.base.light).not.toHaveProperty('brand')
     expect(tokens.appearance.defaultMode).toBe('system')
-    expect(tokens.appearance.defaultAccent).toBe('navy')
+    expect(tokens.appearance.defaultAccent).toBe('ink')
     expect(tokens.appearance.accents).toEqual([...ACCENTS])
     expect(tokens.appearance.storage).toEqual({ mode: 'cnote:theme', accent: 'cnote:accent' })
     for (const id of ACCENTS) {
@@ -68,6 +68,13 @@ describe('design tokens', () => {
     }
     expect(tokens.color.base.light.paper).toBe(PAPER.light)
     expect(tokens.color.base.dark.paper).toBe(PAPER.dark)
+  })
+
+  it('keeps the highlighter legible where it carries text', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      const base = tokens.color.base[scheme]
+      expect(contrast(tone(base, 'sparkInk'), tone(base, 'sparkSoft')), `${scheme} spark ink/soft`).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
   it('keeps AA contrast for every accent in light and dark', () => {

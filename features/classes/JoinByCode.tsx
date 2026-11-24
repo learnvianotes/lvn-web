@@ -30,7 +30,7 @@ export function JoinByCode({ code: raw, via }: { code: string; via: 'CODE' | 'LI
   const problem = problemOf(lookup, undefined, t('failed'))
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4">
-      <h1 className="text-2xl font-extrabold tracking-tight">{t('joinTitle')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t('joinTitle')}</h1>
       {problem ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {problem}
@@ -41,9 +41,9 @@ export function JoinByCode({ code: raw, via }: { code: string; via: 'CODE' | 'LI
         <section className="flex flex-col gap-3 rounded-3xl border border-border bg-surface p-6 shadow-sm">
           <span className="flex items-center gap-2 text-sm text-muted">
             <GraduationCap className="size-4 text-accent" aria-hidden />
-            <span className="font-mono tracking-widest">{code}</span>
+            <span className="font-mono">{code}</span>
           </span>
-          <h2 className="text-xl font-bold">{found.name}</h2>
+          <h2 className="text-xl font-semibold">{found.name}</h2>
           <p className="text-sm text-muted">{t('byTeacher', { name: found.teacher.displayName })}</p>
           {found.viewerRole ? (
             <>

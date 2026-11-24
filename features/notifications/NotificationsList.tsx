@@ -80,7 +80,7 @@ export function NotificationsList() {
   return (
     <section className="mx-auto max-w-2xl">
       <header className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         {unread ? (
           <button type="button" onClick={() => void markRead({ all: true })} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-accent hover:bg-accent-soft">
             <CheckCheck className="size-4" aria-hidden />

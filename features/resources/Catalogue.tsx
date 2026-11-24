@@ -42,7 +42,7 @@ function Inner() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-extrabold tracking-tight">{t('title')}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="max-w-2xl text-sm text-muted">{t('lead')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -123,7 +123,7 @@ export function ResourceCard({ resource: r, note }: { resource: ResourceFieldsFr
           )}
         </div>
         <div className="flex flex-1 flex-col gap-1 p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">{types(r.type)}</span>
+          <span className="text-xs font-semibold text-accent">{types(r.type)}</span>
           <span className="line-clamp-2 font-semibold">{r.title}</span>
           {r.author ? <span className="truncate text-sm text-muted">{t('by', { author: r.author })}</span> : null}
           <span className="mt-auto text-xs text-muted">{r.host}</span>

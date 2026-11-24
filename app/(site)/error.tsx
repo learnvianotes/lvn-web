@@ -8,7 +8,7 @@ export default function SiteError({ reset }: { error: Error & { digest?: string 
   const t = useTranslations('states')
   return (
     <main id="main" className="mx-auto flex min-h-[50dvh] max-w-lg flex-col items-start justify-center gap-4 px-4 py-16">
-      <h1 className="text-2xl font-bold tracking-tight">{t('loadFailed')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t('loadFailed')}</h1>
       <p className="text-sm text-muted">{t('offline')}</p>
       <Button type="button" onClick={() => reset()}>
         {t('retry')}

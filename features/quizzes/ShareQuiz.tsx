@@ -79,7 +79,7 @@ export function ShareQuiz({ title, questions }: { title: string; questions: unkn
   return (
     <section aria-label={t('title')} className="flex flex-col gap-3 rounded-2xl border border-sky-700/30 bg-sky-50 p-4 dark:bg-sky-950/30">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-bold">{t('title')}</h3>
+        <h3 className="text-sm font-semibold">{t('title')}</h3>
         <Button type="button" size="sm" variant="secondary" className="gap-1.5" disabled={busy} onClick={() => void share()}>
           <Share2 className="size-4" aria-hidden />
           {t('share')}

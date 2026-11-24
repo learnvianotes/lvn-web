@@ -61,18 +61,18 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         <span className="text-fg">{topic.title}</span>
       </nav>
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{topic.title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{topic.title}</h1>
         <p className="max-w-2xl text-muted">{t('topicLead', { topic: topic.title })}</p>
       </header>
       {topic.children.length ? (
         <section aria-labelledby="topic-children" className="flex flex-col gap-2">
-          <h2 id="topic-children" className="text-lg font-bold">
+          <h2 id="topic-children" className="text-lg font-semibold">
             {t('subtopics')}
           </h2>
           <ul className="flex flex-wrap gap-2">
             {topic.children.map((c) => (
               <li key={c.id}>
-                <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent hover:underline">
+                <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[10px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent hover:underline">
                   {c.title}
                 </Link>
               </li>

@@ -160,7 +160,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
           {drafts.map((d, i) => (
             <li key={d.key} aria-label={t('questionN', { n: i + 1 })} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold">{t('questionN', { n: i + 1 })}</span>
+                <span className="text-sm font-semibold">{t('questionN', { n: i + 1 })}</span>
                 <span className="flex-1" />
                 <Button variant="ghost" size="icon" aria-label={t('removeQuestion', { n: i + 1 })} title={t('removeQuestion', { n: i + 1 })} onClick={() => setDrafts((all) => all.filter((x) => x.key !== d.key))}>
                   <Trash className="size-4" aria-hidden />

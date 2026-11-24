@@ -78,7 +78,7 @@ export function AdminUsage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <Button type="button" variant="secondary" size="sm" aria-expanded={lookUp} aria-controls="user-timeline-section" onClick={() => setLookUp((v) => !v)}>
             {lookUp ? t('hideLookUp') : t('lookUpUser')}
           </Button>

@@ -77,15 +77,15 @@ export function SharedQuizPage({ token }: { token: string }) {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5 px-4 py-8">
       <header className="flex flex-col gap-1 rounded-3xl border border-sky-700/25 bg-sky-50 px-4 py-4 dark:bg-sky-950/40">
-        <p className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-200">{t('taking')}</p>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+        <p className="text-xs font-semibold text-sky-800 dark:text-sky-200">{t('taking')}</p>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <ListChecks className="size-6" aria-hidden />
           {quiz.title}
         </h1>
         <p className="text-sm text-muted">{t('by', { name: quiz.owner.displayName })}</p>
       </header>
       {score ? (
-        <p role="status" className="rounded-2xl border border-emerald-600/30 bg-emerald-50 px-4 py-3 text-lg font-bold text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+        <p role="status" className="rounded-2xl border border-emerald-600/30 bg-emerald-50 px-4 py-3 text-lg font-semibold text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
           {t('score', { score: score.score, total: score.total })}
         </p>
       ) : (

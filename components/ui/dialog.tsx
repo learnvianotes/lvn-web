@@ -35,7 +35,7 @@ export function Dialog({ open, onClose, title, children, wide, side, sheet, pers
       {open ? (
         <div className={cn('flex max-h-[inherit] min-h-0 flex-col', sheet && 'max-sm:h-dvh max-sm:max-h-dvh')}>
           <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2 sm:px-5 sm:py-3">
-            <h2 id={titleId} className="min-w-0 text-lg font-bold tracking-tight break-words">
+            <h2 id={titleId} className="min-w-0 text-lg font-semibold tracking-tight break-words">
               {title}
             </h2>
             {persistent ? null : (

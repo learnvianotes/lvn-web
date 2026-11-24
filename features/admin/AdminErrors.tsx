@@ -32,7 +32,7 @@ export function AdminErrors() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
@@ -57,10 +57,10 @@ function GroupRow({ group, open, onOpen }: { group: ErrorGroup; open: boolean; o
     <article className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{group.code}</p>
+          <p className="text-xs font-semibold text-muted">{group.code}</p>
           <h2 className="text-base font-semibold break-words">{group.sampleMessage}</h2>
         </div>
-        <p className="text-2xl font-extrabold tracking-tight">{format.number(group.count)}</p>
+        <p className="text-2xl font-semibold tracking-tight">{format.number(group.count)}</p>
       </div>
       <p className="text-sm text-muted">{t('seen', { first: when(group.firstSeen), last: when(group.lastSeen) })}</p>
       <Button size="sm" variant="secondary" className="w-fit" aria-expanded={open} onClick={onOpen}>

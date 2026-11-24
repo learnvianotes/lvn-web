@@ -43,7 +43,7 @@ export function QuizPage({ classroomId, quizId }: { classroomId: string; quizId:
         {t('back')}
       </Link>
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{quiz.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{quiz.title}</h1>
         <p className="text-sm text-muted">{t('meta', { n: quiz.questionCount, name: quiz.author.displayName, when: new Date(quiz.publishedAt).toLocaleDateString() })}</p>
         {quiz.submittedCount != null ? <p className="text-sm">{t('submitted', { n: quiz.submittedCount })}</p> : null}
       </header>
@@ -52,7 +52,7 @@ export function QuizPage({ classroomId, quizId }: { classroomId: string; quizId:
       ) : (
         <>
           <div role="status" className="flex flex-wrap items-center gap-3 rounded-2xl border border-accent/40 bg-accent-soft p-4">
-            <span className="text-lg font-bold">{t('result', { score: latest.score, total: latest.total })}</span>
+            <span className="text-lg font-semibold">{t('result', { score: latest.score, total: latest.total })}</span>
             {first && first.id !== latest.id ? <span className="text-sm text-muted">{t('firstScore', { score: first.score, total: first.total })}</span> : null}
             <span className="flex-1" />
             <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => setRetaking(true)}>
@@ -126,14 +126,14 @@ function TakeQuiz({ quiz, practice, onDone }: { quiz: Quiz; practice: boolean; o
           <span className="text-muted">{t('answeredCount', { n: total - left, total })}</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label={t('progressLabel', { n: at + 1, total })} aria-valuemin={1} aria-valuemax={total} aria-valuenow={at + 1}>
-          <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${((at + 1) / total) * 100}%` }} />
+          <div className="h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${((at + 1) / total) * 100}%` }} />
         </div>
       </div>
       {q ? (
         <fieldset ref={shown} tabIndex={-1} key={q.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4 outline-none">
           <legend className="sr-only">{t('progressLabel', { n: at + 1, total })}</legend>
           <div className="flex gap-2">
-            <span className="font-bold text-muted">{at + 1}.</span>
+            <span className="font-semibold text-muted">{at + 1}.</span>
             <RichDoc doc={q.question as Doc} className="flex flex-col gap-2 font-medium" />
           </div>
           {q.multiple ? <p className="text-xs text-muted">{t('pickAll')}</p> : null}
@@ -220,7 +220,7 @@ function Review({ quiz, answers }: { quiz: Quiz; answers: Answers }) {
         return (
           <li key={q.id} aria-label={t('questionN', { n: i + 1 })} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
             <div className="flex gap-2">
-              <span className="font-bold text-muted">{i + 1}.</span>
+              <span className="font-semibold text-muted">{i + 1}.</span>
               <RichDoc doc={q.question as Doc} className="flex flex-1 flex-col gap-2 font-medium" />
               <span className={cn('inline-flex shrink-0 items-center gap-1 self-start rounded-full px-2 py-0.5 text-xs font-semibold', right ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-red-500/10 text-red-700 dark:text-red-400')}>
                 {right ? <Check className="size-3" aria-hidden /> : <X className="size-3" aria-hidden />}

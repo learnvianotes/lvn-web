@@ -33,7 +33,7 @@ export function Recommendations({ limit = 6 }: { limit?: number }) {
   if (!items) return error && !data ? <LoadFailed message={t('loadFailed')} onRetry={refetch} /> : null
   return (
     <section aria-labelledby="recommended" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="recommended" className="text-lg font-bold">
+      <h2 id="recommended" className="text-lg font-semibold">
         {t('title')}
       </h2>
       {!items.length ? <p className="text-sm text-muted">{t('none')}</p> : null}

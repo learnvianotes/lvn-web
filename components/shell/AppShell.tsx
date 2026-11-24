@@ -176,11 +176,11 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
 function Brand() {
   const t = useTranslations('site')
   return (
-    <Link href="/home" aria-label={t('name')} className="flex items-center gap-2 px-2 text-lg font-extrabold tracking-tight">
+    <Link href="/home" aria-label={t('name')} className="flex items-center gap-2 px-2 text-lg font-medium">
       <Logo size={30} />
       <span aria-hidden>
         {t('wordmark.lead')}
-        <span className="text-accent">{t('wordmark.accent')}</span>
+        {t('wordmark.accent')}
       </span>
     </Link>
   )
@@ -291,7 +291,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
             if (window.dispatchEvent(new Event(OPEN_SEARCH_EVENT, { cancelable: true }))) router.push('/search')
           }}
           data-tour="search"
-          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
+          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" aria-hidden />
           <span className="truncate">{t('searchPlaceholder')}</span>
@@ -300,7 +300,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
           <AppearanceMenu />
           <NotificationBell />
-          <Link href="/profile" data-tour="account" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
+          <Link href="/profile" data-tour="account" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent hover:ring-2 hover:ring-accent/40">
             {(viewer?.displayName ?? '?').slice(0, 1).toUpperCase()}
           </Link>
         </div>

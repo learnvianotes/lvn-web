@@ -26,10 +26,10 @@ function Actions() {
   if (signedIn) {
     return (
       <div className="flex flex-wrap gap-3">
-        <Link href="/home" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
+        <Link href="/home" className="inline-flex h-12 items-center rounded-[10px] bg-accent px-6 text-[15px] font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
           {t('openHome')}
         </Link>
-        <Link href="/profile" className="inline-flex h-12 items-center rounded-full border border-border bg-surface px-6 text-[15px] font-semibold text-fg hover:bg-surface-2">
+        <Link href="/profile" className="inline-flex h-12 items-center rounded-[10px] border border-border bg-surface px-6 text-[15px] font-semibold text-fg hover:bg-surface-2">
           {t('account')}
         </Link>
       </div>
@@ -39,7 +39,7 @@ function Actions() {
     <div className="flex flex-col gap-3">
       {google.error ? <Alert tone="error">{google.error}</Alert> : null}
       <div className="flex flex-wrap items-center gap-3">
-        <Link href="/sign-up" className="inline-flex h-12 items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
+        <Link href="/sign-up" className="inline-flex h-12 items-center rounded-[10px] bg-accent px-6 text-[15px] font-semibold text-accent-fg hover:bg-[var(--accent-hover)]">
           {t('start')}
         </Link>
         {google.available ? (

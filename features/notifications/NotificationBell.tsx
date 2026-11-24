@@ -38,7 +38,7 @@ function BellLink() {
     >
       <Bell className="size-5" aria-hidden />
       {unread ? (
-        <span aria-hidden className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold leading-4 text-accent-fg">
+        <span aria-hidden className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-[10px] bg-accent px-1 text-[10px] font-semibold leading-4 text-accent-fg">
           {unread > 99 ? '99+' : unread}
         </span>
       ) : null}

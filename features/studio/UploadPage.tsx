@@ -24,8 +24,8 @@ export function UploadPage() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-3 rounded-3xl border border-sky-700/25 bg-sky-50 px-4 py-4 text-sky-950 dark:bg-sky-950/40 dark:text-sky-50">
         <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-xs font-bold uppercase tracking-wider">{t('kicker')}</p>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          <p className="text-xs font-semibold">{t('kicker')}</p>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             <FileUp className="size-7 shrink-0" aria-hidden />
             {t('title')}
           </h1>

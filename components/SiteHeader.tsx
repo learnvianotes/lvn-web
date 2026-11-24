@@ -16,11 +16,11 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-bg/70">
       <div className="relative mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:gap-3">
-        <HomeLink label={t('name')} className="flex min-w-0 items-center gap-2 text-base font-extrabold tracking-tight sm:text-lg">
+        <HomeLink label={t('name')} className="flex min-w-0 items-center gap-2 text-base font-medium sm:text-lg">
           <Logo size={30} />
           <span aria-hidden="true" className="truncate">
             {t('wordmark.lead')}
-            <span className="text-accent">{t('wordmark.accent')}</span>
+            {t('wordmark.accent')}
           </span>
         </HomeLink>
         <PublicMenu labels={{ menu: t('nav.menu'), close: t('nav.menuClose'), features: t('nav.features'), subjects: t('nav.subjects'), community: t('nav.community'), resources: t('nav.resources'), start: t('nav.start'), guide: t('nav.guide') }} />

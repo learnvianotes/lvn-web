@@ -32,7 +32,7 @@ export function QuizzesPage() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted">{t('lead')}</p>
         </div>
         <AiButton onClick={() => void ai.ask()} />
@@ -58,7 +58,7 @@ export function QuizzesPage() {
       )}
 
       <section aria-labelledby="class-quizzes" className="flex flex-col gap-3">
-        <h2 id="class-quizzes" className="text-lg font-bold">
+        <h2 id="class-quizzes" className="text-lg font-semibold">
           {t('fromClasses')}
         </h2>
         {!hub.data ? <QueryState loading={hub.loading} error={hub.error} onRetry={hub.refetch} /> : null}
@@ -79,7 +79,7 @@ export function QuizzesPage() {
       </section>
 
       <section aria-labelledby="practice" className="flex flex-col gap-3">
-        <h2 id="practice" className="text-lg font-bold">
+        <h2 id="practice" className="text-lg font-semibold">
           {t('practice')}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -102,7 +102,7 @@ export function QuizzesPage() {
 
       {recent.length ? (
         <section aria-labelledby="recent" className="flex flex-col gap-3">
-          <h2 id="recent" className="text-lg font-bold">
+          <h2 id="recent" className="text-lg font-semibold">
             {t('recent')}
           </h2>
           <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">

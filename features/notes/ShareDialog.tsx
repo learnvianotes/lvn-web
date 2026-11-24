@@ -231,7 +231,7 @@ export function ShareDialog({ meta, open, onClose, onSaved }: { meta: NoteMeta; 
                 const accent = accentOf(s.user.id)
                 return (
                   <li key={s.user.id} className="flex items-center gap-3 px-3 py-2.5">
-                    <span className="grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold text-white" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full text-sm font-semibold text-white" style={{ background: accent.from }} aria-hidden>
                       {s.user.displayName.charAt(0).toUpperCase()}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">

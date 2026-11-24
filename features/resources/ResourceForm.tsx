@@ -141,7 +141,7 @@ export function ResourceForm({ resource }: { resource?: ResourceFieldsFragment }
       }}
     >
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{resource ? t('editTitle') : t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{resource ? t('editTitle') : t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
 
@@ -291,7 +291,7 @@ function TopicPicker({ picked, onChange }: { picked: Topic[]; onChange: (topics:
       {picked.length ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((p) => (
-            <li key={p.id} className="flex items-center gap-1 rounded-full bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
+            <li key={p.id} className="flex items-center gap-1 rounded-[10px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
               {p.title}
               <button type="button" aria-label={t('removeTopic', { title: p.title })} className="rounded-full px-2 hover:bg-accent/10" onClick={() => onChange(picked.filter((x) => x.id !== p.id))}>
                 ×

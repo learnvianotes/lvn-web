@@ -119,7 +119,7 @@ function InstitutionalCode() {
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight">{t('codeTitle')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('codeTitle')}</h1>
         <p className="text-sm text-muted">{t('codeLead', { email: viewer.institutionalEmail ?? '' })}</p>
       </header>
       {note ? <Alert tone="success">{note}</Alert> : null}

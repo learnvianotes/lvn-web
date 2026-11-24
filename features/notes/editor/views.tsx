@@ -23,7 +23,7 @@ const control = 'rounded-lg border border-border bg-surface px-2 py-1 text-sm te
 const area = cn(control, 'min-h-[2.5rem] w-full resize-y leading-relaxed')
 
 function Label({ children }: { children: string }) {
-  return <span className="text-xs font-semibold uppercase tracking-wide text-muted">{children}</span>
+  return <span className="text-xs font-semibold text-muted">{children}</span>
 }
 
 function Field({ label, value, onChange, rows = 2, placeholder }: { label: string; value: string; onChange: (v: string) => void; rows?: number; placeholder?: string }) {
@@ -56,7 +56,7 @@ export function HeadingView({ node, updateAttributes, editor }: ReactNodeViewPro
           <option value={3}>H3</option>
         </select>
       ) : null}
-      <NodeViewContent<'h1' | 'h2' | 'h3'> as={`h${level}`} className={cn('font-bold tracking-tight', level === 1 ? 'text-3xl' : level === 2 ? 'text-2xl' : 'text-xl')} />
+      <NodeViewContent<'h1' | 'h2' | 'h3'> as={`h${level}`} className={cn('font-semibold tracking-tight', level === 1 ? 'text-3xl' : level === 2 ? 'text-2xl' : 'text-xl')} />
     </NodeViewWrapper>
   )
 }

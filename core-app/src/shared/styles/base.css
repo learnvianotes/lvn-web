@@ -4,17 +4,17 @@
    ============================================================ */
 
 :root {
-  --bg: #f4f6f8;
+  --bg: #f8f7f4;
   --surface: #ffffff;
-  --surface-2: #e8edf3;
-  --border: #d5dde8;
-  --border-strong: #c3cedb;
-  --text: #152033;
-  --text-2: #2c3a50;
-  --muted: #3d4b63;
-  --accent: #1e4d8c;
-  --accent-hover: #163e73;
-  --accent-soft: #e7f0fa;
+  --surface-2: #f0eee9;
+  --border: #e4e1da;
+  --border-strong: #d2cec5;
+  --text: #1c1b18;
+  --text-2: #3f3c36;
+  --muted: #66625b;
+  --accent: #2847a8;
+  --accent-hover: #1f3888;
+  --accent-soft: #e9edf8;
   --accent-text: #ffffff;
   --track: #e8e8eb;
 
@@ -32,41 +32,43 @@
   --code-keyword: #cf222e;
   --code-string: #0a3069;
   --code-number: #0550ae;
-  --code-title: #1e4d8c;
+  --code-title: #2847a8;
   --code-type: #953800;
 
-  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font: var(--font-inter, 'IBM Plex Sans'), 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: 10px;
   --radius-sm: 6px;
   --header-h: 56px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
 
+  --spark: #f2c230;
+  --spark-soft: #fcf1c7;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #0e1520;
-  --surface: #171e28;
-  --surface-2: #212a36;
-  --border: #2e3a4a;
-  --border-strong: #3d4d62;
-  --text: #f4f7fb;
-  --text-2: #d5deea;
-  --muted: #b7c3d4;
-  --accent: #9dc0ea;
-  --accent-hover: #c5d9f4;
-  --accent-soft: #1a2c44;
-  --accent-text: #0e1520;
+  --bg: #141413;
+  --surface: #1b1a18;
+  --surface-2: #252421;
+  --border: #2e2c29;
+  --border-strong: #3d3a36;
+  --text: #ecebe6;
+  --text-2: #c4c1b8;
+  --muted: #9a968d;
+  --accent: #a9bbf2;
+  --accent-hover: #c9d5f7;
+  --accent-soft: #1f2640;
+  --accent-text: #141413;
   --track: #2a2a30;
 
   --easy: #4ade80;
   --easy-soft: rgb(74 222 128 / 0.1);
-  --medium: #fbbf24;
+  --medium: #e6b72e;
   --medium-soft: rgb(251 191 36 / 0.1);
   --hard: #f87171;
   --hard-soft: rgb(248 113 113 / 0.1);
-  --revisit: #fbbf24;
+  --revisit: #e6b72e;
 
   --code-bg: #131316;
   --code-text: #e6edf3;
@@ -74,14 +76,30 @@
   --code-keyword: #ff7b72;
   --code-string: #a5d6ff;
   --code-number: #79c0ff;
-  --code-title: #9dc0ea;
+  --code-title: #a9bbf2;
   --code-type: #ffa657;
 
   --shadow: none;
+  --spark: #e6b72e;
+  --spark-soft: #352c10;
   color-scheme: dark;
 }
 
-/* Accent overrides (docs/ui-revamp/tokens.json). Navy is already on :root. Dark rules win by specificity. */
+/* Accent overrides (docs/ui-revamp/tokens.json). Ink is already on :root. Dark rules win by specificity. */
+:root[data-accent='ink'] {
+  --accent: #2847a8;
+  --accent-hover: #1f3888;
+  --accent-text: #ffffff;
+  --accent-soft: #e9edf8;
+  --code-title: #2847a8;
+}
+:root[data-theme='dark'][data-accent='ink'] {
+  --accent: #a9bbf2;
+  --accent-hover: #c9d5f7;
+  --accent-text: #141413;
+  --accent-soft: #1f2640;
+  --code-title: #a9bbf2;
+}
 :root[data-accent='navy'] {
   --accent: #1e4d8c;
   --accent-hover: #163e73;

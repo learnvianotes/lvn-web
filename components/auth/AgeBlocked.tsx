@@ -23,7 +23,7 @@ export function AgeBlocked({ supportEmail, kind = 'age' }: { supportEmail: strin
   }
   return (
     <section role="status" aria-labelledby="age-blocked" className="flex flex-col gap-4">
-      <h1 id="age-blocked" className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+      <h1 id="age-blocked" className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
         <Info className="size-6 shrink-0 text-accent" aria-hidden />
         {kind === 'blocked' ? t('blockedAccountTitle') : t('blockedTitle')}
       </h1>

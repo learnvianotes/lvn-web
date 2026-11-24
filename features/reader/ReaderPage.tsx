@@ -311,7 +311,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
   if (loaded.state === 'missing' || fileMissing) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notFound')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notFound')}</h1>
         <Link href={`/notes/${noteId}`} className="text-accent hover:underline">
           {t('back')}
         </Link>
@@ -476,7 +476,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
                         <p className="text-muted">{t('noCopies')}</p>
                       )}
                     </div>
-                    <h2 className="text-xl font-bold">{loaded.meta.title || t('untitled')}</h2>
+                    <h2 className="text-xl font-semibold">{loaded.meta.title || t('untitled')}</h2>
                     {loaded.cards.map((c) => (
                       <CardView key={c.id} id={c.id} type={c.type} content={c.content} onAnchor={openAnchor} />
                     ))}

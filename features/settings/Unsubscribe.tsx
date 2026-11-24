@@ -33,7 +33,7 @@ function Inner({ token }: { token: string }) {
   }
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 px-4 py-16">
-      <h1 className="text-2xl font-extrabold tracking-tight">{t('unsubscribeTitle')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t('unsubscribeTitle')}</h1>
       {done ? (
         <p role="status">{t(`unsubscribed.${done}`)}</p>
       ) : (

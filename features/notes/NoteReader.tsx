@@ -59,10 +59,10 @@ export function NoteReader({ meta, cards, study, offered, tab, onTab, wide }: { 
       <article className="flex min-w-0 flex-col gap-4">
         <Breadcrumb meta={meta} own={false} />
         <header className="flex animate-rise flex-col gap-3">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-[2.6rem]">{meta.title || t('editor.untitled')}</h1>
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-[2.6rem]">{meta.title || t('editor.untitled')}</h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
             <span className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-full text-sm font-bold text-white" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+              <span className="grid size-8 place-items-center rounded-full text-sm font-semibold text-white" style={{ background: accent.from }} aria-hidden>
                 {meta.owner.displayName.charAt(0).toUpperCase()}
               </span>
               {t('reader.by', { name: meta.owner.displayName })}

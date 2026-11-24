@@ -37,8 +37,8 @@ export function ProjectsPage() {
     <div className="flex w-full flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-3 rounded-3xl border border-amber-700/30 bg-amber-50 px-4 py-4 text-amber-950 dark:bg-amber-950/40 dark:text-amber-50">
         <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-xs font-bold uppercase tracking-wider">{t('kicker')}</p>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          <p className="text-xs font-semibold">{t('kicker')}</p>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             <FolderKanban className="size-7 shrink-0" aria-hidden />
             {t('title')}
           </h1>
@@ -55,11 +55,11 @@ export function ProjectsPage() {
       {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       <div className="grid gap-3 lg:grid-cols-3">
         <section aria-labelledby="project-brief" className="flex flex-col gap-2 rounded-2xl border border-amber-700/20 bg-surface p-4">
-          <h2 id="project-brief" className="text-sm font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">{t('brief')}</h2>
+          <h2 id="project-brief" className="text-sm font-semibold text-amber-800 dark:text-amber-200">{t('brief')}</h2>
           <textarea value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={t('briefPlaceholder')} className="min-h-40 w-full resize-y rounded-xl border border-border bg-bg px-3 py-2 text-sm outline-none focus-visible:border-accent" />
         </section>
         <section aria-labelledby="project-board" className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
-          <h2 id="project-board" className="text-sm font-bold uppercase tracking-wide text-muted">{t('board')}</h2>
+          <h2 id="project-board" className="text-sm font-semibold text-muted">{t('board')}</h2>
           <ul className="flex flex-col gap-2">
             {tasks.map((task) => (
               <li key={task.id} className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export function ProjectsPage() {
           </Button>
         </section>
         <section aria-labelledby="project-links" className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
-          <h2 id="project-links" className="text-sm font-bold uppercase tracking-wide text-muted">{t('links')}</h2>
+          <h2 id="project-links" className="text-sm font-semibold text-muted">{t('links')}</h2>
           <form
             className="flex gap-2"
             onSubmit={(event) => {

@@ -3,7 +3,7 @@
  *
  * `cnote:theme` is the old site's key (JSON "light", "dark", or "system"). Core treats anything
  * other than light or dark as system, and removes the key for system. A missing key is system.
- * `cnote:accent` is JSON "navy" | "teal" | "forest" | "slate" | "amber". A missing key is navy.
+ * `cnote:accent` is JSON "ink" | "navy" | "teal" | "forest" | "slate" | "amber". A missing key is ink.
  *
  * `data-theme` is the resolved light or dark (what CSS and the core reader assert).
  * `data-accent` selects the brand overrides. `data-mode` is the saved mode, including system.
@@ -14,7 +14,7 @@ export const THEME_KEY = 'cnote:theme'
 export const ACCENT_KEY = 'cnote:accent'
 
 export const MODES = ['system', 'light', 'dark'] as const
-export const ACCENTS = ['navy', 'teal', 'forest', 'slate', 'amber'] as const
+export const ACCENTS = ['ink', 'navy', 'teal', 'forest', 'slate', 'amber'] as const
 
 export type ThemeMode = (typeof MODES)[number]
 export type AccentId = (typeof ACCENTS)[number]
@@ -22,12 +22,13 @@ export type ResolvedTheme = 'light' | 'dark'
 
 /** Paper, used for the browser theme-color as well as the page. Matches tokens.json color.base. */
 export const PAPER: Record<ResolvedTheme, string> = {
-  light: '#f4f6f8',
-  dark: '#0e1520',
+  light: '#f8f7f4',
+  dark: '#141413',
 }
 
 /** Light brand, used only as the picker's swatch. CSS owns the real accent. */
 export const ACCENT_SWATCH: Record<AccentId, string> = {
+  ink: '#2847a8',
   navy: '#1e4d8c',
   teal: '#0c5c66',
   forest: '#0f6b45',
@@ -40,7 +41,7 @@ export function isThemeMode(value: unknown): value is ThemeMode {
 }
 
 export function isAccentId(value: unknown): value is AccentId {
-  return value === 'navy' || value === 'teal' || value === 'forest' || value === 'slate' || value === 'amber'
+  return value === 'ink' || value === 'navy' || value === 'teal' || value === 'forest' || value === 'slate' || value === 'amber'
 }
 
 /** Parse the stored mode. Missing, invalid, or core's removed key all mean system. */
@@ -55,16 +56,16 @@ export function readMode(raw: string | null): ThemeMode {
   return isThemeMode(raw) ? raw : 'system'
 }
 
-/** Parse the stored accent. Missing or unknown values stay on navy. */
+/** Parse the stored accent. Missing or unknown values fall back to ink. */
 export function readAccent(raw: string | null): AccentId {
-  if (raw == null) return 'navy'
+  if (raw == null) return 'ink'
   try {
     const value: unknown = JSON.parse(raw)
     if (isAccentId(value)) return value
   } catch {
     /* not JSON — fall through */
   }
-  return isAccentId(raw) ? raw : 'navy'
+  return isAccentId(raw) ? raw : 'ink'
 }
 
 export function resolveAppearance(mode: ThemeMode, prefersDark: boolean): ResolvedTheme {
@@ -102,5 +103,5 @@ export function themeBootScript(): string {
   const accentKey = JSON.stringify(ACCENT_KEY)
   const light = JSON.stringify(PAPER.light)
   const dark = JSON.stringify(PAPER.dark)
-  return `try{var q=matchMedia('(prefers-color-scheme: dark)');var paint=function(){var mode='system';try{mode=JSON.parse(localStorage.getItem(${modeKey}))}catch(e){}if(mode!=='light'&&mode!=='dark'&&mode!=='system')mode='system';var accent='navy';try{accent=JSON.parse(localStorage.getItem(${accentKey}))}catch(e){}if(accent!=='navy'&&accent!=='teal'&&accent!=='forest'&&accent!=='slate'&&accent!=='amber')accent='navy';var tone=mode==='system'?(q.matches?'dark':'light'):mode;var root=document.documentElement;root.setAttribute('data-theme',tone);root.setAttribute('data-accent',accent);root.setAttribute('data-mode',mode);var color=tone==='dark'?${dark}:${light};document.querySelectorAll('meta[name="theme-color"]').forEach(function(el){el.setAttribute('content',color)})};paint();q.addEventListener('change',paint)}catch(e){}`
+  return `try{var q=matchMedia('(prefers-color-scheme: dark)');var paint=function(){var mode='system';try{mode=JSON.parse(localStorage.getItem(${modeKey}))}catch(e){}if(mode!=='light'&&mode!=='dark'&&mode!=='system')mode='system';var accent='ink';try{accent=JSON.parse(localStorage.getItem(${accentKey}))}catch(e){}if(accent!=='ink'&&accent!=='navy'&&accent!=='teal'&&accent!=='forest'&&accent!=='slate'&&accent!=='amber')accent='ink';var tone=mode==='system'?(q.matches?'dark':'light'):mode;var root=document.documentElement;root.setAttribute('data-theme',tone);root.setAttribute('data-accent',accent);root.setAttribute('data-mode',mode);var color=tone==='dark'?${dark}:${light};document.querySelectorAll('meta[name="theme-color"]').forEach(function(el){el.setAttribute('content',color)})};paint();q.addEventListener('change',paint)}catch(e){}`
 }

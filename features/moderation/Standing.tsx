@@ -117,7 +117,7 @@ export function RemovedGroupNotice({ id, fallback }: { id: string; fallback: Rea
     <div role="alert" className="mx-auto flex max-w-2xl items-start gap-3 rounded-2xl border border-red-500/40 bg-red-50 px-4 py-4 text-sm text-red-950 dark:bg-red-950/30 dark:text-red-100">
       <ShieldAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <h1 className="text-lg font-bold">{t('groupRemoved', { name: g.name })}</h1>
+        <h1 className="text-lg font-semibold">{t('groupRemoved', { name: g.name })}</h1>
         <p>{g.reason}</p>
         <p className="opacity-80">{t('groupRemovedLead')}</p>
         {g.canAppeal ? <AppealForm entityType="GROUP" entityId={g.id} onDone={() => void refetch()} /> : <p className="font-medium">{t('appealed')}</p>}

@@ -172,7 +172,7 @@ function SectionList({ pathname, idPrefix, onNavigate, role, verified }: { pathn
         if (!items.length) return null
         return (
         <div key={group} className="flex flex-col gap-0.5">
-          <p id={`${idPrefix}-${group}`} className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+          <p id={`${idPrefix}-${group}`} className="px-3 pb-1 text-xs font-semibold text-muted">
             {t(`groups.${group}`)}
           </p>
           <ul aria-labelledby={`${idPrefix}-${group}`} className="flex flex-col gap-0.5">

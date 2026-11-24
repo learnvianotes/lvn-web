@@ -64,12 +64,12 @@ export function FocusMode() {
 
   return (
     <section aria-labelledby="focus-mode" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="focus-mode" className="text-lg font-bold">
+      <h2 id="focus-mode" className="text-lg font-semibold">
         {t('title')}
       </h2>
       {session && phase ? (
         <div className="flex flex-col gap-3">
-          <p role="timer" aria-live="off" className="text-4xl font-extrabold tabular-nums">
+          <p role="timer" aria-live="off" className="text-4xl font-semibold tabular-nums">
             {clock(phase.left)}
           </p>
           <p className="text-sm text-muted">{phase.phase === 'FOCUS' ? t('focusing', { minutes: session.plannedMinutes }) : phase.phase === 'BREAK' ? t('resting') : t('done')}</p>
@@ -207,7 +207,7 @@ export function Buddies() {
   if (!list) return error && !data ? <LoadFailed message={t('loadFailed')} onRetry={refetch} /> : null
   return (
     <section aria-labelledby="rhythm-buddies" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="rhythm-buddies" className="text-lg font-bold">
+      <h2 id="rhythm-buddies" className="text-lg font-semibold">
         {t('title')}
       </h2>
       <p className="text-sm text-muted">{t('lead')}</p>
@@ -233,7 +233,7 @@ export function Buddies() {
             <span className="flex flex-col">
               <span className="font-medium">
                 {b.user.displayName}
-                {b.studyingNow ? <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-fg">{t('studyingNow')}</span> : null}
+                {b.studyingNow ? <span className="ml-2 rounded-[10px] bg-accent px-2 py-0.5 text-xs font-semibold text-accent-fg">{t('studyingNow')}</span> : null}
               </span>
               <span className="text-muted">
                 {b.studyingNow && b.topicTitle ? `${t('onTopic', { title: b.topicTitle })} · ` : ''}

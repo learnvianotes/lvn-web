@@ -170,11 +170,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-sky-600 bg-sky-50 text-sky-900')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-sky-600 bg-sky-50 text-sky-900')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
               <Notebook className="size-4" aria-hidden />
               {t('pages')}
             </button>
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
               <ListTree className="size-4" aria-hidden />
               {t('contents')}
             </button>
@@ -210,7 +210,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         <div className="flex flex-col gap-2 px-1">
           <textarea
             rows={1}
-            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
+            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-semibold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
             placeholder={t('untitled')}
             aria-label={t('title')}
             value={title}
@@ -459,7 +459,7 @@ function CardHandle({ editor }: { editor: Editor }) {
               <MenuItem icon={Copy} label={t('duplicateCard')} onClick={() => act(() => duplicateCard(editor))} />
               {convertible ? (
                 <>
-                  <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                  <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold text-muted">
                     <WandSparkles className="size-3.5" aria-hidden />
                     {t('turnInto')}
                   </p>
@@ -582,7 +582,7 @@ function Outline({ editor, onPick }: { editor: Editor | null; onPick?: () => voi
   })
   return (
     <div className="flex flex-col gap-1">
-      <p className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('outline')}</p>
+      <p className="px-2 text-xs font-semibold text-muted">{t('outline')}</p>
       {headings?.length ? (
         headings.map((h) => (
           <button

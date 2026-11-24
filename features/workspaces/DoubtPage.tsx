@@ -55,7 +55,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
           </span>
         </div>
         <ContentModeration entityType="DOUBT" item={d} onAppealed={() => void refetch()} />
-        <h1 className="text-2xl font-extrabold tracking-tight">{d.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{d.title}</h1>
         {d.repoRef ? <code className="w-fit rounded bg-surface-2 px-2 py-1 text-sm">{d.repoRef}</code> : null}
         <RichDoc doc={d.body as Doc} className="text-sm" />
         <div className="flex flex-wrap gap-2">
@@ -90,7 +90,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
         <AnswerList doubtId={id} compact />
       </section>
       <section aria-label={t('answersTitle')} className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">{t('answers', { count: d.answers.length })}</h2>
+        <h2 className="text-lg font-semibold">{t('answers', { count: d.answers.length })}</h2>
         {d.answers.map((a) => (
           <article key={a.id} className={`flex flex-col gap-1.5 rounded-2xl border bg-surface px-4 py-3 ${a.byMentor ? 'border-accent/50' : 'border-border'}`}>
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -98,7 +98,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
                 {a.author.displayName}
               </Link>
               {a.byMentor ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
+                <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
                   <GraduationCap className="size-3" aria-hidden />
                   {t('mentor')}
                 </span>

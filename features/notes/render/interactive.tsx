@@ -112,7 +112,7 @@ export function QuizCardView({ id, content }: { id?: string; content: { question
         <button
           type="button"
           disabled={!picked.length}
-          className="self-start rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-fg disabled:opacity-50"
+          className="self-start rounded-[10px] bg-accent px-4 py-1.5 text-sm font-semibold text-accent-fg disabled:opacity-50"
           onClick={() => {
             setChecked(true)
             const correct = picked.length === content.correct.length && picked.every((p) => content.correct.includes(p))

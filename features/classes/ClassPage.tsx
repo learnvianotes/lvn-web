@@ -123,15 +123,15 @@ function Header({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
         <span aria-hidden>·</span>
         <Users className="size-4" aria-hidden />
         {t('members', { count: classroom.memberCount })}
-        {classroom.viewerRole ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
+        {classroom.viewerRole ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
       </div>
-      <h1 className="text-2xl font-extrabold tracking-tight">{classroom.name}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{classroom.name}</h1>
       {classroom.description ? <p className="whitespace-pre-line text-muted">{classroom.description}</p> : null}
       {classroom.joinCode ? (
         <div className="flex flex-col gap-1 rounded-2xl bg-surface-2 p-3">
           <span className="text-xs font-semibold text-muted">{t('code')}</span>
           <div className="flex flex-wrap items-center gap-2">
-            <span data-testid="class-code" className="font-mono text-xl font-bold tracking-widest">
+            <span data-testid="class-code" className="font-mono text-xl font-semibold">
               {classroom.joinCode}
             </span>
             <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => void copyLink()}>

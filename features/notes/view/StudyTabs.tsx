@@ -39,7 +39,7 @@ function Results({ noteId, study, tab, canEdit, onAddedToNote }: { noteId: strin
   if (!mine.length) return null
   return (
     <section aria-label={t('yourResults')} className="flex flex-col gap-3">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('yourResults')}</h3>
+      <h3 className="text-sm font-semibold text-muted">{t('yourResults')}</h3>
       {mine.map((a) => (
         <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void study.ai.run(a.task, a.language)} onAddedToNote={onAddedToNote} />
       ))}
@@ -95,7 +95,7 @@ export function CardsTab({ kind, noteId, noteTitle, cards, study, canEdit, reade
     <>
       {own.length ? (
         <section aria-label={t('inNote')} className="flex min-w-0 max-w-full flex-col gap-3">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('inNote')}</h3>
+          <h3 className="text-sm font-semibold text-muted">{t('inNote')}</h3>
           {own.map((c) => (
             <div key={c.id} className="min-w-0 max-w-full rounded-2xl border border-border bg-surface p-4">
               <CardView id={`tab-${c.id}`} type={c.type as CardType} content={c.content} />

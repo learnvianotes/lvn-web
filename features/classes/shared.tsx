@@ -21,7 +21,7 @@ export function ClassCardView({ classroom }: { classroom: ClassroomCardFragment 
       <span className="mt-auto flex items-center gap-1.5 text-xs text-muted">
         <Users className="size-3.5" aria-hidden />
         {t('members', { count: classroom.memberCount })}
-        {classroom.viewerRole ? <span className="ml-auto rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
+        {classroom.viewerRole ? <span className="ml-auto rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
       </span>
     </Link>
   )

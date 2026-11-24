@@ -108,7 +108,7 @@ export function ShowcaseSetting({ group }: { group: GroupDetailFragment }) {
         })
       }}
     >
-      <h3 className="font-bold">{t('showcase')}</h3>
+      <h3 className="font-semibold">{t('showcase')}</h3>
       <p className="text-sm text-muted">{t('showcaseHint')}</p>
       <label className="flex flex-col gap-1.5">
         <span className="sr-only">{t('showcase')}</span>

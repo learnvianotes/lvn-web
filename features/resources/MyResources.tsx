@@ -26,7 +26,7 @@ export function MyResources() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-extrabold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             {t("title")}
           </h1>
           <p className="text-sm text-muted">{t("lead")}</p>
@@ -59,7 +59,7 @@ export function MyResources() {
               className="flex flex-col gap-1 rounded-2xl border border-border bg-surface p-4 hover:border-accent"
             >
               <span className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+                <span className="text-xs font-semibold text-accent">
                   {t(`type.${r.type}`)}
                 </span>
                 <span

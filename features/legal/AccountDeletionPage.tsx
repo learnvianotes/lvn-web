@@ -13,7 +13,7 @@ export function AccountDeletionPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">Delete your account</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Delete your account</h1>
         <p className="leading-relaxed text-muted">
           You can read this page without an account. The website and the app use the same screens. Deleting the
           account is done while you are signed in, or by email from the address on the account.
@@ -21,7 +21,7 @@ export function AccountDeletionPage() {
       </header>
 
       <section className="flex flex-col gap-3" aria-labelledby="delete-in-app">
-        <h2 id="delete-in-app" className="text-xl font-bold">
+        <h2 id="delete-in-app" className="text-xl font-semibold">
           On the website and in the app
         </h2>
         <ol className="flex list-decimal flex-col gap-2 pl-5 leading-relaxed">
@@ -56,7 +56,7 @@ export function AccountDeletionPage() {
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="delete-by-email">
-        <h2 id="delete-by-email" className="text-xl font-bold">
+        <h2 id="delete-by-email" className="text-xl font-semibold">
           By email
         </h2>
         <p className="leading-relaxed">
@@ -72,7 +72,7 @@ export function AccountDeletionPage() {
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="what-is-deleted">
-        <h2 id="what-is-deleted" className="text-xl font-bold">
+        <h2 id="what-is-deleted" className="text-xl font-semibold">
           What is deleted, and what is kept
         </h2>
         <p className="leading-relaxed">After the {RETENTION.deletionGraceDays} days, we delete:</p>
@@ -91,10 +91,10 @@ export function AccountDeletionPage() {
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="delete-part">
-        <h2 id="delete-part" className="text-xl font-bold">
+        <h2 id="delete-part" className="text-xl font-semibold">
           Delete a note or an upload, and keep the account
         </h2>
-        <h3 className="text-base font-bold">A note</h3>
+        <h3 className="text-base font-semibold">A note</h3>
         <ol className="flex list-decimal flex-col gap-2 pl-5 leading-relaxed">
           <li>
             Open the note from <strong>My Notes</strong>.
@@ -111,7 +111,7 @@ export function AccountDeletionPage() {
           confirm “Delete this note for good? This cannot be undone.” After {RETENTION.trashDays} days a note still in
           the trash is deleted for good, including the files in it.
         </p>
-        <h3 className="text-base font-bold">An upload</h3>
+        <h3 className="text-base font-semibold">An upload</h3>
         <ul className="flex list-disc flex-col gap-2 pl-5 leading-relaxed">
           <li>
             A picture, video, recording or file that is a card in a note: open <strong>Card options</strong> on that

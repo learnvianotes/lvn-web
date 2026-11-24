@@ -85,7 +85,7 @@ export function ClassPerformance({ classroomId }: { classroomId: string }) {
           <li key={tp.key} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
             <span className="font-medium">
               {tp.title}
-              {tp.hard ? <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('hard')}</span> : null}
+              {tp.hard ? <span className="ml-2 rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('hard')}</span> : null}
             </span>
             <span className="text-muted">{t('topicLine', { value: Math.round(tp.accuracy * 100), answers: tp.answers })}</span>
           </li>
@@ -120,7 +120,7 @@ function ClassGoal({ classroomId, goal, staff }: { classroomId: string; goal: Go
       {goal ? (
         <>
           <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label={t('title')} aria-valuemin={0} aria-valuemax={goal.target} aria-valuenow={Math.min(goal.progress, goal.target)}>
-            <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${Math.round(Math.min(goal.progress / goal.target, 1) * 100)}%` }} />
+            <div className="h-full rounded-[10px] bg-accent transition-[width] duration-300" style={{ width: `${Math.round(Math.min(goal.progress / goal.target, 1) * 100)}%` }} />
           </div>
           <p className="text-sm">{goal.reached ? t('reached', { progress: goal.progress, target: goal.target }) : t('progress', { progress: goal.progress, target: goal.target })}</p>
           <p className="text-xs text-muted">{t('share', { share: goal.sharePerStudent })}</p>

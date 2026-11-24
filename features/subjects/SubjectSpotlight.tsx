@@ -17,8 +17,8 @@ export function SubjectSpotlight({ subjects }: { subjects: SubjectSummary[] }) {
     <section aria-labelledby="home-subjects" className="flex flex-col gap-3 rounded-3xl border border-sky-700/30 bg-sky-50 p-4 dark:bg-sky-950/30">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-200">{t('homeKicker')}</p>
-          <h2 id="home-subjects" className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
+          <p className="text-xs font-semibold text-sky-800 dark:text-sky-200">{t('homeKicker')}</p>
+          <h2 id="home-subjects" className="flex items-center gap-2 text-xl font-semibold tracking-tight">
             <BookOpen className="size-5 text-sky-700" aria-hidden />
             {t('title')}
           </h2>

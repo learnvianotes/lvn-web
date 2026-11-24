@@ -12,7 +12,7 @@ export function AiResultPanel({ children, empty, className }: { children?: React
   const t = useTranslations('ai')
   return (
     <section aria-label={t('results')} className={cn('flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4', className)}>
-      <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('results')}</h3>
+      <h3 className="text-sm font-semibold text-muted">{t('results')}</h3>
       {children}
       {empty ? <p className="text-sm text-muted">{t('noResults')}</p> : null}
     </section>

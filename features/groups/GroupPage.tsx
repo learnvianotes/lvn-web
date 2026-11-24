@@ -142,9 +142,9 @@ function Header({ group, onChanged }: { group: GroupDetailFragment; onChanged: (
         <span aria-hidden>·</span>
         <Users className="size-4" aria-hidden />
         {t('members', { count: group.memberCount })}
-        {group.viewerRole ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
+        {group.viewerRole ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
       </div>
-      <h1 className="text-2xl font-extrabold tracking-tight">{group.name}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{group.name}</h1>
       {group.description ? <p className="whitespace-pre-line text-muted">{group.description}</p> : null}
       {group.moderationWarning ? <ModerationBanner entityType="GROUP" entityId={group.id} moderation={{ state: 'OK', reason: group.moderationWarning, canAppeal: false }} /> : null}
       {group.type === 'PROJECT' ? <WorkspaceHeader group={group} onChanged={onChanged} /> : null}
@@ -309,7 +309,7 @@ function PostItem({ post, onPin, onDelete, onChanged }: { post: GroupPostFieldsF
           {ago(post.createdAt)}
           {post.editedAt ? ` · ${t('edited')}` : ''}
         </span>
-        {post.pinned ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('pinned')}</span> : null}
+        {post.pinned ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('pinned')}</span> : null}
         <span className="ml-auto flex gap-1">
           {post.viewerCan.pin ? (
             <button type="button" onClick={onPin} aria-label={post.pinned ? t('unpin') : t('pin')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-fg">

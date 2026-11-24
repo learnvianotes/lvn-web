@@ -165,7 +165,7 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
           className="flex flex-col gap-2.5 text-sm leading-relaxed"
           cite={(n) =>
             cited.has(n) ? (
-              <a href={`#${anchor(n)}`} className="mx-0.5 inline-flex min-w-5 items-center justify-center rounded-md bg-accent-soft px-1 align-super text-[0.7em] font-bold text-accent no-underline hover:bg-accent hover:text-accent-fg" aria-label={t('source', { n })}>
+              <a href={`#${anchor(n)}`} className="mx-0.5 inline-flex min-w-5 items-center justify-center rounded-md bg-accent-soft px-1 align-super text-[0.7em] font-semibold text-accent no-underline hover:bg-accent hover:text-accent-fg" aria-label={t('source', { n })}>
                 {n}
               </a>
             ) : (
@@ -181,12 +181,12 @@ export function AnswerCard({ answer: a, compact }: { answer: Answer; compact?: b
       ) : null}
       {a.status === 'READY' && a.sources.length ? (
         <section aria-label={t('sources')} className="flex flex-col gap-2">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-muted">{t('sources')}</h4>
+          <h4 className="text-xs font-semibold text-muted">{t('sources')}</h4>
           <ol className="flex flex-col gap-2">
             {a.sources.map((s) => (
               <li key={s.n} id={anchor(s.n)} className="scroll-mt-24">
                 <Link href={`/notes/${s.noteId}`} className="flex gap-3 rounded-xl border border-border bg-bg p-3 text-sm transition hover:border-accent">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-md bg-accent-soft text-xs font-bold text-accent">{s.n}</span>
+                  <span className="grid size-6 shrink-0 place-items-center rounded-md bg-accent-soft text-xs font-semibold text-accent">{s.n}</span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 font-semibold">
                       <BookOpen className="size-3.5 text-muted" aria-hidden />
@@ -234,7 +234,7 @@ export function AskPage({ question }: { question?: string } = {}) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <Sparkles className="size-6 text-accent" aria-hidden />
           {t('title')}
         </h1>
@@ -258,7 +258,7 @@ export function AskPage({ question }: { question?: string } = {}) {
       <p className="-mt-3 text-xs text-muted">{t(`scopeHint.${scope}`)}</p>
       <AskForm scope={scope} initialQuestion={question} />
       <section aria-label={t('history')} className="flex flex-col gap-3">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('history')}</h2>
+        <h2 className="text-sm font-semibold text-muted">{t('history')}</h2>
         <AnswerList emptyText={t('none')} />
       </section>
     </div>

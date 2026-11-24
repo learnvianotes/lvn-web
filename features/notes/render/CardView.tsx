@@ -36,7 +36,7 @@ export function CardView({ id, type, content, highlighted, onAnchor }: { id: str
       case 'heading': {
         const H = `h${c.level}` as 'h1' | 'h2' | 'h3'
         return (
-          <H id={`card-${id}`} className={cn('scroll-mt-20 font-bold tracking-tight', c.level === 1 ? 'text-3xl' : c.level === 2 ? 'text-2xl' : 'text-xl')}>
+          <H id={`card-${id}`} className={cn('scroll-mt-20 font-semibold tracking-tight', c.level === 1 ? 'text-3xl' : c.level === 2 ? 'text-2xl' : 'text-xl')}>
             <InlineText content={c.content as Inline} />
           </H>
         )

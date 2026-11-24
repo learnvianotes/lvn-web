@@ -27,7 +27,7 @@ export function DeleteAccount() {
 
   return (
     <section id="delete-account" aria-labelledby="delete-account-heading" className="flex scroll-mt-20 flex-col gap-4 rounded-2xl border border-red-500/40 bg-surface p-5">
-      <h2 id="delete-account-heading" className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400">
+      <h2 id="delete-account-heading" className="flex items-center gap-2 text-lg font-semibold text-red-700 dark:text-red-400">
         <TriangleAlert className="size-5" aria-hidden />
         {t('heading')}
       </h2>

@@ -49,7 +49,7 @@ export function Exams() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       <div role="tablist" aria-label={t('tabs.label')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
@@ -123,7 +123,7 @@ function StudyPlan({ exams }: { exams: Exam[] }) {
     <>
       <section aria-labelledby="plan-today" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="plan-today" className="text-lg font-bold">
+          <h2 id="plan-today" className="text-lg font-semibold">
             {t('today')}
           </h2>
           {next ? (
@@ -175,7 +175,7 @@ function ExamProgress({ exam }: { exam: Exam }) {
   const t = useTranslations('exams')
   return (
     <section aria-label={exam.name} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 className="text-lg font-bold">
+      <h2 className="text-lg font-semibold">
         <Link href={`/exams/${exam.id}`} className="hover:underline">
           {exam.name}
         </Link>
@@ -249,7 +249,7 @@ export function ReadinessBar({ readiness, targetToday }: { readiness: number; ta
   const t = useTranslations('exams')
   return (
     <div role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness} aria-label={t('readinessLabel', { value: readiness, target: targetToday })} className="relative h-2.5 w-full rounded-full bg-surface-2">
-      <div className="h-full rounded-full bg-accent transition-[width] duration-700" style={{ width: `${readiness}%` }} />
+      <div className="h-full rounded-[10px] bg-accent transition-[width] duration-700" style={{ width: `${readiness}%` }} />
       <div aria-hidden className="absolute -top-1 h-4.5 w-0.5 rounded bg-fg/60" style={{ left: `calc(${targetToday}% - 1px)` }} />
     </div>
   )
@@ -263,7 +263,7 @@ export function ExamCard({ exam }: { exam: Exam }) {
   return (
     <article aria-label={exam.name} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-bold">
+        <h2 className="text-lg font-semibold">
           <Link href={`/exams/${exam.id}`} className="hover:underline">
             {exam.name}
           </Link>
@@ -314,7 +314,7 @@ export function ExamDetail({ id }: { id: string }) {
       </Link>
       <header className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight">{exam.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{exam.name}</h1>
           <span className="text-sm text-muted">
             {format.dateTime(new Date(`${exam.date}T12:00:00Z`), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })} · {exam.past ? t('past') : t('daysLeft', { days: exam.daysLeft })}
           </span>
@@ -347,14 +347,14 @@ export function ExamDetail({ id }: { id: string }) {
         </section>
       ) : null}
       <section aria-labelledby="exam-topics" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-        <h2 id="exam-topics" className="text-lg font-bold">
+        <h2 id="exam-topics" className="text-lg font-semibold">
           {t('mastery')}
         </h2>
         <p className="text-sm text-muted">{t('masteryHelp')}</p>
         <TopicMastery exam={exam} />
       </section>
       <section aria-labelledby="exam-plan" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-        <h2 id="exam-plan" className="text-lg font-bold">
+        <h2 id="exam-plan" className="text-lg font-semibold">
           {t('plan')}
         </h2>
         <p className="text-sm text-muted">{t('planHelp')}</p>
@@ -395,7 +395,7 @@ function TopicMastery({ exam }: { exam: Exam }) {
             </span>
           </div>
           <div aria-hidden className="h-1.5 rounded-full bg-surface-2">
-            <div className="h-full rounded-full bg-accent/70" style={{ width: `${pct(tp.mastery)}%` }} />
+            <div className="h-full rounded-[10px] bg-accent/70" style={{ width: `${pct(tp.mastery)}%` }} />
           </div>
         </li>
       ))}
@@ -467,7 +467,7 @@ function TopicPicker({ picked, onChange }: { picked: PickedTopic[]; onChange: (t
       {picked.length ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((p) => (
-            <li key={p.id} className="flex items-center gap-1 rounded-full bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
+            <li key={p.id} className="flex items-center gap-1 rounded-[10px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
               {p.title}
               <button type="button" aria-label={t('removeTopic', { title: p.title })} className="rounded-full px-2 hover:bg-accent/10" onClick={() => onChange(picked.filter((x) => x.id !== p.id))}>
                 ×
@@ -518,7 +518,7 @@ export function WeakTopics() {
   if (!weak) return null
   return (
     <section aria-labelledby="weak-topics" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-      <h2 id="weak-topics" className="text-lg font-bold">
+      <h2 id="weak-topics" className="text-lg font-semibold">
         {t('weak')}
       </h2>
       <p className="text-sm text-muted">{weak.length ? t('weakHelp') : t('noWeak')}</p>

@@ -41,17 +41,17 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
         {note.topics.length ? (
           <ul className="flex flex-wrap gap-1.5 text-xs" aria-label={t('topics')}>
             {note.topics.map((topic) => (
-              <li key={topic.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-muted">
+              <li key={topic.id} className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1 text-muted">
                 <BookBookmark className="size-3.5" aria-hidden />
                 {topic.title} · {topic.subject.title}
               </li>
             ))}
           </ul>
         ) : null}
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-[2.75rem]">{note.title || t('untitled')}</h1>
+        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-[2.75rem]">{note.title || t('untitled')}</h1>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
           <span className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-full text-sm font-bold text-white shadow-sm" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+            <span className="grid size-9 place-items-center rounded-full text-sm font-semibold text-white shadow-sm" style={{ background: accent.from }} aria-hidden>
               {note.owner.displayName.charAt(0).toUpperCase()}
             </span>
             <span>
@@ -99,7 +99,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
               <Sparkles className="size-4" aria-hidden />
               {t('ctaKicker')}
             </p>
-            <p className="text-xl font-bold">{t('ctaTitle')}</p>
+            <p className="text-xl font-semibold">{t('ctaTitle')}</p>
             <p className="text-sm text-inverse-muted">{t('ctaLead')}</p>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -55,7 +55,7 @@ export function AdminPlans() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
           <p className="text-sm font-medium">{t('priceNote')}</p>
         </div>
@@ -73,10 +73,10 @@ export function AdminPlans() {
                   <h2 className="text-lg font-semibold">{plan.name}</h2>
                   <p className="font-mono text-xs text-muted">{plan.code}</p>
                 </div>
-                <p className="text-xl font-extrabold tracking-tight">{formatPlanPrice(plan.priceMinor, plan.currency, plan.interval, per)}</p>
+                <p className="text-xl font-semibold tracking-tight">{formatPlanPrice(plan.priceMinor, plan.currency, plan.interval, per)}</p>
               </div>
               <p className="flex flex-wrap gap-2 text-xs">
-                <span className={plan.active ? 'rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
+                <span className={plan.active ? 'rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
                   {plan.active ? t('active') : t('inactive')}
                 </span>
                 <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('subscribers', { count: plan.subscriberCount })}</span>

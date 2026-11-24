@@ -27,7 +27,7 @@ function QuizColumn({ title, items }: { title: string; items: QuizLink[] }) {
   if (!items.length) return null
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{title}</h2>
+      <h2 className="text-sm font-semibold text-muted">{title}</h2>
       <ul className="flex flex-col gap-2">
         {items.map((quiz) => (
           <li key={quiz.id}>

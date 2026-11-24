@@ -62,7 +62,7 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
           {ideas.map((idea, i) => (
             <li key={idea.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-center gap-2 text-sm">
-                <span className="grid size-6 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent" aria-label={t('rank', { n: i + 1 })}>
+                <span className="grid size-6 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent" aria-label={t('rank', { n: i + 1 })}>
                   {i + 1}
                 </span>
                 <Lightbulb className="size-4 text-amber-500" aria-hidden />

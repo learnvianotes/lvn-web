@@ -41,7 +41,7 @@ export function ContestPage({ id }: { id: string }) {
         </Link>
       </nav>
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight">{c.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
         <p className="text-sm text-muted">
           {[c.subjectTitle, t('questions', { count: c.questionCount }), t('minutes', { count: c.minutes }), c.participantsMilestone ? t('participants', { count: c.participantsMilestone }) : null].filter(Boolean).join(' · ')}
         </p>
@@ -104,7 +104,7 @@ function Attempt({ attempt: a, onOver }: { attempt: ContestAttemptFieldsFragment
     <section aria-label={t('attempt')} className="flex flex-col gap-4">
       <div className="sticky top-16 z-10 flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm">
         <span className="text-sm text-muted">{t('answered', { answered, total: a.questions.length })}</span>
-        <span role="timer" aria-live="off" aria-label={t('timeLeft')} className={cn('font-mono text-lg font-bold tabular-nums', left < 60 && 'text-red-600 dark:text-red-400')}>
+        <span role="timer" aria-live="off" aria-label={t('timeLeft')} className={cn('font-mono text-lg font-semibold tabular-nums', left < 60 && 'text-red-600 dark:text-red-400')}>
           {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
         </span>
       </div>
@@ -150,7 +150,7 @@ function Results({ attempt: a, subject, settings }: { attempt: ContestAttemptFie
   return (
     <div className="flex flex-col gap-6">
       <section aria-label={t('results')} className="flex flex-col gap-2 rounded-3xl border border-border bg-surface p-5">
-        <p className="text-3xl font-extrabold">{t('score', { score: a.score ?? 0, total: a.total })}</p>
+        <p className="text-3xl font-semibold">{t('score', { score: a.score ?? 0, total: a.total })}</p>
         {a.personalBest !== null && a.personalBest !== undefined ? <p className="text-sm text-muted">{subject ? t('bestOn', { best: a.personalBest, subject }) : t('best', { best: a.personalBest })}</p> : null}
         {a.band ? <p className="text-sm font-semibold text-accent">{t(`band.${a.band}`)}</p> : null}
         {settings.canShowBands ? (

@@ -19,7 +19,7 @@ export default async function SubjectsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="max-w-2xl text-muted">{t('lead')}</p>
       </header>
       {subjects.length ? <SubjectBrowser subjects={subjects} initialQuery={q ?? ''} /> : <p className="text-muted">{t('unavailable')}</p>}

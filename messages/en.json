@@ -49,36 +49,51 @@
     "cta": "Browse subjects",
     "categories": "Subjects",
     "hero": {
-      "eyebrow": "Built by students, learn together",
-      "titleLead": "Your Learning Community for a",
-      "titleAccent": "Brighter Tomorrow",
-      "lead": "Create notes, share knowledge, prepare for exams, learn with AI and grow together.",
-      "start": "Get Started Free",
+      "eyebrow": "",
+      "titleLead": "Learn from",
+      "titleAccent": "your own notes and PDFs",
+      "lead": "Write notes, read PDFs and record lectures in one place. Nova answers your questions from that material and shows the page each answer came from. Built for CSE and B.Tech first, open to every course and profession.",
+      "start": "Create a free account",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
       "openHome": "Open your home",
-      "account": "Your account"
+      "account": "Your account",
+      "preview": {
+        "file": "Unit 3 · CPU scheduling.pdf",
+        "page": "Page 14 of 42",
+        "heading": "Round Robin scheduling",
+        "lines": [
+          "Each process gets a fixed slice of CPU time, the time quantum.",
+          "When the quantum ends, the process moves to the back of the ready queue.",
+          "A small quantum gives quick response but more context switches.",
+          "A large quantum behaves like first come, first served."
+        ],
+        "question": "Why does Round Robin need a time quantum?",
+        "answer": "So no process holds the CPU for long. Each one runs for one quantum, then waits its turn again, which keeps response time short for everyone.",
+        "cite": "p. 14",
+        "askedBy": "Asked in Operating Systems"
+      }
     },
     "features": {
       "label": "What you can do",
       "notes": {
-        "title": "Smart Notes",
+        "title": "Notes",
         "lead": "Cards, code and pictures"
       },
       "ai": {
-        "title": "AI Learning",
-        "lead": "Ask about your notes"
+        "title": "Ask Nova",
+        "lead": "Answers from your PDFs, with the page"
       },
       "groups": {
-        "title": "Study Groups",
-        "lead": "Learn with peers"
+        "title": "Study groups",
+        "lead": "Learn with classmates"
       },
       "exams": {
-        "title": "Exam Prep",
-        "lead": "A plan for the day"
+        "title": "Exam plan",
+        "lead": "What to revise today"
       },
       "quizzes": {
-        "title": "Quizzes & Flashcards",
+        "title": "Quizzes and flashcards",
         "lead": "Remember what you read"
       },
       "community": {
@@ -624,7 +639,7 @@
       "showHint": "Show a hint",
       "showAnswer": "Show the answer",
       "quiz": "Quiz",
-      "correct": "Correct!",
+      "correct": "Correct",
       "notQuite": "Not quite.",
       "tryAgain": "Try again",
       "check": "Check",
@@ -931,7 +946,7 @@
     "queue": {
       "title": "Moderation queue",
       "lead": "Open reports and appeals, oldest first. Notes held on their way to the public are here too.",
-      "empty": "Nothing to review. Thank you!",
+      "empty": "Nothing to review",
       "more": "Show more",
       "untitled": "Untitled note",
       "by": "by {name} (@{handle})",
@@ -2634,9 +2649,9 @@
   "homeDashboard": {
     "title": "Home",
     "greeting": {
-      "morning": "Good morning, {name}! 👋",
-      "afternoon": "Good afternoon, {name}! 👋",
-      "evening": "Good evening, {name}! 👋"
+      "morning": "Today",
+      "afternoon": "Today",
+      "evening": "Today"
     },
     "greetingAnon": "Good to see you",
     "lead": "Keep learning. Small steps lead to big achievements.",
@@ -2653,8 +2668,8 @@
     "viewPlan": "View Plan",
     "weeklyGoal": "Weekly goal",
     "ofDays": "{done} / {target} days",
-    "goalMet": "Goal met. Well done!",
-    "keepGoing": "Keep going!",
+    "goalMet": "Goal met for today",
+    "keepGoing": "Keep going",
     "today": "Today",
     "recommended": "Recommended for you",
     "seeAll": "See all",
@@ -2769,7 +2784,7 @@
       "sort": "Sort",
       "popular": "Most saved",
       "newest": "Newest",
-      "none": "Nothing here yet. Add the first one!",
+      "none": "Nothing here yet. Add the first one.",
       "more": "Show more"
     },
     "recommend": {

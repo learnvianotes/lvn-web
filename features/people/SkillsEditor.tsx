@@ -73,7 +73,7 @@ export function SkillsEditor() {
         }}
       >
         <header className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('editTitle')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('editTitle')}</h1>
           <Link href={`/u/${viewer.handle}`} className="text-sm font-medium text-accent hover:underline">
             {t('seeProfile')}
           </Link>

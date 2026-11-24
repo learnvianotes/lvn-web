@@ -190,7 +190,7 @@ export function NotesHome() {
         </nav>
         <section aria-labelledby="folders-heading" className="flex flex-col gap-0.5">
           <div className="flex items-center justify-between px-3 pb-1">
-            <h2 id="folders-heading" className="text-xs font-semibold uppercase tracking-wider text-muted">
+            <h2 id="folders-heading" className="text-xs font-semibold text-muted">
               {t('folders')}
             </h2>
             <button type="button" className="rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-accent" aria-label={t('newFolder')} title={t('newFolder')} onClick={() => void addFolder(null)}>
@@ -222,7 +222,7 @@ export function NotesHome() {
         </section>
         {tags.length ? (
           <section aria-labelledby="tags-heading" className="flex flex-col gap-1.5 px-1">
-            <h2 id="tags-heading" className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">
+            <h2 id="tags-heading" className="px-2 text-xs font-semibold text-muted">
               {t('tags')}
             </h2>
             <div className="flex flex-wrap gap-1.5">
@@ -245,9 +245,9 @@ export function NotesHome() {
           <NightSky as="section" className="rounded-3xl px-6 py-7 sm:px-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex animate-rise flex-col gap-1.5">
-                <p className="text-xs font-bold uppercase tracking-wider text-inverse-muted">{t('kicker')}</p>
+                <p className="text-xs font-semibold text-inverse-muted">{t('kicker')}</p>
                 <p className="text-sm font-medium text-inverse-muted">{t(`greeting.${daypart()}`, { name: firstName })}</p>
-                <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <h1 id="notes-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   {all.length ? t('heroWithNotes') : t('heroFirst')}
                 </h1>
                 <div className="mt-3 flex flex-wrap gap-2 md:hidden">
@@ -278,11 +278,11 @@ export function NotesHome() {
                   </Link>
                 ) : null}
               </div>
-              <NotebookArt className="hidden w-36 shrink-0 drop-shadow-xl sm:block" />
+              <NotebookArt className="hidden w-36 shrink-0 sm:block" />
             </div>
           </NightSky>
         ) : (
-          <h1 id="notes-heading" className="text-2xl font-extrabold tracking-tight">
+          <h1 id="notes-heading" className="text-2xl font-semibold tracking-tight">
             {heading}
           </h1>
         )}
@@ -329,7 +329,7 @@ export function NotesHome() {
                     type="button"
                     disabled={creating.loading}
                     onClick={() => void newNote(key)}
-                    className="group flex animate-rise flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.98]"
+                    className="group flex animate-rise flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10 active:scale-[0.98]"
                     style={{ animationDelay: `${60 * i}ms` }}
                   >
                     <span className="grid size-9 place-items-center rounded-xl bg-accent-soft text-accent transition group-hover:bg-accent group-hover:text-accent-fg">
@@ -351,7 +351,7 @@ export function NotesHome() {
               <label className="relative w-full sm:w-64">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
                 <span className="sr-only">{t('search')}</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-full border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-[10px] border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none" />
               </label>
             ) : null}
           </div>
@@ -368,7 +368,7 @@ export function NotesHome() {
             <div role="status" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
               <span className="truncate font-medium">{t('readPdfUploading', { name: readPdf.uploading.name })}</span>
               <span className="h-2 overflow-hidden rounded-full bg-border" aria-hidden>
-                <span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
+                <span className="block h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
               </span>
             </div>
           ) : null}
@@ -438,10 +438,10 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
   const accent = accentOf(n.id)
   const body = (
     <>
-      <span aria-hidden className="absolute inset-x-0 top-0 h-1.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${accent.from}, ${accent.to})` }} />
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1.5 rounded-t-2xl" style={{ background: accent.from }} />
       <span aria-hidden className="absolute -right-10 -top-10 size-28 rounded-full blur-2xl transition-opacity group-hover:opacity-100" style={{ background: accent.tint, opacity: 0.8 }} />
       <span className="relative flex items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl text-sm font-bold text-white shadow-sm" style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }} aria-hidden>
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl text-sm font-semibold text-white shadow-sm" style={{ background: accent.from }} aria-hidden>
           {(n.title || t('untitled')).trim().charAt(0).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1">
@@ -462,7 +462,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
           </span>
         ) : null}
         {'owner' in n ? (
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
+          <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
         ) : n.visibility !== 'PRIVATE' ? (
           <VisibilityBadge visibility={n.visibility} />
         ) : n.publishedAt ? (
@@ -494,7 +494,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
     )
   }
   return (
-    <Link href={`/notes/${n.id}`} className={cn(tile, 'hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/10 focus-visible:-translate-y-0.5 active:scale-[0.99]')}>
+    <Link href={`/notes/${n.id}`} className={cn(tile, 'hover:-translate-y-0.5 hover:border-fg/20 active:scale-[0.99]')}>
       {body}
     </Link>
   )

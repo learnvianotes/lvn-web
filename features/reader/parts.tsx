@@ -76,7 +76,7 @@ export function Swatches({ onPick, current, label }: { onPick: (color: Highlight
           aria-label={label(color)}
           title={label(color)}
           aria-pressed={current === color}
-          className={cn('size-7 rounded-full ring-offset-2 ring-offset-surface transition hover:scale-110 aria-pressed:ring-2 aria-pressed:ring-fg', SWATCH[color])}
+          className={cn('size-7 rounded-full ring-offset-2 ring-offset-surface transition aria-pressed:ring-2 aria-pressed:ring-fg', SWATCH[color])}
           onClick={() => onPick(color)}
         />
       ))}
@@ -154,7 +154,7 @@ export function HighlightsList({ highlights, onOpen }: { highlights: HighlightFi
     <div className="flex flex-col gap-4">
       {pages.map((page) => (
         <section key={page} className="flex flex-col gap-1.5">
-          <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('pageLabel', { page })}</h3>
+          <h3 className="px-2 text-xs font-semibold text-muted">{t('pageLabel', { page })}</h3>
           {highlights
             .filter((h) => h.page === page)
             .map((h) => (

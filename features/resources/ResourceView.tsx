@@ -52,7 +52,7 @@ function Page({ id }: { id: string }) {
     }
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notFound')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notFound')}</h1>
         <p className="mt-2 text-sm text-muted">{t('notFoundLead')}</p>
       </div>
     )
@@ -93,8 +93,8 @@ export function ResourceDetails({ resource: r }: { resource: ResourceFieldsFragm
           <img src={r.coverUrl} alt="" className="h-48 w-auto max-w-full self-start rounded-xl border border-border object-contain" />
         ) : null}
         <div className="flex min-w-0 flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">{t(`type.${r.type}`)}</span>
-          <h1 id="resource-title" className="text-2xl font-extrabold tracking-tight">
+          <span className="text-xs font-semibold text-accent">{t(`type.${r.type}`)}</span>
+          <h1 id="resource-title" className="text-2xl font-semibold tracking-tight">
             {r.title}
           </h1>
           {r.author ? <p className="text-sm text-muted">{t('by', { author: r.author })}</p> : null}

@@ -69,7 +69,7 @@ export function StudentIdAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <IdCard className="size-6 text-accent" aria-hidden />
           {t('title')}
         </h1>

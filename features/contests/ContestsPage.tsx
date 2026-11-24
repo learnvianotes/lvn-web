@@ -23,7 +23,7 @@ export function ContestsPage() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {open.map((c) => (
@@ -50,8 +50,8 @@ export function ContestHero({ contest: c }: { contest: Item }) {
     <section aria-label={c.title} className="flex flex-col gap-4 overflow-hidden rounded-3xl bg-inverse p-6 text-inverse-ink shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-inverse-muted">{t('weekly')}</p>
-          <h2 className="text-2xl font-extrabold">{c.title}</h2>
+          <p className="text-xs font-semibold text-inverse-muted">{t('weekly')}</p>
+          <h2 className="text-2xl font-semibold">{c.title}</h2>
           <p className="text-sm text-inverse-muted">{c.subjectTitle ? t('testOn', { subject: c.subjectTitle }) : t('testYourself')}</p>
         </div>
         <Trophy aria-hidden className="size-14 shrink-0 text-amber-300" />

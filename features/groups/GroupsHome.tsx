@@ -29,7 +29,7 @@ export function GroupsHome() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-8">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <Button className="gap-1.5" onClick={() => setCreating(true)}>
           <Plus className="size-4" aria-hidden />
           {t('new')}

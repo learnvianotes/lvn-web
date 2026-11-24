@@ -73,7 +73,7 @@ export function ConversionBanner({ conversion, onDismiss }: { conversion: Conver
           {conversion.pages ? <span className="text-muted"> · {t('pages', { n: conversion.pages, scanned: conversion.scannedPages ?? 0 })}</span> : null}
         </span>
         <span className="h-1.5 w-24 overflow-hidden rounded-full bg-border sm:w-40" aria-hidden>
-          <span className="block h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${conversion.progress}%` }} />
+          <span className="block h-full rounded-[10px] bg-accent transition-[width] duration-500" style={{ width: `${conversion.progress}%` }} />
         </span>
       </div>
     )

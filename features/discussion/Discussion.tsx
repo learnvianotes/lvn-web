@@ -49,7 +49,7 @@ export function Discussion({ target, title, compact }: { target: { type: Comment
         reactionTarget ? <ReactionBar target={reactionTarget} reactions={d.reactions} disabled={!d.viewerCanComment} onChanged={refresh} size="sm" /> : null
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             <MessageSquare className="size-5 text-accent" aria-hidden />
             {title ?? t('title')}
             <span className="text-sm font-normal text-muted">{t('count', { count: d.commentCount })}</span>
