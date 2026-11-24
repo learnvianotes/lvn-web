@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A new look across the site: warm paper, ink blue and a highlighter yellow, IBM Plex Sans, a flat LVN logo and icons, and a landing page that shows the product instead of clip-art.
-- Sign in with a passkey or a 6-digit code sent to your email; a password is still one tap away. The assistant is called Nova.
+- A new look across the site: warm paper, ink blue and a highlighter yellow, IBM Plex Sans, a flat LVN logo and icons, and a landing page that shows the product instead of clip-art. [#86](https://github.com/learnvianotes/lvn-web/pull/86)
+- Sign in with a passkey or a 6-digit code sent to your email; a password is still one tap away. The assistant is called Nova. [#86](https://github.com/learnvianotes/lvn-web/pull/86)
 
 ### Changed
 
-- A PDF you just uploaded opens by itself once its virus check finishes, instead of saying it is not there.
+- A PDF you just uploaded opens by itself once its virus check finishes, instead of saying it is not there. [#86](https://github.com/learnvianotes/lvn-web/pull/86)
 
 ### Removed
 
-- GitHub and LinkedIn sign-in.
+- GitHub and LinkedIn sign-in. [#86](https://github.com/learnvianotes/lvn-web/pull/86)
 
 ### Security
 
