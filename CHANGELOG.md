@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-25
+
 ### Added
 
 - A new look across the site: warm paper, ink blue and a highlighter yellow, IBM Plex Sans, a flat LVN logo and icons, and a landing page that shows the product instead of clip-art. [#86](https://github.com/learnvianotes/lvn-web/pull/86)
