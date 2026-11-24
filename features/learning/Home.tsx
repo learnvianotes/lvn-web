@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { ArrowRight, BookOpen, CalendarCheck, CalendarClock, GraduationCap, Library, ListChecks, Play, RotateCcw, TrendingUp, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, Flame, CalendarCheck, CalendarClock, GraduationCap, Library, ListChecks, Play, RotateCcw, TrendingUp, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -11,13 +11,13 @@ import { Today, Week } from './Rhythm'
 
 type Rec = RecommendationsQuery['recommendations'][number]
 
-/** A picture for each kind of recommendation (board A's illustrated cards): a gradient and the kind's sign. */
+/** A picture for each kind of recommendation (board A's illustrated cards): one flat colour from the desk palette and the kind's sign. */
 const ART: Record<RecommendationKind, { icon: typeof BookOpen; from: string; to: string }> = {
-  EXAM_TOPIC: { icon: CalendarClock, from: '#8a4b08', to: '#1e4d8c' },
-  REVISE_TOPIC: { icon: RotateCcw, from: '#1e4d8c', to: '#0f5f6b' },
-  CONTINUE_NOTE: { icon: BookOpen, from: '#163e73', to: '#1e4d8c' },
-  QUIZ_ON_TOPIC: { icon: ListChecks, from: '#0f6b45', to: '#0f5f6b' },
-  POPULAR_NOTE: { icon: TrendingUp, from: '#0f5f6b', to: '#1e4d8c' },
+  EXAM_TOPIC: { icon: CalendarClock, from: '#7a5a12', to: '#7a5a12' },
+  REVISE_TOPIC: { icon: RotateCcw, from: '#0c5c66', to: '#0c5c66' },
+  CONTINUE_NOTE: { icon: BookOpen, from: '#2847a8', to: '#2847a8' },
+  QUIZ_ON_TOPIC: { icon: ListChecks, from: '#3d6b2c', to: '#3d6b2c' },
+  POPULAR_NOTE: { icon: TrendingUp, from: '#4a4740', to: '#4a4740' },
   RESOURCE: { icon: Library, from: '#0f5f6b', to: '#163e73' },
 }
 const coreName = (key: string) => key.replace(/^core:/, '').replace('/', ' / ').replace(/-/g, ' ')
@@ -87,7 +87,7 @@ export function Home() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{firstName ? t(`greeting.${when}`, { name: firstName }) : t('greetingAnon')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{firstName ? t(`greeting.${when}`, { name: firstName }) : t('greetingAnon')}</h1>
           {today ? (
             <p className="max-w-2xl text-sm text-muted" data-testid="daily-line">
               <span className="font-semibold text-fg">{today.title}</span> · {today.line}
@@ -98,9 +98,9 @@ export function Home() {
         </div>
         {rhythm ? (
           <Link href="/rhythm" className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5 hover:border-accent">
-            <span aria-hidden className="text-2xl">🔥</span>
+            <Flame aria-hidden className="size-5 text-spark-ink" strokeWidth={1.5} />
             <span className="flex flex-col leading-tight">
-              <span className="text-lg font-extrabold">{rhythm.countedDaysAllTime}</span>
+              <span className="text-lg font-semibold">{rhythm.countedDaysAllTime}</span>
               <span className="text-xs text-muted">{t('daysLearned')}</span>
             </span>
           </Link>
@@ -116,7 +116,7 @@ export function Home() {
           {continueNote?.note ? (
             <Link href={`/notes/${continueNote.note.id}`} className="flex items-center gap-3 hover:text-accent">
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate font-bold">{continueNote.noteTitle || t('untitled')}</span>
+                <span className="truncate font-semibold">{continueNote.noteTitle || t('untitled')}</span>
                 <span className="text-xs text-muted">{continueNote.reason}</span>
               </span>
               <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-accent-fg">
@@ -133,13 +133,13 @@ export function Home() {
         </section>
         <section aria-labelledby="next-exam" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
           <h2 id="next-exam" className="flex items-center gap-2 text-sm font-semibold text-muted">
-            <CalendarCheck aria-hidden className="size-4 text-orange-500" />
+            <CalendarCheck aria-hidden className="size-4 text-warn" />
             {t('nextExam')}
           </h2>
           {next ? (
             <div className="flex flex-col gap-2">
-              <span className="truncate font-bold">{next.name}</span>
-              <span className="text-sm font-semibold text-red-600 dark:text-red-400">{t('inDays', { count: next.daysLeft ?? 0 })}</span>
+              <span className="truncate font-semibold">{next.name}</span>
+              <span className="text-sm font-semibold text-bad">{t('inDays', { count: next.daysLeft ?? 0 })}</span>
               <Link href={`/exams/${next.id}`} className="inline-flex w-fit items-center gap-1 rounded-full border border-border px-3 py-1 text-sm font-semibold text-accent hover:border-accent">
                 {t('viewPlan')}
               </Link>
@@ -157,15 +157,15 @@ export function Home() {
         </section>
         <section aria-labelledby="weekly-goal" className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
           <h2 id="weekly-goal" className="flex items-center gap-2 text-sm font-semibold text-muted">
-            <span aria-hidden className="size-2 rounded-full bg-emerald-500" />
+            <span aria-hidden className="size-2 rounded-full bg-good" />
             {t('weeklyGoal')}
           </h2>
           {rhythm ? (
             <div className="flex items-center gap-4">
               <GoalRing done={rhythm.countedDays} target={rhythm.target} />
               <span className="flex flex-col">
-                <span className="text-xl font-extrabold">{t('ofDays', { done: rhythm.countedDays, target: rhythm.target })}</span>
-                <span className="text-xs text-emerald-700 dark:text-emerald-400">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
+                <span className="text-xl font-semibold">{t('ofDays', { done: rhythm.countedDays, target: rhythm.target })}</span>
+                <span className="text-xs text-good">{rhythm.met ? t('goalMet') : t('keepGoing')}</span>
               </span>
             </div>
           ) : (
@@ -187,7 +187,7 @@ export function Home() {
 
       <section aria-labelledby="recommended" className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
-          <h2 id="recommended" className="text-lg font-bold">
+          <h2 id="recommended" className="text-lg font-semibold">
             {t('recommended')}
           </h2>
           <Link href="/rhythm" className="text-sm font-semibold text-accent hover:underline">
@@ -204,7 +204,7 @@ export function Home() {
             return (
               <li key={`${r.kind}:${r.resource?.id ?? r.note?.id ?? r.topicKey}`}>
                 <Link href={hrefOf(r)} className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface hover:border-accent">
-                  <span aria-hidden className="grid h-24 place-items-center" style={{ backgroundImage: `linear-gradient(135deg, ${art.from}, ${art.to})` }}>
+                  <span aria-hidden className="grid h-24 place-items-center" style={{ backgroundColor: art.from }}>
                     <Icon className="size-9 text-white" />
                   </span>
                   <span className="flex flex-1 flex-col gap-1 p-3">
@@ -220,7 +220,7 @@ export function Home() {
 
       <section aria-labelledby="rooms" className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
-          <h2 id="rooms" className="text-lg font-bold">
+          <h2 id="rooms" className="text-lg font-semibold">
             {t('rooms')}
           </h2>
           {/* Groups when the person has any; a person only in classes sees their classes. */}

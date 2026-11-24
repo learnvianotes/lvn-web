@@ -100,7 +100,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
           <div role="status" className="flex flex-col gap-2 rounded-xl bg-surface-2 px-4 py-5">
             <p className="truncate text-sm font-medium">{t('media.uploading', { name: progress.name })}</p>
             <div className="h-2 overflow-hidden rounded-full bg-border" aria-hidden>
-              <div className="h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${Math.round(progress.value * 100)}%` }} />
+              <div className="h-full rounded-[10px] bg-accent transition-[width] duration-200" style={{ width: `${Math.round(progress.value * 100)}%` }} />
             </div>
             <p className="text-xs text-muted">{Math.round(progress.value * 100)}%</p>
           </div>
@@ -168,7 +168,7 @@ export function MediaView({ node, updateAttributes, selected, editor, getPos }: 
           </button>
         )}
         {error ? limit ? <LimitNotice>{error}</LimitNotice> : (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

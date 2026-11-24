@@ -34,11 +34,11 @@ export default async function SubjectPage({ params }: { params: Promise<{ slug: 
         › <span className="text-fg">{subject.title}</span>
       </nav>
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{subject.title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{subject.title}</h1>
         <p className="max-w-2xl text-muted">{t('subjectLead', { subject: subject.title })}</p>
       </header>
       <section aria-labelledby="subject-topics" className="flex flex-col gap-3">
-        <h2 id="subject-topics" className="text-lg font-bold">
+        <h2 id="subject-topics" className="text-lg font-semibold">
           {t('topics')}
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -51,7 +51,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ slug: 
                 <ul className="flex flex-wrap gap-1.5">
                   {topic.children.map((c) => (
                     <li key={c.id}>
-                      <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent hover:underline">
+                      <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[10px] bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent hover:underline">
                         {c.title}
                       </Link>
                     </li>

@@ -52,7 +52,7 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -62,17 +62,17 @@ export function Ideas({ group }: { group: GroupDetailFragment }) {
           {ideas.map((idea, i) => (
             <li key={idea.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-center gap-2 text-sm">
-                <span className="grid size-6 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent" aria-label={t('rank', { n: i + 1 })}>
+                <span className="grid size-6 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent" aria-label={t('rank', { n: i + 1 })}>
                   {i + 1}
                 </span>
-                <Lightbulb className="size-4 text-amber-500" aria-hidden />
+                <Lightbulb className="size-4 text-warn" aria-hidden />
                 <Link href={`/u/${idea.author.handle}`} className="font-semibold hover:text-accent">
                   {idea.author.displayName}
                 </Link>
                 <span className="text-xs text-muted">{ago(idea.createdAt)}</span>
                 <span className="ml-auto flex items-center gap-3 text-xs font-semibold text-muted">
                   {idea.viewerCan.delete ? (
-                    <button type="button" className="hover:text-red-600" onClick={() => void remove({ variables: { postId: idea.id } }).then(() => refetch())}>
+                    <button type="button" className="hover:text-bad" onClick={() => void remove({ variables: { postId: idea.id } }).then(() => refetch())}>
                       {t('delete')}
                     </button>
                   ) : null}

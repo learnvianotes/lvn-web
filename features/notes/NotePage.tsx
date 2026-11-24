@@ -98,7 +98,7 @@ export function NotePage({ id }: { id: string }) {
   if (loaded.state === 'missing') {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notFound')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notFound')}</h1>
         <p className="text-sm text-muted">{t('notFoundLead')}</p>
         <Link href="/notes" className="text-accent hover:underline">
           {t('backToNotes')}
@@ -205,18 +205,18 @@ export function NotePage({ id }: { id: string }) {
   const chips =
     meta.viewerAccess === 'OWNER' ? (
       <button type="button" onClick={() => setDetailsOpen(true)} className="flex flex-wrap items-center gap-1.5 text-left text-xs text-muted">
-        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 hover:border-accent hover:text-accent">
+        <span className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1 hover:border-accent hover:text-accent">
           <Folder className="size-3.5" aria-hidden />
           {meta.folder?.name ?? t('details.noFolder')}
         </span>
         {meta.tags.map((x) => (
-          <span key={x.id} className="inline-flex items-center gap-0.5 rounded-full bg-accent-soft px-2.5 py-1 text-accent">
+          <span key={x.id} className="inline-flex items-center gap-0.5 rounded-[10px] bg-accent-soft px-2.5 py-1 text-accent">
             <Hash className="size-3" aria-hidden />
             {x.name}
           </span>
         ))}
         {meta.topics.map((x) => (
-          <span key={x.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1">
+          <span key={x.id} className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1">
             <BookBookmark className="size-3.5" aria-hidden />
             {x.title}
           </span>
@@ -243,11 +243,11 @@ export function NotePage({ id }: { id: string }) {
         {meta.moderation ? <ModerationBanner entityType="NOTE" entityId={id} moderation={meta.moderation} /> : null}
         {meta.forkedFrom ? <ForkCredit credit={meta.forkedFrom} /> : null}
         {copy.copyError ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {copy.copyError}
           </p>
         ) : null}
-        {loaded.offline ? <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">{t('offlineCopy')}</p> : null}
+        {loaded.offline ? <p role="status" className="rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">{t('offlineCopy')}</p> : null}
         {notice ? (
           <p role="status" className="animate-rise rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-medium">
             {notice}

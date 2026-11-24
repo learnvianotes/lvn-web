@@ -76,7 +76,7 @@ export function BarList({ title, bars, valueLabel, note }: { title: string; bars
               <span className="font-medium">{bar.display ?? format.number(bar.value)}</span>
             </span>
             <span className="h-2 rounded-full bg-surface-2">
-              <span className="block h-2 rounded-full bg-accent" style={{ width: `${(Math.max(0, bar.value) / max) * 100}%` }} />
+              <span className="block h-2 rounded-[10px] bg-accent" style={{ width: `${(Math.max(0, bar.value) / max) * 100}%` }} />
             </span>
           </li>
         ))}

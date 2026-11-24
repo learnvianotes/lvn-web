@@ -39,7 +39,7 @@ export function ProfileTabs({ teacher, notes, skills }: { teacher: boolean; note
           <ul className="grid gap-3 sm:grid-cols-2">
             {shown.map((n) => (
               <li key={n.id}>
-                <Link href={publicNotePath(n)} className="flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition hover:border-accent/50 hover:shadow-md">
+                <Link href={publicNotePath(n)} className="flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/50 hover:shadow-md">
                   <FileText className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
                   <span className="flex min-w-0 flex-col">
                     <span className="font-semibold">{n.title || t('untitled')}</span>
@@ -74,7 +74,7 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
         if (!items.length) return null
         return (
           <section key={k} aria-labelledby={`skills-${k}`} className="flex flex-col gap-2">
-            <h2 id={`skills-${k}`} className="text-sm font-semibold uppercase tracking-wide text-muted">
+            <h2 id={`skills-${k}`} className="text-sm font-semibold text-muted">
               {t(`kind.${k}`)}
             </h2>
             {k === 'SKILL' ? (
@@ -82,7 +82,7 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
                 {items.map((s) => (
                   <li
                     key={s.id}
-                    className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
+                    className="rounded-[10px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
                     title={[s.detail, s.source !== 'MANUAL' ? t('from', { source: t(`source.${s.source}`) }) : null].filter(Boolean).join(' · ') || undefined}
                   >
                     {s.name}

@@ -49,7 +49,7 @@ export function AdminAccess() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       <AllowlistSwitch setting={setting} failed={!!settings.error && !settings.data} onSaved={() => void settings.refetch()} />
@@ -290,7 +290,7 @@ function EntryRow({ entry, onChanged }: { entry: Entry; onChanged: () => void })
           <h3 className="break-all font-semibold">{entry.email}</h3>
           {entry.note ? <p className="text-sm text-muted">{entry.note}</p> : null}
           <p className="mt-2 flex flex-wrap gap-2 text-xs">
-            <span className={entry.hasAccount ? 'rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
+            <span className={entry.hasAccount ? 'rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
               {entry.hasAccount ? t('hasAccount') : t('noAccount')}
             </span>
             <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('added', { date: formatAddedOn(entry.createdAt) })}</span>

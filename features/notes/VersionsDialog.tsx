@@ -48,7 +48,7 @@ export function VersionsDialog({ noteId, open, initialVersionId, onClose, onRest
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="truncate text-lg font-bold">{version.title || t('untitled')}</h3>
+                <h3 className="truncate text-lg font-semibold">{version.title || t('untitled')}</h3>
                 <Button
                   size="sm"
                   disabled={restoring.loading}

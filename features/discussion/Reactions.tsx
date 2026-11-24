@@ -48,7 +48,7 @@ export function ReactionBar({ target, reactions, disabled, onChanged, size = 'md
         )
       })}
       {error ? (
-        <span role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <span role="alert" className="text-xs text-bad">
           {error}
         </span>
       ) : null}

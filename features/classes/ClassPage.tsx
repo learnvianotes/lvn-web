@@ -123,15 +123,15 @@ function Header({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
         <span aria-hidden>·</span>
         <Users className="size-4" aria-hidden />
         {t('members', { count: classroom.memberCount })}
-        {classroom.viewerRole ? <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
+        {classroom.viewerRole ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
       </div>
-      <h1 className="text-2xl font-extrabold tracking-tight">{classroom.name}</h1>
+      <h1 className="text-2xl font-semibold">{classroom.name}</h1>
       {classroom.description ? <p className="whitespace-pre-line text-muted">{classroom.description}</p> : null}
       {classroom.joinCode ? (
         <div className="flex flex-col gap-1 rounded-2xl bg-surface-2 p-3">
           <span className="text-xs font-semibold text-muted">{t('code')}</span>
           <div className="flex flex-wrap items-center gap-2">
-            <span data-testid="class-code" className="font-mono text-xl font-bold tracking-widest">
+            <span data-testid="class-code" className="font-mono text-xl font-semibold">
               {classroom.joinCode}
             </span>
             <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => void copyLink()}>
@@ -173,7 +173,7 @@ function Header({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
         ) : null}
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -217,7 +217,7 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -232,7 +232,7 @@ function Posts({ classroom }: { classroom: ClassroomDetailFragment }) {
                 <span className="text-xs text-muted">{ago(p.createdAt)}</span>
                 <span className="ml-auto flex gap-1">
                   {p.viewerCanDelete ? (
-                    <button type="button" onClick={() => void act(() => remove({ variables: { postId: p.id } }))} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-red-600">
+                    <button type="button" onClick={() => void act(() => remove({ variables: { postId: p.id } }))} aria-label={t('deletePost')} className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-bad">
                       <Trash className="size-4" aria-hidden />
                     </button>
                   ) : null}
@@ -311,7 +311,7 @@ function SharedNotes({ classroom }: { classroom: ClassroomDetailFragment }) {
         </>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -387,7 +387,7 @@ function People({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
         </div>
       </form>
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}
@@ -448,7 +448,7 @@ function Requests({ classroom, onChanged }: { classroom: ClassroomDetailFragment
   return (
     <div className="flex flex-col gap-2">
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -506,7 +506,7 @@ function Settings({ classroom, onSaved }: { classroom: ClassroomDetailFragment; 
         <textarea value={description} maxLength={2000} rows={3} onChange={(e) => setDescription(e.target.value)} className="rounded-xl border border-border bg-surface px-3 py-2" />
       </label>
       {message ? (
-        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-red-600 dark:text-red-400'}>
+        <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'text-sm text-accent' : 'text-sm text-bad'}>
           {message.text}
         </p>
       ) : null}

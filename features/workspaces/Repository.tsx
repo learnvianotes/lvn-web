@@ -90,7 +90,7 @@ export function RepositoryCard({ groupId, repository, canManage, onChanged }: { 
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -156,7 +156,7 @@ function RepositoryApp({ groupId, app, events, canManage, onChanged }: { groupId
         </Button>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}

@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { NOTE_ID, cards, meta, mockApi, mockLive, p, page1, type Handler } from './support/notes-api'
 
 /**
- * AI tasks on a note (lvn-backend ADR-0059) against a mocked API: running a task and waiting for it, Markdown results,
+ * Nova tasks on a note (lvn-backend ADR-0059) against a mocked API: running a task and waiting for it, Markdown results,
  * keeping cards into the note or a new note of one's own, failures, AI being off and the day's allowance. The real
  * model answers in lvn-backend's live tests; the deployed API in tests/e2e/live.spec.ts.
  */
@@ -41,8 +41,8 @@ const artifacts = (list: unknown[], recordings: string[] = []) => ({ note: { __t
 const ran = (a: unknown) => ({ runAiTask: { __typename: 'RunAiTaskPayload', artifact: a, userErrors: [] } })
 
 async function openPanel(page: Page) {
-  await page.getByRole('button', { name: 'AI tasks' }).click()
-  return page.getByRole('dialog', { name: 'AI tasks' })
+  await page.getByRole('button', { name: 'Nova tasks' }).click()
+  return page.getByRole('dialog', { name: 'Nova tasks' })
 }
 
 const owner = (extra: Record<string, Handler>) => ({ NoteToEdit: () => ({ note: { ...meta(), cards: page1(cards) } }), AiState: () => aiState(), ...extra })
@@ -65,7 +65,7 @@ test('an owner summarises a note: it shows while it runs, then reads as Markdown
   await page.goto(`/notes/${NOTE_ID}`)
   const panel = await openPanel(page)
   await expect(panel.getByText('Nothing yet.', { exact: false })).toBeVisible()
-  await expect(panel.getByText("Today's AI allowance: 10% used")).toBeVisible()
+  await expect(panel.getByText("Today's Nova allowance: 10% used")).toBeVisible()
   await panel.getByRole('button', { name: /^Summarise/ }).click()
   const result = panel.getByRole('article', { name: 'Summarise' })
   await expect(result.getByRole('status')).toBeVisible()
@@ -122,7 +122,7 @@ test("a reader keeps a quiz as a note of their own, and is never offered the aut
   // The preview is the card itself: it can be tried before it is kept.
   await result.getByRole('radio', { name: 'O(log n)' }).click()
   await result.getByRole('button', { name: 'Check' }).click()
-  await expect(result.getByText('Correct!')).toBeVisible()
+  await expect(result.getByText('Correct')).toBeVisible()
   await expect(result.getByRole('button', { name: /to this note/ })).toHaveCount(0)
   await result.getByRole('button', { name: 'Save 1 card as my note' }).click()
   await expect(result.getByRole('link', { name: 'Open it' })).toHaveAttribute('href', `/notes/${NEW_NOTE}`)
@@ -188,18 +188,18 @@ test("AI that is off says why, and a spent allowance stops new tasks; the server
     owner({
       AiState: () => state,
       NoteAiArtifacts: () => artifacts([]),
-      RunAiTask: () => ({ runAiTask: { __typename: 'RunAiTaskPayload', artifact: null, userErrors: [{ __typename: 'UserError', field: null, message: "You've used today's AI allowance; it comes back at midnight UTC.", code: 'RATE_LIMITED' }] } }),
+      RunAiTask: () => ({ runAiTask: { __typename: 'RunAiTaskPayload', artifact: null, userErrors: [{ __typename: 'UserError', field: null, message: "You've used today's Nova allowance; it comes back at midnight UTC.", code: 'RATE_LIMITED' }] } }),
     }),
   )
   await page.goto(`/notes/${NOTE_ID}`)
   let panel = await openPanel(page)
-  await expect(panel.getByRole('alert')).toHaveText("The AI model isn't answering right now. Try again in a minute.")
+  await expect(panel.getByRole('alert')).toHaveText("Nova isn't answering right now. Try again in a minute.")
   await expect(panel.getByRole('button', { name: /^Summarise/ })).toBeDisabled()
   await panel.getByRole('button', { name: 'Close' }).click()
 
   state = aiState({ usedToday: 200_000 })
   panel = await openPanel(page)
-  await expect(panel.getByText("You've used today's AI allowance.", { exact: false })).toBeVisible()
+  await expect(panel.getByText("You've used today's Nova allowance.", { exact: false })).toBeVisible()
   await expect(panel.getByRole('button', { name: /^Quiz/ })).toBeDisabled()
   await panel.getByRole('button', { name: 'Close' }).click()
 
@@ -207,20 +207,20 @@ test("AI that is off says why, and a spent allowance stops new tasks; the server
   state = aiState({ usedToday: 199_000 })
   panel = await openPanel(page)
   await panel.getByRole('button', { name: /^Quiz/ }).click()
-  await expect(panel.getByRole('alert')).toHaveText("You've used today's AI allowance; it comes back at midnight UTC.")
+  await expect(panel.getByRole('alert')).toHaveText("You've used today's Nova allowance; it comes back at midnight UTC.")
 })
 
 test("the account page shows today's AI allowance, or why AI is off", async ({ page }) => {
   let state = aiState({ usedToday: 150_000 })
   await mockApi(page, { AiState: () => state, MyDataExports: () => ({ myDataExports: [] }), NoteImports: () => ({ noteImports: [] }) }, { profile: null, legacyImport: { __typename: 'LegacyImport', status: 'NOT_FOUND', claimedAt: null, counts: null } })
   await page.goto('/profile')
-  const section = page.getByRole('region', { name: 'AI' })
-  await expect(section.getByText("Today's AI allowance: 75% used")).toBeVisible()
-  await expect(section.getByRole('meter', { name: "Today's AI allowance" })).toHaveAttribute('aria-valuenow', '150000')
+  const section = page.getByRole('region', { name: 'Nova' })
+  await expect(section.getByText("Today's Nova allowance: 75% used")).toBeVisible()
+  await expect(section.getByRole('meter', { name: "Today's Nova allowance" })).toHaveAttribute('aria-valuenow', '150000')
 
   state = aiState({ available: false, reason: 'BUDGET' })
   await page.reload()
-  await expect(page.getByRole('region', { name: 'AI' }).getByText("AI is resting until next month: this month's AI budget is used up.")).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Nova' }).getByText("Nova is resting until next month: this month's budget is used up.")).toBeVisible()
 })
 
 const insight = (task: string, over: Record<string, unknown> = {}) => ({ __typename: 'AiInsight', id: `01920000-0000-7000-8000-0000000a70${task.length.toString().padStart(2, '0')}`, task, status: 'READY', markdown: null, title: null, cards: null, hidden: false, versionId: '01920000-0000-7000-8000-0000000e0001', ...over })
@@ -233,16 +233,16 @@ test('a reader of a public note tries its study aids and keeps the quiz as their
     KeepAiCards: () => ({ keepAiCards: { __typename: 'KeepAiCardsPayload', noteId: NEW_NOTE, userErrors: [] } }),
   })
   await page.goto(`/notes/${NOTE_ID}`)
-  // The aids sit in the note's tabs (ADR-0076): the summary in AI Summary, the quiz in Quiz.
+  // The aids sit in the note's tabs (ADR-0076): the summary in Summary, the quiz in Quiz.
   const sections = page.getByRole('tablist', { name: 'Note sections' })
-  await sections.getByRole('tab', { name: 'AI Summary' }).click()
+  await sections.getByRole('tab', { name: 'Summary' }).click()
   const aids = page.getByRole('region', { name: 'Study aids' })
   await expect(aids.locator('strong')).toHaveText('halves')
   await expect(aids.getByRole('button', { name: /Hide from readers/ })).toHaveCount(0)
   await sections.getByRole('tab', { name: 'Quiz' }).click()
   await aids.getByRole('radio', { name: 'O(log n)' }).click()
   await aids.getByRole('button', { name: 'Check' }).click()
-  await expect(aids.getByText('Correct!')).toBeVisible()
+  await expect(aids.getByText('Correct')).toBeVisible()
   await aids.getByRole('button', { name: 'Save as my note' }).click()
   await expect(aids.getByRole('link', { name: 'Open it' })).toHaveAttribute('href', `/notes/${NEW_NOTE}`)
   expect(calls.find((c) => c.op === 'KeepAiCards')?.variables).toEqual({ input: { artifactId: insight('QUIZ').id, cardIndexes: [0], into: 'NEW_NOTE' } })
@@ -267,9 +267,9 @@ test('the owner watches the study aids being made, live, and hides one from read
   })
   await page.goto(`/notes/${NOTE_ID}`)
   const sections = page.getByRole('tablist', { name: 'Note sections' })
-  await sections.getByRole('tab', { name: 'AI Summary' }).click()
+  await sections.getByRole('tab', { name: 'Summary' }).click()
   const aids = page.getByRole('region', { name: 'Study aids' })
-  await expect(aids.getByText('Made by AI from your published note for its readers.', { exact: false })).toBeVisible()
+  await expect(aids.getByText('Made by Nova from your published note for its readers.', { exact: false })).toBeVisible()
   await sections.getByRole('tab', { name: 'Flashcards' }).click()
   await expect(aids.getByRole('status')).toHaveText('Being made…')
   stage = 'done'
@@ -285,7 +285,7 @@ test('the owner watches the study aids being made, live, and hides one from read
       { timeout: 2500, intervals: [250] },
     )
     .toBe(true)
-  await sections.getByRole('tab', { name: 'AI Summary' }).click()
+  await sections.getByRole('tab', { name: 'Summary' }).click()
   await aids.getByRole('button', { name: 'Hide from readers' }).click()
   await expect(aids.getByText('Hidden from readers', { exact: true })).toBeVisible()
   expect(calls.find((c) => c.op === 'SetAiInsightHidden')?.variables).toEqual({ id: insight('SUMMARIZE').id, hidden: true })

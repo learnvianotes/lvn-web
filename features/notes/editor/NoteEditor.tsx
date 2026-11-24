@@ -170,11 +170,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-sky-600 bg-sky-50 text-sky-900')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-accent/40 bg-accent/10 text-accent')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
               <Notebook className="size-4" aria-hidden />
               {t('pages')}
             </button>
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
               <ListTree className="size-4" aria-hidden />
               {t('contents')}
             </button>
@@ -210,7 +210,7 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
         <div className="flex flex-col gap-2 px-1">
           <textarea
             rows={1}
-            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-extrabold leading-tight tracking-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
+            className={cn('w-full resize-none overflow-hidden border-0 bg-transparent font-semibold leading-tight placeholder:text-muted/50 focus:outline-none', compact ? 'text-2xl' : 'text-3xl sm:text-[2.6rem]')}
             placeholder={t('untitled')}
             aria-label={t('title')}
             value={title}
@@ -261,11 +261,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
 function SavePill({ status }: { status: SaveStatus }) {
   const t = useTranslations('notes.editor.status')
   const look: Record<SaveStatus, { icon: LucideIcon; className: string; spin?: boolean }> = {
-    saved: { icon: Check, className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+    saved: { icon: Check, className: 'bg-good/10 text-good' },
     pending: { icon: LoaderCircle, className: 'bg-surface-2 text-muted', spin: false },
     saving: { icon: LoaderCircle, className: 'bg-accent-soft text-accent', spin: true },
-    offline: { icon: CloudOff, className: 'bg-amber-500/15 text-amber-800 dark:text-amber-300' },
-    error: { icon: CircleAlert, className: 'bg-red-500/10 text-red-700 dark:text-red-400' },
+    offline: { icon: CloudOff, className: 'bg-warn/15 text-warn' },
+    error: { icon: CircleAlert, className: 'bg-bad/10 text-bad' },
   }
   const { icon: Icon, className, spin } = look[status]
   return (
@@ -279,7 +279,7 @@ function SavePill({ status }: { status: SaveStatus }) {
 function Banner({ tone, children, onClose }: { tone: 'warning' | 'error'; children: React.ReactNode; onClose?: () => void }) {
   const t = useTranslations('notes.editor')
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-red-600/30 bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-200' : 'border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100')}>
+    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tone === 'error' ? 'border-bad/30 bg-bad/10 text-bad' : 'border-warn/40 bg-warn/10 text-warn')}>
       <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="flex-1">{children}</div>
       {onClose ? (
@@ -300,7 +300,7 @@ function IconButton({ icon: Icon, label, onClick, pressed, disabled, className }
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-fg transition hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent', className)}
+      className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-fg transition-colors hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent', className)}
     >
       <Icon className="size-[18px]" aria-hidden />
     </button>
@@ -433,10 +433,10 @@ function CardHandle({ editor }: { editor: Editor }) {
 
   return (
     <div ref={box} contentEditable={false} className="absolute left-1.5 z-10 flex flex-col items-center gap-0.5 transition-[top] duration-150 sm:left-3" style={{ top: (at?.top ?? 24) + 2, opacity: at ? 1 : 0 }}>
-      <button type="button" aria-label={t('addCardBelow')} title={t('addCardBelow')} aria-expanded={menu === 'add'} className="grid size-7 place-items-center rounded-lg text-muted transition hover:bg-accent-soft hover:text-accent" onClick={() => setMenu((m) => (m === 'add' ? null : 'add'))}>
+      <button type="button" aria-label={t('addCardBelow')} title={t('addCardBelow')} aria-expanded={menu === 'add'} className="grid size-7 place-items-center rounded-lg text-muted transition-colors hover:bg-accent-soft hover:text-accent" onClick={() => setMenu((m) => (m === 'add' ? null : 'add'))}>
         <Plus className="size-4" aria-hidden />
       </button>
-      <button type="button" aria-label={t('cardMenu')} title={t('cardMenu')} aria-expanded={menu === 'card'} className="grid size-7 cursor-grab place-items-center rounded-lg text-muted transition hover:bg-surface-2 hover:text-fg" onClick={() => setMenu((m) => (m === 'card' ? null : 'card'))}>
+      <button type="button" aria-label={t('cardMenu')} title={t('cardMenu')} aria-expanded={menu === 'card'} className="grid size-7 cursor-grab place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg" onClick={() => setMenu((m) => (m === 'card' ? null : 'card'))}>
         <GripVertical className="size-4" aria-hidden />
       </button>
       {menu ? (
@@ -459,7 +459,7 @@ function CardHandle({ editor }: { editor: Editor }) {
               <MenuItem icon={Copy} label={t('duplicateCard')} onClick={() => act(() => duplicateCard(editor))} />
               {convertible ? (
                 <>
-                  <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                  <p className="mt-1 flex items-center gap-2 px-3 pb-0.5 pt-1.5 text-xs font-semibold text-muted">
                     <WandSparkles className="size-3.5" aria-hidden />
                     {t('turnInto')}
                   </p>
@@ -499,7 +499,7 @@ function MoreMenu({ items }: { items: { label: string; icon: LucideIcon; onClick
 
 function MenuItem({ icon: Icon, label, onClick, danger }: { icon?: LucideIcon; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button type="button" onClick={onClick} className={cn('flex items-center gap-2 rounded-xl px-3 py-1.5 text-left hover:bg-surface-2', danger && 'text-red-600 dark:text-red-400')}>
+    <button type="button" onClick={onClick} className={cn('flex items-center gap-2 rounded-xl px-3 py-1.5 text-left hover:bg-surface-2', danger && 'text-bad')}>
       {Icon ? <Icon className="size-4" aria-hidden /> : <span className="size-4" aria-hidden />}
       {label}
     </button>
@@ -520,7 +520,7 @@ function AddCardMenu({ editor, noteId }: { editor: Editor | null; noteId: string
   }
   return (
     <div className="relative">
-      <button type="button" aria-expanded={open} className="inline-flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm font-medium text-muted transition hover:border-accent hover:bg-accent-soft hover:text-accent" onClick={() => setOpen((o) => !o)}>
+      <button type="button" aria-expanded={open} className="inline-flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent" onClick={() => setOpen((o) => !o)}>
         <Plus className="size-4" aria-hidden />
         {t('addCard')}
       </button>
@@ -582,13 +582,13 @@ function Outline({ editor, onPick }: { editor: Editor | null; onPick?: () => voi
   })
   return (
     <div className="flex flex-col gap-1">
-      <p className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('outline')}</p>
+      <p className="px-2 text-xs font-semibold text-muted">{t('outline')}</p>
       {headings?.length ? (
         headings.map((h) => (
           <button
             key={h.pos}
             type="button"
-            className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-fg"
+            className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg"
             style={{ paddingLeft: `${0.5 + (h.level - 1) * 0.75}rem` }}
             onClick={() => {
               editor?.chain().focus().setTextSelection(h.pos + 1).run()

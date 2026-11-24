@@ -29,7 +29,7 @@ export function CommunityPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <nav aria-label={t('places')} className="flex gap-2">
           <Link href="/groups" className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-semibold hover:border-accent">
             <Users className="size-4" aria-hidden />
@@ -167,7 +167,7 @@ function Following() {
                 {node.owner.displayName}
                 {node.publishedAt ? <span>· {ago(node.publishedAt)}</span> : null}
               </span>
-              <span className="text-lg font-bold">{node.title || t('untitled')}</span>
+              <span className="text-lg font-semibold">{node.title || t('untitled')}</span>
             </Link>
           </li>
         ))}

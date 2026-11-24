@@ -76,7 +76,7 @@ export function ReportDialog({ entityType, entityId, open, onClose }: { entityTy
     <Dialog open={open} onClose={close} title={t(`title.${entityType}`)}>
       {sent ? (
         <div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
-          <span className="grid size-12 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+          <span className="grid size-12 place-items-center rounded-full bg-good/15 text-good">
             <Check className="size-6" aria-hidden />
           </span>
           <p className="font-semibold">{t('thanks')}</p>
@@ -107,9 +107,9 @@ export function ReportDialog({ entityType, entityId, open, onClose }: { entityTy
             <span className="text-sm font-medium">{t('details')}</span>
             <textarea className="min-h-20 rounded-xl border border-border bg-surface px-3 py-2 text-sm focus-visible:border-accent focus-visible:outline-none" maxLength={1000} value={details} onChange={(e) => setDetails(e.target.value)} placeholder={entityType === 'NOTE' ? t('detailsPlaceholder') : t('detailsPlaceholderOther')} />
           </label>
-          {reason === 'SELF_HARM' ? <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">{t('selfHarmHelp')}</p> : null}
+          {reason === 'SELF_HARM' ? <p className="rounded-xl bg-warn/10 px-3 py-2 text-sm text-warn">{t('selfHarmHelp')}</p> : null}
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {error}
             </p>
           ) : null}

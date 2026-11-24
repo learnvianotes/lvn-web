@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles } from 'lucide-react'
+import { TextQuote } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import type { AiTask } from '@/graphql/generated/graphql'
@@ -36,14 +36,14 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
   return (
     <aside aria-labelledby={`dock-${noteId}`} className="sticky top-20 flex max-h-[calc(100dvh-6rem)] flex-col gap-4 overflow-y-auto rounded-3xl border border-border bg-surface p-4">
       <header className="flex flex-col gap-1">
-        <h2 id={`dock-${noteId}`} className="flex items-center gap-2 text-base font-bold">
-          <Sparkles className="size-4 text-accent" aria-hidden />
+        <h2 id={`dock-${noteId}`} className="flex items-center gap-2 text-base font-semibold">
+          <TextQuote className="size-4 text-accent" aria-hidden />
           {t('title')}
         </h2>
         <p className="text-xs text-muted">{t('lead')}</p>
       </header>
       {ai.status && !ai.status.available ? (
-        <p role="note" className="rounded-xl border border-amber-500/40 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+        <p role="note" className="rounded-xl border border-warn/40 bg-warn/10 px-3 py-2 text-sm text-warn">
           {tAi(`unavailable.${ai.status.reason ?? 'NOT_CONFIGURED'}`)}
         </p>
       ) : null}
@@ -56,7 +56,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
                   type="button"
                   disabled={ai.spent || ai.running}
                   onClick={() => void ai.run(task)}
-                  className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-left text-sm font-medium transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
+                  className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-left text-sm font-medium transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50"
                 >
                   {t(`chips.${task}`)}
                 </button>
@@ -64,7 +64,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
             ))}
           </ul>
           {ai.error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {ai.error}
             </p>
           ) : null}
@@ -74,7 +74,7 @@ export function AiDock({ noteId, study, canEdit, canFork, hasCode, onAddedToNote
       ) : null}
       {results.length ? (
         <section aria-label={t('results')} className="flex flex-col gap-3">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{t('results')}</h3>
+          <h3 className="text-xs font-semibold text-muted">{t('results')}</h3>
           {results.map((a) => (
             <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void ai.run(a.task, a.language)} onAddedToNote={onAddedToNote} />
           ))}

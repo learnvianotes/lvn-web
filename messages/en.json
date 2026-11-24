@@ -49,36 +49,51 @@
     "cta": "Browse subjects",
     "categories": "Subjects",
     "hero": {
-      "eyebrow": "Built by students, learn together",
-      "titleLead": "Your Learning Community for a",
-      "titleAccent": "Brighter Tomorrow",
-      "lead": "Create notes, share knowledge, prepare for exams, learn with AI and grow together.",
-      "start": "Get Started Free",
+      "eyebrow": "",
+      "titleLead": "Learn from",
+      "titleAccent": "your own notes and PDFs",
+      "lead": "Write notes, read PDFs and record lectures in one place. Nova answers your questions from that material and shows the page each answer came from. Built for CSE and B.Tech first, open to every course and profession.",
+      "start": "Create a free account",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
       "openHome": "Open your home",
-      "account": "Your account"
+      "account": "Your account",
+      "preview": {
+        "file": "Unit 3 · CPU scheduling.pdf",
+        "page": "Page 14 of 42",
+        "heading": "Round Robin scheduling",
+        "lines": [
+          "Each process gets a fixed slice of CPU time, the time quantum.",
+          "When the quantum ends, the process moves to the back of the ready queue.",
+          "A small quantum gives quick response but more context switches.",
+          "A large quantum behaves like first come, first served."
+        ],
+        "question": "Why does Round Robin need a time quantum?",
+        "answer": "So no process holds the CPU for long. Each one runs for one quantum, then waits its turn again, which keeps response time short for everyone.",
+        "cite": "p. 14",
+        "askedBy": "Asked in Operating Systems"
+      }
     },
     "features": {
       "label": "What you can do",
       "notes": {
-        "title": "Smart Notes",
+        "title": "Notes",
         "lead": "Cards, code and pictures"
       },
       "ai": {
-        "title": "AI Learning",
-        "lead": "Ask about your notes"
+        "title": "Ask Nova",
+        "lead": "Answers from your PDFs, with the page"
       },
       "groups": {
-        "title": "Study Groups",
-        "lead": "Learn with peers"
+        "title": "Study groups",
+        "lead": "Learn with classmates"
       },
       "exams": {
-        "title": "Exam Prep",
-        "lead": "A plan for the day"
+        "title": "Exam plan",
+        "lead": "What to revise today"
       },
       "quizzes": {
-        "title": "Quizzes & Flashcards",
+        "title": "Quizzes and flashcards",
         "lead": "Remember what you read"
       },
       "community": {
@@ -106,11 +121,11 @@
   "auth": {
     "welcome": {
       "headline": "Turn your notes into knowledge that sticks.",
-      "lead": "Learn, revise and share with your class — at your own pace.",
+      "lead": "Nova reads only what you give it and shows the page every answer came from.",
       "features": {
-        "notes": "All your notes in one place",
-        "rhythm": "A weekly Rhythm, not a streak to lose",
-        "together": "Learn together with your class"
+        "notes": "Notes, PDFs and voice notes in one place",
+        "rhythm": "A weekly rhythm, not a streak to lose",
+        "together": "Study with your class, share what helps"
       },
       "sheetTitle": "Start learning in seconds",
       "sheetLead": "One tap with Google, or use your email.",
@@ -121,17 +136,35 @@
       "signedInTitle": "You are signed in",
       "signedInLead": "Pick up where you left off.",
       "account": "Go to your account",
-      "home": "Open your home"
+      "home": "Open your home",
+      "headlineLead": "Your notes, your PDFs,",
+      "headlineMark": "answers from both"
     },
     "signIn": {
       "title": "Sign in",
-      "lead": "Welcome back. Pick up where you left off.",
+      "lead": "Sign in to your notes, PDFs and Nova.",
       "email": "Email",
       "password": "Password",
       "submit": "Sign in",
       "forgot": "Forgot your password?",
       "noAccount": "New to LearnViaNotes?",
-      "signUp": "Create an account"
+      "signUp": "Create an account",
+      "emailCode": "Email me a code",
+      "usePassword": "Use a password instead",
+      "useCode": "Email me a code instead",
+      "codeTitle": "Check your email",
+      "codeLead": "We sent a 6-digit code to {email}. It works once and expires in 10 minutes.",
+      "code": "6-digit code",
+      "codeSubmit": "Sign in",
+      "resend": "Send a new code",
+      "resendIn": "Send a new code in {seconds}s",
+      "resent": "A new code is on its way.",
+      "otherEmail": "Use a different email",
+      "passkey": "Sign in with a passkey",
+      "passkeyBusy": "Waiting for your device…",
+      "passkeyHint": "Uses your phone or laptop screen lock. No password to remember.",
+      "passkeyCancelled": "The passkey was not used. Try again, or sign in with your email.",
+      "secure": "Sign-in runs over an encrypted connection. Your passkey never leaves your device, and codes are kept only as a one-way hash."
     },
     "signUp": {
       "title": "Create your account",
@@ -165,8 +198,6 @@
       "or": "or",
       "google": "Continue with Google",
       "googleBusy": "Signing in…",
-      "github": "Continue with GitHub",
-      "linkedin": "Continue with LinkedIn",
       "failed": "That sign-in did not work. Try again.",
       "redirectLost": "Google sign-in did not finish. Try again."
     },
@@ -230,7 +261,7 @@
           "request": "requesting a payout"
         },
         "ai": {
-          "bulk": "bulk AI"
+          "bulk": "bulk Nova requests"
         },
         "resource": {
           "submit": "submitting resources"
@@ -249,7 +280,7 @@
       "signInAction": "Sign in",
       "myNotes": "My notes",
       "community": "Community",
-      "askAi": "Ask AI"
+      "askAi": "Ask Nova"
     },
     "age": {
       "confirmTitle": "Is this right?",
@@ -353,7 +384,23 @@
     "resources": "Your resources",
     "savedResources": "Bookmarks: your saved notes and resources",
     "plan": "Your plan",
-    "adminContests": "Write weekly contests"
+    "adminContests": "Write weekly contests",
+    "passkeys": {
+      "title": "Sign-in and security",
+      "lead": "Add a passkey to sign in with this device’s screen lock instead of a password. Only its public key is kept on our side.",
+      "add": "Add a passkey",
+      "adding": "Waiting for your device…",
+      "added": "Passkey added. Next time, choose “Sign in with a passkey”.",
+      "cancelled": "No passkey was made. Try again when you are ready.",
+      "failed": "That did not work. Try again.",
+      "unsupported": "This browser cannot make passkeys. You can still sign in with Google, a code sent to your email, or your password.",
+      "none": "No passkeys yet.",
+      "made": "Added {date}",
+      "used": "used {date}",
+      "synced": "synced",
+      "remove": "Remove {name}"
+    },
+    "accountLinks": "Your account"
   },
   "notes": {
     "pageTitle": "Note",
@@ -461,7 +508,7 @@
         "BLOG": "+ Blog post",
         "POST": "+ Post"
       },
-      "askAi": "Ask AI"
+      "askAi": "Ask Nova"
     },
     "editor": {
       "title": "Title",
@@ -624,7 +671,7 @@
       "showHint": "Show a hint",
       "showAnswer": "Show the answer",
       "quiz": "Quiz",
-      "correct": "Correct!",
+      "correct": "Correct",
       "notQuite": "Not quite.",
       "tryAgain": "Try again",
       "check": "Check",
@@ -729,7 +776,7 @@
       "title": "Record a voice note",
       "menu": "Record a voice note",
       "menuHint": "Speak; it becomes an audio card you can transcribe",
-      "lead": "Recording stops by itself after 30 minutes. Transcribe it afterwards from AI tasks.",
+      "lead": "Recording stops by itself after 30 minutes. Transcribe it afterwards from Nova tasks.",
       "start": "Start recording",
       "stop": "Stop",
       "recordingFor": "Recording, {time}",
@@ -786,7 +833,7 @@
       "tabs": {
         "label": "Note sections",
         "content": "Content",
-        "summary": "AI Summary",
+        "summary": "Summary",
         "flashcards": "Flashcards",
         "quiz": "Quiz",
         "discussions": "Discussions"
@@ -798,23 +845,23 @@
       "linkCopied": "Link copied",
       "summary": {
         "none": "No summary yet.",
-        "make": "Summarise with AI",
-        "aiOff": "AI is off, so no summary can be made now."
+        "make": "Summarise with Nova",
+        "aiOff": "Nova is off, so no summary can be made now."
       },
       "flashcards": {
         "none": "No flashcards in this note yet.",
-        "make": "Make flashcards with AI",
+        "make": "Make flashcards with Nova",
         "add": "Add a flashcard",
         "inNote": "In this note",
         "review": "Review your cards"
       },
       "quiz": {
         "none": "No quiz in this note yet.",
-        "make": "Make a quiz with AI",
+        "make": "Make a quiz with Nova",
         "add": "Add a quiz",
         "inNote": "In this note"
       },
-      "yourResults": "Made for you with AI",
+      "yourResults": "Made for you with Nova",
       "pager": {
         "label": "Sections",
         "previous": "Previous section",
@@ -822,8 +869,8 @@
         "position": "Section {n} of {total}"
       },
       "dock": {
-        "title": "Ask AI about this note",
-        "lead": "One tap, or ask anything. Only you see what AI makes.",
+        "title": "Ask Nova about this note",
+        "lead": "One tap, or ask anything. Only you see what Nova makes.",
         "chips": {
           "EXPLAIN_SIMPLY": "Explain this in simple words",
           "PRACTICE_QUESTIONS": "Generate practice questions",
@@ -840,7 +887,7 @@
     },
     "capture": {
       "title": "Notes from photos and PDFs",
-      "lead": "Add up to {max} photos or PDFs (pages of notes, slides, a whiteboard), then AI makes one note from them all. Photos are made smaller so they upload quickly; a PDF can be up to {mb} MB.",
+      "lead": "Add up to {max} photos or PDFs (pages of notes, slides, a whiteboard), then Nova makes one note from them all. Photos are made smaller so they upload quickly; a PDF can be up to {mb} MB.",
       "choose": "Choose photos or PDFs",
       "drop": "or drop them here",
       "full": "The tray is full",
@@ -856,7 +903,7 @@
       "tooMany": "Only {max} photos or PDFs go into one note; {left, plural, one {# was} other {# were}} left out.",
       "creating": "Making the note…",
       "uploading": "Uploading {n} of {of}…",
-      "making": "Asking AI to make notes…",
+      "making": "Asking Nova to make notes…",
       "failed": "Not everything was uploaded. Check your connection and try again: it carries on where it stopped.",
       "noteTitle": "Quick note, {when}",
       "cancel": "Cancel",
@@ -931,7 +978,7 @@
     "queue": {
       "title": "Moderation queue",
       "lead": "Open reports and appeals, oldest first. Notes held on their way to the public are here too.",
-      "empty": "Nothing to review. Thank you!",
+      "empty": "Nothing to review",
       "more": "Show more",
       "untitled": "Untitled note",
       "by": "by {name} (@{handle})",
@@ -1040,7 +1087,7 @@
     "label": "Search notes, people, groups and topics",
     "placeholder": "Search notes, people, groups and topics…",
     "results": "Results",
-    "askAi": "Ask AI: “{query}”",
+    "askAi": "Ask Nova: “{query}”",
     "hint": "Type to search your notes, notes shared with you and public notes.",
     "nothing": "Nothing found for “{query}”.",
     "all": "All results for “{query}”",
@@ -1234,9 +1281,11 @@
       "pages": "{n, plural, one {# page} other {# pages}}{scanned, plural, =0 {} one {, # scanned} other {, # scanned}}",
       "done": "Made {cards, plural, one {# card} other {# cards}} from {pages, plural, one {# page} other {# pages}}. Check them beside the PDF: each card’s page chip shows where it came from.",
       "dismiss": "Dismiss",
-      "aiPages": "AI read {n, plural, one {# unclear page} other {# unclear pages}} again{rejected, plural, =0 {.} one {; # reading disagreed with the scan and was set aside.} other {; # readings disagreed with the scan and were set aside.}}",
-      "cleanUpHint": "To mend words the conversion broke, use Clean up the text in the AI panel."
-    }
+      "aiPages": "Nova read {n, plural, one {# unclear page} other {# unclear pages}} again{rejected, plural, =0 {.} one {; # reading disagreed with the scan and was set aside.} other {; # readings disagreed with the scan and were set aside.}}",
+      "cleanUpHint": "To mend words the conversion broke, use Clean up the text in the Nova panel."
+    },
+    "scanning": "Checking your PDF for viruses",
+    "scanningLead": "It opens here by itself in a moment. Large PDFs take a little longer."
   },
   "notifications": {
     "title": "Notifications",
@@ -1696,7 +1745,7 @@
       "notFound": "This quiz is not here: it was removed, or you are not in its class.",
       "back": "Back to the class",
       "new": "New quiz",
-      "newHint": "Make questions from one of your notes with AI, or write your own.",
+      "newHint": "Make questions from one of your notes with Nova, or write your own.",
       "none": "No quizzes yet. Your teacher will publish them here.",
       "noneStaff": "No quizzes yet. Publish one and every member is told.",
       "meta": "{n, plural, one {# question} other {# questions}} · by {name} · {when}",
@@ -1716,8 +1765,8 @@
       "untitled": "Untitled note",
       "make": "Make questions",
       "making": "Making questions…",
-      "fromNoteHint": "AI writes questions from the note; check each one, change or remove it, and add your own.",
-      "makeFailed": "AI could not make questions from that note. Try again, or write them yourself.",
+      "fromNoteHint": "Nova writes questions from the note; check each one, change or remove it, and add your own.",
+      "makeFailed": "Nova could not make questions from that note. Try again, or write them yourself.",
       "questionN": "Question {n}",
       "questionText": "Words of question {n}",
       "removeQuestion": "Remove question {n}",
@@ -2097,9 +2146,9 @@
     }
   },
   "ai": {
-    "button": "Ask AI",
-    "title": "AI tasks",
-    "lead": "Ask AI about this note. Results stay beside it and only you see them; the note itself is never changed.",
+    "button": "Ask Nova",
+    "title": "Nova tasks",
+    "lead": "Ask Nova about this note. Results stay beside it and only you see them; the note itself is never changed.",
     "tasks": "Tasks",
     "task": {
       "SUMMARIZE": "Summarise",
@@ -2144,15 +2193,15 @@
       "TELUGU": "Telugu"
     },
     "unavailable": {
-      "NOT_CONFIGURED": "AI isn't switched on here yet.",
-      "BUDGET": "AI is resting until next month: this month's AI budget is used up.",
-      "PROVIDER_DOWN": "The AI model isn't answering right now. Try again in a minute."
+      "NOT_CONFIGURED": "Nova isn't switched on here yet.",
+      "BUDGET": "Nova is resting until next month: this month's budget is used up.",
+      "PROVIDER_DOWN": "Nova isn't answering right now. Try again in a minute."
     },
-    "allowanceLabel": "Today's AI allowance",
-    "allowance": "Today's AI allowance: {percent}% used",
-    "allowanceSpent": "You've used today's AI allowance. It comes back at {time}.",
+    "allowanceLabel": "Today's Nova allowance",
+    "allowance": "Today's Nova allowance: {percent}% used",
+    "allowanceSpent": "You've used today's Nova allowance. It comes back at {time}.",
     "allowanceResets": "Resets at {time}",
-    "noLimit": "Your plan has no daily AI limit.",
+    "noLimit": "Your plan has no daily Nova limit.",
     "results": "Your results",
     "loading": "Loading…",
     "noResults": "Nothing yet. Pick a task above; results take a few seconds.",
@@ -2179,12 +2228,12 @@
     "nothingUsable": "Nothing usable came back. Try again.",
     "keepFailed": "Those cards weren't kept. Try again.",
     "account": {
-      "title": "AI",
-      "lead": "Open a note and choose AI tasks to summarise it, explain it, quiz yourself or make flashcards. Each day your plan gives you an allowance."
+      "title": "Nova",
+      "lead": "Open a note and choose Nova tasks to summarise it, explain it, quiz yourself or make flashcards. Each day your plan gives you an allowance."
     },
-    "askTitle": "Ask AI",
+    "askTitle": "Ask Nova",
     "ask": {
-      "title": "Ask AI",
+      "title": "Ask Nova",
       "lead": "Ask a question and get an answer from notes you can read, with the notes it came from.",
       "where": "Where to look",
       "scope": {
@@ -2202,13 +2251,13 @@
       "placeholder": "What would you like to know?",
       "placeholderNote": "What does this note say about…?",
       "ask": "Ask",
-      "aboutDoubt": "Ask AI about this doubt",
-      "aboutDoubtTitle": "Ask AI",
-      "aboutDoubtLead": "AI reads the notes shared with this workspace and this thread. Its answer is for you; post it yourself if it helps.",
+      "aboutDoubt": "Ask Nova about this doubt",
+      "aboutDoubtTitle": "Ask Nova",
+      "aboutDoubtLead": "Nova reads the notes shared with this workspace and this thread. Its answer is for you; post it yourself if it helps.",
       "off": {
-        "NOT_CONFIGURED": "AI isn't switched on here yet.",
-        "BUDGET": "AI is resting until next month: this month's AI budget is used up.",
-        "PROVIDER_DOWN": "The AI model isn't answering right now. Try again in a minute."
+        "NOT_CONFIGURED": "Nova isn't switched on here yet.",
+        "BUDGET": "Nova is resting until next month: this month's budget is used up.",
+        "PROVIDER_DOWN": "Nova isn't answering right now. Try again in a minute."
       },
       "queued": "Waiting its turn…",
       "writing": "Writing…",
@@ -2223,8 +2272,8 @@
     },
     "aids": {
       "title": "Study aids",
-      "lead": "Made by AI from this note: a summary, key concepts, questions to practise with, a quiz and flashcards.",
-      "leadOwner": "Made by AI from your published note for its readers. Hide any you don't want them to see.",
+      "lead": "Made by Nova from this note: a summary, key concepts, questions to practise with, a quiz and flashcards.",
+      "leadOwner": "Made by Nova from your published note for its readers. Hide any you don't want them to see.",
       "making": "Being made…",
       "failed": "This one could not be made.",
       "status": {
@@ -2634,9 +2683,9 @@
   "homeDashboard": {
     "title": "Home",
     "greeting": {
-      "morning": "Good morning, {name}! 👋",
-      "afternoon": "Good afternoon, {name}! 👋",
-      "evening": "Good evening, {name}! 👋"
+      "morning": "{name}'s desk",
+      "afternoon": "{name}'s desk",
+      "evening": "{name}'s desk"
     },
     "greetingAnon": "Good to see you",
     "lead": "Keep learning. Small steps lead to big achievements.",
@@ -2653,8 +2702,8 @@
     "viewPlan": "View Plan",
     "weeklyGoal": "Weekly goal",
     "ofDays": "{done} / {target} days",
-    "goalMet": "Goal met. Well done!",
-    "keepGoing": "Keep going!",
+    "goalMet": "Goal met for today",
+    "keepGoing": "Keep going",
     "today": "Today",
     "recommended": "Recommended for you",
     "seeAll": "See all",
@@ -2769,7 +2818,7 @@
       "sort": "Sort",
       "popular": "Most saved",
       "newest": "Newest",
-      "none": "Nothing here yet. Add the first one!",
+      "none": "Nothing here yet. Add the first one.",
       "more": "Show more"
     },
     "recommend": {
@@ -2825,7 +2874,7 @@
       "title": "Write your own notes",
       "lead": "Your notes start private. You choose if anyone else can read them.",
       "p1": "My Notes is your library. Create Note starts a blank note made of cards: text, headings, code and pictures. Quick notes is a scratchpad, and Projects keeps a brief and a small board for one piece of work.",
-      "p2": "Upload a PDF to read it as a note, or add photos that AI can turn into a note. On a note you can also record a voice note and transcribe it afterwards.",
+      "p2": "Upload a PDF to read it as a note, or add photos that Nova can turn into a note. On a note you can also record a voice note and transcribe it afterwards.",
       "p3": "Share a note with named people, with an unlisted link, or publish it so anyone can find it. Readers of a public note see the published version. You can turn forks off. A fork is a private copy that still names you.",
       "p4": "Making a note public can require a verified account, and confirming your sign-in email comes before some sharing actions.",
       "link": "My Notes"
@@ -2850,7 +2899,7 @@
       "p1": "Flashcards flip front and back. Review brings those cards back when it is time, and you mark how well you knew each one.",
       "p2": "Quizzes can come from a class or be ones you write and share with a link. Contests are a weekly set of timed questions. Your score is yours: nobody is listed.",
       "p3": "Add an exam and its topics. LearnViaNotes spreads revision back from the date, and Readiness shows how well you know those topics. Rhythm is a weekly habit of planned days, not a streak you lose. It also has a focus timer and a few tasks for the week.",
-      "p4": "Ask AI answers from notes you can read and names the notes it used. On a note, AI tasks can summarise, explain, quiz or make flashcards. Results stay beside the note and do not change it. Each plan has a daily allowance. The Plans page lists what each plan includes; looking at a price does not charge you.",
+      "p4": "Ask Nova answers from notes you can read and names the notes it used. On a note, Nova tasks can summarise, explain, quiz or make flashcards. Results stay beside the note and do not change it. Each plan has a daily allowance. The Plans page lists what each plan includes; looking at a price does not charge you.",
       "p5": "The Resources catalogue lists books, courses and tools members recommend. Moderators check each one before it is public. There are no shop links or prices. Home suggests what to pick up, and learning history and achievements record longer progress.",
       "link": "Exams"
     },
@@ -2894,7 +2943,7 @@
     "menu": "Menu",
     "close": "Close the menu",
     "search": "Search",
-    "searchPlaceholder": "Search notes, topics, people, or ask AI…",
+    "searchPlaceholder": "Search or ask Nova",
     "account": "Your account",
     "upload": "Upload a PDF",
     "uploading": "Uploading…",
@@ -2916,7 +2965,7 @@
       "rhythm": "Rhythm",
       "resources": "Resources",
       "community": "Community",
-      "ask": "AI Assistant",
+      "ask": "Nova",
       "saved": "Bookmarks",
       "quizzes": "Quizzes",
       "contests": "Contests",
@@ -3133,7 +3182,7 @@
     "quick": {
       "kicker": "Scratchpad",
       "title": "Quick notes",
-      "lead": "A light page for rough words. Ask AI when you want them tidied.",
+      "lead": "A light page for rough words. Ask Nova when you want them tidied.",
       "label": "Scratchpad",
       "placeholder": "Jot it down…",
       "noteTitle": "Quick note",
@@ -3175,7 +3224,7 @@
     "upload": {
       "kicker": "Bring it in",
       "title": "Upload",
-      "lead": "A PDF becomes a note you can read. Photos become notes with AI.",
+      "lead": "A PDF becomes a note you can read. Photos become notes with Nova.",
       "noteTitle": "Upload",
       "aiSeed": "Notes from a file I am about to upload",
       "drop": "Drop a PDF here",
@@ -4093,5 +4142,14 @@
       "DRAFT": "Draft",
       "PUBLISHED": "Published"
     }
+  },
+  "wait": {
+    "upload": "Uploading your file",
+    "record": "Saving your recording",
+    "pdf": "Opening your PDF",
+    "scan": "Checking your PDF for viruses",
+    "search": "Searching your notes",
+    "nova": "Nova is reading your notes",
+    "general": "One moment"
   }
 }

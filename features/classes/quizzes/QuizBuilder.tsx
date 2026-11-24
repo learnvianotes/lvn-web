@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import { LoaderCircle, Plus, Sparkles, Trash } from 'lucide-react'
+import { LoaderCircle, Plus, TextQuote, Trash } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -149,7 +149,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
               </select>
             </label>
             <Button variant="secondary" className="gap-1.5" disabled={!noteId || making} onClick={() => void make()}>
-              {making ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4 text-accent" aria-hidden />}
+              {making ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <TextQuote className="size-4 text-accent" aria-hidden />}
               {making ? t('making') : t('make')}
             </Button>
           </div>
@@ -160,7 +160,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
           {drafts.map((d, i) => (
             <li key={d.key} aria-label={t('questionN', { n: i + 1 })} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold">{t('questionN', { n: i + 1 })}</span>
+                <span className="text-sm font-semibold">{t('questionN', { n: i + 1 })}</span>
                 <span className="flex-1" />
                 <Button variant="ghost" size="icon" aria-label={t('removeQuestion', { n: i + 1 })} title={t('removeQuestion', { n: i + 1 })} onClick={() => setDrafts((all) => all.filter((x) => x.key !== d.key))}>
                   <Trash className="size-4" aria-hidden />
@@ -208,7 +208,7 @@ export function QuizBuilder({ classroomId, open, onClose, onPublished }: { class
         ) : null}
 
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-bad">
             {error}
           </p>
         ) : null}

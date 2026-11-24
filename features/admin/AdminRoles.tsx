@@ -26,7 +26,7 @@ export function AdminRoles() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       <label className="flex max-w-md flex-col gap-1">
@@ -75,7 +75,7 @@ function PersonRow({ id, name, handle, role }: { id: string; name: string; handl
         <Button size="sm" variant="secondary" disabled={busy || current === 'TEACHER' || current === 'PLATFORM_ADMIN'} onClick={() => void assign('TEACHER')}>{t('makeTeacher')}</Button>
         {staff ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void assign('STUDENT')}>{t('remove')}</Button> : null}
       </div>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400 sm:basis-full">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad sm:basis-full">{error}</p> : null}
     </article>
   )
 }

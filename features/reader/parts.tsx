@@ -29,7 +29,7 @@ export function ToolButton({ icon: Icon, label, onClick, pressed, disabled, clas
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-sm text-fg transition hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent',
+        'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-sm text-fg transition-colors hover:bg-surface-2 active:scale-95 disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent',
         showLabel ? 'px-2.5' : 'w-9',
         className,
       )}
@@ -76,7 +76,7 @@ export function Swatches({ onPick, current, label }: { onPick: (color: Highlight
           aria-label={label(color)}
           title={label(color)}
           aria-pressed={current === color}
-          className={cn('size-7 rounded-full ring-offset-2 ring-offset-surface transition hover:scale-110 aria-pressed:ring-2 aria-pressed:ring-fg', SWATCH[color])}
+          className={cn('size-7 rounded-full ring-offset-2 ring-offset-surface transition aria-pressed:ring-2 aria-pressed:ring-fg', SWATCH[color])}
           onClick={() => onPick(color)}
         />
       ))}
@@ -140,7 +140,7 @@ export function HighlightCard({ highlight, at, onColor, onComment, onAdd, onRemo
       <div className="flex flex-wrap items-center gap-1">
         {changed ? <ToolButton icon={MessageSquareText} label={t('saveComment')} onClick={() => onComment(comment)} showLabel className="bg-accent text-accent-fg hover:bg-accent/90" /> : null}
         <ToolButton icon={NotebookPen} label={highlight.cardId ? t('addAgain') : t('addToNotes')} onClick={onAdd} showLabel />
-        <ToolButton icon={Trash} label={t('remove')} onClick={onRemove} className="ml-auto text-red-600 dark:text-red-400" />
+        <ToolButton icon={Trash} label={t('remove')} onClick={onRemove} className="ml-auto text-bad" />
       </div>
     </Floating>
   )
@@ -154,11 +154,11 @@ export function HighlightsList({ highlights, onOpen }: { highlights: HighlightFi
     <div className="flex flex-col gap-4">
       {pages.map((page) => (
         <section key={page} className="flex flex-col gap-1.5">
-          <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('pageLabel', { page })}</h3>
+          <h3 className="px-2 text-xs font-semibold text-muted">{t('pageLabel', { page })}</h3>
           {highlights
             .filter((h) => h.page === page)
             .map((h) => (
-              <button key={h.id} type="button" onClick={() => onOpen(h)} className="flex gap-2.5 rounded-xl border border-border bg-surface p-2.5 text-left text-sm transition hover:border-accent/50 hover:shadow-sm">
+              <button key={h.id} type="button" onClick={() => onOpen(h)} className="flex gap-2.5 rounded-xl border border-border bg-surface p-2.5 text-left text-sm transition-colors hover:border-accent/50 hover:shadow-sm">
                 <span className={cn('mt-1 size-3 shrink-0 rounded-full', SWATCH[h.color])} aria-hidden />
                 <span className="flex min-w-0 flex-col gap-1">
                   <span className="line-clamp-3">{h.kind === 'AREA' ? <em className="text-muted">{t('area')}</em> : `“${h.quote ?? ''}”`}</span>
@@ -180,7 +180,7 @@ export function OutlineList({ items, onPick, depth = 0 }: { items: OutlineItem[]
     <ul className="flex flex-col">
       {items.map((item, i) => (
         <li key={`${depth}-${i}`}>
-          <button type="button" className="w-full truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-fg" style={{ paddingLeft: `${0.5 + depth * 0.85}rem` }} onClick={() => onPick(item.dest)}>
+          <button type="button" className="w-full truncate rounded-lg px-2 py-1.5 text-left text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg" style={{ paddingLeft: `${0.5 + depth * 0.85}rem` }} onClick={() => onPick(item.dest)}>
             {item.title || t('untitled')}
           </button>
           {item.items.length ? <OutlineList items={item.items} onPick={onPick} depth={depth + 1} /> : null}

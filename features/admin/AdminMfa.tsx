@@ -137,7 +137,7 @@ export function AdminMfaPanel({ onVerified }: { onVerified: () => void }) {
   return (
     <form onSubmit={onSubmit} noValidate className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-2xl border border-border bg-surface p-6" aria-labelledby="admin-mfa-title">
       <header className="flex flex-col gap-1">
-        <h1 id="admin-mfa-title" className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 id="admin-mfa-title" className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {expires ? <p className="text-sm text-muted">{t('expires', { time: expires })}</p> : <p role="status" className="text-sm text-muted">{t('sending')}</p>}

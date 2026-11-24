@@ -49,7 +49,7 @@ export function AdminOverview() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
         <p className="text-sm text-muted">{t('generatedAt', { when: formatWhen(metrics.generatedAt) })}</p>
         <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -98,7 +98,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs break-words text-muted">{label}</dt>
-      <dd className="text-lg font-semibold tracking-tight break-words">{value}</dd>
+      <dd className="text-lg font-semibold break-words">{value}</dd>
     </div>
   )
 }
@@ -109,7 +109,7 @@ function Users({ metrics }: { metrics: Metrics }) {
   const n = (v: number) => format.number(v)
   return (
     <Card title={t('users')} href="/admin/settings#accounts" link={t('usersLink')}>
-      <p className="text-3xl font-extrabold tracking-tight">{n(metrics.users.total)}</p>
+      <p className="text-3xl font-semibold tracking-tight">{n(metrics.users.total)}</p>
       <dl className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-3">
         <Stat label={t('new7')} value={n(metrics.users.newLast7Days)} />
         <Stat label={t('new30')} value={n(metrics.users.newLast30Days)} />
@@ -143,7 +143,7 @@ function Storage({ metrics }: { metrics: Metrics }) {
   const format = useFormatter()
   return (
     <Card title={t('storage')} href="/admin/settings#uploads" link={t('storageLink')}>
-      <p className="text-3xl font-extrabold tracking-tight">{formatBytes(metrics.storage.bytes)}</p>
+      <p className="text-3xl font-semibold tracking-tight">{formatBytes(metrics.storage.bytes)}</p>
       <p className="text-sm text-muted">{t('files', { count: format.number(metrics.storage.files) })}</p>
     </Card>
   )
@@ -292,7 +292,7 @@ function UsageTable({ title, rows }: { title: string; rows: (UsageRow & { name: 
               <li key={row.name} className="rounded-xl border border-border p-3">
                 <p className="font-medium break-words">{row.name}</p>
                 <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-2" role="img" aria-label={t('bar', { name: row.name, count: format.number(row.tasksRun) })}>
-                  <span className="block h-full rounded-full bg-accent" style={{ width: `${width}%` }} />
+                  <span className="block h-full rounded-[10px] bg-accent" style={{ width: `${width}%` }} />
                 </span>
                 <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                   <UsageStat label={t('tasks')} value={format.number(row.tasksRun)} />
@@ -325,7 +325,7 @@ function UsageTable({ title, rows }: { title: string; rows: (UsageRow & { name: 
                     <th scope="row" className="py-2 pr-2 font-medium break-words">
                       <span className="block">{row.name}</span>
                       <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface-2" role="img" aria-label={t('bar', { name: row.name, count: format.number(row.tasksRun) })}>
-                        <span className="block h-full rounded-full bg-accent" style={{ width: `${width}%` }} />
+                        <span className="block h-full rounded-[10px] bg-accent" style={{ width: `${width}%` }} />
                       </span>
                     </th>
                     <td className="py-2 pr-2 break-words">{format.number(row.tasksRun)}</td>

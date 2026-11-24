@@ -17,7 +17,7 @@ describe('terms version picker (lvn-backend ADR-0103)', () => {
     expect(selectableTermsVersions([], web)).toEqual([])
     expect(selectableTermsVersions(PUBLISHED_TERMS_VERSIONS.map((v) => v.version)).map((v) => v.version)).toEqual(PUBLISHED_TERMS_VERSIONS.map((v) => v.version).reverse())
     // The API's built-in allowlist is still 2026-10-08,2026-11-03 until 2026-11-12 is added there.
-    expect(termsRegistryGaps(['2026-10-08', '2026-11-03']).webOnly).toEqual(['2026-11-12'])
+    expect(termsRegistryGaps(['2026-10-08', '2026-11-03']).webOnly).toEqual(['2026-11-12', '2026-11-25'])
     // The registry itself is not reordered.
     expect(web.map((v) => v.version)).toEqual(['2026-10-08', '2026-11-03', '2026-12-01'])
   })

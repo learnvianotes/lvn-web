@@ -35,12 +35,12 @@ export function Teach() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       {status === 'VERIFIED' ? (
         <section role="status" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft p-5">
-          <h2 className="text-lg font-bold">{t('verifiedTitle')}</h2>
+          <h2 className="text-lg font-semibold">{t('verifiedTitle')}</h2>
           <p className="text-sm">{t('verifiedLead')}</p>
           <Link href="/classes" className="text-sm font-semibold text-accent hover:underline">
             {t('newClass')} →
@@ -48,7 +48,7 @@ export function Teach() {
         </section>
       ) : status === 'PENDING' && latest ? (
         <section role="status" className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-lg font-bold">{t('pendingTitle')}</h2>
+          <h2 className="text-lg font-semibold">{t('pendingTitle')}</h2>
           <p className="text-sm text-muted">{t('pendingLead', { when: format.dateTime(new Date(latest.createdAt), { dateStyle: 'medium' }) })}</p>
           <Link href="/classes" className="text-sm font-semibold text-accent hover:underline">
             {t('newClass')} →

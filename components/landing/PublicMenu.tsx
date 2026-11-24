@@ -55,7 +55,7 @@ export function PublicMenu({ labels }: { labels: { menu: string; close: string; 
               {labels.guide}
             </Link>
             {signedIn ? null : (
-              <Link href="/sign-up" className="mt-1 inline-flex h-10 items-center justify-center rounded-full bg-accent px-4 text-sm font-semibold text-accent-fg" onClick={() => setOpen(false)}>
+              <Link href="/sign-up" className="mt-1 inline-flex h-10 items-center justify-center rounded-[10px] bg-accent px-4 text-sm font-semibold text-accent-fg" onClick={() => setOpen(false)}>
                 {labels.start}
               </Link>
             )}

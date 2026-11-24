@@ -23,7 +23,7 @@ export function GuestNav({ labels }: { labels: { features: string; subjects: str
       <Link href="/guide" className={link}>
         {labels.guide}
       </Link>
-      <Link href="/sign-up" className="order-last hidden h-9 items-center whitespace-nowrap rounded-full bg-accent px-4 text-sm font-semibold text-accent-fg hover:opacity-90 sm:inline-flex">
+      <Link href="/sign-up" className="order-last hidden h-9 items-center whitespace-nowrap rounded-[10px] bg-accent px-4 text-sm font-semibold text-accent-fg hover:opacity-90 sm:inline-flex">
         {labels.start}
       </Link>
     </>

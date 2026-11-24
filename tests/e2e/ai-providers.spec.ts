@@ -102,7 +102,7 @@ test('a platform admin adds Claude, tests it, makes it answer, sends transcripti
   await page.goto('/admin/ai')
   await expect(page.getByRole('heading', { name: 'AI providers' })).toBeVisible()
   await expect(page.getByText('Spent this month: $1.25 of the $50.00 budget.')).toBeVisible()
-  await expect(page.getByLabel(/Chats, tasks and Ask AI/)).toHaveValue('')
+  await expect(page.getByLabel(/Chats, tasks and Ask Nova/)).toHaveValue('')
 
   await page.getByRole('button', { name: 'Claude (Anthropic)' }).click()
   const dialog = page.getByRole('dialog', { name: 'Add Claude (Anthropic)' })
@@ -127,7 +127,7 @@ test('a platform admin adds Claude, tests it, makes it answer, sends transcripti
   await expect(listed).toHaveCount(30)
   await expect(listed.last()).toHaveText('claude-model-29')
 
-  await page.getByLabel(/Chats, tasks and Ask AI/).selectOption(CLAUDE)
+  await page.getByLabel(/Chats, tasks and Ask Nova/).selectOption(CLAUDE)
   await expect.poll(() => calls.find((c) => c.op === 'SetAiDefaults')?.variables).toEqual({ input: { chatConnectionId: CLAUDE, embedConnectionId: null } })
   await expect(card.getByText('Answers chats')).toBeVisible()
 
@@ -200,7 +200,7 @@ test('a change that fails outright says so', async ({ page }) => {
   await mockApi(page, { AiSettings: () => ({ aiSettings: state }) }, { ...viewerExtras, globalRole: 'PLATFORM_ADMIN' })
   await page.goto('/admin/ai')
   // SetAiDefaults is not mocked: the API answers 500.
-  await page.getByLabel(/Chats, tasks and Ask AI/).selectOption(GEMINI)
+  await page.getByLabel(/Chats, tasks and Ask Nova/).selectOption(GEMINI)
   await expect(page.getByText('Something went wrong. Try again.')).toBeVisible()
 })
 

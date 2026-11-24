@@ -32,8 +32,10 @@ export function Privacy() {
       <h2>1. What we collect</h2>
       <ul>
         <li>
-          <strong>Account:</strong> your name, email address, handle and age (or date of birth, if you gave one); your password, stored only as a
-          secure hash, or the Google account you sign in with.
+          <strong>Account:</strong> your name, email address, handle and age (or date of birth, if you gave one); how you
+          sign in: a password, stored only as a secure hash; the Google account you sign in with; a passkey’s public key
+          (the private key never leaves your device); or a one-time code we email you, kept only as a one-way hash for ten
+          minutes.
         </li>
         <li>
           <strong>What you agreed to:</strong> when you registered and which versions of the Terms, this policy and the
@@ -52,11 +54,16 @@ export function Privacy() {
           sessions and exam plans — so the app can plan your week and suggest what to study next.
         </li>
         <li>
-          <strong>AI features:</strong> the text you ask an AI feature to work on, and its answers.
+          <strong>Nova (AI features):</strong> the text you ask Nova to work on, and its answers. Nova answers from the notes
+          and files you give it.
         </li>
         <li>
           <strong>Technical data:</strong> your sign-in sessions (device and browser), your IP address in security logs, and
           error reports — sent without your name, email, cookies or the query part of addresses.
+        </li>
+        <li>
+          <strong>Security signals:</strong> counts of failed sign-ins and of requests our limits refused, so we can stop
+          misuse. These counts are short-lived (see “How long we keep it”).
         </li>
         <li>
           <strong>Google Analytics</strong>, only if you choose “Allow” when we ask: the pages you view (their address
@@ -123,6 +130,10 @@ export function Privacy() {
         <li>Data exports you download: {RETENTION.exportDays} days.</li>
         <li>Server logs: {RETENTION.logsDays} days. Security and moderation records: up to {RETENTION.auditYears} years.</li>
         <li>Google Analytics data: {RETENTION.analyticsMonths} months.</li>
+        <li>
+          Sign-in codes: ten minutes, or until used. Counts of refused requests: one hour. Counts of wrong passwords: one
+          day. A passkey: until you remove it or delete your account.
+        </li>
         <li>We may keep a record longer when the law requires it, for example to deal with a legal claim.</li>
       </ul>
 
@@ -161,7 +172,11 @@ export function Privacy() {
 
       <h2>8. Security</h2>
       <p>
-        Data is encrypted in transit and at rest. Access inside our team is limited to people who need it. No system is
+        Data is encrypted in transit and at rest. Passwords and sign-in codes are stored only as one-way hashes, and for a
+        passkey we keep only its public key. Access inside our team is limited to people who need it. To stop misuse,
+        an account that sends far more requests than a person could is paused automatically for an hour and the pause is
+        recorded for a moderator; after many wrong passwords, password sign-in for that email pauses for a day while a
+        code or passkey still works. If you think a pause was a mistake, write to us and a person will look at it. No system is
         perfectly secure; if a breach affects your personal data we will tell you and the authorities as the law requires.
       </p>
 

@@ -66,7 +66,7 @@ export function AdminSettings() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       <AiCheckSettingsCard settings={aiSettings} onSaved={() => void refetch()} />
@@ -78,7 +78,7 @@ export function AdminSettings() {
               <li key={group.category} className="shrink-0">
                 <a
                   href={`#${group.category}`}
-                  className="inline-flex min-h-11 items-center rounded-full border border-border px-3 text-sm font-medium hover:border-accent"
+                  className="inline-flex min-h-11 items-center rounded-[10px] border border-border px-3 text-sm font-medium hover:border-accent"
                   onClick={(e) => {
                     e.preventDefault()
                     reveal(group.category)
@@ -243,7 +243,7 @@ function SettingRow({ setting, onSaved }: { setting: Setting; onSaved: () => voi
         </div>
       )}
       {shownIssue ? (
-        <p role="alert" className="text-sm font-medium text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm font-medium text-bad">
           {shownIssue}
         </p>
       ) : null}
@@ -301,7 +301,7 @@ function Switch({ id, label, hint, checked, invalid, onChange }: { id: string; l
 }
 
 function Badge({ children, muted }: { children: ReactNode; muted?: boolean }) {
-  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
+  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
 }
 
 function describe(setting: Setting, value: string, t: ReturnType<typeof useTranslations<'adminSettings'>>): string {

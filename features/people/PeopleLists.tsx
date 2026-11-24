@@ -74,7 +74,7 @@ export function PeopleLists() {
   return (
     <section className="mx-auto flex max-w-2xl flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         {data?.viewer ? (
           <Link href={`/u/${data.viewer.handle}`} className="text-sm font-medium text-accent hover:underline">
             {t('yourProfile')}
@@ -102,7 +102,7 @@ export function PeopleLists() {
           <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
             {lists[tab].map((p) => (
               <li key={p.id} className="flex items-center gap-3 px-4 py-3">
-                <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft font-bold text-accent">
+                <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft font-semibold text-accent">
                   {p.displayName.slice(0, 1).toUpperCase()}
                 </span>
                 <Link href={`/u/${p.handle}`} className="flex min-w-0 flex-1 flex-col hover:text-accent">

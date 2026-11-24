@@ -57,7 +57,7 @@ export function AdminUsers() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -74,7 +74,7 @@ export function AdminUsers() {
         </div>
       </div>
       {total !== null ? <p className="text-sm text-muted">{t('count', { count: total })}</p> : null}
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
       {rows && !rows.length && !error ? <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted">{t('none')}</p> : null}
       <ul className="flex flex-col gap-3">
         {(rows ?? []).map((user) => (
@@ -210,7 +210,7 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
   const held = user?.accountStatus === 'BLOCKED' || user?.accountStatus === 'SUSPENDED'
   return (
     <Dialog open={user !== null} onClose={onClose} title={user?.displayName ?? t('title')} side>
-      {error ? <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="mb-3 text-sm text-bad">{error}</p> : null}
       {user ? (
         <div className="flex flex-col gap-6">
           <p className="text-sm text-muted">{t(`status.${user.accountStatus}`)} · {user.globalRole}</p>
@@ -269,8 +269,8 @@ function UserDialog({ user, onClose, onUser, onChanged }: { user: AdminManagedUs
               {held ? <Button type="button" variant="secondary" disabled={busy} onClick={() => void standing('ACTIVE')}>{t('unblock')}</Button> : null}
             </div>
           </form>
-          <form className="flex flex-col gap-3 rounded-xl border border-red-300 p-3 dark:border-red-900" onSubmit={(e) => { e.preventDefault(); void remove() }}>
-            <h3 className="font-semibold text-red-700 dark:text-red-300">{t('delete')}</h3>
+          <form className="flex flex-col gap-3 rounded-xl border border-bad/30 p-3" onSubmit={(e) => { e.preventDefault(); void remove() }}>
+            <h3 className="font-semibold text-bad">{t('delete')}</h3>
             <p className="text-sm text-muted">{t('deleteLead')}</p>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">{t('deleteConfirm')}</span>

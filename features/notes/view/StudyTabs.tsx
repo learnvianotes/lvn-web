@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { GraduationCap, Layers, ListChecks, Plus, ScrollText, Sparkles } from 'lucide-react'
+import { GraduationCap, Layers, ListChecks, Plus, ScrollText, TextQuote } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,7 @@ function Results({ noteId, study, tab, canEdit, onAddedToNote }: { noteId: strin
   if (!mine.length) return null
   return (
     <section aria-label={t('yourResults')} className="flex flex-col gap-3">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('yourResults')}</h3>
+      <h3 className="text-sm font-semibold text-muted">{t('yourResults')}</h3>
       {mine.map((a) => (
         <AiResult key={a.id} noteId={noteId} artifact={a} canEdit={canEdit} onRetry={() => void study.ai.run(a.task, a.language)} onAddedToNote={onAddedToNote} />
       ))}
@@ -47,7 +47,7 @@ function Results({ noteId, study, tab, canEdit, onAddedToNote }: { noteId: strin
   )
 }
 
-function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: string; icon: typeof Sparkles }) {
+function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: string; icon: typeof TextQuote }) {
   if (!ai.available) return null
   return (
     <Button size="sm" className="gap-1.5" disabled={ai.spent || ai.running} onClick={() => void ai.run(task)}>
@@ -59,7 +59,7 @@ function Make({ ai, task, label, icon: Icon }: { ai: Ai; task: AiTask; label: st
 
 function Problem({ ai }: { ai: Ai }) {
   return ai.error ? (
-    <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+    <p role="alert" className="text-sm text-bad">
       {ai.error}
     </p>
   ) : null
@@ -95,7 +95,7 @@ export function CardsTab({ kind, noteId, noteTitle, cards, study, canEdit, reade
     <>
       {own.length ? (
         <section aria-label={t('inNote')} className="flex min-w-0 max-w-full flex-col gap-3">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{t('inNote')}</h3>
+          <h3 className="text-sm font-semibold text-muted">{t('inNote')}</h3>
           {own.map((c) => (
             <div key={c.id} className="min-w-0 max-w-full rounded-2xl border border-border bg-surface p-4">
               <CardView id={`tab-${c.id}`} type={c.type as CardType} content={c.content} />

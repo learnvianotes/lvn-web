@@ -20,7 +20,7 @@ export function AppearanceControls() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const shownMode: ThemeMode = mounted ? mode : 'system'
-  const shownAccent: AccentId = mounted ? accent : 'navy'
+  const shownAccent: AccentId = mounted ? accent : 'ink'
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,7 +49,7 @@ export function AppearanceControls() {
       </div>
       <div>
         <p id={`${id}-accent`} className="text-sm font-medium text-fg">{t('accent')}</p>
-        <div role="radiogroup" aria-labelledby={`${id}-accent`} className="mt-2 grid grid-cols-5 gap-1">
+        <div role="radiogroup" aria-labelledby={`${id}-accent`} className="mt-2 grid grid-cols-6 gap-1">
           {ACCENTS.map((item) => {
             const selected = shownAccent === item
             return (

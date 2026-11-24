@@ -10,7 +10,7 @@ export function Shelf({ notes, resources, topicTitle }: { notes: TopicNote[]; re
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <section aria-labelledby="shelf-notes" className="flex flex-col gap-3">
-        <h2 id="shelf-notes" className="text-lg font-bold">
+        <h2 id="shelf-notes" className="text-lg font-semibold">
           {t('notes')}
         </h2>
         {notes.length ? (
@@ -37,7 +37,7 @@ export function Shelf({ notes, resources, topicTitle }: { notes: TopicNote[]; re
         )}
       </section>
       <section aria-labelledby="shelf-resources" className="flex flex-col gap-3">
-        <h2 id="shelf-resources" className="text-lg font-bold">
+        <h2 id="shelf-resources" className="text-lg font-semibold">
           {t('resources')}
         </h2>
         {resources.length ? (

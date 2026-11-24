@@ -33,9 +33,9 @@ describe('theme storage', () => {
     expect(readMode(JSON.stringify('system'))).toBe('system')
     expect(readMode('nope')).toBe('system')
     expect(readMode('{')).toBe('system')
-    expect(readAccent(null)).toBe('navy')
+    expect(readAccent(null)).toBe('ink')
     expect(readAccent(JSON.stringify('forest'))).toBe('forest')
-    expect(readAccent(JSON.stringify('purple'))).toBe('navy')
+    expect(readAccent(JSON.stringify('purple'))).toBe('ink')
   })
 
   it('resolves system from the OS and leaves an explicit mode alone', () => {
@@ -82,7 +82,7 @@ describe('theme storage', () => {
   it('persists mode and accent without dropping a previous explicit choice', () => {
     localStorage.setItem(THEME_KEY, JSON.stringify('dark'))
     useAppearance.getState().sync()
-    expect(useAppearance.getState()).toMatchObject({ mode: 'dark', accent: 'navy', resolved: 'dark' })
+    expect(useAppearance.getState()).toMatchObject({ mode: 'dark', accent: 'ink', resolved: 'dark' })
 
     useAppearance.getState().setAccent('slate')
     useAppearance.getState().setMode('system')

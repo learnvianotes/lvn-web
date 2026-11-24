@@ -31,7 +31,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
   if (forbidden) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <h1 className="text-2xl font-bold">{t('notAllowed')}</h1>
+        <h1 className="text-2xl font-semibold">{t('notAllowed')}</h1>
         <p className="mt-2 text-sm text-muted">{scope ? t('notAllowedScoped') : t('notAllowedLead')}</p>
       </div>
     )
@@ -42,7 +42,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
         <p className="text-sm text-muted">{t(`leadScoped.${scope.scope}`)}</p>
       ) : (
         <header className="flex flex-col gap-1">
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold">
             <ShieldCheck className="size-6 text-accent" aria-hidden />
             {t('title')}
           </h1>
@@ -51,7 +51,7 @@ export function ModerationQueue({ scope, groupId }: { scope?: { scope: Moderatio
       )}
       {queue.data && !cases.length ? (
         <div className="flex flex-col items-center gap-2 rounded-3xl border border-dashed border-border px-6 py-12 text-center">
-          <Check className="size-8 text-emerald-500" aria-hidden />
+          <Check className="size-8 text-good" aria-hidden />
           <p className="font-semibold">{t('empty')}</p>
         </div>
       ) : null}
@@ -85,13 +85,13 @@ function choicesFor(c: Case): ModerationChoice[] {
   const keep = !!c.appeal && (c.content?.moderation === 'HIDDEN' || c.content?.moderation === 'REMOVED' || c.note?.moderation === 'HIDDEN' || c.note?.moderation === 'REMOVED')
   const dismiss: ModerationChoice = { action: 'DISMISS', label: keep ? 'KEEP' : 'DISMISS', icon: Flag, tone: '' }
   const warn: ModerationChoice = { action: 'WARN', label: 'WARN', icon: MessageSquareWarning, tone: '' }
-  const hide: ModerationChoice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-amber-700 dark:text-amber-400' }
-  const remove: ModerationChoice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-red-600 dark:text-red-400' }
+  const hide: ModerationChoice = { action: 'HIDE', label: 'HIDE', icon: EyeOff, tone: 'text-warn' }
+  const remove: ModerationChoice = { action: 'REMOVE', label: 'REMOVE', icon: Trash, tone: 'text-bad' }
   const approve: ModerationChoice = { action: 'APPROVE', label: keep ? 'RESTORE' : 'APPROVE', icon: Check, tone: '' }
   // A new resource is approved or rejected (ADR-0074); people's reports on one in the catalogue are dismissed, or it is removed.
   if (c.entityType === 'RESOURCE') return c.reports.some((x) => x.reporter) ? [dismiss, remove] : [approve, { ...remove, label: 'REJECT' }]
   // Accounts are warned or suspended; a suspension is lifted or kept (ADR-0053).
-  if (c.entityType === 'USER') return c.suspendedUntil ? [{ action: 'APPROVE', label: 'LIFT', icon: Check, tone: '' }, { ...dismiss, label: c.appeal ? 'KEEP' : 'DISMISS' }, warn] : [dismiss, warn, { action: 'SUSPEND', label: 'SUSPEND', icon: Ban, tone: 'text-red-600 dark:text-red-400' }]
+  if (c.entityType === 'USER') return c.suspendedUntil ? [{ action: 'APPROVE', label: 'LIFT', icon: Check, tone: '' }, { ...dismiss, label: c.appeal ? 'KEEP' : 'DISMISS' }, warn] : [dismiss, warn, { action: 'SUSPEND', label: 'SUSPEND', icon: Ban, tone: 'text-bad' }]
   // A removed group is put back or stays removed.
   if (c.entityType === 'GROUP') return c.removedGroup ? [{ action: 'APPROVE', label: 'RESTORE', icon: Check, tone: '' }, { ...dismiss, label: 'KEEP' }] : [dismiss, warn, remove]
   // Approving content that is up changes nothing a dismissal doesn't.
@@ -128,29 +128,29 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
     <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5" aria-label={title}>
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t(`entity.${c.entityType}`)}</span>
+          <span className="text-xs font-semibold text-muted">{t(`entity.${c.entityType}`)}</span>
           {c.note ? (
-            <h2 className="text-lg font-bold">{title}</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
           ) : c.group ? (
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="size-4" aria-hidden />
               <Link href={`/groups/${c.group.id}`} className="hover:text-accent">
                 {c.group.name}
               </Link>
             </h2>
           ) : c.removedGroup ? (
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="size-4" aria-hidden />
               {c.removedGroup.name}
             </h2>
           ) : c.user ? (
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <User className="size-4" aria-hidden />
               {c.user.displayName} <span className="text-sm font-normal text-muted">@{c.user.handle}</span>
             </h2>
           ) : null}
           {c.resource ? (
-            <h2 className="text-lg font-bold">
+            <h2 className="text-lg font-semibold">
               <Link href={`/resources/${c.resource.id}`} className="hover:text-accent">
                 {c.resource.title}
               </Link>
@@ -160,11 +160,11 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
           {c.resource ? <p className="text-sm text-muted">{t('by', { name: c.resource.submittedBy.displayName, handle: c.resource.submittedBy.handle })}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {platform && c.scope !== 'PLATFORM' ? <span className="rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
+          {platform && c.scope !== 'PLATFORM' ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
           {state ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`state.${state}`)}</span> : null}
           {c.resource ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`resourceState.${c.resource.status}`)}</span> : null}
-          {c.suspendedUntil ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
-          {c.removedGroup ? <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{t(`state.REMOVED`)}</span> : null}
+          {c.suspendedUntil ? <span className="rounded-full bg-bad/10 px-2 py-0.5 font-semibold text-bad">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}
+          {c.removedGroup ? <span className="rounded-full bg-bad/10 px-2 py-0.5 font-semibold text-bad">{t(`state.REMOVED`)}</span> : null}
           <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('opened', { when: ago(c.openedAt) })}</span>
         </div>
       </header>
@@ -194,7 +194,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
       ) : null}
       {c.appeal ? (
         <blockquote className="rounded-xl border-l-4 border-accent bg-accent-soft px-3 py-2 text-sm">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-accent">{t('appeal')}</span>
+          <span className="block text-xs font-semibold text-accent">{t('appeal')}</span>
           {c.appeal.message}
         </blockquote>
       ) : null}
@@ -207,7 +207,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
         ) : null}
       </ModerationActions>
       {muteError ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {muteError}
         </p>
       ) : null}

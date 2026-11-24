@@ -78,7 +78,7 @@ export function AdminUsage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
           <Button type="button" variant="secondary" size="sm" aria-expanded={lookUp} aria-controls="user-timeline-section" onClick={() => setLookUp((v) => !v)}>
             {lookUp ? t('hideLookUp') : t('lookUpUser')}
           </Button>
@@ -124,7 +124,7 @@ export function AdminUsage() {
           ) : null}
         </div>
         <p className="text-xs text-muted">{showsRange ? t('range.shown', { from: range.from, to: range.to }) : t('range.notUsed')}</p>
-        {issue ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{t(`range.${issue}`)}</p> : null}
+        {issue ? <p role="alert" className="text-sm text-bad">{t(`range.${issue}`)}</p> : null}
       </form>
 
       <div role="tablist" aria-label={t('tabsLabel')} className="flex gap-1 overflow-x-auto border-b border-border">
@@ -192,7 +192,7 @@ function Timeline() {
         </label>
         <Button type="submit" disabled={busy}>{t('lookUp')}</Button>
       </form>
-      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
       {rows && !rows.length ? <p className="text-sm text-muted">{t('noEvents')}</p> : null}
       <ol className="flex flex-col gap-2">
         {(rows ?? []).map((row, index) => (

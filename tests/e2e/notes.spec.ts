@@ -94,7 +94,7 @@ test('a reader sees the published version, read-only, and can try the quiz', asy
   await expect(page.getByRole('textbox', { name: 'Note content' })).toHaveCount(0)
   await page.getByRole('radio', { name: 'O(log n)' }).click()
   await page.getByRole('button', { name: 'Check' }).click()
-  await expect(page.getByText('Correct!')).toBeVisible()
+  await expect(page.getByText('Correct')).toBeVisible()
 })
 
 test('an unverified owner is told how to publish', async ({ page }) => {

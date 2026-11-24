@@ -63,7 +63,7 @@ export function ModelSelect({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         onChange={(e) => onChange(e.target.value)}
-        className={cn(SELECT, error && 'border-red-500')}
+        className={cn(SELECT, error && 'border-bad/40')}
       >
         {allowEmpty ? <option value="">{t('clearModel')}</option> : null}
         {!allowEmpty && !value ? <option value="">{t('chooseModel')}</option> : null}
@@ -89,7 +89,7 @@ export function ModelSelect({
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">
+        <p id={errorId} role="alert" className="text-xs font-medium text-bad">
           {error}
         </p>
       ) : null}

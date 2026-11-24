@@ -42,7 +42,7 @@ export function ClassQuizzes({ classroom }: { classroom: ClassroomDetailFragment
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}

@@ -53,30 +53,27 @@ const themeScript = themeBootScript()
 // Inner HTML, so React never owns the nodes the app removes.
 const splash = `<div id="splash" role="status" aria-label="Loading ${APP_NAME}">
   <div class="splash-mark">
-    <span class="splash-glow"></span>
-    <img src="/icons/icon-192.png" alt="" width="72" height="72" />
+    <img src="/icons/icon-192.png" alt="" width="64" height="64" />
   </div>
   <div class="splash-name">${APP_NAME}</div>
   <p class="splash-status">Opening notes…</p>
   <div class="splash-bar"><span></span></div>
 </div>
 <style>
-  #splash { position: fixed; inset: 0; z-index: 1000; display: grid; place-content: center; justify-items: center; gap: 14px;
-    background: #f7f7f8; color: #18181b; font: 600 17px/1.2 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; letter-spacing: -0.01em;
-    transition: opacity .18s ease, visibility .18s; }
-  [data-theme='dark'] #splash { background: #0e0e10; color: #f4f4f5; }
+  #splash { position: fixed; inset: 0; z-index: 1000; display: grid; place-content: center; justify-items: center; gap: 12px;
+    background: #f8f7f4; color: #1c1b18; font: 500 17px/1.2 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    transition: opacity .2s cubic-bezier(.22,1,.36,1), visibility .2s; }
+  [data-theme='dark'] #splash { background: #141413; color: #ecebe6; }
   #splash.is-done { opacity: 0; visibility: hidden; }
-  .splash-mark { position: relative; width: 72px; height: 72px; animation: splash-in .4s cubic-bezier(.2,.8,.2,1) both; }
-  .splash-mark img { position: relative; border-radius: 18px; box-shadow: 0 10px 30px -10px rgb(37 99 235 / .45); animation: splash-float 1.6s ease-in-out infinite; }
-  .splash-glow { position: absolute; inset: -18px; border-radius: 50%; background: radial-gradient(circle, rgb(37 99 235 / .22), transparent 70%); animation: splash-pulse 1.6s ease-in-out infinite; }
-  .splash-name { animation: splash-in .4s .06s cubic-bezier(.2,.8,.2,1) both; }
-  .splash-status { margin: 0; font-size: 14px; font-weight: 500; color: #3d4b63; animation: splash-in .4s .1s both; }
-  [data-theme='dark'] .splash-status { color: #b7c3d4; }
-  .splash-bar { width: 120px; height: 3px; border-radius: 3px; overflow: hidden; background: rgb(127 127 127 / .18); animation: splash-in .4s .1s both; }
-  .splash-bar span { display: block; width: 40%; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2563eb, #60a5fa); animation: splash-slide 1s ease-in-out infinite; }
-  @keyframes splash-in { from { opacity: 0; transform: translateY(6px) scale(.97); } }
-  @keyframes splash-float { 50% { transform: translateY(-4px); } }
-  @keyframes splash-pulse { 50% { transform: scale(1.12); opacity: .6; } }
+  .splash-mark { width: 64px; height: 64px; animation: splash-in .32s cubic-bezier(.22,1,.36,1) both; }
+  .splash-mark img { border-radius: 14px; }
+  .splash-name { animation: splash-in .32s .05s cubic-bezier(.22,1,.36,1) both; }
+  .splash-status { margin: 0; font-size: 14px; font-weight: 400; color: #66625b; animation: splash-in .32s .1s cubic-bezier(.22,1,.36,1) both; }
+  [data-theme='dark'] .splash-status { color: #9a968d; }
+  .splash-bar { width: 120px; height: 4px; border-radius: 4px; overflow: hidden; background: rgb(28 27 24 / .08); animation: splash-in .32s .1s both; }
+  [data-theme='dark'] .splash-bar { background: rgb(236 235 230 / .1); }
+  .splash-bar span { display: block; width: 40%; height: 100%; border-radius: 4px; background: #f2c230; animation: splash-slide 1.1s cubic-bezier(.22,1,.36,1) infinite; }
+  @keyframes splash-in { from { opacity: 0; transform: translateY(8px); } }
   @keyframes splash-slide { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
   @media (prefers-reduced-motion: reduce) { #splash * { animation: none !important; } }
 </style>`
@@ -87,9 +84,9 @@ export default function CoreLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* The old site's fonts, loaded the same way: its CSS names the families directly. */}
+        {/* The reader's fonts (IBM Plex Sans, JetBrains Mono), loaded the same way: its CSS names the families directly. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font -- this is the /core root layout */}
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>

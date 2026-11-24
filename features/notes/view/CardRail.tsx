@@ -35,7 +35,7 @@ export function CardRail({ sections, onGo }: { sections: { key: string | number;
               onClick={() => go(i)}
               className={cn('flex max-w-56 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-left text-sm transition', i === at ? 'border-accent bg-accent-soft text-accent' : 'border-border bg-surface text-muted hover:border-accent hover:text-fg')}
             >
-              <span aria-hidden className="text-xs font-bold tabular-nums">
+              <span aria-hidden className="text-xs font-semibold tabular-nums">
                 {i + 1}
               </span>
               <span className="truncate">{s.text || t('editor.untitledHeading')}</span>

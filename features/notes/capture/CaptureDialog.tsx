@@ -159,7 +159,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
             setDragging(false)
             if (!full && !busy) void add(Array.from(e.dataTransfer.files))
           }}
-          className={cn('flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center transition hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50', dragging && 'border-accent bg-accent-soft')}
+          className={cn('flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-8 text-center transition-colors hover:border-accent hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-50', dragging && 'border-accent bg-accent-soft')}
         >
           <ImagePlus className="size-7 text-accent" aria-hidden />
           <span className="font-semibold">{full ? t('full') : t('choose')}</span>
@@ -194,7 +194,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
           </ul>
         ) : null}
         {problems.length ? (
-          <div role="alert" className="flex flex-col gap-1 text-sm text-red-600 dark:text-red-400">
+          <div role="alert" className="flex flex-col gap-1 text-sm text-bad">
             {problems.map((p) => (
               <p key={p}>{p}</p>
             ))}
@@ -204,7 +204,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
           <div className="flex flex-col gap-1.5" role="status">
             <span className="text-sm">{busy.upload ? t('uploading', { n: busy.upload, of: busy.of }) : t('creating')}</span>
             <span className="block h-1.5 overflow-hidden rounded-full bg-surface-2">
-              <span className="block h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(((Math.max(0, busy.upload - 1) + busy.progress) / Math.max(1, busy.of)) * 100)}%` }} />
+              <span className="block h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(((Math.max(0, busy.upload - 1) + busy.progress) / Math.max(1, busy.of)) * 100)}%` }} />
             </span>
           </div>
         ) : null}

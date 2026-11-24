@@ -102,12 +102,12 @@ export function CollegeIdOption({ restrictedMinor }: { restrictedMinor: boolean 
   return (
     <div className="flex flex-col gap-2">
       {request?.status === 'REJECTED' ? (
-        <p role="status" className="rounded-xl border border-red-500/30 bg-red-50 p-3 text-sm text-red-950 dark:bg-red-950/30 dark:text-red-100">
+        <p role="status" className="rounded-xl border border-bad/30 bg-bad/10 p-3 text-sm text-bad">
           {request.reason ? t('rejected', { reason: request.reason }) : t('rejectedNoReason')}
         </p>
       ) : null}
       {request?.status === 'APPROVED' ? (
-        <p role="status" className="rounded-xl border border-green-600/30 bg-green-50 p-3 text-sm text-green-950 dark:bg-green-950/30 dark:text-green-100">
+        <p role="status" className="rounded-xl border border-good/30 bg-good/10 p-3 text-sm text-good">
           {t('approved')}
         </p>
       ) : null}
@@ -163,7 +163,7 @@ export function CollegeIdOption({ restrictedMinor }: { restrictedMinor: boolean 
 
 function Problem({ children }: { children: string }) {
   return (
-    <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+    <p role="alert" className="text-sm text-bad">
       {children}
     </p>
   )

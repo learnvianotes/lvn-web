@@ -20,6 +20,7 @@ export const PUBLISHED_TERMS_VERSIONS = [
   { version: '2026-10-08', summary: 'First Terms of Service, Privacy Policy and content licence.' },
   { version: '2026-11-03', summary: 'Adults only (18 and over), optional Google Analytics, the Grievance page and the operator’s details.' },
   { version: '2026-11-12', summary: 'Accounts from age 13, parental consent for ages 13–17 (India’s DPDP Act), the processors in use, and how to delete an account.' },
+  { version: '2026-11-25', summary: 'Sign-in with passkeys and emailed codes, automatic pauses that stop misuse, short-lived security counts, and the assistant named Nova.' },
 ] as const satisfies readonly PublishedTermsVersion[]
 
 /**

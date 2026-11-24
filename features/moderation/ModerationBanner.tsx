@@ -43,7 +43,7 @@ export function ModerationBanner({ entityType, entityId, moderation, compact, on
     }
   }
 
-  const tone = held || warned ? 'border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100' : 'border-red-500/40 bg-red-50 text-red-950 dark:bg-red-950/30 dark:text-red-100'
+  const tone = held || warned ? 'border-warn/40 bg-warn/10 text-warn' : 'border-bad/40 bg-bad/10 text-bad'
   const Icon = held ? Clock : warned ? MessageSquareWarning : ShieldAlert
   const lead = held ? (note ? t('heldLead') : t('heldLeadContent')) : warned ? t('warnedLead') : note ? null : t('hiddenLeadContent')
   return (
@@ -74,7 +74,7 @@ export function ModerationBanner({ entityType, entityId, moderation, compact, on
             <textarea required className="min-h-28 rounded-xl border border-border bg-surface px-3 py-2 text-sm focus-visible:border-accent focus-visible:outline-none" maxLength={2000} value={message} onChange={(e) => setMessage(e.target.value)} />
           </label>
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {error}
             </p>
           ) : null}

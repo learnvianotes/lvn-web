@@ -22,9 +22,9 @@ function choice(action: ModerationActionType, label: string, icon: LucideIcon, t
 const approve = () => choice('APPROVE', 'APPROVE', Check)
 const restore = () => choice('APPROVE', 'RESTORE', Check)
 const warn = () => choice('WARN', 'WARN', MessageSquareWarning)
-const hide = () => choice('HIDE', 'HIDE', EyeOff, 'text-amber-700 dark:text-amber-400')
-const remove = () => choice('REMOVE', 'REMOVE', Trash, 'text-red-600 dark:text-red-400')
-const reject = () => choice('REMOVE', 'REJECT', Trash, 'text-red-600 dark:text-red-400')
+const hide = () => choice('HIDE', 'HIDE', EyeOff, 'text-warn')
+const remove = () => choice('REMOVE', 'REMOVE', Trash, 'text-bad')
+const reject = () => choice('REMOVE', 'REJECT', Trash, 'text-bad')
 
 /**
  * Actions for one row, when this kind is one moderateContent can take and the id is a uuid. The set follows the

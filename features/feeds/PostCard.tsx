@@ -10,10 +10,10 @@ import type { PostCardFieldsFragment } from '@/graphql/generated/graphql'
 
 /** A picture for each kind of public note when it has none of its own (board A's cards). */
 const ART = {
-  NOTE: { icon: BookOpen, from: '#1e4d8c', to: '#0f5f6b' },
-  BLOG: { icon: PenLine, from: '#8a4b08', to: '#1e4d8c' },
-  POST: { icon: Megaphone, from: '#163e73', to: '#1e4d8c' },
-  PROJECT: { icon: FolderGit2, from: '#0f6b45', to: '#0f5f6b' },
+  NOTE: { icon: BookOpen, from: '#2847a8', to: '#2847a8' },
+  BLOG: { icon: PenLine, from: '#9a4a2b', to: '#9a4a2b' },
+  POST: { icon: Megaphone, from: '#4a4740', to: '#4a4740' },
+  PROJECT: { icon: FolderGit2, from: '#3d6b2c', to: '#3d6b2c' },
 } as const
 
 /**
@@ -34,7 +34,7 @@ export function PostCard({ note, topic, onChanged }: { note: PostCardFieldsFragm
           // eslint-disable-next-line @next/next/no-img-element -- signed storage URLs, not optimised by Next
           <img src={note.previewPicture.mediumUrl ?? note.previewPicture.url} alt="" className="h-40 w-full object-cover" />
         ) : (
-          <span className="grid h-20 place-items-center" style={{ backgroundImage: `linear-gradient(135deg, ${art.from}, ${art.to})` }}>
+          <span className="grid h-20 place-items-center" style={{ backgroundColor: art.from }}>
             <Icon className="size-7 text-white" />
           </span>
         )}
@@ -48,12 +48,12 @@ export function PostCard({ note, topic, onChanged }: { note: PostCardFieldsFragm
           {note.publishedAt ? <span>· {ago(note.publishedAt)}</span> : null}
           <span className="rounded-full bg-surface-2 px-2 py-0.5 font-semibold">{t(`kind.${note.kind}`)}</span>
         </p>
-        <Link href={href} className="text-lg font-bold leading-snug hover:text-accent">
+        <Link href={href} className="text-lg font-semibold leading-snug hover:text-accent">
           {note.title || t('untitled')}
         </Link>
         {note.excerpt ? <p className="line-clamp-2 text-sm text-muted">{note.excerpt}</p> : null}
         {chip ? (
-          <Link href={`/search?${new URLSearchParams({ topic: chip.id, topicTitle: chip.title }).toString()}`} className="w-fit rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent hover:underline">
+          <Link href={`/search?${new URLSearchParams({ topic: chip.id, topicTitle: chip.title }).toString()}`} className="w-fit rounded-[10px] bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent hover:underline">
             {chip.title}
           </Link>
         ) : null}

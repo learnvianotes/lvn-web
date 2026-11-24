@@ -34,7 +34,7 @@ function persist(key: string, value: string) {
 export const useAppearance = create<AppearanceState>((set, get) => ({
   // Server and the first client render agree. ThemeSync reads storage after mount.
   mode: 'system',
-  accent: 'navy',
+  accent: 'ink',
   resolved: 'light',
   setMode: (mode) => {
     persist(THEME_KEY, mode)
@@ -48,7 +48,7 @@ export const useAppearance = create<AppearanceState>((set, get) => ({
   },
   sync: () => {
     let mode: ThemeMode = 'system'
-    let accent: AccentId = 'navy'
+    let accent: AccentId = 'ink'
     try {
       mode = readMode(localStorage.getItem(THEME_KEY))
       accent = readAccent(localStorage.getItem(ACCENT_KEY))

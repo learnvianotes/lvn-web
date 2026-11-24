@@ -69,7 +69,7 @@ export function StudentIdAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold">
           <IdCard className="size-6 text-accent" aria-hidden />
           {t('title')}
         </h1>
@@ -160,7 +160,7 @@ function Card({ item, onDone }: { item: StudentIdReviewItem; onDone: () => void 
       </div>
       {item.ai ? (
         <p className="flex flex-wrap items-center gap-2 text-sm">
-          <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', item.ai && verdictTone(item.ai.verdict) === 'good' ? 'bg-emerald-100 text-emerald-900' : verdictTone(item.ai.verdict) === 'bad' ? 'bg-red-100 text-red-900' : 'bg-amber-100 text-amber-950')}>{item.ai.verdict}</span>
+          <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', item.ai && verdictTone(item.ai.verdict) === 'good' ? 'bg-good/10 text-good' : verdictTone(item.ai.verdict) === 'bad' ? 'bg-bad/10 text-bad' : 'bg-warn/10 text-warn')}>{item.ai.verdict}</span>
           {percent != null ? <span className="text-muted">{reviewT('confidence', { percent })}</span> : null}
           {item.ai.reason ? <span>{item.ai.reason}</span> : null}
         </p>
@@ -188,7 +188,7 @@ function Card({ item, onDone }: { item: StudentIdReviewItem; onDone: () => void 
 }
 
 function AlertText({ children }: { children: string }) {
-  return <p role="alert" className="text-sm text-red-600 dark:text-red-400">{children}</p>
+  return <p role="alert" className="text-sm text-bad">{children}</p>
 }
 
 function errorCopy(t: (key: 'unavailable' | 'ratePending' | 'rateWeek' | 'rateEither' | 'tooBig' | 'wrongType' | 'failed') => string): StudentIdErrorCopy {

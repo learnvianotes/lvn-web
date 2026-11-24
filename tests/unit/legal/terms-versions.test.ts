@@ -31,8 +31,8 @@ describe('PUBLISHED_TERMS_VERSIONS (lvn-backend ADR-0103)', () => {
   it('ends with TERMS_VERSION, the version of the text the pages ship', () => {
     expect(versions).toContain(TERMS_VERSION)
     expect(versions.at(-1)).toBe(TERMS_VERSION)
-    expect(TERMS_VERSION).toBe('2026-11-12')
-    expect(legalLastUpdated()).toBe('12 November 2026')
+    expect(TERMS_VERSION).toBe('2026-11-25')
+    expect(legalLastUpdated()).toBe('25 November 2026')
     expect(legalLastUpdated('2026-10-08')).toBe('8 October 2026')
   })
 
@@ -113,7 +113,7 @@ describe('the legal pages’ version label', () => {
     const page = async () => renderToStaticMarkup(await LegalPage({ doc: 'terms', children: createElement('p', null, 'text') }))
     vi.stubGlobal('fetch', answer({ data: { termsVersion: '2026-10-08' } }))
     expect(await page()).toContain('Version 2026-10-08')
-    expect(await page()).toContain('Last updated 12 November 2026')
+    expect(await page()).toContain('Last updated 25 November 2026')
 
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.stubGlobal('fetch', answer({ data: { termsVersion: '2099-01-01' } }))

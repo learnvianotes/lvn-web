@@ -26,8 +26,8 @@ export function DeleteAccount() {
   const scheduled = viewer.deletionScheduledFor
 
   return (
-    <section id="delete-account" aria-labelledby="delete-account-heading" className="flex scroll-mt-20 flex-col gap-4 rounded-2xl border border-red-500/40 bg-surface p-5">
-      <h2 id="delete-account-heading" className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400">
+    <section id="delete-account" aria-labelledby="delete-account-heading" className="flex scroll-mt-20 flex-col gap-4 rounded-2xl border border-bad/40 bg-surface p-5">
+      <h2 id="delete-account-heading" className="flex items-center gap-2 text-lg font-semibold text-bad">
         <TriangleAlert className="size-5" aria-hidden />
         {t('heading')}
       </h2>
@@ -63,7 +63,7 @@ export function DeleteAccount() {
             <input id={ids.confirm} value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="off" className="h-10 rounded-lg border border-border bg-bg px-3" />
           </label>
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-bad">
               {error}
             </p>
           ) : null}
@@ -87,7 +87,7 @@ export function DeletionBanner() {
   const [cancel, cancelling] = useMutation(CancelAccountDeletionDocument, { refetchQueries: [ViewerDocument], awaitRefetchQueries: true })
   if (!viewer?.deletionScheduledFor) return null
   return (
-    <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-red-500/40 bg-red-50 px-4 py-2 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-100">
+    <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-bad/40 bg-bad/10 px-4 py-2 text-sm text-bad">
       <span className="flex-1">{t('text', { date: day(viewer.deletionScheduledFor) })}</span>
       <button type="button" disabled={cancelling.loading} onClick={() => void cancel()} className="rounded-full bg-red-700 px-3 py-1 font-semibold text-white hover:bg-red-800 disabled:opacity-60">
         {t('keep')}

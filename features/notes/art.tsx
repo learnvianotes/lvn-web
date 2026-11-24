@@ -1,29 +1,22 @@
-/** Small inline illustrations in the brand's gradient (ui-reference: warm illustrations). Decorative only. */
-
+/**
+ * A small flat illustration for the notes home and its empty state: an open ruled notebook with one line marked by the
+ * highlighter (ADR-0114). Theme colours only, so it follows light and dark. Decorative only.
+ */
 export function NotebookArt({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 200 150" className={className} aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="nb-page" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#EFF6FF" />
-          <stop offset="1" stopColor="#DBEAFE" />
-        </linearGradient>
-        <linearGradient id="nb-cover" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#3B82F6" />
-          <stop offset="1" stopColor="#06B6D4" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="100" cy="136" rx="70" ry="8" fill="#3B82F6" opacity="0.12" />
-      <path d="M30 40 Q65 28 100 40 L100 128 Q65 116 30 128 Z" fill="url(#nb-cover)" />
-      <path d="M36 42 Q66 32 100 44 L100 124 Q66 112 36 122 Z" fill="url(#nb-page)" />
-      <path d="M170 40 Q135 28 100 40 L100 128 Q135 116 170 128 Z" fill="url(#nb-cover)" />
-      <path d="M164 42 Q134 32 100 44 L100 124 Q134 112 164 122 Z" fill="#FFFFFF" />
-      {[58, 72, 86, 100].map((y) => (
-        <path key={y} d={`M46 ${y} Q68 ${y - 6} 92 ${y + 2}`} stroke="#93C5FD" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M24 30 Q62 20 100 30 L100 132 Q62 122 24 132 Z" fill="var(--surface)" stroke="var(--border)" strokeWidth="2" />
+      <path d="M176 30 Q138 20 100 30 L100 132 Q138 122 176 132 Z" fill="var(--surface)" stroke="var(--border)" strokeWidth="2" />
+      {[52, 68, 84, 100, 116].map((y) => (
+        <g key={y}>
+          <path d={`M34 ${y} Q62 ${y - 6} 92 ${y}`} stroke="var(--border)" strokeWidth="2" fill="none" />
+          <path d={`M108 ${y} Q138 ${y - 6} 166 ${y}`} stroke="var(--border)" strokeWidth="2" fill="none" />
+        </g>
       ))}
-      <path d="M114 78 l10 10 l22 -24" stroke="#10B981" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <path d="M150 22 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3 Z" fill="#F59E0B" />
-      <path d="M40 18 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 Z" fill="#93C5FD" />
+      <path d="M110 77 Q138 70 160 76 L160 86 Q138 80 110 87 Z" fill="var(--highlight)" />
+      <path d="M38 50 Q58 45 78 48" stroke="var(--fg)" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M38 66 Q56 62 86 65" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M112 80 Q136 74 156 79" stroke="var(--fg)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
     </svg>
   )
 }

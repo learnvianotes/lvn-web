@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { Analytics } from '@/components/analytics/Analytics'
 import { UsageTracker } from '@/components/analytics/UsageTracker'
@@ -12,7 +12,7 @@ import { SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/site'
 import { PAPER, themeBootScript } from '@/lib/theme'
 import '../globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+const inter = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-inter', display: 'swap' })
 // Code only: not preloaded on every page, fetched where code is shown.
 const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', display: 'swap', preload: false })
 

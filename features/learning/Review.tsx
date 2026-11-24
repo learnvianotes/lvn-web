@@ -121,7 +121,7 @@ export function Review() {
   if (!cards?.length) {
     return (
       <section className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border px-6 py-10 text-center">
-        <h1 className="text-xl font-bold">{t('nothingTitle')}</h1>
+        <h1 className="text-xl font-semibold">{t('nothingTitle')}</h1>
         <p className="text-sm text-muted">{t('nothing')}</p>
         <Link href="/notes" className="text-accent hover:underline">
           {t('toNotes')}
@@ -132,7 +132,7 @@ export function Review() {
   if (!card) {
     return (
       <section className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface px-6 py-10 text-center">
-        <h1 className="text-xl font-bold">{t('doneTitle')}</h1>
+        <h1 className="text-xl font-semibold">{t('doneTitle')}</h1>
         <p className="text-sm text-muted">{t('done', { count: done })}</p>
         {queue?.waiting ? <p className="text-sm text-muted">{t('later', { count: queue.waiting })}</p> : null}
         {waiting ? <p role="status" className="text-sm text-muted">{t('waitingToSend', { count: waiting })}</p> : null}

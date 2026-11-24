@@ -64,7 +64,7 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
           {t('withdraw')}
         </Button>
         {error ? (
-          <p role="alert" className="text-red-600 dark:text-red-400">
+          <p role="alert" className="text-bad">
             {error}
           </p>
         ) : null}
@@ -75,7 +75,7 @@ export function VerifyAccount({ restrictedMinor }: { restrictedMinor: boolean })
   return (
     <div className="flex flex-col gap-3">
       {last?.status === 'REJECTED' ? (
-        <p role="status" className="rounded-xl border border-red-500/30 bg-red-50 p-3 text-sm text-red-950 dark:bg-red-950/30 dark:text-red-100">
+        <p role="status" className="rounded-xl border border-bad/30 bg-bad/10 p-3 text-sm text-bad">
           {t('rejected', { reason: last.reason ?? '' })}
         </p>
       ) : null}
@@ -162,7 +162,7 @@ function AskTeacher({ onSent }: { onSent: () => void }) {
         <textarea value={message} maxLength={500} rows={2} onChange={(e) => setMessage(e.target.value)} placeholder={t('messageHint')} className="rounded-xl border border-border bg-bg px-3 py-2 text-sm" />
       </label>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -242,7 +242,7 @@ function SendDocuments({ onSent }: { onSent: () => void }) {
         <textarea value={message} maxLength={500} rows={2} onChange={(e) => setMessage(e.target.value)} className="rounded-xl border border-border bg-bg px-3 py-2 text-sm" />
       </label>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-bad">
           {error}
         </p>
       ) : null}

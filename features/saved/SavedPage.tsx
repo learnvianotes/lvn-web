@@ -16,12 +16,12 @@ export function SavedPage() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
       <SavedNotes />
       <section aria-labelledby="saved-resources" className="flex flex-col gap-3">
-        <h2 id="saved-resources" className="text-lg font-bold">
+        <h2 id="saved-resources" className="text-lg font-semibold">
           {t('resources')}
         </h2>
         <SavedResourcesList />
@@ -37,7 +37,7 @@ function SavedNotes() {
   const page = data?.savedNotes.pageInfo
   return (
     <section aria-labelledby="saved-notes" className="flex flex-col gap-3">
-      <h2 id="saved-notes" className="text-lg font-bold">
+      <h2 id="saved-notes" className="text-lg font-semibold">
         {t('notes')}
       </h2>
       {data && !notes.length && !page?.hasNextPage ? (

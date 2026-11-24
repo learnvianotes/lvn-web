@@ -22,7 +22,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
-  Sparkles,
+  TextQuote,
   Trophy,
   Upload,
   Users,
@@ -48,6 +48,7 @@ import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { DeletionBanner } from '@/features/data/DeleteAccount'
 import { useUploadsEnabled } from '@/features/notes/uploads'
 import { TOUR_MENU_EVENT } from '@/lib/walkthrough'
+import { ViewTransition } from 'react'
 
 type Entry = { href: string; key: string; icon: LucideIcon; match?: RegExp; staff?: boolean }
 
@@ -73,7 +74,7 @@ const ENTRIES: Entry[] = [
   { href: '/rhythm', key: 'rhythm', icon: Activity },
   { href: '/resources', key: 'resources', icon: Library },
   { href: '/community', key: 'community', icon: MessagesSquare },
-  { href: '/ask', key: 'ask', icon: Sparkles },
+  { href: '/ask', key: 'ask', icon: TextQuote },
   { href: '/saved', key: 'saved', icon: Bookmark },
   { href: '/guide', key: 'guide', icon: CircleHelp, match: /^\/guide(\/|$)/ },
 ]
@@ -150,7 +151,8 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
               : 'min-h-[70dvh]'
           }
         >
-          {children}
+          {/* One short fade and rise between pages (ADR-0114); the browser skips it where unsupported or reduced motion is on. */}
+          <ViewTransition default="lvn-page">{children}</ViewTransition>
           {admin ? footer : null}
         </main>
         {admin ? null : footer}
@@ -176,11 +178,11 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
 function Brand() {
   const t = useTranslations('site')
   return (
-    <Link href="/home" aria-label={t('name')} className="flex items-center gap-2 px-2 text-lg font-extrabold tracking-tight">
+    <Link href="/home" aria-label={t('name')} className="flex items-center gap-2 px-2 text-lg font-medium">
       <Logo size={30} />
       <span aria-hidden>
         {t('wordmark.lead')}
-        <span className="text-accent">{t('wordmark.accent')}</span>
+        {t('wordmark.accent')}
       </span>
     </Link>
   )
@@ -213,12 +215,12 @@ function Nav() {
     }
   }
   return (
-    <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-1">
+    <nav aria-label={t('nav')} className="flex flex-1 flex-col gap-0.5">
       {entries.map(({ href, key, icon: Icon, match }) => {
         const active = match ? match.test(path) : path === href || path.startsWith(`${href}/`)
         return (
-          <Link key={key} href={href} data-tour={key} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium', active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg', key === 'subjects' && !active && 'bg-sky-50 font-semibold text-sky-900 ring-1 ring-sky-700/30 dark:bg-sky-950/40 dark:text-sky-100')}>
-            <Icon className="size-[18px] shrink-0" aria-hidden />
+          <Link key={key} href={href} data-tour={key} aria-current={active ? 'page' : undefined} className={cn('flex h-9 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors', active ? 'bg-surface-2 font-medium text-fg' : 'text-muted hover:bg-surface-2/60 hover:text-fg')}>
+            <Icon className={cn('size-[18px] shrink-0', active && 'text-accent')} strokeWidth={1.5} aria-hidden />
             {t(`entries.${key}`)}
           </Link>
         )
@@ -291,7 +293,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
             if (window.dispatchEvent(new Event(OPEN_SEARCH_EVENT, { cancelable: true }))) router.push('/search')
           }}
           data-tour="search"
-          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
+          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" aria-hidden />
           <span className="truncate">{t('searchPlaceholder')}</span>
@@ -300,7 +302,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
           <AppearanceMenu />
           <NotificationBell />
-          <Link href="/profile" data-tour="account" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent hover:ring-2 hover:ring-accent/40">
+          <Link href="/profile" data-tour="account" aria-label={t('account')} className="ml-1 grid size-9 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent hover:ring-2 hover:ring-accent/40">
             {(viewer?.displayName ?? '?').slice(0, 1).toUpperCase()}
           </Link>
         </div>

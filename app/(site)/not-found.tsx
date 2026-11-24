@@ -11,7 +11,7 @@ export default async function NotFound() {
     <AuthProvider>
       <SiteHeader />
       <main id="main" className="mx-auto flex min-h-[60dvh] max-w-xl flex-col items-start justify-center gap-4 px-4 py-16">
-        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-muted">{t('lead')}</p>
         <Button asChild>
           <HomeLink label={t('home')}>{t('home')}</HomeLink>

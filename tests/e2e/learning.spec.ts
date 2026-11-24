@@ -60,7 +60,7 @@ test('a search left in place is recorded, without its words', async ({ page }) =
   await page.clock.install()
   await page.goto('/notes')
   await expect(page.getByText('Start your first note')).toBeVisible()
-  await page.getByRole('button', { name: 'Search notes, topics, people, or ask AI' }).click()
+  await page.getByRole('button', { name: 'Search or ask Nova' }).click()
   const palette = page.getByRole('dialog', { name: 'Search notes, people, groups and topics' })
   await palette.getByRole('combobox').fill('binary search trees')
   await page.clock.runFor(3_000)

@@ -97,7 +97,7 @@ export function PhotoScan({ open, onClose, onImage }: { open: boolean; onClose: 
     <Dialog open={open} onClose={onClose} title={t('scanTitle')} wide>
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted">{t('scanLead')}</p>
-        {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+        {error ? <p role="alert" className="text-sm text-bad">{error}</p> : null}
         {!shot ? (
           <div className="flex flex-col gap-3">
             <video ref={video} autoPlay playsInline muted className="aspect-[3/4] w-full rounded-2xl bg-black object-cover sm:aspect-video" />
@@ -146,7 +146,7 @@ export function PhotoScan({ open, onClose, onImage }: { open: boolean; onClose: 
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={shot} alt={t('scanPreview')} className="h-full w-full object-contain" />
               {crop && crop.w > 0.02 ? (
-                <span aria-hidden className="absolute border-2 border-sky-400 bg-sky-400/20" style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.w * 100}%`, height: `${crop.h * 100}%` }} />
+                <span aria-hidden className="absolute border-2 border-accent/40 bg-accent/20" style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.w * 100}%`, height: `${crop.h * 100}%` }} />
               ) : null}
             </div>
             <p className="text-xs text-muted">{t('cropHint')}</p>

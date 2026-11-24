@@ -37,7 +37,7 @@ export function PlaceResources({ to }: { to: { groupId: string } | { classroomId
               }
             />
             {r.viewerCanRemove ? (
-              <button type="button" className="self-start text-xs font-semibold text-muted hover:text-red-600" onClick={async () => (await remove({ variables: { input: { id: r.id } } }), void refetch())}>
+              <button type="button" className="self-start text-xs font-semibold text-muted hover:text-bad" onClick={async () => (await remove({ variables: { input: { id: r.id } } }), void refetch())}>
                 {t('remove')}
               </button>
             ) : null}

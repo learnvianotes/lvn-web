@@ -24,7 +24,7 @@ export function PlansPage() {
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
         <p className="max-w-3xl text-sm text-muted">{t('lead')}</p>
       </header>
 
@@ -35,7 +35,7 @@ export function PlansPage() {
               <h2 className="text-lg font-semibold">{t('yours')}</h2>
               <p className="text-sm text-muted">{myPlan.plan.name}</p>
             </div>
-            <p className="text-xl font-extrabold tracking-tight">{publicPlanPrice(myPlan.plan.priceMinor, myPlan.plan.currency, myPlan.plan.interval, per, t('free'))}</p>
+            <p className="text-xl font-semibold">{publicPlanPrice(myPlan.plan.priceMinor, myPlan.plan.currency, myPlan.plan.interval, per, t('free'))}</p>
           </div>
           {myPlan.usage.length ? (
             <ul className="flex flex-col gap-3">
@@ -59,7 +59,7 @@ export function PlansPage() {
                         aria-valuetext={usageText(item.used, item.limit, t('unlimited'))}
                         className="h-2 overflow-hidden rounded-full bg-surface-2"
                       >
-                        <div className={cn('h-full rounded-full', ratio >= 1 ? 'bg-amber-600' : 'bg-accent')} style={{ width: `${Math.round(ratio * 100)}%` }} />
+                        <div className={cn('h-full rounded-full', ratio >= 1 ? 'bg-warn' : 'bg-accent')} style={{ width: `${Math.round(ratio * 100)}%` }} />
                       </div>
                     )}
                     {item.resetsAt ? <p className="text-xs text-muted">{t('resets', { when: formatResetsAt(item.resetsAt) })}</p> : null}
@@ -117,9 +117,9 @@ function PlanCard({ plan, per }: { plan: Plan; per: { month: string; year: strin
           <h2 className="text-lg font-semibold">{plan.name}</h2>
           <p className="text-xs text-muted">{t(`intervals.${plan.interval}`)}</p>
         </div>
-        <p className="text-xl font-extrabold tracking-tight">{publicPlanPrice(plan.priceMinor, plan.currency, plan.interval, per, t('free'))}</p>
+        <p className="text-xl font-semibold">{publicPlanPrice(plan.priceMinor, plan.currency, plan.interval, per, t('free'))}</p>
       </div>
-      {plan.current ? <p className="w-fit rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('current')}</p> : null}
+      {plan.current ? <p className="w-fit rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('current')}</p> : null}
       <div>
         <h3 className="text-sm font-semibold">{t('features')}</h3>
         {plan.features.length ? (

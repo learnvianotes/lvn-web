@@ -24,14 +24,14 @@ export function AchievementsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted">{t('lead')}</p>
       </header>
 
       {viewer?.contribution ? <Level contribution={viewer.contribution} /> : null}
 
       <section aria-labelledby="earned" className="flex flex-col gap-3">
-        <h2 id="earned" className="text-lg font-bold">
+        <h2 id="earned" className="text-lg font-semibold">
           {t('earned')}
         </h2>
         {items.length ? (
@@ -75,7 +75,7 @@ function Level({ contribution }: { contribution: { points: number; level: 'NEWCO
           <Award className="size-6" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
-          <h2 id="level" className="text-lg font-bold">
+          <h2 id="level" className="text-lg font-semibold">
             {t(`level.${level}`)}
           </h2>
           <p className="text-sm text-muted">{t('points', { points })}</p>
@@ -84,7 +84,7 @@ function Level({ contribution }: { contribution: { points: number; level: 'NEWCO
       {nextLevelAt ? (
         <div className="flex flex-col gap-1">
           <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={t('toNext', { points: nextLevelAt - points })}>
-            <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-[10px] bg-accent transition-[width] duration-300" style={{ width: `${progress}%` }} />
           </div>
           <p className="text-xs text-muted">{t('toNext', { points: nextLevelAt - points })}</p>
         </div>
@@ -129,7 +129,7 @@ function History() {
   const page = data?.myPoints.pageInfo
   return (
     <section aria-labelledby="history" className="flex flex-col gap-3">
-      <h2 id="history" className="text-lg font-bold">
+      <h2 id="history" className="text-lg font-semibold">
         {t('history')}
       </h2>
       {!data ? <QueryState loading={loading} error={error} onRetry={refetch} /> : null}
@@ -138,7 +138,7 @@ function History() {
       <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
         {entries.map((e) => (
           <li key={e.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-            <span className={`w-10 shrink-0 font-bold tabular-nums ${e.delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted'}`}>{e.delta > 0 ? `+${e.delta}` : e.delta}</span>
+            <span className={`w-10 shrink-0 font-semibold tabular-nums ${e.delta > 0 ? 'text-good' : 'text-muted'}`}>{e.delta > 0 ? `+${e.delta}` : e.delta}</span>
             <Link href={e.sourceType === 'NOTE' ? `/notes/${e.sourceId}` : `/resources/${e.sourceId}`} className="min-w-0 flex-1 hover:underline">
               {t(`rule.${e.rule}${e.delta < 0 ? '_BACK' : ''}`)}
               {e.subjectTitle ? <span className="text-muted"> · {e.subjectTitle}</span> : null}
