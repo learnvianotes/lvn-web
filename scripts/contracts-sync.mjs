@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Copies the parts of @lvn/contracts the web app runs (card content, rich text, card positions, note names, notification and live-event shapes and the
- * enums they use) from lvn-backend into lib/contracts/, until the package is published (lvn-backend ADR-0031) — as
+ * Copies the parts of @lvn/contracts the web app runs (card content, rich text, card positions, note names, drawings, usage events, notification and
+ * live-event shapes and the enums they use) from lvn-backend into lib/contracts/, until the package is published (lvn-backend ADR-0031) — as
  * graphql:sync does for the schema. The copies are committed and never edited here.
  *
  *   node scripts/contracts-sync.mjs           copy (LVN_CONTRACTS overrides ../lvn-backend/contracts)
@@ -10,7 +10,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-const FILES = ['domain/enums.ts', 'validation/index.ts', 'validation/cards.ts', 'validation/rich-text.ts', 'validation/positions.ts', 'validation/notes.ts', 'validation/learning.ts', 'validation/resources.ts', 'notifications/index.ts']
+const FILES = ['domain/enums.ts', 'domain/usage-events.ts', 'validation/index.ts', 'validation/drawing.ts', 'validation/usage-events.ts', 'validation/cards.ts', 'validation/rich-text.ts', 'validation/positions.ts', 'validation/notes.ts', 'validation/learning.ts', 'validation/resources.ts', 'notifications/index.ts']
 const root = path.resolve(import.meta.dirname, '..')
 const source = path.join(process.env.LVN_CONTRACTS ?? path.resolve(root, '../lvn-backend/contracts'), 'src')
 const target = path.join(root, 'lib/contracts')

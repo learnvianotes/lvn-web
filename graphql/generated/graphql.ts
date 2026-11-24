@@ -1,9 +1,9 @@
 /* eslint-disable */
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 /** Internal type. DO NOT USE DIRECTLY. */
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type AccountStatus =
   | 'ACTIVE'
   | 'AGE_BLOCKED'
@@ -443,6 +443,8 @@ export type CompleteRegistrationInput = {
   dateOfBirth?: string | null | undefined;
   displayName: string;
   institutionalEmail?: string | null | undefined;
+  /** Parent or guardian email. Required for an admitted registration under 18. Stored with the consent record, not as this account's email. */
+  parentEmail?: string | null | undefined;
 };
 
 /** From GitHub's return to the setup page: the install link's state, the installation and the person's code */
@@ -606,16 +608,20 @@ export type DoubtStatus =
 
 export type EmailKind =
   | 'CLASSROOM_POST'
-  | 'DIGEST';
+  | 'DIGEST'
+  | 'MARKETING';
 
 /** Fixed error vocabulary (§6.2) */
 export type ErrorCode =
   | 'ADMIN_MFA_REQUIRED'
   | 'AGE_RESTRICTED'
+  | 'AI_UNAVAILABLE_FOR_MINOR'
   | 'CONFLICT'
+  | 'FEATURE_UNAVAILABLE_FOR_MINOR'
   | 'FORBIDDEN'
   | 'INTERNAL'
   | 'MFA_REQUIRED'
+  | 'MINOR_PII_BLOCKED'
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'UNAUTHENTICATED'
@@ -633,7 +639,7 @@ export type ExternalIdentityKind =
   | 'ORCID'
   | 'WEBSITE';
 
-/** What an upload is for. ATTACHMENT is a picture, video, audio or PDF for a note you can edit (parentId). PAGE_IMAGE is a PNG or JPEG for a note page (parentId). VOICE_NOTE is audio; parentId is the note when the recording belongs to one, and omitted when it stands alone. Every one of these finishes with completeUpload, so a remote scan still runs. */
+/** What an upload is for. ATTACHMENT is a picture, video, audio, PDF, Word (.doc, .docx), PowerPoint (.ppt, .pptx) or plain-text file for a note you can edit (parentId). PAGE_IMAGE is a PNG or JPEG for a note page (parentId). VOICE_NOTE is audio; parentId is the note when the recording belongs to one, and omitted when it stands alone. Every one of these finishes with completeUpload, so a remote scan still runs. */
 export type FilePurpose =
   | 'ATTACHMENT'
   | 'AVATAR'
@@ -1400,6 +1406,8 @@ export type SignUpInput = {
   displayName: string;
   email: string;
   institutionalEmail?: string | null | undefined;
+  /** Parent or guardian email. Required for an admitted sign-up under 18. Stored with the consent record, not as this account's email. */
+  parentEmail?: string | null | undefined;
   password: string;
 };
 

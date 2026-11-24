@@ -51,7 +51,8 @@ console.log(`graphql:check ok (${files.length} files)`)
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
-    if (name === 'node_modules' || name === '.git' || name === 'graphql' || name === 'tests' || name === 'content-src' || name === 'content-build' || name === 'core-app') continue
+    // .next and .next-e2e hold build output (bundled copies of the operations), not sources.
+    if (name === 'node_modules' || name === '.git' || name.startsWith('.next') || name === 'graphql' || name === 'tests' || name === 'content-src' || name === 'content-build' || name === 'core-app') continue
     const full = path.join(dir, name)
     if (statSync(full).isDirectory()) walk(full, out)
     else if (/\.(ts|tsx|js|mjs|cjs)$/.test(name)) out.push(full)

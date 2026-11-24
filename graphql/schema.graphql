@@ -217,6 +217,65 @@ input AddWeeklyTaskInput {
   topicId: UUID
 }
 
+type AdminActivityActionCount {
+  action: String!
+  count: Int!
+}
+
+type AdminActivityConnection {
+  entries: [AdminActivityEntry!]!
+
+  """Pass as cursor to read the next page. Null on the last page."""
+  nextCursor: String
+}
+
+type AdminActivityDayCount {
+  count: Int!
+
+  """UTC midnight of that day."""
+  day: DateTime!
+}
+
+"""
+One append-only audit row. details has secrets redacted. There is no mutation that changes or deletes it.
+"""
+type AdminActivityEntry {
+  action: String!
+
+  """
+  The actor's email at the time. Null when the account had already been removed.
+  """
+  actorEmail: String
+  actorId: UUID
+  createdAt: DateTime!
+  details: JSON
+  id: UUID!
+  ip: String
+  targetId: UUID
+  targetType: String!
+  userAgent: String
+}
+
+input AdminActivityFilter {
+  """Exact action name, such as settings.updated or mfa.verified."""
+  action: String
+  actorId: UUID
+  from: DateTime
+  targetType: String
+  to: DateTime
+}
+
+"""
+Counts for charts. from is inclusive and to is exclusive. Omit both for the last 30 days. At most 366 days.
+"""
+type AdminActivitySummary {
+  byAction: [AdminActivityActionCount!]!
+  byDay: [AdminActivityDayCount!]!
+  from: DateTime!
+  to: DateTime!
+  total: Int!
+}
+
 """
 `from` is inclusive and `to` is exclusive, both aligned to a UTC minute. A refresh within that minute reuses the cached aggregate.
 """
@@ -320,49 +379,27 @@ input AdminContentFilter {
 
 type AdminContentItem {
   author: AdminContentAuthor!
-
-  """A uuid for most kinds. A share is noteId:userId, noteId:groupId or noteId:classroomId."""
-  id: String!
-  type: AdminContentType!
-
-  """Set when the item has a title. At most 200 characters."""
-  title: String
+  createdAt: DateTime!
+  deepLink: String!
 
   """The body, or the title when there is no body. At most 200 characters."""
   excerpt: String
-  visibility: AdminContentVisibility!
-  createdAt: DateTime!
-  updatedAt: DateTime!
 
-  """OK, PENDING_REVIEW, HIDDEN, REMOVED, PENDING, APPROVED, REJECTED, DRAFT or PUBLISHED. Null when this kind has none."""
+  """
+  A uuid for most kinds. A share is noteId:userId, noteId:groupId or noteId:classroomId.
+  """
+  id: String!
+
+  """
+  OK, PENDING_REVIEW, HIDDEN, REMOVED, PENDING, APPROVED, REJECTED, DRAFT or PUBLISHED. Null when this kind has none.
+  """
   moderation: String
-  deepLink: String!
-}
 
-enum AdminContentType {
-  NOTE
-  COMMENT
-  GROUP
-  GROUP_POST
-  CLASSROOM
-  CLASSROOM_POST
-  QUIZ
-  DOUBT
-  DOUBT_ANSWER
-  SHARE
-  UPLOAD
-  RESOURCE
-  HIGHLIGHT
-  CONTEST
-}
-
-"""How widely the item can be seen. PRIVATE is only used for a private group; private notes are not returned."""
-enum AdminContentVisibility {
-  PUBLIC
-  SHARED
-  UNLISTED
-  PRIVATE
-  MEMBERS
+  """Set when the item has a title. At most 200 characters."""
+  title: String
+  type: AdminContentType!
+  updatedAt: DateTime!
+  visibility: AdminContentVisibility!
 }
 
 """
@@ -389,6 +426,34 @@ type AdminContentStats {
   scans: AdminScanCounts!
   sharing: AdminSharingCounts!
   uploads: AdminUploadStats!
+}
+
+enum AdminContentType {
+  CLASSROOM
+  CLASSROOM_POST
+  COMMENT
+  CONTEST
+  DOUBT
+  DOUBT_ANSWER
+  GROUP
+  GROUP_POST
+  HIGHLIGHT
+  NOTE
+  QUIZ
+  RESOURCE
+  SHARE
+  UPLOAD
+}
+
+"""
+How widely the item can be seen. PRIVATE is only used for a private group; private notes are not returned.
+"""
+enum AdminContentVisibility {
+  MEMBERS
+  PRIVATE
+  PUBLIC
+  SHARED
+  UNLISTED
 }
 
 """A contest as its writers see it"""
@@ -714,6 +779,12 @@ type AdminQuizStarts {
   byKind: [AdminQuizStartCount!]!
   hiddenSmallGroups: Int!
   starts: Int!
+}
+
+input AdminRecoverMfaInput {
+  """Why this recovery is being made. Required."""
+  reason: String!
+  userId: UUID!
 }
 
 """
@@ -1158,6 +1229,10 @@ type AiAllowance {
 An Ask AI answer: the asker's own. Its text grows while it is RUNNING (live AI_ANSWER events say when)
 """
 type AiAnswer {
+  """
+  True when this text was produced by a model, so clients can show an AI label.
+  """
+  aiGenerated: Boolean!
   createdAt: DateTime!
   doubtId: UUID
 
@@ -1178,6 +1253,11 @@ type AiAnswer {
 What a task made for the viewer from a note (ADR-0059). Only its maker sees it, while they can read the note
 """
 type AiArtifact {
+  """
+  True when this text was produced by a model, so clients can show an AI label.
+  """
+  aiGenerated: Boolean!
+
   """Card tasks, once READY: the cards to choose from"""
   cards: [AiCard!]
 
@@ -1324,6 +1404,10 @@ type AiEnvironmentProvider {
 A study aid made from a public note's published version: a summary, key concepts, practice questions, a quiz or flashcards
 """
 type AiInsight {
+  """
+  True when this text was produced by a model, so clients can show an AI label.
+  """
+  aiGenerated: Boolean!
   cards: [AiCard!]
 
   """Hidden by the owner: only they see it"""
@@ -1453,6 +1537,46 @@ type AiProviderPreset {
   Private notes may go to it unless an admin says otherwise (a model on our own machine)
   """
   privateByDefault: Boolean!
+}
+
+"""
+A report of one AI answer. context is the task, status and note id. The answer text is not here.
+"""
+type AiReport {
+  comment: String
+  context: JSON!
+  createdAt: DateTime!
+  id: UUID!
+  reason: AiReportReason!
+  reporterId: UUID!
+  resolvedAt: DateTime
+  resolvedBy: UUID
+  responseId: UUID!
+
+  """ANSWER or ARTIFACT"""
+  responseKind: String!
+  status: AiReportStatus!
+}
+
+type AiReportPayload {
+  report: AiReport
+  userErrors: [UserError!]!
+}
+
+"""Why someone reported a model answer"""
+enum AiReportReason {
+  HARMFUL
+  INACCURATE
+  INAPPROPRIATE
+  OTHER
+  PERSONAL_INFO
+}
+
+"""Where a report sits in the admin queue"""
+enum AiReportStatus {
+  DISMISSED
+  OPEN
+  RESOLVED
 }
 
 type AiSettings {
@@ -1657,115 +1781,6 @@ input AskDoubtInput {
   title: String!
 }
 
-enum MfaFactorType {
-  """A 6-digit code emailed to the account address."""
-  EMAIL_OTP
-
-  """Reserved. startMfaChallenge refuses it until an authenticator app is built."""
-  TOTP
-
-  """Reserved. startMfaChallenge refuses it until a security key is built."""
-  WEBAUTHN
-}
-
-enum MfaFactorStatus {
-  ACTIVE
-  DISABLED
-  PENDING
-}
-
-type MfaFactor {
-  createdAt: DateTime!
-  id: UUID!
-  lastUsedAt: DateTime
-  status: MfaFactorStatus!
-  type: MfaFactorType!
-}
-
-"""
-Whether this signed-in session still needs a second factor. `satisfied` is true when nothing is required, or the
-code was accepted less than 12 hours ago. Calling this does not itself require MFA.
-"""
-type MfaStatus {
-  allowedFactors: [MfaFactorType!]!
-  factors: [MfaFactor!]!
-  required: Boolean!
-  satisfied: Boolean!
-  verifiedAt: DateTime
-}
-
-type MfaChallengePayload {
-  challengeId: UUID
-  expiresAt: DateTime
-  factor: MfaFactorType
-  userErrors: [UserError!]!
-}
-
-"""A new access token after the code is accepted. The refresh token rotates with it."""
-type MfaVerifyPayload {
-  session: Session
-  userErrors: [UserError!]!
-}
-
-input AdminRecoverMfaInput {
-  """Why this recovery is being made. Required."""
-  reason: String!
-  userId: UUID!
-}
-
-input AdminActivityFilter {
-  """Exact action name, such as settings.updated or mfa.verified."""
-  action: String
-  actorId: UUID
-  from: DateTime
-  targetType: String
-  to: DateTime
-}
-
-"""One append-only audit row. details has secrets redacted. There is no mutation that changes or deletes it."""
-type AdminActivityEntry {
-  action: String!
-
-  """The actor's email at the time. Null when the account had already been removed."""
-  actorEmail: String
-  actorId: UUID
-  createdAt: DateTime!
-  details: JSON
-  id: UUID!
-  ip: String
-  targetId: UUID
-  targetType: String!
-  userAgent: String
-}
-
-type AdminActivityConnection {
-  entries: [AdminActivityEntry!]!
-
-  """Pass as cursor to read the next page. Null on the last page."""
-  nextCursor: String
-}
-
-type AdminActivityActionCount {
-  action: String!
-  count: Int!
-}
-
-type AdminActivityDayCount {
-  count: Int!
-
-  """UTC midnight of that day."""
-  day: DateTime!
-}
-
-"""Counts for charts. from is inclusive and to is exclusive. Omit both for the last 30 days. At most 366 days."""
-type AdminActivitySummary {
-  byAction: [AdminActivityActionCount!]!
-  byDay: [AdminActivityDayCount!]!
-  from: DateTime!
-  to: DateTime!
-  total: Int!
-}
-
 type AuthPayload {
   """
   True only from signUp, when this email already belongs to an account with no password (for example one created with
@@ -1775,12 +1790,14 @@ type AuthPayload {
   """
   emailLinkPending: Boolean!
 
-  """Factors this sign-in may use. Empty when mfaRequired is false. EMAIL_OTP is the one that sends a code today."""
+  """
+  Factors this sign-in may use. Empty when mfaRequired is false. EMAIL_OTP is the one that sends a code today.
+  """
   mfaFactors: [MfaFactorType!]!
 
   """
   True when this session must finish a second factor before protected operations (an admin or staff role, or an
-  account that opted in). Sign-in still returns a session: use it for startMfaChallenge and verifyMfaChallenge.
+  account that opted in). Sign-in still returns a session: use it for `startMfaChallenge` and `verifyMfaChallenge`.
   False when nothing further is required, including a normal account.
   """
   mfaRequired: Boolean!
@@ -2387,6 +2404,11 @@ input CompleteRegistrationInput {
   dateOfBirth: String @deprecated(reason: "Send age, in whole years. Ignored when age is sent.")
   displayName: String!
   institutionalEmail: String
+
+  """
+  Parent or guardian email. Required for an admitted registration under 18. Stored with the consent record, not as this account's email.
+  """
+  parentEmail: String
 }
 
 """
@@ -2716,6 +2738,11 @@ input CreateUploadIntentInput {
 Written by AI for the person once a day; a chosen line until then, or when AI is off
 """
 type DailyLine {
+  """
+  True when a model wrote the line, false for the chosen line. Clients use this for the AI label.
+  """
+  aiGenerated: Boolean!
+
   """The learning day it is for (YYYY-MM-DD, in the person's zone)"""
   day: String!
 
@@ -2890,16 +2917,20 @@ input EditGroupPostInput {
 enum EmailKind {
   CLASSROOM_POST
   DIGEST
+  MARKETING
 }
 
 """Fixed error vocabulary (§6.2)"""
 enum ErrorCode {
   ADMIN_MFA_REQUIRED
   AGE_RESTRICTED
+  AI_UNAVAILABLE_FOR_MINOR
   CONFLICT
+  FEATURE_UNAVAILABLE_FOR_MINOR
   FORBIDDEN
   INTERNAL
   MFA_REQUIRED
+  MINOR_PII_BLOCKED
   NOT_FOUND
   RATE_LIMITED
   UNAUTHENTICATED
@@ -3032,7 +3063,7 @@ type ExternalIdentityPayload {
 }
 
 """
-What an upload is for. ATTACHMENT is a picture, video, audio or PDF for a note you can edit (parentId). PAGE_IMAGE is a PNG or JPEG for a note page (parentId). VOICE_NOTE is audio; parentId is the note when the recording belongs to one, and omitted when it stands alone. Every one of these finishes with completeUpload, so a remote scan still runs.
+What an upload is for. ATTACHMENT is a picture, video, audio, PDF, Word (.doc, .docx), PowerPoint (.ppt, .pptx) or plain-text file for a note you can edit (parentId). PAGE_IMAGE is a PNG or JPEG for a note page (parentId). VOICE_NOTE is audio; parentId is the note when the recording belongs to one, and omitted when it stands alone. Every one of these finishes with completeUpload, so a remote scan still runs.
 """
 enum FilePurpose {
   ATTACHMENT
@@ -3323,6 +3354,58 @@ enum GroupRole {
 enum GroupType {
   COMMUNITY
   PROJECT
+}
+
+"""
+What a parent sees. Counts and the consent record only: no email address and no note text.
+"""
+type GuardianChildSummary {
+  accountStatus: String!
+
+  """under_13, 13_15 or 16_17, as recorded at sign-up."""
+  ageBand: String!
+  ageYears: Int
+
+  """
+  auto_unverified until the parent clicks confirm. email_plus after that click.
+  """
+  consentMethod: String!
+
+  """
+  True only when the method currently lifts restricted-minor limits. email_plus needs the click and the admin setting.
+  """
+  consentVerified: Boolean!
+  deletionScheduledFor: DateTime
+  displayName: String!
+  files: Int!
+  notes: Int!
+  noticeVersion: String!
+
+  """
+  The parent's choice for groups, classes, doubts, messages and public posts. It applies only while consentVerified is true and ageBand is under_13. Withdrawing consent clears it.
+  """
+  socialEnabled: Boolean!
+}
+
+type GuardianExportsPayload {
+  exports: [DataExport!]
+  userErrors: [UserError!]!
+}
+
+type GuardianSessionPayload {
+  expiresAt: DateTime
+
+  """
+  Present this on the later parent calls until expiresAt. The manage link that produced it cannot be used again.
+  """
+  sessionToken: String
+  summary: GuardianChildSummary
+  userErrors: [UserError!]!
+}
+
+type GuardianSummaryPayload {
+  summary: GuardianChildSummary
+  userErrors: [UserError!]!
 }
 
 enum HighlightColor {
@@ -3692,6 +3775,60 @@ enum MetricsInterval {
   WEEK
 }
 
+type MfaChallengePayload {
+  challengeId: UUID
+  expiresAt: DateTime
+  factor: MfaFactorType
+  userErrors: [UserError!]!
+}
+
+type MfaFactor {
+  createdAt: DateTime!
+  id: UUID!
+  lastUsedAt: DateTime
+  status: MfaFactorStatus!
+  type: MfaFactorType!
+}
+
+enum MfaFactorStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+}
+
+enum MfaFactorType {
+  """A 6-digit code emailed to the account address."""
+  EMAIL_OTP
+
+  """
+  Reserved. startMfaChallenge refuses it until an authenticator app is built.
+  """
+  TOTP
+
+  """Reserved. startMfaChallenge refuses it until a security key is built."""
+  WEBAUTHN
+}
+
+"""
+Whether this signed-in session still needs a second factor. `satisfied` is true when nothing is required, or the
+code was accepted less than 12 hours ago. Calling this does not itself require MFA.
+"""
+type MfaStatus {
+  allowedFactors: [MfaFactorType!]!
+  factors: [MfaFactor!]!
+  required: Boolean!
+  satisfied: Boolean!
+  verifiedAt: DateTime
+}
+
+"""
+A new access token after the code is accepted. The refresh token rotates with it.
+"""
+type MfaVerifyPayload {
+  session: Session
+  userErrors: [UserError!]!
+}
+
 input ModerateContentInput {
   action: ModerationActionType!
   entityId: UUID!
@@ -3831,6 +3968,11 @@ type Mutation {
   acceptTerms(input: AcceptTermsInput!): OkPayload!
 
   """
+  The signed-in person has seen the safety reminder. Later reads of safetyReminderRequired are false.
+  """
+  acknowledgeSafetyReminder: OkPayload!
+
+  """
   Platform admins. CONFLICT when the email is already listed. VALIDATION when the email is not usable.
   """
   addAccessAllowlistEntry(input: AddAccessAllowlistEntryInput!): AccessAllowlistPayload!
@@ -3854,7 +3996,7 @@ type Mutation {
 
   """
   Platform admins who have already passed MFA. Clears another account's unused codes and send limits, and lets that
-  account sign in without a code for 2 hours. You cannot recover yourself. Audited.
+  account sign in without a code for 2 hours. You cannot recover yourself. Audited. There is no way to edit or delete the audit row.
   """
   adminRecoverMfa(input: AdminRecoverMfaInput!): OkPayload!
 
@@ -3930,6 +4072,11 @@ type Mutation {
 
   """Checks the uploaded bytes (size, magic bytes) and makes the file READY"""
   completeUpload(fileId: UUID!): OkPayload!
+
+  """
+  The parent clicked the confirm link. Receiving or opening the email does not call this. Sets method email_plus.
+  """
+  confirmGuardianConsent(token: String!): OkPayload!
   confirmNoteImport(input: NoteIdInput!): NoteImportPayload!
 
   """
@@ -3979,8 +4126,10 @@ type Mutation {
   deleteAiAnswer(id: UUID!): OkPayload!
   deleteAiArtifact(id: UUID!): OkPayload!
 
-  """Routes through it then use the default connection"""
+  """Platform admins. Routes through it then use the default connection"""
   deleteAiConnection(input: AiConnectionIdInput!): AiSettingsPayload!
+
+  """Platform admins. The task uses the default connection again"""
   deleteAiTaskRoute(input: AiTaskRouteInput!): AiSettingsPayload!
 
   """Staff: moves the quiz to the trash; its attempts stay"""
@@ -3993,7 +4142,7 @@ type Mutation {
   """
   deleteComment(input: CommentIdInput!): CommentPayload!
 
-  """Drafts only"""
+  """Platform admins. Drafts only"""
   deleteContest(input: ContestIdInput!): OkPayload!
 
   """The asker or a moderator"""
@@ -4029,6 +4178,9 @@ type Mutation {
   """Stops the repository's activity and deletes what was kept"""
   disconnectRepositoryApp(input: GroupIdInput!): GroupPayload!
 
+  """Platform admins. Only an OPEN report can be dismissed."""
+  dismissAiReport(id: UUID!): AiReportPayload!
+
   """Signed in only: not shown again for 30 days"""
   dismissRecommendation(input: DismissRecommendationInput!): OkPayload!
 
@@ -4047,6 +4199,24 @@ type Mutation {
   A PRIVATE copy of a note you may fork, credited to its origin; returns the copy
   """
   forkNote(input: NoteIdInput!): NotePayload!
+
+  """
+  Schedules deletion. confirm must be the word DELETE. There is no child password.
+  """
+  guardianDeleteAccount(confirm: String!, sessionToken: String!): AccountDeletionPayload!
+
+  """The same archive the account can ask for. One a day."""
+  guardianRequestDataExport(sessionToken: String!): DataExportPayload!
+
+  """
+  Turns social features on or off for an under-13 child. Refused until consent is verified. Ages 13 to 17 keep the usual restricted-minor rules and do not use this.
+  """
+  guardianSetSocialEnabled(enabled: Boolean!, sessionToken: String!): GuardianSummaryPayload!
+
+  """
+  Puts consent back to auto_unverified. Restricted-minor limits apply again. Suspends only when an admin requires consent for access.
+  """
+  guardianWithdrawConsent(sessionToken: String!): GuardianSummaryPayload!
 
   """Import notes; everything arrives PRIVATE. Five imports a day"""
   importNotes(input: ImportNotesInput!): NoteImportPayload!
@@ -4094,6 +4264,8 @@ type Mutation {
   Staff: a quiz every member of the class can take (classroom.publishQuiz)
   """
   publishClassQuiz(input: PublishClassQuizInput!): ClassQuizPayload!
+
+  """Platform admins: makes a draft visible for the window"""
   publishContest(input: ContestIdInput!): AdminContestPayload!
 
   """
@@ -4109,6 +4281,11 @@ type Mutation {
   Sends an approved resource with a reason to a person, a group or a class (30 an hour)
   """
   recommendResource(input: RecommendResourceInput!): OkPayload!
+
+  """
+  One use of the manage link. Returns a session for the summary, export, withdrawal and deletion calls.
+  """
+  redeemGuardianManageLink(token: String!): GuardianSessionPayload!
   refreshSession(input: RefreshSessionInput!): AuthPayload!
 
   """Phones: after sign-in and whenever the token changes"""
@@ -4138,12 +4315,17 @@ type Mutation {
   reopenDoubt(input: DoubtIdInput!): DoubtPayload!
 
   """
+  The person who received the answer, or any signed-in person for a public study aid. Rate limited per account.
+  """
+  reportAiAnswer(input: ReportAiAnswerInput!): ReportAiAnswerPayload!
+
+  """
   Report what you can see (a note, a person, a comment, a post, an announcement, a doubt or a group); reporting again updates your report
   """
   reportContent(input: ReportContentInput!): OkPayload!
 
   """
-  Ask for your account to be deleted in 14 days, with your private notes and learning history; every other device is signed out. Public notes, posts and comments stay, by "Deleted user"
+  Ask for your account to be deleted after the grace period, with your private notes and learning history; every other device is signed out. Adults wait 14 days. A minor uses the admin purge window, which defaults to 14 days. Public notes, posts and comments stay, by "Deleted user"
   """
   requestAccountDeletion(input: RequestAccountDeletionInput!): AccountDeletionPayload!
 
@@ -4169,6 +4351,16 @@ type Mutation {
 
   """Every other group: the admins accept or reject"""
   requestToJoinGroup(input: RequestToJoinGroupInput!): GroupPayload!
+
+  """
+  Sends the notice again, with a new confirm link, to the stored parent address. Rate limited. Signed in.
+  """
+  resendGuardianConfirmLink: OkPayload!
+
+  """
+  Sends a new manage link to the stored parent address. Rate limited. Signed in.
+  """
+  resendGuardianManageLink: OkPayload!
   resendInstitutionalEmailCode: OkPayload!
 
   """
@@ -4186,6 +4378,9 @@ type Mutation {
 
   """Sets the password and signs out every device"""
   resetPassword(input: ResetPasswordInput!): OkPayload!
+
+  """Platform admins. Only an OPEN report can be resolved."""
+  resolveAiReport(id: UUID!): AiReportPayload!
 
   """The mentor, admins, the Owner or the asker"""
   resolveDoubt(input: DoubtIdInput!): DoubtPayload!
@@ -4231,6 +4426,8 @@ type Mutation {
 
   """Platform admins only, as every mutation below"""
   saveAiConnection(input: SaveAiConnectionInput!): AiConnectionPayload!
+
+  """Platform admins. Points one AI task at a connection and model"""
   saveAiTaskRoute(input: SaveAiTaskRouteInput!): AiSettingsPayload!
 
   """Platform admins: creates a draft, or changes one"""
@@ -4249,6 +4446,8 @@ type Mutation {
   Shows or hides the viewer's achievements and level on their profile; refused under 18
   """
   setAchievementsShown(input: SetAchievementsShownInput!): AchievementSettingsPayload!
+
+  """Platform admins. Which connection answers chat, and which one embeds"""
   setAiDefaults(input: SetAiDefaultsInput!): AiSettingsPayload!
 
   """The note's owner only"""
@@ -4380,6 +4579,10 @@ type Mutation {
 
   """Apply a device's outbox in order (at most 100 operations)"""
   syncPush(ops: [SyncOpInput!]!): SyncPushPayload!
+
+  """
+  Platform admins. Asks the connection for one word, one embedding and its model list
+  """
   testAiConnection(input: AiConnectionIdInput!): AiConnectionTestPayload!
 
   """
@@ -4882,6 +5085,10 @@ enum NoteVersionKind {
 }
 
 type NotesFromTranscript {
+  """
+  True when this text was produced by a model, so clients can show an AI label.
+  """
+  aiGenerated: Boolean!
   noteId: UUID!
   summary: String!
   title: String!
@@ -5320,6 +5527,11 @@ input PublishClassQuizInput {
 
 type Query {
   accessPolicy: AccessPolicy!
+
+  """
+  Youngest whole-year age that may sign up. A platform admin changes it (account_minimum_age). Default 13. It cannot be set below 13, and a lower saved value is still enforced as 13. Ages under 13 cannot create an account. Read it here instead of hard-coding a minimum.
+  """
+  accountMinimumAge: Int!
   achievementSettings: AchievementSettings!
 
   """
@@ -5327,21 +5539,29 @@ type Query {
   """
   activityFeed(after: String, first: Int): ActivityConnection!
 
-  """Platform admins with a valid MFA. Audit rows, newest first. limit is 1 to 100, 50 when omitted."""
-  adminActivity(cursor: String, filter: AdminActivityFilter, limit: Int): AdminActivityConnection!
-
-  """Platform admins with a valid MFA. How many audit rows, per action and per UTC day."""
-  adminActivitySummary(from: DateTime, to: DateTime): AdminActivitySummary!
-
   """
   Platform admins. Every allowlist entry, or those whose email or note contains `search`.
   """
   adminAccessAllowlist(search: String): [AccessAllowlistEntry!]!
 
-  """Platform admins. One page of content that is not private. Every call writes an audit row with the filter."""
-  adminContent(filter: AdminContentFilter, first: Int, after: String): AdminContentConnection!
+  """
+  Platform admins with a valid MFA. Audit rows, newest first. limit is 1 to 100, 50 when omitted.
+  """
+  adminActivity(cursor: String, filter: AdminActivityFilter, limit: Int): AdminActivityConnection!
 
-  """Platform admins. How many of each kind were created in the window. The same private items are left out."""
+  """
+  Platform admins with a valid MFA. How many audit rows, per action and per UTC day.
+  """
+  adminActivitySummary(from: DateTime, to: DateTime): AdminActivitySummary!
+
+  """
+  Platform admins. One page of content that is not private. Every call writes an audit row with the filter.
+  """
+  adminContent(after: String, filter: AdminContentFilter, first: Int): AdminContentConnection!
+
+  """
+  Platform admins. How many of each kind were created in the window. The same private items are left out.
+  """
   adminContentCounts(from: DateTime, to: DateTime): AdminContentCounts!
 
   """
@@ -5452,6 +5672,12 @@ type Query {
   """
   aiConnectionModels(input: AiConnectionIdInput!): AiConnectionModels!
 
+  """Platform admins."""
+  aiReport(id: UUID!): AiReport!
+
+  """Platform admins. Newest first. status defaults to OPEN. first is 1–50."""
+  aiReports(first: Int = 20, status: AiReportStatus): [AiReport!]!
+
   """Platform admins only"""
   aiSettings: AiSettings!
 
@@ -5534,6 +5760,14 @@ type Query {
   """
   group(id: UUID!): Group
 
+  """The child's summary for a live manage session."""
+  guardianChildSummary(sessionToken: String!): GuardianSummaryPayload!
+
+  """
+  Data exports already asked for on this account. A ready one includes a short-lived download link.
+  """
+  guardianDataExports(sessionToken: String!): GuardianExportsPayload!
+
   """
   Platform admins: the same queue, or every domain of one status. Omit status for domains still waiting.
   """
@@ -5544,7 +5778,9 @@ type Query {
   """
   learningHistory(before: String, days: Int): LearningHistory!
 
-  """Signed in. The second-factor state of this session. Does not require MFA."""
+  """
+  Signed in. The second-factor state of this session. Does not require MFA.
+  """
   mfaStatus: MfaStatus!
 
   """
@@ -5803,6 +6039,11 @@ type Query {
   """
   verificationRequestsToReview(after: UUID, first: Int): [VerificationRequest!]!
 
+  """
+  Public. This running build: the package version plus the short git SHA, as vX.Y.Z+sha. Not the terms date (termsVersion).
+  """
+  version: String!
+
   """The signed-in user, null for anonymous visitors"""
   viewer: User
 
@@ -6043,6 +6284,22 @@ type RemovedGroup {
 input RenameTagInput {
   id: UUID!
   name: String!
+}
+
+input ReportAiAnswerInput {
+  comment: String
+  reason: AiReportReason!
+  responseId: UUID!
+
+  """
+  ANSWER (Ask AI) or ARTIFACT (a task result, including a public study aid)
+  """
+  responseKind: String!
+}
+
+type ReportAiAnswerPayload {
+  reportId: UUID
+  userErrors: [UserError!]!
 }
 
 input ReportContentInput {
@@ -6978,6 +7235,11 @@ input SignUpInput {
   displayName: String!
   email: String!
   institutionalEmail: String
+
+  """
+  Parent or guardian email. Required for an admitted sign-up under 18. Stored with the consent record, not as this account's email.
+  """
+  parentEmail: String
   password: String!
 }
 
@@ -7435,6 +7697,11 @@ input TranscribeCaptionClipInput {
 
 type Transcript {
   """
+  True when a model produced this text, so clients can show an AI label. False for browser SpeechRecognition captions.
+  """
+  aiGenerated: Boolean!
+
+  """
   The recording was longer than 30 minutes and the rest was not transcribed
   """
   cut: Boolean!
@@ -7820,6 +8087,11 @@ type User {
   restrictedMinor: Boolean
 
   """
+  Viewer only. True when this person is under 18, or has no known age, and has not acknowledged the safety reminder. Clients show it before the first use of social features.
+  """
+  safetyReminderRequired: Boolean
+
+  """
   Viewer only (ADR-0100): ways this account can sign in. Null for anyone else, so account settings can list them.
   """
   signInMethods: [SignInMethod!]
@@ -7869,7 +8141,7 @@ type UserError {
   retryAfter: Int
 
   """
-  One address on AGE_RESTRICTED and on a blocked sign-in: the earliest non-deleted platform admin (GlobalRole PLATFORM_ADMIN) by createdAt, or SUPPORT_EMAIL when none exists.
+  One address on AGE_RESTRICTED and on a blocked sign-in: SUPPORT_EMAIL (support@learnvianotes.in unless the environment sets another).
   """
   supportEmail: String
 }
