@@ -1251,7 +1251,9 @@
       "dismiss": "Dismiss",
       "aiPages": "Nova read {n, plural, one {# unclear page} other {# unclear pages}} again{rejected, plural, =0 {.} one {; # reading disagreed with the scan and was set aside.} other {; # readings disagreed with the scan and were set aside.}}",
       "cleanUpHint": "To mend words the conversion broke, use Clean up the text in the Nova panel."
-    }
+    },
+    "scanning": "Checking your PDF for viruses",
+    "scanningLead": "It opens here by itself in a moment. Large PDFs take a little longer."
   },
   "notifications": {
     "title": "Notifications",
