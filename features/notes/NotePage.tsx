@@ -205,18 +205,18 @@ export function NotePage({ id }: { id: string }) {
   const chips =
     meta.viewerAccess === 'OWNER' ? (
       <button type="button" onClick={() => setDetailsOpen(true)} className="flex flex-wrap items-center gap-1.5 text-left text-xs text-muted">
-        <span className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1 hover:border-accent hover:text-accent">
+        <span className="inline-flex items-center gap-1 rounded-[4px] border border-border bg-surface px-2.5 py-1 hover:border-accent hover:text-accent">
           <Folder className="size-3.5" aria-hidden />
           {meta.folder?.name ?? t('details.noFolder')}
         </span>
         {meta.tags.map((x) => (
-          <span key={x.id} className="inline-flex items-center gap-0.5 rounded-[10px] bg-accent-soft px-2.5 py-1 text-accent">
+          <span key={x.id} className="inline-flex items-center gap-0.5 rounded-[4px] bg-accent-soft px-2.5 py-1 text-accent">
             <Hash className="size-3" aria-hidden />
             {x.name}
           </span>
         ))}
         {meta.topics.map((x) => (
-          <span key={x.id} className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1">
+          <span key={x.id} className="inline-flex items-center gap-1 rounded-[4px] border border-border bg-surface px-2.5 py-1">
             <BookBookmark className="size-3.5" aria-hidden />
             {x.title}
           </span>

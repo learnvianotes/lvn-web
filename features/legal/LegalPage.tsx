@@ -19,7 +19,7 @@ export async function LegalPage({ doc, children }: { doc: LegalDocument; childre
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10">
       <nav aria-label="Legal" className="flex flex-wrap gap-2 text-sm">
         {(Object.keys(LEGAL_DOCUMENTS) as LegalDocument[]).map((d) => (
-          <Link key={d} href={LEGAL_DOCUMENTS[d].path} aria-current={d === doc ? 'page' : undefined} className={d === doc ? 'rounded-[10px] bg-accent px-3 py-1 font-medium text-accent-fg' : 'rounded-full border border-border px-3 py-1 text-muted hover:border-accent hover:text-accent'}>
+          <Link key={d} href={LEGAL_DOCUMENTS[d].path} aria-current={d === doc ? 'page' : undefined} className={d === doc ? 'rounded-[4px] bg-accent px-3 py-1 font-medium text-accent-fg' : 'rounded-full border border-border px-3 py-1 text-muted hover:border-accent hover:text-accent'}>
             {LEGAL_DOCUMENTS[d].title}
           </Link>
         ))}

@@ -291,7 +291,7 @@ function TopicPicker({ picked, onChange }: { picked: Topic[]; onChange: (topics:
       {picked.length ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((p) => (
-            <li key={p.id} className="flex items-center gap-1 rounded-[10px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
+            <li key={p.id} className="flex items-center gap-1 rounded-[4px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
               {p.title}
               <button type="button" aria-label={t('removeTopic', { title: p.title })} className="rounded-full px-2 hover:bg-accent/10" onClick={() => onChange(picked.filter((x) => x.id !== p.id))}>
                 ×

@@ -60,7 +60,7 @@ export function Floating({ at, children, label, onClose }: { at: { x: number; y:
     return () => window.removeEventListener('keydown', close)
   }, [onClose])
   return (
-    <div ref={box} role="dialog" aria-label={label} className="fixed z-[60] flex animate-rise flex-col gap-2 rounded-2xl border border-border bg-surface p-2 shadow-2xl shadow-black/20" style={pos} onMouseDown={(e) => e.preventDefault()}>
+    <div ref={box} role="dialog" aria-label={label} className="fixed z-[60] flex animate-rise flex-col gap-2 rounded-2xl border border-border bg-surface p-2 shadow-lg shadow-black/20" style={pos} onMouseDown={(e) => e.preventDefault()}>
       {children}
     </div>
   )

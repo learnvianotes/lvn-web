@@ -78,7 +78,7 @@ export function AdminSettings() {
               <li key={group.category} className="shrink-0">
                 <a
                   href={`#${group.category}`}
-                  className="inline-flex min-h-11 items-center rounded-[10px] border border-border px-3 text-sm font-medium hover:border-accent"
+                  className="inline-flex min-h-11 items-center rounded-[4px] border border-border px-3 text-sm font-medium hover:border-accent"
                   onClick={(e) => {
                     e.preventDefault()
                     reveal(group.category)
@@ -301,7 +301,7 @@ function Switch({ id, label, hint, checked, invalid, onChange }: { id: string; l
 }
 
 function Badge({ children, muted }: { children: ReactNode; muted?: boolean }) {
-  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
+  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
 }
 
 function describe(setting: Setting, value: string, t: ReturnType<typeof useTranslations<'adminSettings'>>): string {

@@ -140,7 +140,7 @@ export function AdminNav({ role, verified }: { role?: string | null; verified?: 
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('label')}>
           <button type="button" aria-label={t('close')} className="absolute inset-0 bg-black/40" onClick={close} />
-          <div id="admin-settings-drawer" className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-2xl">
+          <div id="admin-settings-drawer" className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-lg">
             <div className="flex items-center justify-between gap-3">
               <p className="px-2 text-sm font-semibold">{t('label')}</p>
               <button

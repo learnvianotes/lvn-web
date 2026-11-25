@@ -22,7 +22,7 @@ export async function GuidePage() {
         <p className="max-w-2xl text-sm leading-6 text-muted sm:text-base">{t('lead')}</p>
         <nav aria-label={t('onThisPage')} className="flex flex-wrap gap-2">
           {SECTIONS.map((section) => (
-            <a key={section.id} href={`#${section.id}`} className="rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg hover:border-accent hover:text-accent">
+            <a key={section.id} href={`#${section.id}`} className="rounded-[4px] border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg hover:border-accent hover:text-accent">
               {t(`${section.id}.title`)}
             </a>
           ))}

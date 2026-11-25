@@ -204,7 +204,7 @@ export function NotesHome() {
                 <summary className="cursor-pointer list-none rounded-lg p-1 text-muted opacity-60 hover:bg-surface-2 hover:opacity-100" aria-label={t('folderActions', { name: f.name })}>
                   <Ellipsis className="size-4" aria-hidden />
                 </summary>
-                <div className="absolute right-0 z-20 mt-1 flex w-44 flex-col rounded-xl border border-border bg-surface p-1 text-sm shadow-xl">
+                <div className="absolute right-0 z-20 mt-1 flex w-44 flex-col rounded-xl border border-border bg-surface p-1 text-sm shadow-lg">
                   <button type="button" className="rounded-lg px-3 py-1.5 text-left hover:bg-surface-2" onClick={() => void addFolder(f.id)}>
                     {t('newSubfolder')}
                   </button>
@@ -351,7 +351,7 @@ export function NotesHome() {
               <label className="relative w-full sm:w-64">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
                 <span className="sr-only">{t('search')}</span>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-[10px] border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search')} className="h-10 w-full rounded-[4px] border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted focus-visible:border-accent focus-visible:outline-none" />
               </label>
             ) : null}
           </div>
@@ -368,7 +368,7 @@ export function NotesHome() {
             <div role="status" className="flex flex-col gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
               <span className="truncate font-medium">{t('readPdfUploading', { name: readPdf.uploading.name })}</span>
               <span className="h-2 overflow-hidden rounded-full bg-border" aria-hidden>
-                <span className="block h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
+                <span className="block h-full rounded-[4px] bg-accent transition-[width]" style={{ width: `${Math.round(readPdf.uploading.progress * 100)}%` }} />
               </span>
             </div>
           ) : null}
@@ -462,7 +462,7 @@ function NoteTile({ note: n, trash, onRestore, onDestroy }: { note: NoteListFiel
           </span>
         ) : null}
         {'owner' in n ? (
-          <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
+          <span className="rounded-[4px] bg-accent-soft px-2 py-0.5 font-medium text-accent">{t(n.viewerAccess === 'EDITOR' ? 'canEdit' : 'canView')}</span>
         ) : n.visibility !== 'PRIVATE' ? (
           <VisibilityBadge visibility={n.visibility} />
         ) : n.publishedAt ? (

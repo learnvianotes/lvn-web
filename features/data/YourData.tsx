@@ -68,7 +68,7 @@ function ExportPart() {
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-good/30 bg-good/10 p-3 text-sm">
           <CircleCheck className="size-5 text-good" aria-hidden />
           <span className="flex-1">{t('ready', { size: formatBytes(latest.sizeBytes ?? 0), date: new Date(latest.expiresAt!).toLocaleDateString() })}</span>
-          <a href={downloadHref} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-[10px] bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
+          <a href={downloadHref} onClick={() => trackUsage('download', { kind: 'data_export' })} className="inline-flex items-center gap-1.5 rounded-[4px] bg-accent px-3 py-1.5 font-semibold text-accent-fg hover:opacity-90">
             <Download className="size-4" aria-hidden />
             {t('download')}
           </a>
@@ -187,7 +187,7 @@ function Progress({ label, value }: { label: string; value: number }) {
     <div role="status" className="flex flex-col gap-1.5">
       <span className="text-sm text-muted">{label}</span>
       <div className="h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-        <div className="h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(value)}%` }} />
+        <div className="h-full rounded-[4px] bg-accent transition-[width]" style={{ width: `${Math.round(value)}%` }} />
       </div>
     </div>
   )
@@ -206,7 +206,7 @@ function Report({ imp }: { imp: NoteImportFieldsFragment }) {
         <ul className="flex flex-wrap gap-2">
           {imp.notes.slice(0, 12).map((n) => (
             <li key={n.id}>
-              <Link href={`/notes/${n.id}`} className="rounded-[10px] bg-accent-soft px-2.5 py-1 text-accent hover:underline">
+              <Link href={`/notes/${n.id}`} className="rounded-[4px] bg-accent-soft px-2.5 py-1 text-accent hover:underline">
                 {n.title || t('untitled')}
               </Link>
             </li>

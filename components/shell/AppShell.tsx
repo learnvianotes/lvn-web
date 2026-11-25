@@ -160,7 +160,7 @@ export function AppShell({ children, footer, visitor }: { children: ReactNode; f
       {app && open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal={tourMenu.current ? undefined : true} aria-label={t('menu')}>
           <button type="button" aria-label={t('close')} className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-2xl">
+          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto bg-surface px-3 py-4 shadow-lg">
             <div className="flex items-center justify-between">
               <Brand />
               <button ref={closeButton} type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="inline-flex size-10 items-center justify-center rounded-lg text-muted hover:bg-surface-2">
@@ -293,7 +293,7 @@ function TopBar({ onMenu, open, menuButton, pinned }: { onMenu: () => void; open
             if (window.dispatchEvent(new Event(OPEN_SEARCH_EVENT, { cancelable: true }))) router.push('/search')
           }}
           data-tour="search"
-          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
+          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[4px] border border-border bg-surface px-3 text-left text-sm text-muted hover:border-accent sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" aria-hidden />
           <span className="truncate">{t('searchPlaceholder')}</span>

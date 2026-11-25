@@ -10,7 +10,7 @@ import type { PostCardFieldsFragment } from '@/graphql/generated/graphql'
 
 /** A picture for each kind of public note when it has none of its own (board A's cards). */
 const ART = {
-  NOTE: { icon: BookOpen, from: '#2847a8', to: '#2847a8' },
+  NOTE: { icon: BookOpen, from: '#1e40af', to: '#1e40af' },
   BLOG: { icon: PenLine, from: '#9a4a2b', to: '#9a4a2b' },
   POST: { icon: Megaphone, from: '#4a4740', to: '#4a4740' },
   PROJECT: { icon: FolderGit2, from: '#3d6b2c', to: '#3d6b2c' },
@@ -53,7 +53,7 @@ export function PostCard({ note, topic, onChanged }: { note: PostCardFieldsFragm
         </Link>
         {note.excerpt ? <p className="line-clamp-2 text-sm text-muted">{note.excerpt}</p> : null}
         {chip ? (
-          <Link href={`/search?${new URLSearchParams({ topic: chip.id, topicTitle: chip.title }).toString()}`} className="w-fit rounded-[10px] bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent hover:underline">
+          <Link href={`/search?${new URLSearchParams({ topic: chip.id, topicTitle: chip.title }).toString()}`} className="w-fit rounded-[4px] bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent hover:underline">
             {chip.title}
           </Link>
         ) : null}

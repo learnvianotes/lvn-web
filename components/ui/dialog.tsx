@@ -26,7 +26,7 @@ export function Dialog({ open, onClose, title, children, wide, side, sheet, pers
       onCancel={(e) => persistent && e.preventDefault()}
       onClick={(e) => !persistent && e.target === ref.current && onClose()}
       className={cn(
-        'm-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-full rounded-2xl border border-border bg-bg p-0 text-fg shadow-2xl backdrop:bg-black/40',
+        'm-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-full rounded-2xl border border-border bg-bg p-0 text-fg shadow-lg backdrop:bg-black/40',
         wide ? 'max-w-3xl' : 'max-w-md',
         side && 'my-0 ml-auto mr-0 h-dvh max-h-dvh rounded-none sm:w-[28rem]',
         sheet && 'max-sm:m-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none',

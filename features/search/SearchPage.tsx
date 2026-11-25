@@ -186,7 +186,7 @@ export function SearchPage() {
                       {p.displayName.slice(0, 1).toUpperCase()}
                     </span>
                     {p.displayName} <span className="text-muted">@{p.handle}</span>
-                    {p.globalRole === 'TEACHER' ? <span className="rounded-[10px] bg-accent-soft px-1.5 text-[10px] font-semibold text-accent">{t('teacher')}</span> : null}
+                    {p.globalRole === 'TEACHER' ? <span className="rounded-[4px] bg-accent-soft px-1.5 text-[10px] font-semibold text-accent">{t('teacher')}</span> : null}
                   </Link>
                 </li>
               ))}
@@ -264,7 +264,7 @@ export function SearchPage() {
                     setTab(where)
                     go({ q: '', topic: chosen, tab: where })
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent"
+                  className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent"
                 >
                   <BookBookmark className="size-3.5" aria-hidden />
                   {tp.title} <span className="text-muted">· {tp.subject.title}</span>

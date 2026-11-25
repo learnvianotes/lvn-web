@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation } from '@apollo/client/react'
-import { KeyRound, LockKeyhole } from 'lucide-react'
+import { KeyRound } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -32,7 +32,6 @@ const RESEND_AFTER = 30
  */
 export function SignInForm() {
   const t = useTranslations('auth.signIn')
-  const tp = useTranslations('auth.providers')
   const te = useTranslations('auth.errors')
   const params = useSearchParams()
   const next = params.get('next')
@@ -145,9 +144,9 @@ export function SignInForm() {
   if (hold) return <AgeBlocked supportEmail={hold.supportEmail} kind={hold.kind} />
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-medium">{step.kind === 'code' ? t('codeTitle') : t('title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{step.kind === 'code' ? t('codeTitle') : t('title')}</h1>
         <p className="text-sm text-muted">{step.kind === 'code' ? t('codeLead', { email: step.email }) : t('lead')}</p>
       </header>
       <InviteOnlyNotice />
@@ -182,22 +181,8 @@ export function SignInForm() {
         </form>
       ) : (
         <>
-          <div className="flex flex-col gap-3">
-            <ProviderButtons next={next} onAgeHold={setHold} divider={false} />
-            {passkey.available ? (
-              <Button variant="secondary" size="lg" disabled={passkey.busy || busy} onClick={() => void passkey.signIn()} className="gap-2">
-                <KeyRound className="size-[18px]" strokeWidth={1.5} aria-hidden />
-                {passkey.busy ? t('passkeyBusy') : t('passkey')}
-              </Button>
-            ) : null}
-            {passkey.error ? <Alert tone="error">{passkey.error}</Alert> : null}
-          </div>
-          <div className="flex items-center gap-3 text-xs text-muted" aria-hidden>
-            <span className="h-px flex-1 bg-border" />
-            {tp('or')}
-            <span className="h-px flex-1 bg-border" />
-          </div>
-          <form onSubmit={step.kind === 'password' ? submitPassword : sendCode} noValidate className="flex flex-col gap-4">
+          <ProviderButtons next={next} onAgeHold={setHold} />
+          <form onSubmit={step.kind === 'password' ? submitPassword : sendCode} noValidate className="flex flex-col gap-3">
             <Field label={t('email')} error={fieldError && !(step.kind === 'password' && EMAIL.test(email.trim())) ? fieldError : undefined}>
               <Input type="email" autoComplete="email webauthn" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </Field>
@@ -206,11 +191,11 @@ export function SignInForm() {
                 <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
               </Field>
             ) : null}
-            <Button type="submit" size="lg" disabled={busy}>
+            <Button type="submit" size="lg" className="mt-1" disabled={busy}>
               {step.kind === 'password' ? t('submit') : t('emailCode')}
             </Button>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <button type="button" className="text-accent hover:underline" onClick={() => (reset(), setStep(step.kind === 'password' ? { kind: 'email' } : { kind: 'password' }))}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              <button type="button" className="font-medium text-accent hover:underline" onClick={() => (reset(), setStep(step.kind === 'password' ? { kind: 'email' } : { kind: 'password' }))}>
                 {step.kind === 'password' ? t('useCode') : t('usePassword')}
               </button>
               {step.kind === 'password' ? (
@@ -218,16 +203,19 @@ export function SignInForm() {
                   {t('forgot')}
                 </Link>
               ) : null}
+              {passkey.available ? (
+                <button type="button" className="inline-flex items-center gap-1.5 text-muted hover:text-fg disabled:opacity-50" disabled={passkey.busy || busy} onClick={() => void passkey.signIn()}>
+                  <KeyRound className="size-4" strokeWidth={1.75} aria-hidden />
+                  {passkey.busy ? t('passkeyBusy') : t('passkey')}
+                </button>
+              ) : null}
             </div>
+            {passkey.error ? <Alert tone="error">{passkey.error}</Alert> : null}
           </form>
         </>
       )}
 
-      <p className="flex items-start gap-2 text-xs text-muted">
-        <LockKeyhole className="mt-0.5 size-3.5 shrink-0" strokeWidth={1.5} aria-hidden />
-        {t('secure')}
-      </p>
-      <p className="text-center text-sm text-muted">
+      <p className="text-sm text-muted">
         {t('noAccount')}{' '}
         <Link href={next ? `/sign-up?next=${encodeURIComponent(next)}` : '/sign-up'} className="font-medium text-accent hover:underline">
           {t('signUp')}

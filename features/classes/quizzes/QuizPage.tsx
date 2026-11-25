@@ -126,7 +126,7 @@ function TakeQuiz({ quiz, practice, onDone }: { quiz: Quiz; practice: boolean; o
           <span className="text-muted">{t('answeredCount', { n: total - left, total })}</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label={t('progressLabel', { n: at + 1, total })} aria-valuemin={1} aria-valuemax={total} aria-valuenow={at + 1}>
-          <div className="h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${((at + 1) / total) * 100}%` }} />
+          <div className="h-full rounded-[4px] bg-accent transition-[width]" style={{ width: `${((at + 1) / total) * 100}%` }} />
         </div>
       </div>
       {q ? (

@@ -84,7 +84,7 @@ function Level({ contribution }: { contribution: { points: number; level: 'NEWCO
       {nextLevelAt ? (
         <div className="flex flex-col gap-1">
           <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={t('toNext', { points: nextLevelAt - points })}>
-            <div className="h-full rounded-[10px] bg-accent transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-[4px] bg-accent transition-[width] duration-300" style={{ width: `${progress}%` }} />
           </div>
           <p className="text-xs text-muted">{t('toNext', { points: nextLevelAt - points })}</p>
         </div>

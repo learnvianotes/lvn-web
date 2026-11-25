@@ -12,9 +12,9 @@
   --text: #1c1b18;
   --text-2: #3f3c36;
   --muted: #66625b;
-  --accent: #2847a8;
-  --accent-hover: #1f3888;
-  --accent-soft: #e9edf8;
+  --accent: #1e40af;
+  --accent-hover: #1e3a8a;
+  --accent-soft: #eff3fe;
   --accent-text: #ffffff;
   --track: #e8e8eb;
 
@@ -32,7 +32,7 @@
   --code-keyword: #cf222e;
   --code-string: #0a3069;
   --code-number: #0550ae;
-  --code-title: #2847a8;
+  --code-title: #1e40af;
   --code-type: #953800;
 
   --font: var(--font-inter, 'IBM Plex Sans'), 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -56,9 +56,9 @@
   --text: #ecebe6;
   --text-2: #c4c1b8;
   --muted: #9a968d;
-  --accent: #a9bbf2;
-  --accent-hover: #c9d5f7;
-  --accent-soft: #1f2640;
+  --accent: #93b4ff;
+  --accent-hover: #bcd0ff;
+  --accent-soft: #172036;
   --accent-text: #141413;
   --track: #2a2a30;
 
@@ -76,7 +76,7 @@
   --code-keyword: #ff7b72;
   --code-string: #a5d6ff;
   --code-number: #79c0ff;
-  --code-title: #a9bbf2;
+  --code-title: #93b4ff;
   --code-type: #ffa657;
 
   --shadow: none;
@@ -87,18 +87,18 @@
 
 /* Accent overrides (docs/ui-revamp/tokens.json). Ink is already on :root. Dark rules win by specificity. */
 :root[data-accent='ink'] {
-  --accent: #2847a8;
-  --accent-hover: #1f3888;
+  --accent: #1e40af;
+  --accent-hover: #1e3a8a;
   --accent-text: #ffffff;
-  --accent-soft: #e9edf8;
-  --code-title: #2847a8;
+  --accent-soft: #eff3fe;
+  --code-title: #1e40af;
 }
 :root[data-theme='dark'][data-accent='ink'] {
-  --accent: #a9bbf2;
-  --accent-hover: #c9d5f7;
-  --accent-text: #141413;
-  --accent-soft: #1f2640;
-  --code-title: #a9bbf2;
+  --accent: #93b4ff;
+  --accent-hover: #bcd0ff;
+  --accent-text: #09090b;
+  --accent-soft: #172036;
+  --code-title: #93b4ff;
 }
 :root[data-accent='navy'] {
   --accent: #1e4d8c;

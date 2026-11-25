@@ -204,7 +204,7 @@ export function CaptureDialog({ open, onClose, folderId }: { open: boolean; onCl
           <div className="flex flex-col gap-1.5" role="status">
             <span className="text-sm">{busy.upload ? t('uploading', { n: busy.upload, of: busy.of }) : t('creating')}</span>
             <span className="block h-1.5 overflow-hidden rounded-full bg-surface-2">
-              <span className="block h-full rounded-[10px] bg-accent transition-[width]" style={{ width: `${Math.round(((Math.max(0, busy.upload - 1) + busy.progress) / Math.max(1, busy.of)) * 100)}%` }} />
+              <span className="block h-full rounded-[4px] bg-accent transition-[width]" style={{ width: `${Math.round(((Math.max(0, busy.upload - 1) + busy.progress) / Math.max(1, busy.of)) * 100)}%` }} />
             </span>
           </div>
         ) : null}

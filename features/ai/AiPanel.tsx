@@ -316,7 +316,7 @@ export function AiResult({ noteId, artifact: a, canEdit, onRetry, onAddedToNote,
         <TextQuote className="size-4 shrink-0 text-accent" aria-hidden />
         <h4 className="min-w-0 flex-1 truncate text-sm font-semibold">{label}</h4>
         {a.keptAt ? (
-          <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs text-accent">
+          <span className="inline-flex items-center gap-1 rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs text-accent">
             <Check className="size-3" aria-hidden />
             {t('kept')}
           </span>

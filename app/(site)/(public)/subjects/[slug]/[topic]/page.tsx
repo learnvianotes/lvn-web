@@ -72,7 +72,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           <ul className="flex flex-wrap gap-2">
             {topic.children.map((c) => (
               <li key={c.id}>
-                <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[10px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent hover:underline">
+                <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[4px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent hover:underline">
                   {c.title}
                 </Link>
               </li>

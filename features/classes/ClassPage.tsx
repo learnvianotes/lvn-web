@@ -123,7 +123,7 @@ function Header({ classroom, onChanged }: { classroom: ClassroomDetailFragment; 
         <span aria-hidden>·</span>
         <Users className="size-4" aria-hidden />
         {t('members', { count: classroom.memberCount })}
-        {classroom.viewerRole ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
+        {classroom.viewerRole ? <span className="rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t(`role.${classroom.viewerRole}`)}</span> : null}
       </div>
       <h1 className="text-2xl font-semibold">{classroom.name}</h1>
       {classroom.description ? <p className="whitespace-pre-line text-muted">{classroom.description}</p> : null}

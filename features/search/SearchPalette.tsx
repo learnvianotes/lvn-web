@@ -92,7 +92,7 @@ export function SearchPalette() {
       aria-label={t('label')}
       onClose={() => setOpen(false)}
       onClick={(e) => e.target === ref.current && setOpen(false)}
-      className="m-auto mt-[12vh] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border border-border bg-bg p-0 text-fg shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="m-auto mt-[12vh] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border border-border bg-bg p-0 text-fg shadow-lg backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       {open ? (
         <div className="flex max-h-[70vh] flex-col">

@@ -51,7 +51,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ slug: 
                 <ul className="flex flex-wrap gap-1.5">
                   {topic.children.map((c) => (
                     <li key={c.id}>
-                      <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[10px] bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent hover:underline">
+                      <Link href={`/subjects/${subject.slug}/${c.slug}`} className="inline-block rounded-[4px] bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent hover:underline">
                         {c.title}
                       </Link>
                     </li>

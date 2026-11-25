@@ -76,7 +76,7 @@ export function AdminPlans() {
                 <p className="text-xl font-semibold">{formatPlanPrice(plan.priceMinor, plan.currency, plan.interval, per)}</p>
               </div>
               <p className="flex flex-wrap gap-2 text-xs">
-                <span className={plan.active ? 'rounded-[10px] bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
+                <span className={plan.active ? 'rounded-[4px] bg-accent-soft px-2 py-0.5 font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-muted'}>
                   {plan.active ? t('active') : t('inactive')}
                 </span>
                 <span className="rounded-full bg-surface-2 px-2 py-0.5 text-muted">{t('subscribers', { count: plan.subscriberCount })}</span>

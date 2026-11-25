@@ -99,7 +99,7 @@ function RequestCard({ request: r, canDecideRole, onDone }: { request: ReviewReq
           {r.requester.displayName}
         </Link>
         <span className="text-sm text-muted">@{r.requester.handle}</span>
-        {r.purpose === 'TEACHER_ROLE' ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('teacherApplication')}</span> : null}
+        {r.purpose === 'TEACHER_ROLE' ? <span className="rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t('teacherApplication')}</span> : null}
         <span className="ml-auto text-xs text-muted">{format.dateTime(new Date(r.createdAt), { dateStyle: 'medium' })}</span>
       </div>
       {r.purpose === 'TEACHER_ROLE' ? (

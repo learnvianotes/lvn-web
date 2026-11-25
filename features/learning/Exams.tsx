@@ -249,7 +249,7 @@ export function ReadinessBar({ readiness, targetToday }: { readiness: number; ta
   const t = useTranslations('exams')
   return (
     <div role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness} aria-label={t('readinessLabel', { value: readiness, target: targetToday })} className="relative h-2.5 w-full rounded-full bg-surface-2">
-      <div className="h-full rounded-[10px] bg-accent transition-[width] duration-700" style={{ width: `${readiness}%` }} />
+      <div className="h-full rounded-[4px] bg-accent transition-[width] duration-700" style={{ width: `${readiness}%` }} />
       <div aria-hidden className="absolute -top-1 h-4.5 w-0.5 rounded bg-fg/60" style={{ left: `calc(${targetToday}% - 1px)` }} />
     </div>
   )
@@ -395,7 +395,7 @@ function TopicMastery({ exam }: { exam: Exam }) {
             </span>
           </div>
           <div aria-hidden className="h-1.5 rounded-full bg-surface-2">
-            <div className="h-full rounded-[10px] bg-accent/70" style={{ width: `${pct(tp.mastery)}%` }} />
+            <div className="h-full rounded-[4px] bg-accent/70" style={{ width: `${pct(tp.mastery)}%` }} />
           </div>
         </li>
       ))}
@@ -467,7 +467,7 @@ function TopicPicker({ picked, onChange }: { picked: PickedTopic[]; onChange: (t
       {picked.length ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((p) => (
-            <li key={p.id} className="flex items-center gap-1 rounded-[10px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
+            <li key={p.id} className="flex items-center gap-1 rounded-[4px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
               {p.title}
               <button type="button" aria-label={t('removeTopic', { title: p.title })} className="rounded-full px-2 hover:bg-accent/10" onClick={() => onChange(picked.filter((x) => x.id !== p.id))}>
                 ×

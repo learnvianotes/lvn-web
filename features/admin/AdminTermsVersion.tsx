@@ -103,7 +103,7 @@ export function TermsVersionCard({ overridden, onSaved }: { overridden: boolean;
           </h3>
           <p className="text-xs text-muted">{TERMS_VERSION_KEY}</p>
         </div>
-        <span className={overridden ? 'rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted'}>{t(`sources.${source}`)}</span>
+        <span className={overridden ? 'rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent' : 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted'}>{t(`sources.${source}`)}</span>
       </div>
       <p className="text-sm text-muted">{t('lead')}</p>
 

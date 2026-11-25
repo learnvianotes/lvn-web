@@ -119,7 +119,7 @@ function PlanCard({ plan, per }: { plan: Plan; per: { month: string; year: strin
         </div>
         <p className="text-xl font-semibold">{publicPlanPrice(plan.priceMinor, plan.currency, plan.interval, per, t('free'))}</p>
       </div>
-      {plan.current ? <p className="w-fit rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('current')}</p> : null}
+      {plan.current ? <p className="w-fit rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('current')}</p> : null}
       <div>
         <h3 className="text-sm font-semibold">{t('features')}</h3>
         {plan.features.length ? (

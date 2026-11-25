@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-25
+
+### Fixed
+
+- Signing in works on the live site again, and the Google button is back: the site was built to call the server at the app's own address, which does not answer there. It now calls api.learnvianotes.in (new `LVN_API_URL` deploy variable).
+- The Appearance settings no longer show an error for the Ink colour.
+
+### Changed
+
+- Sign-up asks only for your name, email and password (or one tap with Google). No age, no college email (add it later from Verify), no checkbox.
+- Sign-in and sign-up are one focused screen that fits without scrolling: Google first, then your email; password and passkey are one tap away.
+- A sharper look everywhere: white and near-black instead of warm paper, real borders, small square corners and no soft shadows.
+
 ## [0.7.0] - 2026-11-25
 
 ### Added
