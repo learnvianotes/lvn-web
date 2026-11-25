@@ -160,7 +160,7 @@ function CaseCard({ item: c, groupId, platform, onDone }: { item: Case; groupId?
           {c.resource ? <p className="text-sm text-muted">{t('by', { name: c.resource.submittedBy.displayName, handle: c.resource.submittedBy.handle })}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {platform && c.scope !== 'PLATFORM' ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
+          {platform && c.scope !== 'PLATFORM' ? <span className="rounded-[4px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`scope.${c.scope}`)}</span> : null}
           {state ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`state.${state}`)}</span> : null}
           {c.resource ? <span className="rounded-full bg-surface-2 px-2 py-0.5">{t(`resourceState.${c.resource.status}`)}</span> : null}
           {c.suspendedUntil ? <span className="rounded-full bg-bad/10 px-2 py-0.5 font-semibold text-bad">{t('suspendedUntil', { until: format.dateTime(new Date(c.suspendedUntil), { dateStyle: 'medium' }) })}</span> : null}

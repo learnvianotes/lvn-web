@@ -45,7 +45,7 @@ export function GroupCardView({ group }: { group: GroupCardFragment }) {
       <span className="mt-auto flex items-center gap-1.5 text-xs text-muted">
         <Users className="size-3.5" aria-hidden />
         {t('members', { count: group.memberCount })}
-        {group.viewerRole ? <span className="ml-auto rounded-[10px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
+        {group.viewerRole ? <span className="ml-auto rounded-[4px] bg-accent-soft px-2 py-0.5 font-semibold text-accent">{t(`role.${group.viewerRole}`)}</span> : null}
       </span>
     </Link>
   )

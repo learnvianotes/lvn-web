@@ -105,7 +105,7 @@ export function Today({ r }: { r: R }) {
         <h2 id="rhythm-today" className="text-lg font-semibold">
           {t('today')}
         </h2>
-        {today.counted ? <span className="rounded-[10px] bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('counted')}</span> : null}
+        {today.counted ? <span className="rounded-[4px] bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('counted')}</span> : null}
       </div>
       <div className="flex items-center gap-5">
         <Ring share={ringShare(today)} comeback={today.comeback} />
@@ -152,7 +152,7 @@ export function Week({ r }: { r: R }) {
         <h2 id="rhythm-week" className="text-lg font-semibold">
           {t('week')}
         </h2>
-        {r.met ? <span className="rounded-[10px] bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('met')}</span> : null}
+        {r.met ? <span className="rounded-[4px] bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">{t('met')}</span> : null}
       </div>
       <ol className="grid grid-cols-7 gap-1">
         {r.week.map((d) => {
@@ -235,7 +235,7 @@ function Plan({ r }: { r: R }) {
                 setSaved(false)
                 setDays((prev) => (on ? prev.filter((x) => x !== d) : [...prev, d].sort((a, b) => a - b)))
               }}
-              className={cn('h-10 rounded-[10px] border px-4 text-sm font-medium', on ? 'border-accent bg-accent text-accent-fg' : 'border-border bg-surface hover:bg-surface-2')}
+              className={cn('h-10 rounded-[4px] border px-4 text-sm font-medium', on ? 'border-accent bg-accent text-accent-fg' : 'border-border bg-surface hover:bg-surface-2')}
             >
               {name(d)}
             </button>
@@ -290,7 +290,7 @@ function Pauses({ r }: { r: R }) {
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
               <span className="flex flex-wrap items-center gap-2">
                 <span>{t('pauseRange', { reason: t(`reasons.${p.reason}`), from: show(p.from), to: show(p.to) })}</span>
-                {p.active ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('pausedNow')}</span> : null}
+                {p.active ? <span className="rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('pausedNow')}</span> : null}
               </span>
               <Button variant="ghost" size="sm" disabled={ending.loading} onClick={() => void end({ variables: { input: { id: p.id } } })}>
                 {p.active && p.from < r.today.day ? t('endPause') : t('dropPause')}

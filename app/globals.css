@@ -6,34 +6,34 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  --bg: #f8f7f4;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f0eee9;
-  --fg: #1c1b18;
-  --muted: #66625b;
-  --border: #e4e1da;
-  --accent: #2847a8;
-  --accent-hover: #1f3888;
+  --surface-2: #f4f4f5;
+  --fg: #09090b;
+  --muted: #52525b;
+  --border: #d4d4d8;
+  --accent: #1e40af;
+  --accent-hover: #1e3a8a;
   --accent-fg: #ffffff;
-  --accent-soft: #e9edf8;
+  --accent-soft: #eff3fe;
   --good: #0f6b45;
   --warn: #8a4b08;
   --bad: #9f1d1d;
   --def: #0f5f6b;
-  --inverse: #1f2640;
-  --inverse-ink: #f8f7f4;
-  --inverse-muted: #cbc7be;
-  --shadow-sm: 0 1px 2px rgb(28 27 24 / 0.06);
-  --shadow-md: 0 6px 24px -6px rgb(28 27 24 / 0.12), 0 2px 6px rgb(28 27 24 / 0.04);
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --inverse: #09090b;
+  --inverse-ink: #fafafa;
+  --inverse-muted: #a1a1aa;
+  --shadow-sm: none;
+  --shadow-md: 0 6px 16px -6px rgb(9 9 11 / 0.18);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
   --spark: #f2c230;
   --highlight: #fbe7a1;
   --spark-soft: #fcf1c7;
   --spark-ink: #6b4c00;
-  --shadow-lg: 0 24px 48px -12px rgb(28 27 24 / 0.10);
-  --radius-xl: 20px;
+  --shadow-lg: 0 20px 40px -16px rgb(9 9 11 / 0.30);
+  --radius-xl: 6px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-fast: 140ms;
@@ -43,45 +43,45 @@
 }
 
 [data-theme='dark'] {
-  --bg: #141413;
-  --surface: #1b1a18;
-  --surface-2: #252421;
-  --fg: #ecebe6;
-  --muted: #9a968d;
-  --border: #2e2c29;
-  --accent: #a9bbf2;
-  --accent-hover: #c9d5f7;
-  --accent-fg: #141413;
-  --accent-soft: #1f2640;
+  --bg: #09090b;
+  --surface: #111113;
+  --surface-2: #1c1c1f;
+  --fg: #fafafa;
+  --muted: #a1a1aa;
+  --border: #2e2e33;
+  --accent: #93b4ff;
+  --accent-hover: #bcd0ff;
+  --accent-fg: #09090b;
+  --accent-soft: #172036;
   --good: #6ee7a8;
   --warn: #f5c16c;
   --bad: #f0a0a0;
   --def: #7fd4d0;
-  --inverse: #0e0e0d;
-  --inverse-ink: #ecebe6;
-  --inverse-muted: #cbc7be;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
-  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
+  --inverse: #000000;
+  --inverse-ink: #fafafa;
+  --inverse-muted: #a1a1aa;
+  --shadow-sm: none;
+  --shadow-md: 0 6px 16px -6px rgb(0 0 0 / 0.6);
   --spark: #e6b72e;
   --highlight: #4d3f12;
   --spark-soft: #352c10;
   --spark-ink: #f3d27a;
-  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 20px 40px -16px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 
 /* Accent overrides. The dark rule follows the light rule so it wins (higher specificity). */
 [data-accent='ink'] {
-  --accent: #2847a8;
-  --accent-hover: #1f3888;
+  --accent: #1e40af;
+  --accent-hover: #1e3a8a;
   --accent-fg: #ffffff;
-  --accent-soft: #e9edf8;
+  --accent-soft: #eff3fe;
 }
 [data-theme='dark'][data-accent='ink'] {
-  --accent: #a9bbf2;
-  --accent-hover: #c9d5f7;
-  --accent-fg: #141413;
-  --accent-soft: #1f2640;
+  --accent: #93b4ff;
+  --accent-hover: #bcd0ff;
+  --accent-fg: #09090b;
+  --accent-soft: #172036;
 }
 [data-accent='navy'] {
   --accent: #1e4d8c;
@@ -173,6 +173,15 @@
 }
 
 @theme {
+  /* Sharp corners across the app (rounded-* utilities). rounded-full stays round for avatars and dots. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
+  --radius-3xl: 8px;
+  --shadow-xs: none;
   /* Content rising into place on the welcome surfaces; off with reduced motion (below). */
   --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   @keyframes rise {
@@ -208,7 +217,7 @@ html { background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; 
 /* Backup for the inline hide on `/` (lib/auth/hint.ts). The head script sets visibility itself so this is not required before first paint. */
 html[data-landing='away'] { visibility: hidden; }
 body { font-family: var(--font-sans); min-height: 100dvh; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 
 /* Text fields: one border, not that outline stacked on the field (a bright double box — the search
    overlay, inputs, textareas). Unlayered, so it wins over Tailwind's outline and ring utilities.
@@ -295,7 +304,7 @@ select:not([aria-invalid='true']):focus-visible {
 .lvn-editor .ProseMirror { min-width: 0; max-width: 100%; }
 .lvn-editor .ProseMirror { outline: none; display: flex; flex-direction: column; gap: 0.9rem; font-size: 1.0625rem; line-height: 1.7; }
 .lvn-editor .ProseMirror > .lvn-card,
-.lvn-editor .ProseMirror > [data-node-view-wrapper] { min-width: 0; max-width: 100%; border-radius: 0.75rem; transition: background-color 0.2s, box-shadow 0.2s; }
+.lvn-editor .ProseMirror > [data-node-view-wrapper] { min-width: 0; max-width: 100%; border-radius: 4px; transition: background-color 0.2s, box-shadow 0.2s; }
 .lvn-editor .ProseMirror p { min-height: 1.5em; }
 .lvn-editor .ProseMirror .lvn-card-text > p + p,
 .lvn-editor .ProseMirror blockquote p + p,

@@ -44,7 +44,7 @@ export function Interests() {
       ) : chosen.length ? (
         <ul aria-label={t('chosen')} className="flex flex-wrap gap-2">
           {chosen.map((topic) => (
-            <li key={topic.id} className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
+            <li key={topic.id} className="inline-flex items-center gap-1 rounded-[4px] bg-accent-soft py-1 pl-3 pr-1 text-sm text-accent">
               {topic.title}
               <button type="button" aria-label={t('remove', { topic: topic.title })} disabled={saving.loading} onClick={() => void set(ids.filter((id) => id !== topic.id))} className="rounded-full p-0.5 hover:bg-accent/15">
                 <X className="size-3.5" aria-hidden />

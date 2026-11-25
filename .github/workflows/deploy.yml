@@ -48,11 +48,17 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           LVN_R2_ENDPOINT: ${{ vars.LVN_R2_ENDPOINT }}
           LVN_PUBLIC_URL: ${{ vars.LVN_PUBLIC_URL }}
+          LVN_API_URL: ${{ vars.LVN_API_URL }}
         run: |
           echo "image=ghcr.io/${OWNER,,}/lvn-web:${LVN_ENV}-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
           [[ $LVN_PUBLIC_URL =~ ^https://[^/]+$ ]] || { echo "LVN_PUBLIC_URL must be https://<host>" >&2; exit 1; }
-          # Live updates (ADR-0042) through the same entrance: wss://<host>/graphql/live.
-          echo "live=wss://${LVN_PUBLIC_URL#https://}/graphql/live" >> "$GITHUB_OUTPUT"
+          # The API's own host when the entrance is split (production: https://api.learnvianotes.in). Unset means the
+          # single entrance, where the app host also answers /graphql (beta).
+          api=${LVN_API_URL:-$LVN_PUBLIC_URL}
+          [[ $api =~ ^https://[^/]+$ ]] || { echo "LVN_API_URL must be https://<host>" >&2; exit 1; }
+          echo "api=$api/graphql" >> "$GITHUB_OUTPUT"
+          # Live updates (ADR-0042) on the API's entrance: wss://<api host>/graphql/live.
+          echo "live=wss://${api#https://}/graphql/live" >> "$GITHUB_OUTPUT"
           # Pre-signed URLs point at the R2 endpoint; the Content Security Policy lets the browser reach only that origin.
           origin=$(printf '%s' "$LVN_R2_ENDPOINT" | sed -E 's#^(https://[^/]+).*#\1#')
           [[ $origin == https://* ]] || { echo "LVN_R2_ENDPOINT must be https://<account>.r2.cloudflarestorage.com" >&2; exit 1; }
@@ -76,7 +82,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_APP_ENV=${{ vars.LVN_APP_ENV }}
             NEXT_PUBLIC_SITE_URL=${{ vars.LVN_PUBLIC_URL }}
-            NEXT_PUBLIC_API_URL=${{ vars.LVN_PUBLIC_URL }}/graphql
+            NEXT_PUBLIC_API_URL=${{ steps.name.outputs.api }}
             NEXT_PUBLIC_LIVE_URL=${{ steps.name.outputs.live }}
             NEXT_PUBLIC_STORAGE_ORIGINS=${{ steps.name.outputs.storage }}
             NEXT_PUBLIC_FIREBASE_API_KEY=${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}

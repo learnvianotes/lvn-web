@@ -292,7 +292,7 @@ function UsageTable({ title, rows }: { title: string; rows: (UsageRow & { name: 
               <li key={row.name} className="rounded-xl border border-border p-3">
                 <p className="font-medium break-words">{row.name}</p>
                 <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-2" role="img" aria-label={t('bar', { name: row.name, count: format.number(row.tasksRun) })}>
-                  <span className="block h-full rounded-[10px] bg-accent" style={{ width: `${width}%` }} />
+                  <span className="block h-full rounded-[4px] bg-accent" style={{ width: `${width}%` }} />
                 </span>
                 <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                   <UsageStat label={t('tasks')} value={format.number(row.tasksRun)} />
@@ -325,7 +325,7 @@ function UsageTable({ title, rows }: { title: string; rows: (UsageRow & { name: 
                     <th scope="row" className="py-2 pr-2 font-medium break-words">
                       <span className="block">{row.name}</span>
                       <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface-2" role="img" aria-label={t('bar', { name: row.name, count: format.number(row.tasksRun) })}>
-                        <span className="block h-full rounded-[10px] bg-accent" style={{ width: `${width}%` }} />
+                        <span className="block h-full rounded-[4px] bg-accent" style={{ width: `${width}%` }} />
                       </span>
                     </th>
                     <td className="py-2 pr-2 break-words">{format.number(row.tasksRun)}</td>

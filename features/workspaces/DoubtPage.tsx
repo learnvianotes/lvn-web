@@ -98,7 +98,7 @@ export function DoubtPage({ groupId, id }: { groupId: string; id: string }) {
                 {a.author.displayName}
               </Link>
               {a.byMentor ? (
-                <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
+                <span className="inline-flex items-center gap-1 rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
                   <GraduationCap className="size-3" aria-hidden />
                   {t('mentor')}
                 </span>

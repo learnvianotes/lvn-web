@@ -82,7 +82,7 @@ function Skills({ profile }: { profile: PublicProfile['teacherProfile'] }) {
                 {items.map((s) => (
                   <li
                     key={s.id}
-                    className="rounded-[10px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
+                    className="rounded-[4px] bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
                     title={[s.detail, s.source !== 'MANUAL' ? t('from', { source: t(`source.${s.source}`) }) : null].filter(Boolean).join(' · ') || undefined}
                   >
                     {s.name}

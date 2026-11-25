@@ -41,7 +41,7 @@ export async function PublicNoteView({ note }: { note: PublicNote }) {
         {note.topics.length ? (
           <ul className="flex flex-wrap gap-1.5 text-xs" aria-label={t('topics')}>
             {note.topics.map((topic) => (
-              <li key={topic.id} className="inline-flex items-center gap-1 rounded-[10px] border border-border bg-surface px-2.5 py-1 text-muted">
+              <li key={topic.id} className="inline-flex items-center gap-1 rounded-[4px] border border-border bg-surface px-2.5 py-1 text-muted">
                 <BookBookmark className="size-3.5" aria-hidden />
                 {topic.title} · {topic.subject.title}
               </li>

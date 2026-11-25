@@ -275,7 +275,7 @@ export function AiProviders() {
 }
 
 function Badge({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
-  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
+  return <span className={muted ? 'rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted' : 'rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent'}>{children}</span>
 }
 
 function Row({ term, value }: { term: string; value: string }) {

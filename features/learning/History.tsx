@@ -74,7 +74,7 @@ function DayCard({ day: d }: { day: Day }) {
     <article aria-label={format.dateTime(date, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })} className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="font-semibold">{format.dateTime(date, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })}</h2>
-        {d.counted ? <span className="rounded-[10px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('counted')}</span> : null}
+        {d.counted ? <span className="rounded-[4px] bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">{t('counted')}</span> : null}
       </div>
       {stats.length ? <p className="text-sm text-muted">{stats.join(' · ')}</p> : <p className="text-sm text-muted">{t('activity')}</p>}
       {d.topics.length ? (

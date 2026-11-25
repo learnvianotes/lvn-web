@@ -28,7 +28,7 @@ export const PAPER: Record<ResolvedTheme, string> = {
 
 /** Light brand, used only as the picker's swatch. CSS owns the real accent. */
 export const ACCENT_SWATCH: Record<AccentId, string> = {
-  ink: '#2847a8',
+  ink: '#1e40af',
   navy: '#1e4d8c',
   teal: '#0c5c66',
   forest: '#0f6b45',

@@ -24,7 +24,7 @@ export async function ProfileView({ person }: { person: PublicProfile }) {
           <p className="text-sm text-muted">@{person.handle}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
             {teacher ? (
-              <span className="inline-flex items-center gap-1 rounded-[10px] bg-accent-soft px-2.5 py-0.5 font-semibold text-accent">
+              <span className="inline-flex items-center gap-1 rounded-[4px] bg-accent-soft px-2.5 py-0.5 font-semibold text-accent">
                 <GraduationCap className="size-4" aria-hidden />
                 {t('teacher')}
               </span>

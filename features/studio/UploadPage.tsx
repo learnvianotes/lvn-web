@@ -50,11 +50,11 @@ export function UploadPage() {
         <FileUp className="size-8 text-muted" strokeWidth={1.5} aria-hidden />
         <p className="text-lg font-medium">{t('drop')}</p>
         <div className="flex flex-wrap justify-center gap-2">
-          <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-accent px-4 text-sm font-medium text-accent-fg transition-colors hover:bg-[var(--accent-hover)]" onClick={() => input.current?.click()}>
+          <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[4px] bg-accent px-4 text-sm font-medium text-accent-fg transition-colors hover:bg-[var(--accent-hover)]" onClick={() => input.current?.click()}>
             <FileUp className="size-4" aria-hidden />
             {t('pdf')}
           </button>
-          <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-surface-2" onClick={() => setCapture(true)}>
+          <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[4px] border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-surface-2" onClick={() => setCapture(true)}>
             <Camera className="size-4" aria-hidden />
             {t('photos')}
           </button>

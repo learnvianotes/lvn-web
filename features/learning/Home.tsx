@@ -15,7 +15,7 @@ type Rec = RecommendationsQuery['recommendations'][number]
 const ART: Record<RecommendationKind, { icon: typeof BookOpen; from: string; to: string }> = {
   EXAM_TOPIC: { icon: CalendarClock, from: '#7a5a12', to: '#7a5a12' },
   REVISE_TOPIC: { icon: RotateCcw, from: '#0c5c66', to: '#0c5c66' },
-  CONTINUE_NOTE: { icon: BookOpen, from: '#2847a8', to: '#2847a8' },
+  CONTINUE_NOTE: { icon: BookOpen, from: '#1e40af', to: '#1e40af' },
   QUIZ_ON_TOPIC: { icon: ListChecks, from: '#3d6b2c', to: '#3d6b2c' },
   POPULAR_NOTE: { icon: TrendingUp, from: '#4a4740', to: '#4a4740' },
   RESOURCE: { icon: Library, from: '#0f5f6b', to: '#163e73' },

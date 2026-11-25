@@ -13,7 +13,7 @@ const sizes = {
   sm: 'h-9 px-3 text-sm',
   icon: 'size-10',
   /** The pill of the sign-in pages, matching the Google button beside it. */
-  lg: 'h-12 rounded-[10px] px-6 text-[15px] font-semibold',
+  lg: 'h-12 rounded-[4px] px-6 text-[15px] font-semibold',
 }
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -263,7 +263,7 @@ export function Walkthrough() {
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        className="absolute rounded-2xl border border-border bg-bg p-4 text-fg shadow-2xl outline-none motion-reduce:transition-none"
+        className="absolute rounded-2xl border border-border bg-bg p-4 text-fg shadow-lg outline-none motion-reduce:transition-none"
         style={{ top: box?.top ?? 0, left: box?.left ?? 12, width: 'min(22.5rem,calc(100vw-1.5rem))', visibility: box ? 'visible' : 'hidden' }}
       >
         <p className="text-xs font-medium text-muted">{t('progress', { step: step + 1, total: STEPS.length })}</p>

@@ -81,7 +81,7 @@ function TaskRow({ task }: { task: WeeklyTaskFieldsFragment }) {
         <span className="shrink-0 text-sm tabular-nums text-muted">{t('progress', { progress: Math.min(task.progress, task.target), target: task.target })}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-surface" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={task.target} aria-valuenow={Math.min(task.progress, task.target)}>
-        <div className="h-full rounded-[10px] bg-accent transition-[width] duration-300" style={{ width: `${Math.round(share * 100)}%` }} />
+        <div className="h-full rounded-[4px] bg-accent transition-[width] duration-300" style={{ width: `${Math.round(share * 100)}%` }} />
       </div>
       {task.plan && !editing ? <p className="text-sm text-muted">{t('planShown', { plan: task.plan })}</p> : null}
       {editing ? (

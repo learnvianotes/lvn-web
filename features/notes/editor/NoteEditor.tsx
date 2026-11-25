@@ -170,11 +170,11 @@ export function NoteEditor({ noteId, userId, title: initialTitle, doc, saved, se
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-accent/40 bg-accent/10 text-accent')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2', pages && 'border-accent/40 bg-accent/10 text-accent')} aria-pressed={pages} onClick={() => setPages((open) => !open)}>
               <Notebook className="size-4" aria-hidden />
               {t('pages')}
             </button>
-            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
+            <button type="button" className={cn('inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 lg:hidden', compact && 'hidden')} onClick={() => setContentsOpen(true)}>
               <ListTree className="size-4" aria-hidden />
               {t('contents')}
             </button>
@@ -340,7 +340,7 @@ function SelectionMenu({ editor }: { editor: Editor }) {
     <BubbleMenu
       editor={editor}
       shouldShow={({ editor: e, state }) => !state.selection.empty && e.isEditable && !e.isActive('codeCard') && !e.isActive('markdownCard') && !e.isActive('diagramCard') && state.selection.$from.depth > 1}
-      className="flex items-center gap-0.5 rounded-2xl border border-border bg-surface p-1 shadow-xl shadow-black/10"
+      className="flex items-center gap-0.5 rounded-2xl border border-border bg-surface p-1 shadow-lg shadow-black/10"
     >
       {MARKS.map((m) => (
         <IconButton key={m.mark} icon={m.icon} label={t(`marks.${m.mark}`)} pressed={!!active?.[m.mark]} onClick={() => m.run(editor)} className="size-8" />
@@ -440,7 +440,7 @@ function CardHandle({ editor }: { editor: Editor }) {
         <GripVertical className="size-4" aria-hidden />
       </button>
       {menu ? (
-        <div className="absolute left-9 top-0 z-30 w-64 animate-rise rounded-2xl border border-border bg-surface p-1.5 shadow-2xl shadow-black/15" onKeyDown={(e) => e.key === 'Escape' && setMenu(null)}>
+        <div className="absolute left-9 top-0 z-30 w-64 animate-rise rounded-2xl border border-border bg-surface p-1.5 shadow-lg shadow-black/15" onKeyDown={(e) => e.key === 'Escape' && setMenu(null)}>
           {menu === 'add' ? (
             <ul className="grid max-h-80 grid-cols-1 overflow-y-auto">
               {menuItems.map((item) => (
@@ -487,7 +487,7 @@ function MoreMenu({ items }: { items: { label: string; icon: LucideIcon; onClick
     <div className="relative sm:hidden">
       <IconButton icon={Ellipsis} label={t('more')} pressed={open} onClick={() => setOpen((o) => !o)} className="border border-border bg-surface" />
       {open ? (
-        <div className="absolute right-0 z-30 mt-2 flex w-52 animate-rise flex-col rounded-2xl border border-border bg-surface p-1.5 text-sm shadow-2xl shadow-black/15">
+        <div className="absolute right-0 z-30 mt-2 flex w-52 animate-rise flex-col rounded-2xl border border-border bg-surface p-1.5 text-sm shadow-lg shadow-black/15">
           {items.map((item) => (
             <MenuItem key={item.label} icon={item.icon} label={item.label} danger={item.danger} onClick={() => (setOpen(false), item.onClick())} />
           ))}
@@ -525,7 +525,7 @@ function AddCardMenu({ editor, noteId }: { editor: Editor | null; noteId: string
         {t('addCard')}
       </button>
       {open ? (
-        <ul className="absolute z-30 mt-2 grid w-full max-w-xl animate-rise gap-1 rounded-2xl border border-border bg-surface p-2 shadow-2xl shadow-black/10 sm:grid-cols-2">
+        <ul className="absolute z-30 mt-2 grid w-full max-w-xl animate-rise gap-1 rounded-2xl border border-border bg-surface p-2 shadow-lg shadow-black/10 sm:grid-cols-2">
           {cardMenu(uploadsOn).map((item) => (
             <li key={item.type}>
               <button type="button" className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-2" onClick={() => add(item.type)}>

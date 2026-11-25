@@ -233,7 +233,7 @@ export function Buddies() {
             <span className="flex flex-col">
               <span className="font-medium">
                 {b.user.displayName}
-                {b.studyingNow ? <span className="ml-2 rounded-[10px] bg-accent px-2 py-0.5 text-xs font-semibold text-accent-fg">{t('studyingNow')}</span> : null}
+                {b.studyingNow ? <span className="ml-2 rounded-[4px] bg-accent px-2 py-0.5 text-xs font-semibold text-accent-fg">{t('studyingNow')}</span> : null}
               </span>
               <span className="text-muted">
                 {b.studyingNow && b.topicTitle ? `${t('onTopic', { title: b.topicTitle })} · ` : ''}

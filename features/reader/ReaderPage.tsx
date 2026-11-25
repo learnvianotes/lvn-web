@@ -463,7 +463,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
           <aside
             aria-label={t('panel')}
             className={cn(
-              'flex flex-col border-border bg-bg max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[55] max-lg:h-[78dvh] max-lg:rounded-t-3xl max-lg:border-t max-lg:shadow-2xl lg:w-[30rem] lg:shrink-0 lg:border-l xl:w-[34rem]',
+              'flex flex-col border-border bg-bg max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[55] max-lg:h-[78dvh] max-lg:rounded-t-3xl max-lg:border-t max-lg:shadow-lg lg:w-[30rem] lg:shrink-0 lg:border-l xl:w-[34rem]',
               !panelOpen && 'hidden',
             )}
           >
@@ -610,7 +610,7 @@ export function ReaderPage({ noteId, fileId }: { noteId: string; fileId: string 
         ) : null}
         <ConvertDialog open={convertOpen} onClose={() => setConvertOpen(false)} noteId={noteId} fileId={fileId} fileName={fileName} />
         {notice ? (
-          <div role="status" className="fixed bottom-4 left-1/2 z-[70] flex -translate-x-1/2 animate-rise items-center gap-3 rounded-full bg-fg px-4 py-2 text-sm text-bg shadow-xl">
+          <div role="status" className="fixed bottom-4 left-1/2 z-[70] flex -translate-x-1/2 animate-rise items-center gap-3 rounded-full bg-fg px-4 py-2 text-sm text-bg shadow-lg">
             {notice.text}
             {notice.action ? (
               <button type="button" className="font-semibold underline" onClick={notice.action.run}>

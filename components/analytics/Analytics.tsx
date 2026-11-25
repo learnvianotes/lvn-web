@@ -35,7 +35,7 @@ function ConsentBanner() {
   return (
     <section
       aria-label={t('region')}
-      className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-surface p-4 text-sm shadow-2xl sm:flex-row sm:items-center"
+      className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-surface p-4 text-sm shadow-lg sm:flex-row sm:items-center"
     >
       <p className="flex-1 text-muted">
         {t.rich('text', {

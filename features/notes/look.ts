@@ -8,7 +8,7 @@
  * text at 4.5:1 or more. `to` equals `from`: notes get one solid colour, never a gradient.
  */
 export const ACCENTS = [
-  { name: 'ink', from: '#2847a8', to: '#2847a8', tint: 'rgb(40 71 168 / 0.08)' },
+  { name: 'ink', from: '#1e40af', to: '#1e40af', tint: 'rgb(40 71 168 / 0.08)' },
   { name: 'teal', from: '#0c5c66', to: '#0c5c66', tint: 'rgb(12 92 102 / 0.08)' },
   { name: 'moss', from: '#3d6b2c', to: '#3d6b2c', tint: 'rgb(61 107 44 / 0.08)' },
   { name: 'clay', from: '#9a4a2b', to: '#9a4a2b', tint: 'rgb(154 74 43 / 0.08)' },
